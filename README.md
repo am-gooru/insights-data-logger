@@ -42,4 +42,4 @@ Command: `mvn clean install -P dev -Dmaven.test.skip=true`
 
 
 ## License
-Gooru Core API is released under the [MIT License](http://opensource.org/licenses/MIT) .
+Gooru Insights Event Logger is released under the [MIT License](http://opensource.org/licenses/MIT) .
