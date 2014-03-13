@@ -1,25 +1,28 @@
 /*******************************************************************************
- * CassandraProcessor.java
- * loader
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
- * http://www.goorulearning.org/
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+ *  http://www.goorulearning.org/
+ *  
+ *  CassandraProcessor.java
+ *  event-api-stable-1.1
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining
+ *  a copy of this software and associated documentation files (the
+ *   "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so, subject to
+ *  the following conditions:
+ * 
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ * 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 package org.ednovo.data.handlers;
 
@@ -28,6 +31,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.EventObjectValidator;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,29 +46,33 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
 	private final String EVENT_SOURCE = "file-logged";
+	private EventObjectValidator eventObjectValidator;
 	
 	public CassandraProcessor(Map<String,String> configOptionsMap){
 		
 		gson = new Gson();
 		dataLoader = new CassandraDataLoader(configOptionsMap);
+		eventObjectValidator = new EventObjectValidator(configOptionsMap);
 	}
 
         @Override
         public void handleRow(Object row) throws Exception {
 
-            if (row == null || !(row instanceof EventData)) {
-                logger.warn("row null or not instance of EventData. This is an error");
-                return;
-            }
+         if (row != null && (row instanceof EventData)) {
+       
             EventData eventData = (EventData) row;
-
-            cleanseData(eventData);
-            
-            if (eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
-                logger.warn("eventName is empty. This is an error");
-                return;
+            /*
+             * Skip new version  events  
+             */
+            if(eventData.getVersion() != null){
+            	return;
             }
+            logger.info("EventName : {}",eventData.getEventName());
+            cleanseData(eventData);
 
+            if (eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
+            	return;
+            }
             // Update into Cassandra through logger-core
             String fields = eventData.getFields();
             if (fields == null || fields.isEmpty()) {
@@ -80,19 +89,33 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
             
             handleRowByNextHandler(eventData);
         }
-	
-        public void deleteEventsGivenTimeline (String timeStampMinuteStart, String timeStampMinuteStop, final boolean dryRun) {
-             dataLoader.deleteEventsGivenTimeline(timeStampMinuteStart, timeStampMinuteStop, dryRun);
-        }
-
-        public void deleteEventsFromStaging (String timeStampMinuteStart, String timeStampMinuteStop, final boolean dryRun) {
-            dataLoader.deleteEventsFromStaging(timeStampMinuteStart, timeStampMinuteStop, dryRun);
-       }
+         if (row != null && (row instanceof EventObject)) {
+        	
+        	 EventObject eventObject = (EventObject) row;
+         	
+        	 if(eventObject.getVersion() == null){
+             	return;
+             }
+        	 
+        	if (eventObject.getEventName() == null || eventObject.getEventName().isEmpty() || eventObject.getContext() == null) {
+        		logger.warn("EventName or Context is empty. This is an error in EventObject");
+        		return;
+         	}
+         	
+        	if (eventObject.getFields() == null || eventObject.getFields().isEmpty()) {
+                logger.warn("fields are empty. This is an error in EventObject");
+                return;
+            }
+        	eventObjectValidator.validateEventObject(eventObject);
+         	dataLoader.handleEventObjectMessage(eventObject);
+         }
+	}
         
         public void updateToStaging(String statTime,String endTime,String eventName){
         	try {
 				dataLoader.updateStaging(statTime, endTime,eventName);
 			} catch (ParseException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }
@@ -111,6 +134,7 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 		updateEventNameIfEmpty(eventData);
 		cleansEventValue(eventData);
 		if(eventData.getStartTime() == null && eventData.getExpireTime() != null) {
+			// SessionExpired event did NOT have start / end time. Use expiry time.
 			eventData.setStartTime(eventData.getExpireTime());
 			eventData.setEndTime(eventData.getExpireTime());
 		}
@@ -144,10 +168,6 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 				// This is actually collection-resource-play event, coming up disguised as collection-play. Change.
 				eventName = "collection-resource-play";
 			}
-			if(eventName.equalsIgnoreCase("collection-resource-play-dots") && eventData.getAttemptStatus() != null) {                               
-            	// This is used to remove collection resource play from server side logs
-                eventName = "collection-question-resource-play-dots";
-             }
  		}
 		eventData.setEventName(eventName);
 	}
@@ -172,6 +192,13 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	public void updateViewCount(String gooruoid, long viewcount){
 		dataLoader.updateViewCount(gooruoid, viewcount);
 	}
+	
+	public void addAggregators(String eventName, String json,String updateBy){
+		dataLoader.addAggregators(eventName, json,updateBy);
+	}
+	public void  runPig(String eventName) {
+		dataLoader.runPig(eventName);
+	} 
 	
 	public void callAPIViewCount(){
 		dataLoader.callAPIViewCount();

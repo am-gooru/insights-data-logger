@@ -1,35 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  pom.xml
-  insights-write-api
-  Created by Gooru on 2014
-  Copyright (c) 2014 Gooru. All rights reserved.
-  http://www.goorulearning.org/
-  Permission is hereby granted, free of charge, to any person obtaining
-  a copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-  The above copyright notice and this permission notice shall be
-  included in all copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+   http://www.goorulearning.org/
+   
+   pom.xml
+   event-api-stable-1.1
+   
+   Permission is hereby granted, free of charge, to any person obtaining
+   a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+   without limitation the rights to use, copy, modify, merge, publish,
+   distribute, sublicense, and/or sell copies of the Software, and to
+   permit persons to whom the Software is furnished to do so, subject to
+   the following conditions:
+  
+   The above copyright notice and this permission notice shall be
+   included in all copies or substantial portions of the Software.
+  
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+   OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.ednovo.data.eventapi</groupId>
-	<artifactId>insights-event-logger</artifactId>
+	<artifactId>Event-Logger</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
-	<name>Insights-event-logger</name>
+	<name>Event-Logger</name>
 	<build>
 		<directory>${my.build.directory}</directory>
 		<plugins>
@@ -51,12 +53,12 @@
 	</build>
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>org.glassfish</groupId>
-				<artifactId>javax.json</artifactId>
-				<version>1.0.4</version>
-			</dependency>
-
+<dependency>
+<groupId>org.glassfish</groupId>
+<artifactId>javax.json</artifactId>
+<version>1.0.4</version>
+</dependency>
+            
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-expression</artifactId>
@@ -86,24 +88,24 @@
 				<type>jar</type>
 				<scope>compile</scope>
 			</dependency>
+			
+			<dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-context-support</artifactId>
+               <version>3.1.2.RELEASE</version>
+       </dependency>
 
+       <!-- Spring + Quartz need transaction -->
+       <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-tx</artifactId>
+               <version>3.1.2.RELEASE</version>
+       </dependency>
 			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context-support</artifactId>
-				<version>3.1.2.RELEASE</version>
-			</dependency>
-
-			<!-- Spring + Quartz need transaction -->
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-tx</artifactId>
-				<version>3.1.2.RELEASE</version>
-			</dependency>
-			<dependency>
-				<groupId>org.quartz-scheduler</groupId>
-				<artifactId>quartz</artifactId>
-				<version>1.8.6</version>
-			</dependency>
+               <groupId>org.quartz-scheduler</groupId>
+               <artifactId>quartz</artifactId>
+               <version>1.8.6</version>
+       		</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-orm</artifactId>
@@ -168,12 +170,12 @@
 			<version>${jsp.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.glassfish</groupId>
-			<artifactId>javax.json</artifactId>
-			<version>1.0.4</version>
-		</dependency>
-
+<dependency>
+<groupId>org.glassfish</groupId>
+<artifactId>javax.json</artifactId>
+<version>1.0.4</version>
+</dependency>
+            
 		<dependency>
 			<groupId>commons-discovery</groupId>
 			<artifactId>commons-discovery</artifactId>
@@ -476,6 +478,18 @@
 			<artifactId>hibernate-core</artifactId>
 			<version>4.0.1.Final</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pig</artifactId>
+			<version>0.10.0</version>
+		</dependency>
+            
+		<!-- <dependency> <groupId>org.hibernate</groupId> <artifactId>hibernate-annotations</artifactId> 
+			<version>3.5.6-Final</version> <exclusions> <exclusion> <groupId>org.hibernate</groupId> 
+			<artifactId>ejb3-persistence</artifactId> </exclusion> <exclusion> <groupId>org.hibernate</groupId> 
+			<artifactId>hibernate-core</artifactId> </exclusion> </exclusions> </dependency> -->
+
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
@@ -512,6 +526,11 @@
 			<version>5.1.6</version>
 		</dependency>
 		<!-- cassandra dependency -->
+		<!-- <dependency>
+			<groupId>me.prettyprint</groupId>
+			<artifactId>hector-core</artifactId>
+			<version>1.0-5</version>
+		</dependency> -->
 		<dependency>
 			<groupId>com.netflix.astyanax</groupId>
 			<artifactId>astyanax</artifactId>
@@ -526,6 +545,7 @@
 			<version>2.1.1</version>
 		</dependency>
 		<!-- dependency for jsonx -->
+		
 		<!-- GSON Json serializer for parsing JSON into Java Object -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -533,19 +553,20 @@
 			<version>2.2.2</version>
 		</dependency>
 	</dependencies>
-
-	<!-- Event Logger Modules Start -->
+	
+	<!-- Event Logger Modules Start-->
 	<modules>
-		<module>geo-location</module>
-		<module>core</module>
-		<module>rest-app</module>
-		<module>loader</module>
-		<module>kafka-consumer</module>
-		<module>kafka-producer</module>
-		<module>kafka-log-writer</module>
-	</modules>
-	<!-- Event Logger Modules End -->
-
+    		<module>geo-location</module>
+	        <module>core</module>
+	        <module>micro-aggregation</module>
+        	<module>rest-app</module>
+	        <module>loader</module>
+	        <module>kafka-consumer</module>
+    		<module>kafka-producer</module>
+    		<module>kafka-log-writer</module>
+  </modules>
+	<!-- Event Logger Modules End-->
+	
 	<profiles>
 		<profile>
 			<id>integration-test</id>
@@ -604,6 +625,7 @@
 				<env>dev</env>
 			</properties>
 		</profile>
+
 	</profiles>
 	<properties>
 		<env>local</env>

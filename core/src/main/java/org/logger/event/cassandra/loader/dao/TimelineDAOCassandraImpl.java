@@ -1,9 +1,10 @@
 /*******************************************************************************
- * TimelineDAOCassandraImpl.java
- * core
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   TimelineDAOCassandraImpl.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -28,11 +31,10 @@
 package org.logger.event.cassandra.loader.dao;
 
 import java.util.UUID;
-import java.util.logging.Level;
 
 import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +46,6 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
-/**
- *
- * @author vijayakumark
- */
 public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements TimelineDAO {
 
     private ColumnFamily<String, String> eventTimelineCF;
@@ -83,6 +81,24 @@ public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements Ti
         }
     }
 
+    public void updateTimelineObject(EventObject eventObject, String rowKey,String CoulmnValue) {
+
+        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        eventTimelineMutation.withRow(eventTimelineCF, rowKey).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+
+        eventTimelineMutation.withRow(eventTimelineCF, (rowKey+"~"+eventObject.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+        try {
+            eventTimelineMutation.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting event data to cassandra", e);
+        }
+    }
+    
 	public ColumnList<String> readTimeLine(String timeLineKey) {
 
 
@@ -105,7 +121,8 @@ public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements Ti
             OperationResult<Void> result = m.execute();
 
         } catch (ConnectionException ex) {
-            java.util.logging.Logger.getLogger(CassandraDataLoader.class.getName()).log(Level.SEVERE, null, ex);
+        	logger.info("Error while deleting event data from cassandra", ex);
+        	return;
         }
 	}
 }

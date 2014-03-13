@@ -1,25 +1,28 @@
 /*******************************************************************************
- * DataLoader.java
- * loader
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
- * http://www.goorulearning.org/
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+ *  http://www.goorulearning.org/
+ *  
+ *  DataLoader.java
+ *  event-api-stable-1.1
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining
+ *  a copy of this software and associated documentation files (the
+ *   "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so, subject to
+ *  the following conditions:
+ * 
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ * 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 package org.ednovo.data;
 
@@ -72,8 +75,11 @@ public class DataLoader  {
     	options.addOption( "cmd", "command", true, "Ad-hoc command to pass, primarily for ad-hoc testing" );
     	options.addOption( "geoLocationUpdate", "geoLocationUpdate", true, "geoLocationUpdate" );
     	options.addOption( "updateViewCount", "updateViewCount", true, "updateViewCount" );
+    	options.addOption( "runAggregation", "runAggregation", true, "runAggregation" );
     	options.addOption( "gooruOid", "gooruOid", true, "gooruOid" );
     	options.addOption( "viewCount", "viewCount", true, "viewCount" );
+    	options.addOption( "aggregators", "aggregators", true, "aggregators" );
+    	options.addOption( "updateBy", "updateBy", true, "updateBy" );
     	options.addOption( "callAPIViewCount", "callAPIViewCount", true, "callAPIViewCount" );
 
     	try {
@@ -107,13 +113,6 @@ public class DataLoader  {
                             }
                         }
                         
-
-                        if(cmd.equalsIgnoreCase("delete-staging")){
-                        	LOG.info("Enterting into delete-staging");
-                        	cassandraProcessor.deleteEventsFromStaging(timeStampStartMinute, timeStampStopMinute, dryRun);
-                        }else if (cmd.equalsIgnoreCase("delete-events")){
-                        	cassandraProcessor.deleteEventsGivenTimeline(timeStampStartMinute, timeStampStopMinute, dryRun);
-                        }
                         
 	    	    	return;
     	    	}
@@ -152,6 +151,21 @@ public class DataLoader  {
     	    	cassandraProcessor.updateViewCount(line.getOptionValue("gooruOid"), viewcount);
     	    }
     	    
+    	    if( line.hasOption( "aggregators" ) ) {
+    	    	LOG.info("Updating aggregators");
+    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
+    	    	cassandraProcessor.addAggregators(line.getOptionValue("eventName"), line.getOptionValue("aggregators"),line.getOptionValue("updateBy"));
+    	    }
+    	    
+    	    //for pig aggregation
+    	    if(line.hasOption("runAggregation")) {
+    	    	LOG.info("Aggregation Starts");
+    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
+    	    	String eventName;
+    	    	eventName = line.getOptionValue("eventName");
+    	    	cassandraProcessor.runPig(eventName);
+    	    }
+    	    
     	    //call gooru-appi update resource view count
     	    if( line.hasOption( "callAPIViewCount" ) ) {
     	    	LOG.info("call API view count");
@@ -181,7 +195,7 @@ public class DataLoader  {
     	    }
     	}
     	catch( ParseException exp ) {
-    	    LOG.error("Unexpected exception:" + exp.getMessage());
+    	    System.out.println( "Unexpected exception:" + exp.getMessage() );
     	}
 	}
     
@@ -221,7 +235,4 @@ public class DataLoader  {
     	return firstHandler;
     }
     
-    public static void readEventDetails(){
-    	LOG.info("End of read Event Details");
-    }
 }

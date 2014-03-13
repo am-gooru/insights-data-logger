@@ -1,9 +1,10 @@
 /*******************************************************************************
- * DimEventsDAOCassandraImpl.java
- * core
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   DimEventsDAOCassandraImpl.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -70,6 +73,14 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 		
 	}
 
+
+	/**
+     * @param eventName
+     *            eventName to lookup.
+     * @return String with the event id.
+     * @throws ConnectionException
+     *             if host is unavailable
+     */
 	@Caching
 	public String getEventId(String eventName) {
 
@@ -77,13 +88,18 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 		try {
 			existingEventRecord = getKeyspace().prepareQuery(dimEventCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(eventName).execute().getResult();
 		} catch (ConnectionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		return existingEventRecord.getStringValue("event_id", null);
 		
 	}
+	
+	/**
+     * @return HashMap<String, String> with event name and event id.
+     * @throws ConnectionException
+     *             if host is unavailable
+     */
 	public HashMap<String, String> readAllEventNames(){
 		Rows<String, String> allEvents = null;
 		HashMap<String, String> events = new HashMap<String, String>();
@@ -106,11 +122,17 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 			e.printStackTrace();
 		}
 		for (Row<String, String> row : allEvents) {
-			logger.info("EventName : {},EventId:{}",row.getKey(), row.getColumns().getStringValue("event_id", null));
 			events.put(row.getKey(), row.getColumns().getStringValue("event_id", null));
 		}
 		return events;
 	}
+
+	/**
+     * @param eventData
+     *            eventData is object
+     * @throws ConnectionException
+     *             if host is unavailable
+     */
 	public void saveEventName(EventData eventData) {
 	
 	    UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -118,15 +140,7 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 	    String displayName = null;
 	    int displayOrder = 0;
 	    String rowKey = eventData.getEventName();
-	    
-	    if(rowKey.equalsIgnoreCase("resource-search")){
-	    	displayName = "resourceSearch";
-	    	displayOrder = 1;
-	    }
-	    if(rowKey.equalsIgnoreCase("collection-play")){
-	    	displayName = "collectionPlay";
-	    	displayOrder = 2;
-	    }
+
 	    MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 	    eventTimelineMutation.withRow(dimEventCF, rowKey)
 	    .putColumn("event_id", eventColumnTimeUUID.toString(), null)
@@ -138,8 +152,27 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 	        eventTimelineMutation.execute();
 	    } catch (ConnectionException e) {
 	        logger.info("Error while inserting event data to cassandra", e);
+	        return ;
 	    }
 	
 	}
 
+	public void saveEventNameByName(String name) {
+		
+	    UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+	    
+	    String displayName = null;
+	    int displayOrder = 0;
+
+	    MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    eventTimelineMutation.withRow(dimEventCF, name)
+	    .putColumn("event_id", eventColumnTimeUUID.toString(), null);
+	    try {
+	        eventTimelineMutation.execute();
+	    } catch (ConnectionException e) {
+	        logger.info("Error while inserting event data to cassandra", e);
+	        return ;
+	    }
+	
+	}
 }

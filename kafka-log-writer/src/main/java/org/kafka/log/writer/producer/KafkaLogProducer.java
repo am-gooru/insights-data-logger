@@ -1,25 +1,28 @@
 /*******************************************************************************
- * KafkaLogProducer.java
- * kafka-log-writer
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
- * http://www.goorulearning.org/
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+ *  http://www.goorulearning.org/
+ *  
+ *  KafkaLogProducer.java
+ *  event-api-stable-1.1
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining
+ *  a copy of this software and associated documentation files (the
+ *   "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so, subject to
+ *  the following conditions:
+ * 
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ * 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 package org.kafka.log.writer.producer;
 
@@ -45,7 +48,7 @@ public class KafkaLogProducer
 	private static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
 	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
 	private Producer<String, String> producer;
-	private String topic = "topic name";
+	private String topic = "event-log-writer-dev";
 	protected Properties props = new Properties();
 	
 	public KafkaLogProducer(){
@@ -79,11 +82,22 @@ public class KafkaLogProducer
 		
 		String messageAsJson = new JSONObject(message).toString();
 		
+		System.out.print(messageAsJson);
 		send(messageAsJson);
 	}
 	
 	private void send(String message) {
+		System.out.print("Topic \n" + topic);
 		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		System.out.print("Topic \n " + message);
 		producer.send(data);
+		System.out.print("Done \n " + message);
+	}
+
+	public static void main(String args[])
+	{
+		String samplejson = "{\"userIp\":\"38.64.65.241\",\"organizationUid\":\"4261739e-ccae-11e1-adfb-5404a609bd14\",\"resourceInstanceId\":\"2b60dff5-fe36-4e2a-aadc-c07189421461\",\"userAgent\":\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31\",\"sessionActivityItemId\":\"null\",\"sessionActivityId\":null,\"endTime\":1367366400798,\"type\":\"start\",\"startTime\":1367366400779,\"sessionToken\":\"156e533d-fffa-4581-abe2-4f932e7919ee\",\"contentGooruId\":\"38ceafa3-de9f-4158-98ec-19b8724fd188\",\"eventId\":\"7147dc48-c799-7712-feff-a4049689e2c8\",\"parentGooruId\":\"03bfd74b-3171-48b1-8ff4-3a4b870a4424\",\"parentEventId\":\"e5c8c0db-b566-d588-3d07-53dcc0c66848\",\"userId\":11878,\"context\":\"/activity/log/7147dc48-c799-7712-feff-a4049689e2c8/start\",\"eventName\":\"collection-play\",\"imeiCode\":\"null\",\"apiKey\":\"5673eaa7-15e3-4d6b-b3ef-5f7729c82de3\"}";
+		KafkaLogProducer producer = new KafkaLogProducer("192.241.237.160", "2181", "event-log-writer-daniel", "async");
+		producer.sendEventLog(samplejson);
 	}
 }

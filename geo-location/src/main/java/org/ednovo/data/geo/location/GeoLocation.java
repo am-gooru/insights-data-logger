@@ -1,9 +1,10 @@
 /*******************************************************************************
- * GeoLocation.java
- * geo-location
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   GeoLocation.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -38,8 +41,14 @@ import com.maxmind.geoip2.DatabaseReader;
 
 public class GeoLocation  {
 
+	private static String fileNameCity = "/home/gooruapp/event-logger-stable-1.1/loader/GeoLite2-City.mmdb";
     private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
 
+    /**
+     * @return a string country database name from the
+     *         field set on the environment.
+     */
+    
     public String getFileNamemmdb(){
 		String currPath = "";
 		currPath = System.getenv("GEO_LOCATION_DB_FILE");
@@ -47,6 +56,15 @@ public class GeoLocation  {
 		return (currPath);
     }
     
+    /**
+     * @param ip
+     *            IP address to lookup.
+     * @return A string with the city name for the IP address
+     * @throws IOException
+     *             if there is an error opening or reading from the file.
+     * @throws GeoIp2Exception
+     *             if the IP address is not in country database
+     */
 	public String getGeoCityByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String City = null;
@@ -68,6 +86,15 @@ public class GeoLocation  {
 		return (City);
 	}
 
+    /**
+     * @param ip
+     *            IP address to lookup.
+     * @return a string with the region name for the IP address
+     * @throws IOException
+     *             if there is an error opening or reading from the file.
+     * @throws GeoIp2Exception
+     *             if the IP address is not in country database
+     */
 	public String getGeoRegionByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String Region = null;
@@ -87,6 +114,15 @@ public class GeoLocation  {
 		return (Region);
 	}
 	
+    /**
+     * @param ip
+     *            IP address to lookup.
+     * @return A string with the country name for the IP address
+     * @throws IOException
+     *             if there is an error opening or reading from the file.
+     * @throws GeoIp2Exception
+     *             if the IP address is not in country database
+     */
 	public String getGeoCountryByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String Country = null;

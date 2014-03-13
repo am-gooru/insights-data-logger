@@ -1,9 +1,10 @@
 /*******************************************************************************
- * EventDetailDAOCassandraImpl.java
- * core
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   EventDetailDAOCassandraImpl.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -29,6 +32,8 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventObject;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +46,6 @@ import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
-/**
- *
- * @author vijayakumark
- */
 public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements EventDetailDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(EventDetailDAOCassandraImpl.class);
@@ -69,6 +70,13 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
         
     }
 
+    /**
+     * @param eventData,appOid
+     *          eventData is the Object and appOid to save
+     * @throws ConnectionException
+     *             if the host is unavailable 
+     */
+    
     @Override
     public String saveEvent(EventData eventData,String appOid) {
     	String key = null;
@@ -166,25 +174,61 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
 		        .putColumnIfNotNull("collaboratorIds",eventData.getCollaboratorIds(), null)
 		        .putColumnIfNotNull("mobileData",eventData.isMobileData(), null)
 		        .putColumnIfNotNull("hintId",eventData.getHintId(), null)
-		        .putColumnIfNotNull("open_ended_text",eventData.getOpenEndedText(), null);
+		        .putColumnIfNotNull("open_ended_text",eventData.getOpenEndedText(), null)
+		        .putColumnIfNotNull("parent_event_id",eventData.getParentEventId(), null);
         
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info(
-                    "Error while inserting to cassandra - JSON - "
-                    + (eventData.getFields() + date
-                    + eventData.getStartTime()
-                    + eventData.getUserIp()
-                    + eventData.getEndTime()
-                    + eventData.getUserAgent()
-                    + eventData.getEventName() + eventData
-                    .getApiKey()), e);
+            logger.info("Error while inserting to cassandra - JSON - ", e);
             return null;
         }
         return key;
     }
     
+    public String  saveEventObject(EventObject eventObject){
+    	
+    	String key = null;
+    	if(eventObject.getEventId() == null){
+    		UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+    		key = eventKeyUUID.toString();
+    	}else{
+    		key	= eventObject.getEventId(); 
+    	}
+    
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	
+        m.withRow(eventDetailsCF, key)
+                .putColumnIfNotNull("start_time", eventObject.getStartTime(), null)
+                .putColumnIfNotNull("end_time", eventObject.getEndTime(),null)
+                .putColumnIfNotNull("fields", eventObject.getFields(),null)
+                .putColumnIfNotNull("time_spent_in_millis",eventObject.getTimeInMillSec(),null)
+                .putColumnIfNotNull("content_gooru_oid",eventObject.getContentGooruId(),null)
+                .putColumnIfNotNull("parent_gooru_oid",eventObject.getParentGooruId(),null)
+                .putColumnIfNotNull("event_name", eventObject.getEventName(),null)
+                .putColumnIfNotNull("session",eventObject.getSession().toString(),null)
+                .putColumnIfNotNull("metrics",eventObject.getMetrics().toString(),null)
+                .putColumnIfNotNull("pay_load_object",eventObject.getPayLoadObject().toString(),null)
+                .putColumnIfNotNull("user",eventObject.getUser().toString(),null)
+                .putColumnIfNotNull("context",eventObject.getContext().toString(),null)
+        		.putColumnIfNotNull("event_type",eventObject.getEventType().toString(),null)
+        		.putColumnIfNotNull("parent_event_id",eventObject.getParentEventId(), null);
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting Event Object to cassandra - JSON - ", e);
+            return null;
+        }
+		return key;
+                
+                
+    }
+    /**
+     * @param key,endTime,timeSpent
+     *		save time spent for the particular resource in given time. 
+     * @throws ConnectionException
+     *             if the host is unavailable
+     */
     public void updateParentId(String key,Long endTime,Long timeSpent ){
     
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -201,6 +245,13 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     	
     }
     
+    /**
+     * @param eventKey
+     *           eventKey to lookup.
+     * @return ColumnList<String> with the eventData Object
+     * @throws ConnectionException
+     *             if the host is unavailable
+     */
     public ColumnList<String> readEventDetail(String eventKey){
     	
     	ColumnList<String> eventDetail = null;
@@ -229,6 +280,15 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     	return eventDetail;
     }
 	
+
+    /**
+     * @param apiKey,rowsToRead
+     *           apiKey to lookup and rowsToRead for number of rows to return.
+     * @return Rows<String, String> with the eventData Object
+     * @throws ConnectionException
+     *             if the host is unavailable
+     */
+    
 	public Rows<String, String> readLastNrows(String apiKey, Integer rowsToRead) {
 		Rows<String, String> eventDetail = null;
     	try {
@@ -243,6 +303,14 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     	return eventDetail;
 	}
 	
+
+    /**
+     * @param key,city,state,country
+     *           save locations for the user key.
+     * @throws ConnectionException
+     *             if the host is unavailable
+     */
+
 	
 	public String saveGeoLocation(String key, String  city, String  state, String country){
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);

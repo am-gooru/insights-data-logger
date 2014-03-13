@@ -1,9 +1,10 @@
 /*******************************************************************************
- * AggregateDAOCassandraImpl.java
- * core
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   AggregateDAOCassandraImpl.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,6 +26,7 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader.dao;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -32,6 +36,7 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.RowCallback;
 import com.netflix.astyanax.connectionpool.OperationResult;
@@ -65,6 +70,12 @@ public class AggregateDAOCassandraImpl extends BaseDAOCassandraImpl implements A
 				StringSerializer.get());
 	}
 
+	 /**
+     * @param stagingEvents
+     *           raw data from staging table 
+     * @throws ConnectionException
+     *             if there is an error while inserting a record or unavailable host 
+     */
 	public void saveAggregation(HashMap<String, String> stagingEvents){
 		
 		 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -128,7 +139,11 @@ public class AggregateDAOCassandraImpl extends BaseDAOCassandraImpl implements A
         }
 
 	}
-
+	 /**
+     * @param timeId
+     *            time id to lookup
+     * @return ColumnList<String> with event data in particular hour
+     */
 	public ColumnList<String> readEventName(String timeId) throws ConnectionException{
 
 		ColumnList<String> hourlyEventData = getKeyspace().prepareQuery(aggEventResourcesStagingCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(timeId).execute().getResult();
@@ -137,6 +152,11 @@ public class AggregateDAOCassandraImpl extends BaseDAOCassandraImpl implements A
 		
 	}
 	
+	/**
+     * @throws OperationException
+     * @throws ConnectionException
+     *             if host is unavailable
+     */
 	public void  deleteAll(){
 			try {
 				getKeyspace().truncateColumnFamily(aggEventResourcesStagingCF);
@@ -147,6 +167,14 @@ public class AggregateDAOCassandraImpl extends BaseDAOCassandraImpl implements A
 			}
     	
 	}
+	
+
+	/**
+	 * @param timeStampMinuteStart,timeStampMinuteStop,dryRun
+	 * 		start and stop time stamp look-up and dryRun staging record for delete operation 
+     * @throws ConnectionException
+     *             if host is unavailable
+     */
 	public void deleteEventsGivenTimeline(String timeStampMinuteStart, String timeStampMinuteStop, final boolean dryRun){
         try {
             final long timeStampStart = Long.parseLong(timeStampMinuteStart);

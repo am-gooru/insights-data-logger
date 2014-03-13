@@ -1,9 +1,10 @@
 <!--
-  pom.xml
-  core
-  Created by Gooru on 2014
-  Copyright (c) 2014 Gooru. All rights reserved.
+  Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
   http://www.goorulearning.org/
+    
+    pom.xml
+    event-api-stable-1.2
+    
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
   "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
   distribute, sublicense, and/or sell copies of the Software, and to
   permit persons to whom the Software is furnished to do so, subject to
   the following conditions:
+   
   The above copyright notice and this permission notice shall be
   included in all copies or substantial portions of the Software.
+   
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -35,17 +38,23 @@
 			<groupId>org.ednovo.data.eventapi</groupId>
 			<artifactId>geo-location</artifactId>
 			<version>1.0</version>
+		</dependency> 
+		<dependency>
+			<groupId>org.kafka.event.microaggregator</groupId>
+			<artifactId>micro-aggregator</artifactId>
+			<version>1.0</version>
 		</dependency>
-		
   		<dependency>
 			<groupId>com.ecyrd.speed4j</groupId>
 			<artifactId>speed4j</artifactId>
 			<version>0.16</version>
 		</dependency>
+		
 		<dependency>
 		  	<groupId>org.kafka.log.writer</groupId>
 		  	<artifactId>kafka-log-writer</artifactId>
 		  	<version>1.0</version>
 	  	</dependency>
+	  	
   </dependencies>
 </project>

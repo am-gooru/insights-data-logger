@@ -1,23 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- eventLoggerContext.xml rest-app Created by Gooru on 2014 Copyright (c) 
-	2014 Gooru. All rights reserved. http://www.goorulearning.org/ Permission 
-	is hereby granted, free of charge, to any person obtaining a copy of this 
-	software and associated documentation files (the "Software"), to deal in 
-	the Software without restriction, including without limitation the rights 
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-	copies of the Software, and to permit persons to whom the Software is furnished 
-	to do so, subject to the following conditions: The above copyright notice 
-	and this permission notice shall be included in all copies or substantial 
-	portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY 
-	OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-	OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-	DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
-	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
-	DEALINGS IN THE SOFTWARE. -->
+<!--
+  Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+   http://www.goorulearning.org/
+   
+   eventLoggerContext.xml
+   event-api-stable-1.1
+   
+   Permission is hereby granted, free of charge, to any person obtaining
+   a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+   without limitation the rights to use, copy, modify, merge, publish,
+   distribute, sublicense, and/or sell copies of the Software, and to
+   permit persons to whom the Software is furnished to do so, subject to
+   the following conditions:
+  
+   The above copyright notice and this permission notice shall be
+   included in all copies or substantial portions of the Software.
+  
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+   OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
-	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:context="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
             http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd          
@@ -26,27 +38,53 @@
             http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
 
 	<bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper" />
-
+	
 	<tx:annotation-driven />
-
+	
 	<context:annotation-config />
-
-	<!-- Scans the classpath for annotated components that will be auto-registered 
-		as Spring beans. For example @Controller and @Service. Make sure to set the 
-		correct base-package -->
+	
+	<!-- Scans the classpath for annotated components that will be auto-registered as Spring beans.
+	 For example @Controller and @Service. Make sure to set the correct base-package-->
 	<context:component-scan base-package="org.logger.event.web" />
-
+	
+	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
+	
+	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="eventController" />
+           <property name="targetMethod" value="updateViews" />
+       </bean>
+       
+       <bean id="secondSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="firstTaskJobDetail" />
+           <property name="repeatInterval" value="5000" />
+           <property name="startDelay" value="1000" />
+       </bean>
+       
+        <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+           <property name="jobDetails">
+              <list>
+                 <ref bean="firstTaskJobDetail" />
+              </list>
+           </property>
+           <property name="triggers">
+              <list>
+                 <ref bean="secondSimpleTrigger" />
+              </list>
+           </property>
+       </bean>
+       
+    
 	<bean id="tomcatUsername" class="java.lang.String">
 		<constructor-arg>
 			<value>${tomcat.username}</value>
 		</constructor-arg>
 	</bean>
-
+	
 	<bean id="tomcatPassword" class="java.lang.String">
 		<constructor-arg>
 			<value>${tomcat.password}</value>
 		</constructor-arg>
 	</bean>
-
+	
 </beans>

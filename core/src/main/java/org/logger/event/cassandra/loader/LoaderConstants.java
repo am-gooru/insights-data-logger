@@ -1,9 +1,10 @@
 /*******************************************************************************
- * LoaderConstants.java
- * core
- * Created by Gooru on 2014
- * Copyright (c) 2014 Gooru. All rights reserved.
+ * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
  * http://www.goorulearning.org/
+ *   
+ *   LoaderConstants.java
+ *   event-api-stable-1.2
+ *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,8 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
+ *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
+ *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,9 +26,6 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-/*
- * @author daniel
- */
 public enum LoaderConstants {
 	
     CORRECT("correct"),
@@ -95,7 +95,34 @@ public enum LoaderConstants {
     ESAPIL("api-logged"),
     
     ESFL("file-logged"),
-	;
+    
+    KEY("key"),
+    
+    STATUS("status"),
+    
+    STARTTIME("start_time"),
+    
+    ENDTIME("end_time"),
+    
+    LASTPROCESSED("last_processed"),
+    
+    SCORE("score"),
+    
+    TS("time_spent"),
+    
+    AVGTS("avg_time_spent"),
+    
+    TOTALVIEWS("views"),
+    
+    AVGRA("avg_reaction"),
+    
+    CRPV1("collection.resource.play"),
+    
+    CPV1("collection.play"),
+    
+    CRAV1("reaction.create"),
+	
+    ;
 	
 	String name;
 
