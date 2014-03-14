@@ -2,3 +2,9 @@
 */target/**
 *.class
 target/*
+**/logs/**
+*/logs/**
+logs/*
+.classpath
+.project
+.settings/
