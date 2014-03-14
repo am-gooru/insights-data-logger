@@ -1,6 +1,6 @@
 /*******************************************************************************
  * JobStatusDAOCassandra.java
- * core
+ * insights-event-logger
  * Created by Gooru on 2014
  * Copyright (c) 2014 Gooru. All rights reserved.
  * http://www.goorulearning.org/

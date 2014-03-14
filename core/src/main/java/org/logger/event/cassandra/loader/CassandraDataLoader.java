@@ -1,10 +1,9 @@
 /*******************************************************************************
- * Copyright 2014 Ednovo d/b/a Gooru. All rights reserved.
+ * CassandraDataLoader.java
+ * insights-event-logger
+ * Created by Gooru on 2014
+ * Copyright (c) 2014 Gooru. All rights reserved.
  * http://www.goorulearning.org/
- *   
- *   CassandraDataLoader.java
- *   event-api-stable-1.2
- *   
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -12,10 +11,8 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *  
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -30,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -72,6 +68,7 @@ import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
