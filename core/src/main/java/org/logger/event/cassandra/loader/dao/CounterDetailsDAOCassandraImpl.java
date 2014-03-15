@@ -150,10 +150,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
         				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
         				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
-        				updateCounter(localKey,entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+"~"+key,entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+"~"+key+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+        				updateCounter(localKey,entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+            			updateCounter(localKey+"~"+key,entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+            			updateCounter(localKey+"~"+key+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
         			}
         			//Resource view count
         			updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
