@@ -318,7 +318,7 @@ public class CassandraDataLoader {
 			 */
 			if (eventData.getFields() != null) {
 				eventDetailDao.saveEvent(eventData, "GLP");
-				kafkaLogWriter.sendEventLog(eventData.getFields());
+				//kafkaLogWriter.sendEventLog(eventData.getFields());
 				logger.info("CORE: Writing to activity log - :"+ eventData.getFields().toString());
 			}
 	    
@@ -373,7 +373,7 @@ public class CassandraDataLoader {
 		}
       
 		if (eventObject.getFields() != null) {
-			kafkaLogWriter.sendEventLog(eventObject.getFields());
+//			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
    
 
@@ -390,15 +390,15 @@ public class CassandraDataLoader {
 		this.updateEvent(eventData); 
 
 		updateActivityStream(eventObject.getEventId());
-		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) ){
+		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) ){
 			counterDetailsDao.realTimeStudentWiseReport(eventMap);
 		}
 		
-		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+		/*if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 			microAggregation.microAggregation(eventMap);
 			//String JSONString = TypeConverter.convertMapToJsonString(eventMap);
 			//microAggregator.sendEventForAggregation(JSONString);
-		}
+		}*/
     }
     /**
      * 
