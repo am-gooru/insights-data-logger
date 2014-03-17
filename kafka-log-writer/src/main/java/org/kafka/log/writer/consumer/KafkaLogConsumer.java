@@ -58,17 +58,16 @@ public class KafkaLogConsumer extends Thread {
 	  {
 	    
 		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
-		KAFKA_IP = "192.241.237.160";
         KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
         KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
         KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
         KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-        //KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
+        KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
         KAFKA_FILE_GROUPID = "event-log-writer-group-daniel";
         
-        this.topic = "event-log-writer-daniel";
+        this.topic = KAFKA_FILE_TOPIC;
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	  }
 
