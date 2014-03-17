@@ -34,6 +34,8 @@ import kafka.consumer.KafkaMessageStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.Message;
 
+import org.kafka.event.microaggregator.core.MicroAggregationLoader;
+import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,37 +53,43 @@ public class MicroAggregatorConsumer extends Thread {
 	private static String KAFKA_IP;
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_GROUPID;
+	private static String KAFKA_AGGREGATOR_GROUPID;
+	private static String KAFKA_AGGREGATOR_TOPIC;
+	private MicroAggregationLoader microAggregationLoader;
 	static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
 	private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
 	
 	public MicroAggregatorConsumer(String topic)
 	  {
 	    
-		//KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
-		KAFKA_IP = "192.241.237.160";
+		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
         KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
         KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
         KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
         KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-        //KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
+        KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
+        KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
+        KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
+        KAFKA_AGGREGATOR_GROUPID = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_GROUPID");
         KAFKA_FILE_GROUPID = "event-log-writer-group-daniel";
         
-        this.topic = "event-log-writer-daniel";
+        this.topic = KAFKA_AGGREGATOR_TOPIC;
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+        microAggregationLoader = new MicroAggregationLoader(null);
 	  }
 
 	  private static ConsumerConfig createConsumerConfig()
 	  {
 	    Properties props = new Properties();
 	    props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-	    props.put("groupid", KAFKA_FILE_GROUPID);
+	    props.put("groupid", KAFKA_AGGREGATOR_GROUPID);
 	    props.put("zk.sessiontimeout.ms", "10000");
 	    props.put("zk.synctime.ms", "200");
 	    props.put("autocommit.interval.ms", "1000");
 	    
-	    LOG.info("Kafka File writer consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+ topic+"::"+KAFKA_FILE_GROUPID);
+	    LOG.info("Kafka File writer consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+ topic+"::"+KAFKA_AGGREGATOR_GROUPID);
 
 	    return new ConsumerConfig(props);
 
@@ -110,10 +118,9 @@ public class MicroAggregatorConsumer extends Thread {
 	    	if(messageMap != null)
 	    	{
 	    		String eventJson = (String)messageMap.get("raw");
-	    		
-	    		//Write the consumed JSON to Log file.
 	    		LOG.info("Micro aggregator Kafka Consumer Log writer  :\n" + eventJson + "\n");
-	    		//activityLogger.info(eventJson);
+	    		microAggregationLoader.microRealTimeAggregation(eventJson);
+	    		
 	    	}
 	    	else
 	    	{

@@ -149,6 +149,7 @@ public class EventController {
 			eventData.setUserIp(userIp);
 			eventData.setEventSource(EVENT_SOURCE);
 			eventData.setFields(eventJson.getAsJsonObject().toString());
+			eventObject.setFields(eventJson.getAsJsonObject().toString());
 			eventObject.setStartTime(timeStamp);
 			eventObject.setEndTime(timeStamp);
 			JsonObject eventObj = eventJson.getAsJsonObject();

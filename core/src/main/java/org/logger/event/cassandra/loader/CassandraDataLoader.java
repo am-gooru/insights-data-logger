@@ -394,11 +394,8 @@ public class CassandraDataLoader {
 			counterDetailsDao.realTimeStudentWiseReport(eventMap);
 		}
 		
-		/*if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-			microAggregation.microAggregation(eventMap);
-			//String JSONString = TypeConverter.convertMapToJsonString(eventMap);
-			//microAggregator.sendEventForAggregation(JSONString);
-		}*/
+			microAggregator.sendEventForAggregation(eventObject.getFields());
+		
     }
     /**
      * 
