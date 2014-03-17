@@ -134,8 +134,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        				}else{
 	        					localKey = eventMap.get("parentGooruId")+key; 
 	        				}
-	            			updateCounter(localKey,eventMap.get("contentGooruId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-	            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),eventMap.get("contentGooruId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
         				}
         			}
         			
@@ -143,12 +143,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			if(!entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && !eventMap.get("type").equalsIgnoreCase("stop")){
         				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
         				String localKey = classPageOid+"~"+eventMap.get("parentGooruId")+"~"+key;
-        				updateCounter(localKey,eventMap.get("contentGooruId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),eventMap.get("contentGooruId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
             			if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
             				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
             				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
-            				updateCounter(localKey , eventMap.get("contentGooruId")+"~"+entry.getKey().toString()+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+            				updateCounter(localKey ,key+"~"+entry.getKey().toString()+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
             				}
         				}
         			}
@@ -241,7 +241,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						  studentCurrentScore = Long.parseLong(eventMap.get("score")); 
 					  }
 				      m.withRow(rtStudentReportCF, keyValue)
-				                .putColumnIfNotNull(eventMap.get("contentGooruId") +"~score", studentCurrentScore, null)
+				                //.putColumnIfNotNull(eventMap.get("contentGooruId") +"~score", studentCurrentScore, null)
 				                .putColumnIfNotNull(eventMap.get("contentGooruId") + "~Type" ,eventMap.get("questionType"),null)
 				      			.putColumnIfNotNull(eventMap.get("contentGooruId") +"~choice",DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
 				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",openEndedText,null)
