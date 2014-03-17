@@ -34,8 +34,8 @@ import kafka.consumer.KafkaMessageStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.Message;
 
+import org.json.JSONException;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
-import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,6 @@ public class MicroAggregatorConsumer extends Thread {
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         KAFKA_AGGREGATOR_GROUPID = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_GROUPID");
-        KAFKA_FILE_GROUPID = "event-log-writer-group-daniel";
         
         this.topic = KAFKA_AGGREGATOR_TOPIC;
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
@@ -119,7 +118,11 @@ public class MicroAggregatorConsumer extends Thread {
 	    	{
 	    		String eventJson = (String)messageMap.get("raw");
 	    		LOG.info("Micro aggregator Kafka Consumer Log writer  :\n" + eventJson + "\n");
-	    		microAggregationLoader.microRealTimeAggregation(eventJson);
+	    		try {
+					microAggregationLoader.microRealTimeAggregation(eventJson);
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
 	    		
 	    	}
 	    	else
