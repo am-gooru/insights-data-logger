@@ -393,7 +393,7 @@ public class CassandraDataLoader {
 		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) ){
 			counterDetailsDao.realTimeStudentWiseReport(eventMap);
 		}
-		
+			logger.info("Fields to Aggregation : {}",eventObject.getFields());
 			microAggregator.sendEventForAggregation(eventObject.getFields());
 		
     }
