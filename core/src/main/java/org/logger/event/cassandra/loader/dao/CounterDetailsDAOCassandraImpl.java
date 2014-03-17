@@ -126,17 +126,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			String key = eventMap.get("contentGooruId");
         			//For Custom Student Real Time Report
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-        				if(eventMap.get("parentGooruId") == null || eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
-        					String parentGooruOid = collectionItemDAOImpl.getParentId(key);
-        					key = parentGooruOid+"~"+key;
-        				}else{
-        					key = eventMap.get("parentGooruId")+key; 
+        				if(!entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && !eventMap.get("type").equalsIgnoreCase("stop")){
+	        				if(eventMap.get("parentGooruId") == null || eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
+	        					String parentGooruOid = collectionItemDAOImpl.getParentId(key);
+	        					key = parentGooruOid+"~"+key;
+	        				}else{
+	        					key = eventMap.get("parentGooruId")+key; 
+	        				}
+	            			updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(eventMap.get("contentGooruId")+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
         				}
-            			updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(eventMap.get("contentGooruId")+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
         			}
         			
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+        			if(!entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && !eventMap.get("type").equalsIgnoreCase("stop")){
         				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
         				key = classPageOid+"~"+eventMap.get("parentGooruId")+"~"+key;
         				updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
@@ -145,7 +148,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
             				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
             				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
             				updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString()+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			}
+            				}
+        				}
         			}
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
         				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
@@ -156,9 +160,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
             			updateCounter(localKey+"~"+key+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
         			}
         			//Resource view count
-        			updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+        			updateCounter(eventMap.get("contentGooruId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
         			//Resource view count based on user
-        			updateCounter(eventMap.get("contentGooruId")+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+        			updateCounter(eventMap.get("contentGooruId")+ "~" + eventMap.get("gooruUId"),entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
         		}
         }
     }
