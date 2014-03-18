@@ -354,11 +354,12 @@ public class CassandraDataLoader {
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
 		 }
 		
-		 String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
+		 //Real time calculator instead of Kafka real time calculator
+		 /*String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		 
 		 if(aggregatorJson != null && !aggregatorJson.isEmpty()){
-			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-		 }
+		   counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+		 }*/
 
 		 try {
 			updateEventObjectCompletion(eventObject);
@@ -373,7 +374,7 @@ public class CassandraDataLoader {
 		}
       
 		if (eventObject.getFields() != null) {
-//			kafkaLogWriter.sendEventLog(eventObject.getFields());
+			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
    
 
@@ -1007,7 +1008,9 @@ public class CassandraDataLoader {
     			eventData.setOpenEndedText(openEndedText);
     			eventData.setOrganizationUid(eventMap.get("organizationUId"));
     			eventData.setType(eventMap.get("type"));
+    			eventData.setGooruUId(eventMap.get("gooruUId"));
     			eventData.setApiKey(eventMap.get("apiKey"));
+    			
 		return eventData;
     }
     private static String loadStream(InputStream s) throws Exception {
