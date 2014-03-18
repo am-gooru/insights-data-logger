@@ -132,7 +132,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        					String parentGooruOid = collectionItemDAOImpl.getParentId(key);
 	        					localKey = parentGooruOid+"~"+key;
 	        				}else{
-	        					localKey = eventMap.get("parentGooruId")+key; 
+	        					localKey = eventMap.get("parentGooruId")+"~"+key; 
 	        				}
 	            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
 	            			updateCounter(localKey+"~"+eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
