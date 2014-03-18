@@ -348,13 +348,13 @@ public class CassandraDataLoader {
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	
-    	if(eventObject.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+    	if(eventObject.getEventName().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("classPageGooruId") == null){
 	    	ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
 	    	if(!eventDetail.isEmpty() && eventDetail != null){
-	    		eventMap.put("classPageGooruId",eventDetail.getStringValue("parentGooruId", null));
+	    		eventMap.put("classPageGooruId",eventDetail.getStringValue("parent_gooru_oid", null));
 	    	}
     	}
-    	logger.info("classPageGooruId ;{}",eventMap.get("classPageGooruId"));
+    	logger.info("classPageGooruId :{}",eventMap.get("classPageGooruId"));
     	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
