@@ -341,13 +341,20 @@ public class CassandraDataLoader {
     
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
-    	eventObject.setParentGooruId(eventMap.get("parentGooruId") == null ? "NA" : eventMap.get("parentGooruId"));
-    	eventObject.setContentGooruId(eventMap.get("contentGooruId") == null ? "NA" : eventMap.get("contentGooruId"));
-    	eventObject.setTimeInMillSec(eventMap.get("totalTimeSpentInMs") == null ? 0L : Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	
+    	if(eventObject.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+	    	ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
+	    	if(!eventDetail.isEmpty() && eventDetail != null){
+	    		eventMap.put("classPageGooruId",eventDetail.getStringValue("parentGooruId", null));
+	    	}
+    	}
+    	logger.info("classPageGooruId ;{}",eventMap.get("classPageGooruId"));
     	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){

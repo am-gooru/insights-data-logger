@@ -87,39 +87,39 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			String key = eventMap.get("contentGooruId");
         			//For Custom Student Real Time Report
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+        			if(eventMap.get("parentGooruId") != null && !eventMap.get("parentGooruId").isEmpty() || !eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
         				if(!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
-	        				String localKey = null;
-        					if(eventMap.get("parentGooruId") == null || eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
-	        					String parentGooruOid = collectionItemDAOImpl.getParentId(key);
-	        					localKey = parentGooruOid+"~"+key;
-	        				}else{
-	        					localKey = eventMap.get("parentGooruId")+"~"+key; 
-	        				}
-	            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-	            			updateCounter(localKey+"~"+eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	        					String localKey = eventMap.get("parentGooruId")+"~"+key; 
+		            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+		            			updateCounter(localKey+"~"+eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+        					}
         				}
         			}
         			
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
-        			if(!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
-        				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
-        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
-        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            			if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
-            				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
-            				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
-            				updateCounter(localKey ,key+"~"+entry.getKey().toString()+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-            				}
+        				String classPageOid = eventMap.get("classPageGooruId");
+        				if(!classPageOid.isEmpty() && classPageOid != null){
+	        				if(!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
+	        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
+	        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
+	            				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
+	            				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	            				updateCounter(localKey ,key+"~"+entry.getKey().toString()+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+            					}
+        					}
         				}
         			}
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-        				String classPageOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
-        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
-        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
-            			updateCounter(localKey+"~"+ eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+        				String classPageOid = eventMap.get("classPageGooruId");
+        				if(!classPageOid.isEmpty() && classPageOid != null){
+	        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
+	        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+	            			updateCounter(localKey+"~"+ eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+        				}
         			}
         			//Resource view count
         			updateCounter(key,entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
