@@ -117,7 +117,6 @@ public class MicroAggregatorConsumer extends Thread {
 	    	if(messageMap != null)
 	    	{
 	    		String eventJson = (String)messageMap.get("raw");
-	    		LOG.info("Micro aggregator Kafka Consumer Log writer  :\n" + eventJson + "\n");
 	    		try {
 					microAggregationLoader.microRealTimeAggregation(eventJson);
 				} catch (JSONException e) {

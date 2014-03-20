@@ -66,7 +66,7 @@ public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl impleme
 		 String rowKey = null;
 		 String dateId = "0";
 		 String columnName = null;
-		 rowKey = activities.get("userUid").toString();
+		 rowKey = activities.get("userUid") != null ? null : activities.get("userUid").toString();
 		 
 		 if(activities.get("dateId") != null){
 			 dateId = activities.get("dateId").toString();

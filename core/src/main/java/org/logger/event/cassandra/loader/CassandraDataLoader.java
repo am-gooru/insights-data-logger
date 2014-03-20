@@ -49,6 +49,7 @@ import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
+import org.kafka.event.microaggregator.dao.MicroAggregationDAOImpl;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
@@ -62,7 +63,6 @@ import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimUserDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.MicroAggregationDAOImpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
@@ -85,7 +85,6 @@ import com.netflix.astyanax.query.ColumnFamilyQuery;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
-
 
 public class CassandraDataLoader {
 
@@ -183,7 +182,6 @@ public class CassandraDataLoader {
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(getConnectionProvider());    
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
         this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
-        this.microAggregation = new MicroAggregationDAOImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
@@ -348,26 +346,11 @@ public class CassandraDataLoader {
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	
-    	if(eventObject.getEventName().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("classPageGooruId") == null){
-	    	ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-	    	if(!eventDetail.isEmpty() && eventDetail != null){
-	    		eventMap.put("classPageGooruId",eventDetail.getStringValue("parent_gooru_oid", null));
-	    	}
-    	}
-    	logger.info("classPageGooruId :{}",eventMap.get("classPageGooruId"));
-    	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
 		 }
 		
-		 //Real time calculator instead of Kafka real time calculator
-		 /*String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
-		 
-		 if(aggregatorJson != null && !aggregatorJson.isEmpty()){
-		   counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-		 }*/
-
 		 try {
 			updateEventObjectCompletion(eventObject);
 		} catch (ConnectionException e) {
@@ -398,11 +381,8 @@ public class CassandraDataLoader {
 		this.updateEvent(eventData); 
 
 		updateActivityStream(eventObject.getEventId());
-		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) ){
-			counterDetailsDao.realTimeStudentWiseReport(eventMap);
-		}
-			logger.info("Fields to Aggregation : {}",eventObject.getFields());
-			microAggregator.sendEventForAggregation(eventObject.getFields());
+		
+		microAggregator.sendEventForAggregation(eventObject.getFields());
 		
     }
     /**

@@ -23,6 +23,9 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,9 +53,10 @@ public class CollectionItemDAOImpl extends BaseDAOCassandraImpl implements Colle
         
 	}
 	
-public String getParentId(String Key){
+public List<String> getParentId(String Key){
 
 	Rows<String, String> collectionItem = null;
+	List<String> classPages = new ArrayList<String>();
 	String parentId = null;
 	try {
 		collectionItem = getKeyspace().prepareQuery(collectionItemCF)
@@ -66,13 +70,13 @@ public String getParentId(String Key){
 		
 		logger.info("Error while retieveing data : {}" ,e);
 	}
-	if(collectionItem == null){
-		return "NA";
+	if(collectionItem != null){
+		for(Row<String, String> collectionItems : collectionItem){
+			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue() == null ? "NA" : collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+			classPages.add(parentId);
+		 }
 	}
-	for(Row<String, String> collectionItems : collectionItem){
-		parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue() == null ? "NA" : collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
-	 }
-		return parentId;
+	return classPages; 
 	} 
 
 }

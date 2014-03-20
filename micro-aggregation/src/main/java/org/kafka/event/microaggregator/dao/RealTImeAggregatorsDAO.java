@@ -1,5 +1,5 @@
 /*******************************************************************************
- * CollectionItemDAO.java
+ * RecentViewedResourcesDAO.java
  * insights-event-logger
  * Created by Gooru on 2014
  * Copyright (c) 2014 Gooru. All rights reserved.
@@ -23,9 +23,6 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.dao;
 
-import java.util.List;
+public interface RealTImeAggregatorsDAO {
 
-public interface CollectionItemDAO {
-
-	public List<String> getParentId(String Key);
 }

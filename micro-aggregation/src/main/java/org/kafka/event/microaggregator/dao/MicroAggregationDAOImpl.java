@@ -23,11 +23,7 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.dao;
 
-import java.util.Map;
-
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
-import org.kafka.event.microaggregator.core.DataUtils;
-import org.kafka.event.microaggregator.core.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -66,49 +62,6 @@ public class MicroAggregationDAOImpl extends BaseDAOCassandraImpl implements  Mi
 	}
 
 	@Async
-	public void microAggregation(Map<String,String> eventMap){
-		
-		long collectionViews = 0L;
-		long resourceViews = 0L;
-		long collectionReaction = 0L;
-		long resourceReaction = 0L;
-		long collectionAvgReaction = 0L;
-		long resourceAvgReaction = 0L;
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			
-			String keyOne = null;
-			String keyTwo = null;
-			
-			if(eventMap.get("parentGooruId") != null && !eventMap.get("parentGooruId").equalsIgnoreCase("NA")){	
-				String classPageId = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));	
-				 keyOne = classPageId+"~"+eventMap.get("parentGooruId");
-				 keyTwo = classPageId+"~"+eventMap.get("parentGooruId")+""+eventMap.get("contentGooruId");				
-			}
-					m.withRow(microAggregationCF, keyTwo)
-					.putColumnIfNotNull(eventMap.get("contentGooruId") + "~" + eventMap.get("gooruUId"),+DataUtils.formatReactionString(eventMap.get("reactionType")))
-					;
-					
-					m.withRow(microAggregationCF, keyOne)
-					.putColumnIfNotNull(eventMap.get("contentGooruId") + "~" + eventMap.get("gooruUId"),+DataUtils.formatReactionString(eventMap.get("reactionType")))
-					;
-										
-					
-					try {
-						m.execute();
-					} catch (ConnectionException e) {
-						logger.info("Error while inserting to cassandra  ");
-					}
-					
-					collectionViews = this.getTotalViews(keyOne  ,eventMap.get("parentGooruId") + "~" +LoaderConstants.TOTALVIEWS.getName());
-					collectionReaction = this.iterateColumnsAndSum(keyOne);
-					collectionAvgReaction = Math.round(collectionReaction/collectionViews);
-					updateAvgMetrics(keyOne,collectionReaction,eventMap.get("parentGooruId")+"~"+LoaderConstants.AVGRA.getName());
-					
-					resourceViews = getTotalViews(keyOne  ,eventMap.get("contentGooruId") + "~" +LoaderConstants.TOTALVIEWS.getName());
-					resourceReaction = this.iterateColumnsAndSum(keyTwo);
-					resourceAvgReaction = Math.round(resourceReaction/resourceViews);
-					updateAvgMetrics(keyOne,collectionReaction,eventMap.get("contentGooruId")+"~"+LoaderConstants.AVGRA.getName());
-	}
 
 	private Long getTotalViews(String key,String ... columnName){
 

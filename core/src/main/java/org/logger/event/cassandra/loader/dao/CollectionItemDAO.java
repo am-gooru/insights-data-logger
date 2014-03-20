@@ -23,7 +23,9 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.List;
+
 public interface CollectionItemDAO {
 
-	public String getParentId(String Key);
+	public List<String> getParentId(String Key);
 }

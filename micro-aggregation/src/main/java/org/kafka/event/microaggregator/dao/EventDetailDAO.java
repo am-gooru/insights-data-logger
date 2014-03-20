@@ -1,5 +1,5 @@
 /*******************************************************************************
- * CollectionItemDAO.java
+ * EventDetailDAO.java
  * insights-event-logger
  * Created by Gooru on 2014
  * Copyright (c) 2014 Gooru. All rights reserved.
@@ -23,9 +23,14 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.dao;
 
-import java.util.List;
+import com.netflix.astyanax.model.ColumnList;
 
-public interface CollectionItemDAO {
+/**
+ *
+ * @author vijayakumark
+ */
+interface EventDetailDAO {
 
-	public List<String> getParentId(String Key);
+	public ColumnList<String> readEventDetail(String eventKey);
+	
 }

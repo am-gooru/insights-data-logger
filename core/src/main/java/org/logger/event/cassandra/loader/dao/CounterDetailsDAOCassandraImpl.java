@@ -26,6 +26,7 @@ package org.logger.event.cassandra.loader.dao;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -137,7 +138,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
         				String classPageOid = eventMap.get("classPageGooruId");
-        				if(!classPageOid.isEmpty() && classPageOid != null){
+        				if(classPageOid != null && !classPageOid.isEmpty()){
 	        				if(!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
 	        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
 	        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
@@ -152,7 +153,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         			}
         			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
         				String classPageOid = eventMap.get("classPageGooruId");
-        				if(!classPageOid.isEmpty() && classPageOid != null){
+        				if(classPageOid != null && !classPageOid.isEmpty()){
 	        				String localKey = classPageOid+"~"+eventMap.get("parentGooruId");
 	        				updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
 	            			updateCounter(localKey+ "~" + eventMap.get("gooruUId"),key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
@@ -288,12 +289,15 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		HashMap<String, String> keys = new HashMap<String, String>();
 		String keyOne = null;
 		String keyTwo = null ;
-				String parentGooruOid = eventMap.get("parentGooruId");
-				parentGooruOid = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
-				keyOne = parentGooruOid+"~"+eventMap.get("parentGooruId");
-				keyTwo = parentGooruOid+"~"+eventMap.get("parentGooruId") + "~" + eventMap.get("gooruUId");			
-				keys.put("keyOne", keyOne);
-				keys.put("keyTwo", keyTwo);
+		int i=0 ;
+				List<String> classPageGooruOids = collectionItemDAOImpl.getParentId(eventMap.get("parentGooruId"));
+				for(String classPageGooruOid : classPageGooruOids){
+					i++;
+					keyOne = classPageGooruOid+"~"+eventMap.get("parentGooruId");
+					keyTwo = classPageGooruOid+"~"+eventMap.get("parentGooruId") + "~" + eventMap.get("gooruUId");			
+					keys.put("resourceKey"+i, keyOne);
+					keys.put("resourceUserKey"+i, keyTwo);
+				}
 				return keys;
 			
 	}
