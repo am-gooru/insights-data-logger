@@ -65,7 +65,6 @@ public class KafkaLogConsumer extends Thread {
         KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-        KAFKA_FILE_GROUPID = "event-log-writer-group-daniel";
         
         this.topic = KAFKA_FILE_TOPIC;
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());

@@ -119,11 +119,7 @@ public class CassandraDataLoader {
     private KafkaLogProducer kafkaLogWriter;
   
     private CounterDetailsDAOCassandraImpl counterDetailsDao;
-    
-    private CounterDetailsDAO counterDetails;
-    
-    private MicroAggregationDAOImpl microAggregation;
-    
+        
     private ActivityStreamDaoCassandraImpl activityStreamDao;
 
     private RealTimeOperationConfigDAOImpl realTimeOperation;
@@ -329,7 +325,7 @@ public class CassandraDataLoader {
 		        String duplicatekey = eventRowKey+"~"+eventRowKey;
 		        timelineDao.updateTimeline(eventData, eventRowKey);
 	        }	        
-	        updateActivityStream(eventData.getEventId());
+	       // updateActivityStream(eventData.getEventId());
         } catch (ConnectionException e) {
         	logger.info("Exception while processing update for rowkey {} ", e);
        }
