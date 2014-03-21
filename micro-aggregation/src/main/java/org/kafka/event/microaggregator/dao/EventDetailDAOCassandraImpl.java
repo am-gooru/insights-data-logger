@@ -115,7 +115,10 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     	
     	ColumnList<String> eventDetail = null;
     	try {
-			 eventDetail = getKeyspace().prepareQuery(eventDetailsCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(eventKey).execute().getResult();
+			 eventDetail = getKeyspace().prepareQuery(eventDetailsCF)
+			 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			 .getKey(eventKey)
+			 .execute().getResult();
 		} catch (ConnectionException e) {
 			
 			logger.info("Error while retieveing data : {}" ,e);

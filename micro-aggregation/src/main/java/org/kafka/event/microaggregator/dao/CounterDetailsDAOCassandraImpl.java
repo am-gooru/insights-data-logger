@@ -130,11 +130,25 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
 	        			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
 					}
+	        		
 	        		if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
 	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
+	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get("attemptStatus")) ;
+	    				String answerStatus = null;
+	    				if(attempStatus.length == 0){
+	    					answerStatus = LoaderConstants.SKIPPED.getName();
+	        			}else {
+	    	    			if(attempStatus[0] == 1){
+	    	    				answerStatus = LoaderConstants.CORRECT.getName();
+	    	    			}else if(attempStatus[0] == 0){
+	    	    				answerStatus = LoaderConstants.INCORRECT.getName();
+	    	    			}
+	        			}	
 	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
-	    				updateCounter(localKey ,key+"~"+option+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	    				updateCounter(localKey ,key+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	    				updateCounter(localKey ,key+"~"+answerStatus,1L);
 					}
+	        		
 	        		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 		        		updateForPostAggregate(localKey,key+"~"+eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
 		        		updateForPostAggregate(localKey+"~"+key,eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
@@ -344,11 +358,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	if((!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get("classPageGooruId") == null)){
 	    		if(eventMap.get("classPageGooruId") == null){
 	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-	            if(R != null && !R.isEmpty()){
-	                ColumnList<String> C = eventDetailDao.readEventDetail(R.getStringValue("parent_event_id", null));
-	                if(C != null && !C.isEmpty()){
-	                    eventMap.put("classPageGooruId",C.getStringValue("parent_gooru_oid", null));
-	                }
+	            if(R != null && R.size() > 0){
+	            	String parentEventId = R.getStringValue("parent_event_id", null);
+	            	if(parentEventId != null ){
+	            		ColumnList<String> C = eventDetailDao.readEventDetail(parentEventId);
+	            		if(C != null && C.size() > 0){
+	            			String parentGooruOid = C.getStringValue("parent_gooru_oid", null);
+	            			if(parentGooruOid != null){
+	            				eventMap.put("classPageGooruId",parentGooruOid);
+	            			}
+	            		}
+	            	}
 	            }
 	        }else{
 	    		classPages.add(eventMap.get("classPageGooruId"));
