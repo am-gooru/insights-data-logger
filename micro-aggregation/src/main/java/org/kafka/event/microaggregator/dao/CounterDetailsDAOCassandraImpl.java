@@ -166,7 +166,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
      */
     public void updateCounter(String key,String columnName, long count ) {
 
-    	MutationBatch m = getKeyspace().prepareMutationBatch();
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
         m.withRow(realTimeCounter, key)
         .incrementCounterColumn(columnName, count);
         try {
@@ -178,7 +178,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     public void updateForPostAggregate(String key,String columnName, long count ) {
 
-    	MutationBatch m = getKeyspace().prepareMutationBatch();
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
         m.withRow(realTimeAggregator, key)
         .putColumnIfNotNull(columnName, count);
         try {
