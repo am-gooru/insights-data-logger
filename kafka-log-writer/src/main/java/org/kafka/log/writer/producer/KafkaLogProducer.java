@@ -78,17 +78,12 @@ public class KafkaLogProducer
 		message.put("raw", new String(eventLog));
 		
 		String messageAsJson = new JSONObject(message).toString();
-		
-		System.out.print(messageAsJson);
 		send(messageAsJson);
 	}
 	
 	private void send(String message) {
-		System.out.print("Topic \n" + topic);
 		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
-		System.out.print("Topic \n " + message);
 		producer.send(data);
-		System.out.print("Done \n " + message);
 	}
 
 	public static void main(String args[])

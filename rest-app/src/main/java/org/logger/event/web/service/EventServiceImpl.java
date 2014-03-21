@@ -199,8 +199,6 @@ public class EventServiceImpl implements EventService {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
-        	logger.info("User : {}",eventObject.getUser());
-        	
         		eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
