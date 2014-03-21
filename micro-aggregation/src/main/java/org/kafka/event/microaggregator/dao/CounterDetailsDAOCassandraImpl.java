@@ -83,6 +83,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
+        this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
+        this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
     }
     
     @Async
@@ -261,7 +263,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	private List<String> getClassPagesFromItems(List<String> parentIds){
 		List<String> classPageGooruOids = new ArrayList<String>();
 		for(String classPageGooruOid : parentIds){
-			if(dimResource.resourceType(classPageGooruOid).equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
+			String type = dimResource.resourceType(classPageGooruOid);
+			if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
 				classPageGooruOids.add(classPageGooruOid);
 			}
 		}
@@ -326,7 +329,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	if(!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("parentGooruId") != null){
     		if(eventMap.get("classPageGooruId") == null){
 	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-		    	if(!eventDetail.isEmpty() && eventDetail != null){
+		    	if(eventDetail != null && !eventDetail.isEmpty()){
 		    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null){
 		    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
 		    			classPages = this.getClassPagesFromItems(classPages);
@@ -341,9 +344,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	if((!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get("classPageGooruId") == null)){
 	    		if(eventMap.get("classPageGooruId") == null){
 	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-	            if(!R.isEmpty() && R != null){
+	            if(R != null && !R.isEmpty()){
 	                ColumnList<String> C = eventDetailDao.readEventDetail(R.getStringValue("parent_event_id", null));
-	                if(!R.isEmpty() && R != null){
+	                if(C != null && !C.isEmpty()){
 	                    eventMap.put("classPageGooruId",C.getStringValue("parent_gooru_oid", null));
 	                }
 	            }

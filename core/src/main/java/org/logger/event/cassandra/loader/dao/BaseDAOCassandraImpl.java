@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 
 class BaseDAOCassandraImpl {
-    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
+    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
     private CassandraConnectionProvider connectionProvider;
     private Keyspace keyspace;
