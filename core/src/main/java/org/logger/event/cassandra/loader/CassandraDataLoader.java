@@ -377,8 +377,13 @@ public class CassandraDataLoader {
 		this.updateEvent(eventData); 
 
 		//updateActivityStream(eventObject.getEventId());
+		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
-		microAggregator.sendEventForAggregation(eventObject.getFields());
+		//To be revoked
+		if(aggregatorJson != null && !aggregatorJson.isEmpty()){
+			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+		}
+		//microAggregator.sendEventForAggregation(eventObject.getFields());
 		
     }
     /**

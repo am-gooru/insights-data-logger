@@ -37,7 +37,7 @@ import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.model.ConsistencyLevel;
 
 class BaseDAOCassandraImpl {
-    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_LOCAL_QUORUM;
+    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
     private CassandraConnectionProvider connectionProvider;
     private Keyspace keyspace;
