@@ -380,7 +380,7 @@ public class CassandraDataLoader {
 		EventData eventData= getAndSetEventData(eventMap);
 		this.updateEvent(eventData); 
 
-		updateActivityStream(eventObject.getEventId());
+		//updateActivityStream(eventObject.getEventId());
 		
 		microAggregator.sendEventForAggregation(eventObject.getFields());
 		
