@@ -113,9 +113,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 					keysList.add("AS~"+classPage+"~"+key);
 					keysList.add("AS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
 					keysList.add("RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
-					this.clearRow(new ColumnFamily<String, String>(CF_MICRO_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
-					this.clearRow(new ColumnFamily<String, String>(CF_RT_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
-					if(this.isRowAvailable("FS~"+classPage+"~"+key, eventMap.get("gooruUId"))){
+					this.clearAggregatoRow("RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					this.clearCounterRow("RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					logger.info( "is row avaialbe or not : {}" ,this.isRowAvailable("FS~"+classPage+"~"+key, eventMap.get("gooruUId")));
+					if(!this.isRowAvailable("FS~"+classPage+"~"+key, eventMap.get("gooruUId"))){
 						keysList.add("FS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
 						this.addColumnForAggregator("FS~"+classPage+"~"+key, eventMap.get("gooruUId"), FIRSTSESSION);
 					}
@@ -125,9 +126,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				keysList.add("AS~"+key);
 				keysList.add("AS~"+key+"~"+eventMap.get("gooruUId"));
 				keysList.add("RS~"+key+"~"+eventMap.get("gooruUId"));
-				this.clearRow(new ColumnFamily<String, String>(CF_MICRO_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+key+"~"+eventMap.get("gooruUId"));
-				this.clearRow(new ColumnFamily<String, String>(CF_RT_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+key+"~"+eventMap.get("gooruUId"));
-				if(this.isRowAvailable("S1~"+key, eventMap.get("gooruUId"))){
+				this.clearAggregatoRow("RS~"+key+"~"+eventMap.get("gooruUId"));
+				this.clearCounterRow( "RS~"+key+"~"+eventMap.get("gooruUId"));
+				if(!this.isRowAvailable("FS~~"+key, eventMap.get("gooruUId"))){
 					keysList.add("FS~"+key+"~"+eventMap.get("gooruUId"));
 					this.addColumnForAggregator("FS~"+key, eventMap.get("gooruUId"), FIRSTSESSION);
 				}
@@ -487,10 +488,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	}
     	}
 
-	private void clearRow(ColumnFamily<String, String> cfName,String key){
+	private void clearAggregatoRow(String key){
 		
 		MutationBatch m = getKeyspace().prepareMutationBatch();
-		m.withRow(cfName, key).delete();
+		m.withRow(realTimeAggregator, key).delete();
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while clearing counters : {}",e);
+		}
+	}
+	
+	private void clearCounterRow(String key){
+		MutationBatch m = getKeyspace().prepareMutationBatch();
+		m.withRow(realTimeCounter, key).delete();
 		try {
 			m.execute();
 		} catch (ConnectionException e) {
