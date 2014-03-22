@@ -98,26 +98,31 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		List<String> keysList = new ArrayList<String>();
 		
 		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")){
-			if(eventMap.get("parentGooruId") != null && !eventMap.get("parentGooruId").isEmpty() || !eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
-				keysList.add(eventMap.get("parentGooruId")+"~"+key);
-				keysList.add(eventMap.get("parentGooruId")+"~"+key+"~"+eventMap.get("gooruUId"));
+			if(classPages != null && classPages.size() > 0){				
+				for(String classPage : classPages){
+					keysList.add(classPage+"~"+key);
+					keysList.add(classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+				}
+			}else{
+				keysList.add(key);
+				keysList.add(key+"~"+eventMap.get("gooruUId"));
 			}
 		}
 
 		if((eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-			String classPageOid = eventMap.get("classPageGooruId");
-			if(classPageOid != null && !classPageOid.isEmpty()){
-            	String keys = classPageOid+"~"+eventMap.get("parentGooruId");
-            	keysList.add(keys+"~"+key);
- 				keysList.add(keys+"~"+key+"~"+eventMap.get("gooruUId"));
+
+			if(classPages != null && classPages.size() > 0){				
+				for(String classPage : classPages){
+					keysList.add(classPage+"~"+eventMap.get("parentGooruId"));
+					keysList.add(classPage+"~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+				}
+			}else{
+				keysList.add(eventMap.get("parentGooruId"));
+				keysList.add(eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
 			}
+			
 		}
-		
-		if(keysList == null || keysList.size() < 0 ){
-			keysList.add(key);
-			keysList.add(key+"~"+eventMap.get("gooruUId"));
-		}
-		
+		logger.info("Key List :{}",keysList.toArray());
 		JSONObject j = new JSONObject(aggregatorJson);
 
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
@@ -128,7 +133,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
 	        	if(e.get("aggregatorType").toString().equalsIgnoreCase("counter")){
-	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
+	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) && !eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 	        			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
 					}
 	        		
@@ -329,7 +334,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while retieveing data : {}" ,e);
 		}
 		
-		logger.info("RT Record is empty : {}",stagedRecords.isEmpty());
 		return stagedRecords.isEmpty();
 		
 	}
@@ -339,36 +343,46 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		classPages = collectionItem.getParentId(eventMap.get("contentGooruId"));
     		classPages = this.getClassPagesFromItems(classPages);
     	}else if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-    		classPages.add(eventMap.get("contentGooruId"));
+    		classPages.add(eventMap.get("parentGooruId"));
     	}
-    	if(!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("parentGooruId") != null){
+    	if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("parentGooruId") != null){
     		if(eventMap.get("classPageGooruId") == null){
 	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-		    	if(eventDetail != null && !eventDetail.isEmpty()){
-		    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null){
-		    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
-		    			classPages = this.getClassPagesFromItems(classPages);
-		    		}else{
-		    			classPages.add(eventDetail.getStringValue("parent_gooru_oid", null));
+		    	if(eventDetail != null && eventDetail.size() > 0){
+		    		if(eventDetail.getStringValue("event_name", null) != null && (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+		    			classPages.add(eventDetail.getStringValue("content_gooru_oid", null));
+		    		}		    		
+		    		if(eventDetail.getStringValue("event_name", null) != null &&  (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null || eventDetail.getStringValue("parent_gooru_oid", null).isEmpty()){
+			    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
+			    			classPages = this.getClassPagesFromItems(classPages);
+			    		}else{
+			    			classPages.add(eventDetail.getStringValue("parent_gooru_oid", null));
+			    		}
 		    		}
 		    	}
 	    	}else{
 	    		classPages.add(eventMap.get("classPageGooruId"));
 	    	}
     	}
-	    	if((!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get("classPageGooruId") == null)){
+	    	if((eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get("classPageGooruId") == null)){
 	    		if(eventMap.get("classPageGooruId") == null){
 	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
 	            if(R != null && R.size() > 0){
 	            	String parentEventId = R.getStringValue("parent_event_id", null);
 	            	if(parentEventId != null ){
 	            		ColumnList<String> C = eventDetailDao.readEventDetail(parentEventId);
-	            		if(C != null && C.size() > 0){
-	            			String parentGooruOid = C.getStringValue("parent_gooru_oid", null);
-	            			if(parentGooruOid != null){
-	            				eventMap.put("classPageGooruId",parentGooruOid);
-	            			}
-	            		}
+	            		if(C.getStringValue("event_name", null) != null && (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+			    			classPages.add(C.getStringValue("content_gooru_oid", null));
+			    		}
+			    		if(C.getStringValue("event_name", null) != null &&  (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+				    		if(C.getStringValue("parent_gooru_oid", null) == null || C.getStringValue("parent_gooru_oid", null).isEmpty()){
+				    			classPages = collectionItem.getParentId(C.getStringValue("content_gooru_oid", null));
+				    			classPages = this.getClassPagesFromItems(classPages);
+				    		}else{
+				    			classPages.add(C.getStringValue("parent_gooru_oid", null));
+				    		}
+			    		}
 	            	}
 	            }
 	        }else{

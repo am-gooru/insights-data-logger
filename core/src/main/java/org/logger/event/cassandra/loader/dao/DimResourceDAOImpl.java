@@ -43,7 +43,7 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
 		}
 		if(resources != null){
 			for(Row<String, String> resource : resources){
-				type =  resource.getColumns().getColumnByName("collection_gooru_oid").getStringValue() ;
+				type =  resource.getColumns().getColumnByName("type_name") != null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
 			 }
 		}
 		

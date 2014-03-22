@@ -338,17 +338,22 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		classPages = collectionItem.getParentId(eventMap.get("contentGooruId"));
     		classPages = this.getClassPagesFromItems(classPages);
     	}else if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-    		classPages.add(eventMap.get("contentGooruId"));
+    		classPages.add(eventMap.get("parentGooruId"));
     	}
     	if(!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("parentGooruId") != null){
     		if(eventMap.get("classPageGooruId") == null){
 	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
-		    	if(eventDetail != null && !eventDetail.isEmpty()){
-		    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null){
-		    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
-		    			classPages = this.getClassPagesFromItems(classPages);
-		    		}else{
-		    			classPages.add(eventDetail.getStringValue("parent_gooru_oid", null));
+		    	if(eventDetail != null && eventDetail.size() > 0){
+		    		if(eventDetail.getStringValue("event_name", null) != null &&  (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+		    			classPages.add(eventDetail.getStringValue("content_gooru_oid", null));
+		    		}
+		    		if(eventDetail.getStringValue("event_name", null) != null && (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null || eventDetail.getStringValue("parent_gooru_oid", null).isEmpty()){
+			    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
+			    			classPages = this.getClassPagesFromItems(classPages);
+			    		}else{
+			    			classPages.add(eventDetail.getStringValue("parent_gooru_oid", null));
+			    		}
 		    		}
 		    	}
 	    	}else{

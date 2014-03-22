@@ -119,6 +119,8 @@ public enum LoaderConstants {
     
     CRAV1("reaction.create"),
 	
+    CLPV1("classpage.view"),
+    
     CLASSPAGE("classpage"),
     
     ;

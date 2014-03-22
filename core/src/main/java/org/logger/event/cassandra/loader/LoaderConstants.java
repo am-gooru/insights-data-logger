@@ -118,8 +118,10 @@ public enum LoaderConstants {
     CPV1("collection.play"),
     
     CRAV1("reaction.create"),
-	
-    CLASSPAGE("classpage"),
+    
+	CLPV1("classpage.view"),
+    
+	CLASSPAGE("classpage"),
     
     ;
 	
