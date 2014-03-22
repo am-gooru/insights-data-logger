@@ -107,7 +107,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	String key = eventMap.get("contentGooruId");
 		List<String> keysList = new ArrayList<String>();
 		
-		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")){
+		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
 					keysList.add(classPage+"~"+key);
@@ -119,7 +119,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			}
 		}
 
-		if((eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
@@ -418,7 +418,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		} catch (ConnectionException e) {
 			e.printStackTrace();
 		}
-		
+		count = columns.size();
 		if(columns != null && columns.size() > 0){
 			for(int i = 0 ; i < columns.size() ; i++) {
 				values += columns.getColumnByIndex(i).getLongValue();
@@ -430,6 +430,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 	
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
+		logger.info("localKey : {} - divisor : {}",localKey,divisor);
+		logger.info("dividend : {} - columnToUpdate : {}",dividend,columnToUpdate);
 		long d = this.readViewCount(localKey, divisor);
 	    	if(d != 0L){
 	    		long average = (this.readViewCount(localKey, dividend)/d);
