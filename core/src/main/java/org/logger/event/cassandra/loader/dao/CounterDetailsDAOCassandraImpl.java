@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -74,6 +75,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     private EventDetailDAOCassandraImpl eventDetailDao; 
     
     private DimResourceDAOImpl dimResource;
+
+    private String FIRSTSESSION = "First User Session";
     
     public CounterDetailsDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
@@ -92,7 +95,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         		CF_MICRO_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
-        
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -108,26 +110,50 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
-					keysList.add(classPage+"~"+key);
-					keysList.add(classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					keysList.add("AS~"+classPage+"~"+key);
+					keysList.add("AS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					keysList.add("RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					this.clearRow(new ColumnFamily<String, String>(CF_MICRO_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					this.clearRow(new ColumnFamily<String, String>(CF_RT_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+					if(this.isRowAvailable("FS~"+classPage+"~"+key, eventMap.get("gooruUId"))){
+						keysList.add("FS~"+classPage+"~"+key+"~"+eventMap.get("gooruUId"));
+						this.addColumnForAggregator("FS~"+classPage+"~"+key, eventMap.get("gooruUId"), FIRSTSESSION);
+					}
+					
 				}
-			}else{
-				keysList.add(key);
-				keysList.add(key+"~"+eventMap.get("gooruUId"));
 			}
+				keysList.add("AS~"+key);
+				keysList.add("AS~"+key+"~"+eventMap.get("gooruUId"));
+				keysList.add("RS~"+key+"~"+eventMap.get("gooruUId"));
+				this.clearRow(new ColumnFamily<String, String>(CF_MICRO_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+key+"~"+eventMap.get("gooruUId"));
+				this.clearRow(new ColumnFamily<String, String>(CF_RT_AGGREGATOR, StringSerializer.get(),StringSerializer.get()), "RS~"+key+"~"+eventMap.get("gooruUId"));
+				if(this.isRowAvailable("S1~"+key, eventMap.get("gooruUId"))){
+					keysList.add("FS~"+key+"~"+eventMap.get("gooruUId"));
+					this.addColumnForAggregator("FS~"+key, eventMap.get("gooruUId"), FIRSTSESSION);
+				}
 		}
 
 		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
-					keysList.add(classPage+"~"+eventMap.get("parentGooruId"));
-					keysList.add(classPage+"~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+					keysList.add("AS~"+classPage+"~"+eventMap.get("parentGooruId"));
+					keysList.add("AS~"+classPage+"~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+					keysList.add("RS~"+classPage+"~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+					if(this.isRowAvailable("FS~"+classPage+"~"+eventMap.get("parentGooruId"), eventMap.get("gooruUId"))){
+						keysList.add("FS~"+classPage+"~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+						this.addColumnForAggregator("FS~"+classPage+"~"+eventMap.get("parentGooruId"), eventMap.get("gooruUId"), "FS");
+					}
 				}
-			}else{
-				keysList.add(eventMap.get("parentGooruId"));
-				keysList.add(eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
 			}
+				keysList.add("AS~"+eventMap.get("parentGooruId"));
+				keysList.add("AS~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+				keysList.add("RS~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+				if(this.isRowAvailable("FS~"+eventMap.get("parentGooruId"), eventMap.get("gooruUId"))){
+					keysList.add("FS~"+eventMap.get("parentGooruId")+"~"+eventMap.get("gooruUId"));
+					this.addColumnForAggregator("FS~"+eventMap.get("parentGooruId"), eventMap.get("gooruUId"), "FS");
+				}
+			
 			
 		}
 
@@ -223,6 +249,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         }
     }
     
+    public void addColumnForAggregator(String key,String columnName, String  columnValue ) {
+
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        m.withRow(microAggregator, key)
+        .putColumnIfNotNull(columnName, columnValue);
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting to cassandra {} ", e);
+        }
+    }
 
     
     /**
@@ -252,11 +289,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get("resourceType");		  
-					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(resourceType + "_gooru_oid",eventMap.get("contentGooruId"),null)
-					;					
 			if(resourceType != null && resourceType.equalsIgnoreCase("question")){		 
-					if(eventMap.get("type").equalsIgnoreCase("stop") && !isRowAvailable(keyValue, eventMap.get("contentGooruId")+"~options")){
+					if(eventMap.get("type").equalsIgnoreCase("stop")){
 						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get("attemptStatus")) ;
 						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
 						String openEndedText = eventMap.get("text");						
@@ -271,8 +305,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				                .putColumnIfNotNull(eventMap.get("contentGooruId") + "~Type" ,eventMap.get("questionType"),null)
 				      			.putColumnIfNotNull(eventMap.get("contentGooruId") +"~options",DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
 				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",openEndedText,null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",firstChoosenAns,null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") +"~"+DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]) +"~status",attempStatus[0],null);
+				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",firstChoosenAns,null);
 					}      				     
 				}
 			 try{
@@ -349,7 +382,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while retieveing data : {}" ,e);
 		}
 		
-		return stagedRecords.isEmpty();
+		return !stagedRecords.isEmpty();
 		
 	}
 	private List<String> getClassPages(Map<String,String> eventMap){
@@ -432,20 +465,19 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 	
 	private long iterateAndFindSum(String key){
-		ColumnList<String> columns = null;
-		long count = 0L; 
+		Integer columns = null;
 		try {
 			columns = getKeyspace().prepareQuery(microAggregator)
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 					.getKey(key)
+					.getCount()
 					.execute().getResult();
 		} catch (ConnectionException e) {
 			e.printStackTrace();
 		}
 		
-		count = columns.size();
 		
-		return count;
+		return columns.longValue();
 	}
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
 		long d = this.readViewCount(localKey, divisor);
@@ -455,6 +487,16 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	}
     	}
 
+	private void clearRow(ColumnFamily<String, String> cfName,String key){
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch();
+		m.withRow(cfName, key).delete();
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while clearing counters : {}",e);
+		}
+	}
 	@Override
 	public void getIncrementer(EventData eventData) {
 		// TODO Auto-generated method stub
