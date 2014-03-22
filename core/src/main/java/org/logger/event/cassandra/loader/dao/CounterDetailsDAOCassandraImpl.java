@@ -59,9 +59,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private final ColumnFamily<String, String> realTimeAggregator;
     
+    private final ColumnFamily<String, String> microAggregator;
+    
     private static final String CF_RT_COUNTER = "real_time_counter";
     
     private static final String CF_RT_AGGREGATOR = "real_time_aggregator";
+    
+    private static final String CF_MICRO_AGGREGATOR = "micro_aggregation";
     
     private CassandraConnectionProvider connectionProvider;
     
@@ -83,6 +87,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         		CF_RT_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
+        
+        microAggregator = new ColumnFamily<String, String>(
+        		CF_MICRO_AGGREGATOR, // Column Family Name
+                StringSerializer.get(), // Key Serializer
+                StringSerializer.get()); // Column Serializer
+        
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -132,7 +142,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
-	        	if(e.get("aggregatorType").toString().equalsIgnoreCase("counter")){
+	        	if(e.get("aggregatorType") != null && e.get("aggregatorType").toString().equalsIgnoreCase("counter")){
 	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) && !eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 	        			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
 					}
@@ -160,11 +170,14 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		        		updateForPostAggregate(localKey+"~"+key,eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
 	        		}
 	        	}				
-	        	if(e.get("aggregatorType").toString().equalsIgnoreCase("aggregator")){
-	        		if(e.get("aggregatorMode").toString().equalsIgnoreCase("avg")){
+	        	logger.info("aggregatorType : {} ",e.get("aggregatorType"));
+	        	if(e.get("aggregatorType") != null && e.get("aggregatorType").toString().equalsIgnoreCase("aggregator")){
+	        		logger.info("aggregatorMode : {} ",e.get("aggregatorMode"));
+	        		if(e.get("aggregatorMode")!= null &&  e.get("aggregatorMode").toString().equalsIgnoreCase("avg")){
 	                   this.calculateAvg(localKey, eventMap.get("contentGooruId")+"~"+e.get("divisor").toString(), eventMap.get("contentGooruId")+"~"+e.get("dividend").toString(), eventMap.get("contentGooruId")+"~"+entry.getKey().toString());
-	               }
-	            if(e.get("aggregatorMode").toString().equalsIgnoreCase("sumofavg")){
+	        		}
+	        		
+	        		if(e.get("aggregatorMode")!= null && e.get("aggregatorMode").toString().equalsIgnoreCase("sumofavg")){
 	                   long averageC = this.iterateAndFindAvg(localKey);
 	                   this.updateRealTimeAggregator(localKey,eventMap.get("parentGooruId")+"~"+entry.getKey().toString(), averageC);
 	                   long averageR = this.iterateAndFindAvg(localKey+"~"+eventMap.get("contentGooruId"));
@@ -199,7 +212,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     public void updateForPostAggregate(String key,String columnName, long count ) {
 
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        m.withRow(realTimeAggregator, key)
+        m.withRow(microAggregator, key)
         .putColumnIfNotNull(columnName, count);
         try {
             m.execute();
@@ -398,19 +411,18 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		long count = 0L; 
 		long avgValues = 0L;
 		try {
-			columns = getKeyspace().prepareQuery(realTimeAggregator)
+			columns = getKeyspace().prepareQuery(microAggregator)
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 					.getKey(key)
 					.execute().getResult();
 		} catch (ConnectionException e) {
 			e.printStackTrace();
 		}
-
-		for(int i = 0 ; i < columns.size() ; i++) {
-			values += columns.getColumnByIndex(i).getLongValue();
-		}
 		
-		if(columns.size() > 0){
+		if(columns != null && columns.size() > 0){
+			for(int i = 0 ; i < columns.size() ; i++) {
+				values += columns.getColumnByIndex(i).getLongValue();
+			}
 			avgValues = values/count;
 		}
 		
