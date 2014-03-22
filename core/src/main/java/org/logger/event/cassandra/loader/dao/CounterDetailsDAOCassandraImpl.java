@@ -102,8 +102,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
     	
     	List<String> classPages = this.getClassPages(eventMap);
-    	logger.info("classPageGooruId :{}",classPages.toArray());
-		
     	String key = eventMap.get("contentGooruId");
 		List<String> keysList = new ArrayList<String>();
 		
@@ -132,7 +130,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			}
 			
 		}
-		logger.info("Key List :{}",keysList.toArray());
+
 		JSONObject j = new JSONObject(aggregatorJson);
 
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
@@ -145,6 +143,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        	if(e.get("aggregatorType") != null && e.get("aggregatorType").toString().equalsIgnoreCase("counter")){
 	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) && !eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 	        			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	        			updateForPostAggregate(localKey+"~"+key, eventMap.get("gooruUId"), 1L);
 					}
 	        		
 	        		if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
@@ -170,9 +169,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		        		updateForPostAggregate(localKey+"~"+key,eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
 	        		}
 	        	}				
-	        	logger.info("aggregatorType : {} ",e.get("aggregatorType"));
 	        	if(e.get("aggregatorType") != null && e.get("aggregatorType").toString().equalsIgnoreCase("aggregator")){
-	        		logger.info("aggregatorMode : {} ",e.get("aggregatorMode"));
+
 	        		if(e.get("aggregatorMode")!= null &&  e.get("aggregatorMode").toString().equalsIgnoreCase("avg")){
 	                   this.calculateAvg(localKey, eventMap.get("contentGooruId")+"~"+e.get("divisor").toString(), eventMap.get("contentGooruId")+"~"+e.get("dividend").toString(), eventMap.get("contentGooruId")+"~"+entry.getKey().toString());
 	        		}
@@ -183,6 +181,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	                   long averageR = this.iterateAndFindAvg(localKey+"~"+eventMap.get("contentGooruId"));
 	                   this.updateRealTimeAggregator(localKey,eventMap.get("contentGooruId")+"~"+entry.getKey().toString(), averageR);
 	               }
+	        		if(e.get("aggregatorMode")!= null && e.get("aggregatorMode").toString().equalsIgnoreCase("sum")){
+		                   long sumOf = this.iterateAndFindSum(localKey+"~"+key);
+		                   this.updateRealTimeAggregator(localKey,key+"~"+entry.getKey().toString(), sumOf);
+		               }
 	                        
 	        	}
 	        }
@@ -429,9 +431,23 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		return avgValues;
 	}
 	
+	private long iterateAndFindSum(String key){
+		ColumnList<String> columns = null;
+		long count = 0L; 
+		try {
+			columns = getKeyspace().prepareQuery(microAggregator)
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					.getKey(key)
+					.execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		count = columns.size();
+		
+		return count;
+	}
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
-		logger.info("localKey : {} - divisor : {}",localKey,divisor);
-		logger.info("dividend : {} - columnToUpdate : {}",dividend,columnToUpdate);
 		long d = this.readViewCount(localKey, divisor);
 	    	if(d != 0L){
 	    		long average = (this.readViewCount(localKey, dividend)/d);
