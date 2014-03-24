@@ -324,8 +324,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		}
 		m.withRow(realTimeAggregator, keyValue)
 		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+"~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
-		.putColumnIfNotNull(eventMap.get(GOORUID)+"~"+USERID,eventMap.get(GOORUID),null)
-		.putColumnIfNotNull(eventMap.get(CLASSPAGEGOORUOID)+"~"+CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
+		.putColumnIfNotNull(USERID,eventMap.get(GOORUID),null)
+		.putColumnIfNotNull(CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
 		;
 
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
