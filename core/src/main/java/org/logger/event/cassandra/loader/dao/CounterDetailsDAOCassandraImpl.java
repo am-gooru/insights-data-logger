@@ -250,7 +250,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
         m.withRow(realTimeAggregator, key)
-        .incrementCounterColumn(columnName, count);
+        .putColumnIfNotNull(columnName, count);
         try {
             m.execute();
         } catch (ConnectionException e) {
