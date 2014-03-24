@@ -829,7 +829,7 @@ public class CassandraDataLoader {
 		for (Row<String, String> row : dataDetail) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			String recentResources = row.getKey();
-			count = counterDetailsDao.readViewCount(recentResources, "resource-view");
+			count = counterDetailsDao.getCounterLongValue(recentResources, "resource-view");
 			map.put("gooruOid", recentResources);
 			map.put("views", count);
 			dataJSONList.add(map);
