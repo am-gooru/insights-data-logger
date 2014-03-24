@@ -85,4 +85,11 @@ public interface Constants {
 	public String COLLECTION = "collection";
 	
 	public String RESOURCE = "resource";
+	
+	public String GOORUOID = "gooru_oid";
+	
+	public String USERID = "gooru_uid";
+	
+	public String CLASSPAGEID = "classpage_id";
+
 }

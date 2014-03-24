@@ -105,8 +105,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-			if(classPages != null && classPages.size() > 0){				
+			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
+					eventMap.put(CLASSPAGEGOORUOID, classPage);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
@@ -315,15 +316,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
-		String type = null;
-		if(resourceType == null || resourceType.isEmpty()){
-			type = COLLECTION;
-		}else{
-			type = RESOURCE;
+		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+			m.withRow(realTimeAggregator, keyValue)
+			.putColumnIfNotNull(COLLECTION+ "~gooru_oid",eventMap.get(CONTENTGOORUOID),null)
+			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
-		.putColumnIfNotNull(type + "_gooru_oid",eventMap.get("contentGooruId"),null)
-        ;
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+"~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
+		.putColumnIfNotNull(eventMap.get(GOORUID)+"~"+USERID,eventMap.get(GOORUID),null)
+		.putColumnIfNotNull(eventMap.get(CLASSPAGEGOORUOID)+"~"+CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
+		;
 
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
