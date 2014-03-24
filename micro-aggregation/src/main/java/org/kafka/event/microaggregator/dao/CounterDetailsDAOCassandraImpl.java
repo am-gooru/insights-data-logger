@@ -24,7 +24,6 @@
 package org.kafka.event.microaggregator.dao;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
+import org.kafka.event.microaggregator.core.Constants;
 import org.kafka.event.microaggregator.core.DataUtils;
 import org.kafka.event.microaggregator.core.LoaderConstants;
 import org.kafka.event.microaggregator.model.JSONDeserializer;
@@ -50,7 +50,7 @@ import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
-public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl implements CounterDetailsDAO {
+public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl implements CounterDetailsDAO,Constants {
 	
     private static final Logger logger = LoggerFactory.getLogger(CounterDetailsDAOCassandraImpl.class);
     
@@ -58,9 +58,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private final ColumnFamily<String, String> realTimeAggregator;
     
+    private final ColumnFamily<String, String> microAggregator;
+    
     private static final String CF_RT_COUNTER = "real_time_counter";
     
     private static final String CF_RT_AGGREGATOR = "real_time_aggregator";
+    
+    private static final String CF_MICRO_AGGREGATOR = "micro_aggregation";
     
     private CassandraConnectionProvider connectionProvider;
     
@@ -82,6 +86,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         		CF_RT_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
+        
+        microAggregator = new ColumnFamily<String, String>(
+        		CF_MICRO_AGGREGATOR, // Column Family Name
+                StringSerializer.get(), // Key Serializer
+                StringSerializer.get()); // Column Serializer
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -91,32 +100,59 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
     	
     	List<String> classPages = this.getClassPages(eventMap);
-    	logger.info("classPageGooruId :{}",classPages.toArray());
-		
-    	String key = eventMap.get("contentGooruId");
+    	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
-		
-		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")){
-			if(eventMap.get("parentGooruId") != null && !eventMap.get("parentGooruId").isEmpty() || !eventMap.get("parentGooruId").equalsIgnoreCase("NA")){
-				keysList.add(eventMap.get("parentGooruId")+"~"+key);
-				keysList.add(eventMap.get("parentGooruId")+"~"+key+"~"+eventMap.get("gooruUId"));
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			if(classPages != null && classPages.size() > 0){
+				for(String classPage : classPages){
+					eventMap.put(CLASSPAGEGOORUOID, classPage);
+					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
+					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID))){
+						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+					}
+					
+				}
 			}
+				keysList.add(ALLSESSION+key);
+				keysList.add(ALLSESSION+key+SEPERATOR+eventMap.get(GOORUID));
+				keysList.add(eventMap.get(SESSION)+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+				this.addColumnForAggregator(RECENTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+				if(!this.isRowAvailable(FIRSTSESSION+key, eventMap.get(GOORUID))){
+					keysList.add(FIRSTSESSION+key+SEPERATOR+eventMap.get(GOORUID));
+					this.addColumnForAggregator(FIRSTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+				}
 		}
 
-		if((eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("type").equalsIgnoreCase("stop")) || eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-			String classPageOid = eventMap.get("classPageGooruId");
-			if(classPageOid != null && !classPageOid.isEmpty()){
-            	String keys = classPageOid+"~"+eventMap.get("parentGooruId");
-            	keysList.add(keys+"~"+key);
- 				keysList.add(keys+"~"+key+"~"+eventMap.get("gooruUId"));
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+
+			if(classPages != null && classPages.size() > 0){				
+				for(String classPage : classPages){
+					keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
+					keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
+					if(this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID))){
+						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
+					}
+				}
 			}
+				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID));
+				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+				this.addColumnForAggregator(RECENTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
+				if(this.isRowAvailable(FIRSTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID))){
+					keysList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					this.addColumnForAggregator(FIRSTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
+				}
+			
+			
 		}
-		
-		if(keysList == null || keysList.size() < 0 ){
-			keysList.add(key);
-			keysList.add(key+"~"+eventMap.get("gooruUId"));
-		}
-		
+
 		JSONObject j = new JSONObject(aggregatorJson);
 
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
@@ -126,14 +162,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
-	        	if(e.get("aggregatorType").toString().equalsIgnoreCase("counter")){
-	        		if(!(entry.getKey().toString().equalsIgnoreCase("choice")) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get("type").equalsIgnoreCase("stop"))){
-	        			updateCounter(localKey,key+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
+	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
+	        		if(!(entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+	        			updateCounter(localKey,key+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
+	        			updatePostAggregator(localKey,key+SEPERATOR+entry.getKey().toString());
+	        			updateForPostAggregate(localKey+SEPERATOR+key, eventMap.get(GOORUID), 1L);
+	        			
 					}
 	        		
-	        		if(entry.getKey().toString().equalsIgnoreCase("choice") && eventMap.get("resourceType").equalsIgnoreCase("question")){
-	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
-	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get("attemptStatus")) ;
+	        		if(entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)){
+	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 	    				String answerStatus = null;
 	    				if(attempStatus.length == 0){
 	    					answerStatus = LoaderConstants.SKIPPED.getName();
@@ -145,30 +184,38 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	    			}
 	        			}	
 	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
-	    				updateCounter(localKey ,key+"~"+option,e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : Long.parseLong(eventMap.get(e.get("aggregatorMode")).toString()));
-	    				updateCounter(localKey ,key+"~"+answerStatus,1L);
+	    				updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
+	    				updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
+	    				updatePostAggregator(localKey,key+SEPERATOR+option);
+	    				updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
 					}
 	        		
-	        		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-		        		updateForPostAggregate(localKey,key+"~"+eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
-		        		updateForPostAggregate(localKey+"~"+key,eventMap.get("gooruUId")+"~"+entry.getKey().toString(),e.get("aggregatorMode").toString().equalsIgnoreCase("auto") ? 1L : DataUtils.formatReactionString(eventMap.get(e.get("aggregatorMode")).toString()));
+	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+		        		updateForPostAggregate(localKey,key+SEPERATOR+eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
+		        		updateForPostAggregate(localKey+SEPERATOR+key,eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
 	        		}
 	        	}				
-	        	if(e.get("aggregatorType").toString().equalsIgnoreCase("aggregator")){
-	        		if(e.get("aggregatorMode").toString().equalsIgnoreCase("avg")){
-	                   this.calculateAvg(localKey, eventMap.get("contentGooruId")+"~"+e.get("divisor").toString(), eventMap.get("contentGooruId")+"~"+e.get("dividend").toString(), eventMap.get("contentGooruId")+"~"+entry.getKey().toString());
-	               }
-	            if(e.get("aggregatorMode").toString().equalsIgnoreCase("sumofavg")){
+	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(AGG)){
+
+	        		if(e.get(AGGMODE)!= null &&  e.get(AGGMODE).toString().equalsIgnoreCase(AVG)){
+	                   this.calculateAvg(localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
+	        		}
+	        		
+	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUMOFAVG)){
 	                   long averageC = this.iterateAndFindAvg(localKey);
-	                   this.updateRealTimeAggregator(localKey,eventMap.get("parentGooruId")+"~"+entry.getKey().toString(), averageC);
-	                   long averageR = this.iterateAndFindAvg(localKey+"~"+eventMap.get("contentGooruId"));
-	                   this.updateRealTimeAggregator(localKey,eventMap.get("contentGooruId")+"~"+entry.getKey().toString(), averageR);
+	                   this.updateRealTimeAggregator(localKey,eventMap.get(PARENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageC);
+	                   long averageR = this.iterateAndFindAvg(localKey+SEPERATOR+eventMap.get(CONTENTGOORUOID));
+	                   this.updateRealTimeAggregator(localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageR);
 	               }
+	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)){
+		                   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key);
+		                   this.updateRealTimeAggregator(localKey,key+SEPERATOR+entry.getKey().toString(), sumOf);
+		               }
 	                        
 	        	}
 	        }
 	        for(String localKey : keysList){
-	        	this.realTimeStudentWiseReport(localKey,eventMap);
+	        	this.realTimeAggregator(localKey,eventMap);
 	        }
     	}
     }
@@ -189,11 +236,28 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
     }
+
+    public void updateAggregator(String key,String columnName, long count ) {
+
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        m.withRow(realTimeAggregator, key)
+        .putColumnIfNotNull(columnName, count);
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+    }
+    
+    private void updatePostAggregator(String key,String columnName){
+    	long value = this.getCounterLongValue(key, columnName);
+    	this.updateAggregator(key, columnName,value);
+    }
     
     public void updateForPostAggregate(String key,String columnName, long count ) {
 
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        m.withRow(realTimeAggregator, key)
+        m.withRow(microAggregator, key)
         .putColumnIfNotNull(columnName, count);
         try {
             m.execute();
@@ -202,6 +266,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         }
     }
     
+    public void addColumnForAggregator(String key,String columnName, String  columnValue ) {
+
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        m.withRow(microAggregator, key)
+        .putColumnIfNotNull(columnName, columnValue);
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting to cassandra {} ", e);
+        }
+    }
 
     
     /**
@@ -211,7 +286,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
      * @throws ConnectionException
      *             if host is unavailable
      */
-	public long readViewCount(String key, String metric) {
+	public long getCounterLongValue(String key, String metric) {
 		ColumnList<String>  result = null;
 		Long count = 0L;
     	try {
@@ -227,19 +302,28 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	return (count);
 	}
 
-	public void realTimeStudentWiseReport(String keyValue,Map<String,String> eventMap) throws JSONException{
+	public void realTimeAggregator(String keyValue,Map<String,String> eventMap) throws JSONException{
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		String resourceType = eventMap.get("resourceType");		  
-					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(resourceType + "_gooru_oid",eventMap.get("contentGooruId"),null)
-					;					
-			if(resourceType != null && resourceType.equalsIgnoreCase("question")){		 
-					if(eventMap.get("type").equalsIgnoreCase("stop") && !isRowAvailable(keyValue, eventMap.get("contentGooruId")+"~options")){
-						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get("attemptStatus")) ;
-						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence")) ;
-						String openEndedText = eventMap.get("text");						
-						String answers = eventMap.get("answers");
+		String resourceType = eventMap.get(RESOURCETYPE);
+		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+			m.withRow(realTimeAggregator, keyValue)
+			.putColumnIfNotNull(COLLECTION+ "~gooru_oid",eventMap.get(CONTENTGOORUOID),null)
+			;
+		}
+		m.withRow(realTimeAggregator, keyValue)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+"~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
+		.putColumnIfNotNull(USERID,eventMap.get(GOORUID),null)
+		.putColumnIfNotNull(CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
+		;
+
+			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
+					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+						String openEndedText = eventMap.get(TEXT);						
+						String answers = eventMap.get(ANS);
 						JSONObject answersJson = new JSONObject(answers);
 						JSONArray names = answersJson.names();
 						String firstChoosenAns = null;
@@ -247,11 +331,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 							firstChoosenAns = names.getString(0);
 						}						
 				      m.withRow(realTimeAggregator, keyValue)
-				                .putColumnIfNotNull(eventMap.get("contentGooruId") + "~Type" ,eventMap.get("questionType"),null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") +"~options",DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",openEndedText,null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") + "~choice",firstChoosenAns,null)
-				      			.putColumnIfNotNull(eventMap.get("contentGooruId") +"~"+DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]) +"~status",attempStatus[0],null);
+				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+TYPE ,eventMap.get(QUESTIONTYPE),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) +"~"+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+CHOICE,openEndedText,null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+CHOICE,firstChoosenAns,null);
 					}      				     
 				}
 			 try{
@@ -298,7 +381,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		return stagedRecords;
 	}	
 	
-	public Long getRTLongValues(String key,String columnName){
+	public Long getAggregatorLongValue(String key,String columnName){
 		Column<String>  result = null;
 		Long score = 0L;
     	try {
@@ -328,26 +411,46 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while retieveing data : {}" ,e);
 		}
 		
-		logger.info("RT Record is empty : {}",stagedRecords.isEmpty());
-		return stagedRecords.isEmpty();
+		return !stagedRecords.isEmpty();
+		
+	}
+	
+	private String getSession(String key,String columnName){
+		
+		String session = null; 
+		
+		Column<String> stagedRecords = null;
+    	try {
+    		stagedRecords = (getKeyspace().prepareQuery(realTimeAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					 .getKey(key)
+					 .getColumn(columnName)
+					 .execute().getResult());
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data : {}" ,e);
+		}
+		
+		if(stagedRecords != null){
+			session = stagedRecords.getStringValue();
+		}
+		return session;
 		
 	}
 	private List<String> getClassPages(Map<String,String> eventMap){
     	List<String> classPages = new ArrayList<String>();
-    	if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get("parentGooruId") == null){
-    		classPages = collectionItem.getParentId(eventMap.get("contentGooruId"));
+    	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null){
+    		classPages = collectionItem.getParentId(eventMap.get(CONTENTGOORUOID));
     		classPages = this.getClassPagesFromItems(classPages);
-    	}else if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-    		classPages.add(eventMap.get("parentGooruId"));
+    	}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+    		classPages.add(eventMap.get(PARENTGOORUOID));
     	}
-    	if(!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get("parentGooruId") != null){
-    		if(eventMap.get("classPageGooruId") == null){
-	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
+    	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(PARENTGOORUOID) != null){
+    		if(eventMap.get(CLASSPAGEGOORUOID) == null){
+	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get(PARENTEVENTID));
 		    	if(eventDetail != null && eventDetail.size() > 0){
-		    		if(eventDetail.getStringValue("event_name", null) != null &&  (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+		    		if(eventDetail.getStringValue("event_name", null) != null && (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
 		    			classPages.add(eventDetail.getStringValue("content_gooru_oid", null));
-		    		}
-		    		if(eventDetail.getStringValue("event_name", null) != null && (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+		    		}		    		
+		    		if(eventDetail.getStringValue("event_name", null) != null &&  (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null || eventDetail.getStringValue("parent_gooru_oid", null).isEmpty()){
 			    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
 			    			classPages = this.getClassPagesFromItems(classPages);
@@ -357,26 +460,31 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		    		}
 		    	}
 	    	}else{
-	    		classPages.add(eventMap.get("classPageGooruId"));
+	    		classPages.add(eventMap.get(CLASSPAGEGOORUOID));
 	    	}
     	}
-	    	if((!eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get("classPageGooruId") == null)){
-	    		if(eventMap.get("classPageGooruId") == null){
-	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get("parentEventId"));
+	    	if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)){
+	    		if(eventMap.get(CLASSPAGEGOORUOID) == null){
+	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get(PARENTEVENTID));
 	            if(R != null && R.size() > 0){
 	            	String parentEventId = R.getStringValue("parent_event_id", null);
 	            	if(parentEventId != null ){
 	            		ColumnList<String> C = eventDetailDao.readEventDetail(parentEventId);
-	            		if(C != null && C.size() > 0){
-	            			String parentGooruOid = C.getStringValue("parent_gooru_oid", null);
-	            			if(parentGooruOid != null){
-	            				eventMap.put("classPageGooruId",parentGooruOid);
-	            			}
-	            		}
+	            		if(C.getStringValue("event_name", null) != null && (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+			    			classPages.add(C.getStringValue("content_gooru_oid", null));
+			    		}
+			    		if(C.getStringValue("event_name", null) != null &&  (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+				    		if(C.getStringValue("parent_gooru_oid", null) == null || C.getStringValue("parent_gooru_oid", null).isEmpty()){
+				    			classPages = collectionItem.getParentId(C.getStringValue("content_gooru_oid", null));
+				    			classPages = this.getClassPagesFromItems(classPages);
+				    		}else{
+				    			classPages.add(C.getStringValue("parent_gooru_oid", null));
+				    		}
+			    		}
 	            	}
 	            }
 	        }else{
-	    		classPages.add(eventMap.get("classPageGooruId"));
+	    		classPages.add(eventMap.get(CLASSPAGEGOORUOID));
 	    	}
     	}
 	    	return classPages;
@@ -388,31 +496,66 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		long count = 0L; 
 		long avgValues = 0L;
 		try {
-			columns = getKeyspace().prepareQuery(realTimeAggregator)
+			columns = getKeyspace().prepareQuery(microAggregator)
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 					.getKey(key)
 					.execute().getResult();
 		} catch (ConnectionException e) {
 			e.printStackTrace();
 		}
-
-		for(int i = 0 ; i < columns.size() ; i++) {
-			values += columns.getColumnByIndex(i).getLongValue();
-		}
-		
-		if(columns.size() > 0){
+		count = columns.size();
+		if(columns != null && columns.size() > 0){
+			for(int i = 0 ; i < columns.size() ; i++) {
+				values += columns.getColumnByIndex(i).getLongValue();
+			}
 			avgValues = values/count;
 		}
 		
 		return avgValues;
 	}
 	
+	private long iterateAndFindSum(String key){
+		Integer columns = null;
+		try {
+			columns = getKeyspace().prepareQuery(microAggregator)
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					.getKey(key)
+					.getCount()
+					.execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return columns.longValue();
+	}
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
-		long d = this.readViewCount(localKey, divisor);
+		long d = this.getCounterLongValue(localKey, divisor);
 	    	if(d != 0L){
-	    		long average = (this.readViewCount(localKey, dividend)/d);
+	    		long average = (this.getCounterLongValue(localKey, dividend)/d);
 	    		this.updateRealTimeAggregator(localKey,columnToUpdate, average);
 	    	}
     	}
+
+	private void clearAggregatoRow(String key){
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch();
+		m.withRow(realTimeAggregator, key).delete();
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while clearing counters : {}",e);
+		}
+	}
+	
+	private void clearCounterRow(String key){
+		MutationBatch m = getKeyspace().prepareMutationBatch();
+		m.withRow(realTimeCounter, key).delete();
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while clearing counters : {}",e);
+		}
+	}
 
 }

@@ -36,7 +36,7 @@ public interface Constants {
 
 	public String EVENTTYPE = "eventType";
 	
-	public String SESSION = "sessionToken";
+	public String SESSION = "sessionId";
 	
 	public String GOORUID = "gooruUId" ;
 	
