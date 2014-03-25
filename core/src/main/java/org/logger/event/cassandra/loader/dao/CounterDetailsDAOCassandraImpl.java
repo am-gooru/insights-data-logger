@@ -311,11 +311,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
 			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(COLLECTION+ "~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
+			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
-		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+"~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 		.putColumnIfNotNull(USERID,eventMap.get(GOORUID),null)
 		.putColumnIfNotNull(CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
 		;
@@ -333,10 +333,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 							firstChoosenAns = names.getString(0);
 						}						
 				      m.withRow(realTimeAggregator, keyValue)
-				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+TYPE ,eventMap.get(QUESTIONTYPE),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) +"~"+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+CHOICE,openEndedText,null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + "~"+CHOICE,firstChoosenAns,null);
+				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) +SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null);
 					}      				     
 				}
 			 try{
