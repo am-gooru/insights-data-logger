@@ -109,12 +109,7 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     		organizationUid = "NA";
     	}
     	String GooruUId = eventData.getGooruUId();
-    	if(GooruUId == null){
-    		GooruUId = eventData.getGooruId();
-    	} 
-    	if(GooruUId == null){
-    		GooruUId = "ANONYMOUS";
-    	}
+logger.info("GooruUId : {}",GooruUId);
     	String appUid = appOid+"~"+gooruOid;    	
         Date dNow = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("yyyyMMddkkmm");

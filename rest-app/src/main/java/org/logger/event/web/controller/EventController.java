@@ -203,6 +203,9 @@ public class EventController {
 		if(eventObj.get("type") != null){
 			eventData.setType(eventObj.get("type").toString().replaceAll("\"", ""));
 		}
+		if(eventObj.get("gooruUId") != null){
+			eventData.setType(eventObj.get("gooruUId").toString().replaceAll("\"", ""));
+		}
 		if(eventObj.get("timeSpentInMs") != null){
 			eventData.setTimeSpentInMs(Long.parseLong(eventObj.get("timeSpentInMs").toString().replaceAll("\"", "")));
 		}
