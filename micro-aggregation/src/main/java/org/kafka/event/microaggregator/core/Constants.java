@@ -72,7 +72,7 @@ public interface Constants {
 	
 	public String STOP = "stop";
 	
-	public String ANS = "answer";
+	public String ANS = "answers";
 	
 	public String TEXT = "text";
 	

@@ -57,7 +57,7 @@ public class DataUtils {
 	
 	static {
 		formatedAnswerSeq = new HashMap<String, String>();
-		formatedAnswerSeq.put("0", "Skipped");
+		formatedAnswerSeq.put("0", "skipped");
 		formatedAnswerSeq.put("1", "A");
 		formatedAnswerSeq.put("2", "B");
 		formatedAnswerSeq.put("3", "C");

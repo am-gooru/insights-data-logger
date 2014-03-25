@@ -170,7 +170,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        			
 					}
 	        		
-	        		if(entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)){
+	        		if(entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
 	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 	    				String answerStatus = null;
@@ -309,7 +309,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
 			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(COLLECTION+ "~gooru_oid",eventMap.get(CONTENTGOORUOID),null)
+			.putColumnIfNotNull(COLLECTION+ "~"+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
