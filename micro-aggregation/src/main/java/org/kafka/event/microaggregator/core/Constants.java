@@ -66,6 +66,8 @@ public interface Constants {
 	
 	public String QUESTIONTYPE = "questionType";
 	
+	public String OE = "OE";
+	
 	public String TYPE = "type";
 	
 	public String AUTO = "auto";

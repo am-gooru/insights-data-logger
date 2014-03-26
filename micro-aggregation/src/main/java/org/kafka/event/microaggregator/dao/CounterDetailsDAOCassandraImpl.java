@@ -166,8 +166,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        		if(!(entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 	        			updateCounter(localKey,key+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
 	        			updatePostAggregator(localKey,key+SEPERATOR+entry.getKey().toString());
-	        			updateForPostAggregate(localKey+SEPERATOR+key, eventMap.get(GOORUID), 1L);
-	        			
 					}
 	        		
 	        		if(entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
@@ -185,9 +183,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        			}	
 	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
 	    				updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
-	    				updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
 	    				updatePostAggregator(localKey,key+SEPERATOR+option);
-	    				updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){	    					
+	    					updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
+	    					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+	    				}
 					}
 	        		
 	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
@@ -208,7 +208,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	                   this.updateRealTimeAggregator(localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageR);
 	               }
 	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)){
-		                   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key);
+	        			   updateForPostAggregate(localKey+SEPERATOR+key, eventMap.get(GOORUID), 1L);
+	        			   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key);
 		                   this.updateRealTimeAggregator(localKey,key+SEPERATOR+entry.getKey().toString(), sumOf);
 		               }
 	                        
@@ -557,5 +558,4 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while clearing counters : {}",e);
 		}
 	}
-
 }

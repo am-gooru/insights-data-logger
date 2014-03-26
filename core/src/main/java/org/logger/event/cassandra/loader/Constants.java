@@ -65,6 +65,8 @@ public interface Constants {
 	public String RESOURCETYPE = "resourceType";
 	
 	public String QUESTIONTYPE = "questionType";
+
+	public String OE = "OE";
 	
 	public String TYPE = "type";
 	
