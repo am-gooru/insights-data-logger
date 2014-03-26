@@ -59,7 +59,7 @@ public class EventObjectValidator  {
 			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 			for (String fieldName : eventMap.keySet()){
 				if(!acceptedFileds.containsKey(fieldName)){
-					throw new NoSuchElementException("Pleae make sure this attribute:"+fieldName+". Or contact Adminstrator to add this attribute in event JSON list. ");
+					throw new NoSuchElementException("Please make sure this attribute:"+fieldName+". Or contact Adminstrator to add this attribute in event JSON list. ");
 				}
 			}			
 		return null;
