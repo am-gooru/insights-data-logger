@@ -34,6 +34,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -177,7 +178,7 @@ logger.info("GooruUId : {}",GooruUId);
         }
         return key;
     }
-    
+    @Async
     public String  saveEventObject(EventObject eventObject){
     	
     	String key = null;

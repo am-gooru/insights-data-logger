@@ -31,6 +31,7 @@ import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
@@ -154,6 +155,7 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 	
 	}
 
+	@Async
 	public void saveEventNameByName(String name) {
 		
 	    UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
