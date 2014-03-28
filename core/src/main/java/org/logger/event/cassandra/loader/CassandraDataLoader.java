@@ -68,6 +68,7 @@ import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.JsonElement;
@@ -455,7 +456,8 @@ public class CassandraDataLoader {
         }
 
     }
-
+    
+    @Async
     private void updateEventObjectCompletion(EventObject eventObejct) throws ConnectionException {
 
     	Long endTime = eventObejct.getEndTime(), startTime = eventObejct.getStartTime();
@@ -518,6 +520,8 @@ public class CassandraDataLoader {
      * @return
      * Save Event Data
      */
+    
+    @Async
     private String updateEvent(EventData eventData) {
     	ColumnList<String> apiKeyValues = apiDao.readApiData(eventData.getApiKey());
         String appOid = apiKeyValues.getStringValue("app_oid", null);

@@ -34,6 +34,7 @@ import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
@@ -78,6 +79,7 @@ public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements Ti
         }
     }
 
+    @Async
     public void updateTimelineObject(EventObject eventObject, String rowKey,String CoulmnValue) {
 
         UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
