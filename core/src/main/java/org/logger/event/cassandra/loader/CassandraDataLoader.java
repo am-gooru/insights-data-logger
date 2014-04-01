@@ -326,7 +326,6 @@ public class CassandraDataLoader {
 		        String duplicatekey = eventRowKey+"~"+eventRowKey;
 		        timelineDao.updateTimeline(eventData, eventRowKey);
 	        }	        
-	       // updateActivityStream(eventData.getEventId());
         } catch (ConnectionException e) {
         	logger.info("Exception while processing update for rowkey {} ", e);
        }
@@ -378,7 +377,6 @@ public class CassandraDataLoader {
 		EventData eventData= getAndSetEventData(eventMap);
 		this.updateEvent(eventData); 
 
-		//updateActivityStream(eventObject.getEventId());
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		//To be revoked
@@ -1015,117 +1013,6 @@ public class CassandraDataLoader {
         return sb.toString();
     }    
 
-    private void updateActivityStream(String eventId) {
-    	
-    	if (eventId != null){
-    	
-	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);
-
-	    	String userName = null;
-	    	String dateId = null;
-	    	String userUid = null;
-	    	Date startDate = new Date();
-	
-	    	SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-	    	HashMap<String, Object> activityMap = new HashMap<String, Object>();
-	    	Map<String, Object> eventMap = new HashMap<String, Object>();       
-	    	if(activityRow.getLongValue("end_time", null) != null) {
-	    		startDate = new Date(activityRow.getLongValue("end_time", null));
-	    		Date endDate = new Date(activityRow.getLongValue("end_time", null));
-	    	} else {
-	    		startDate = new Date(activityRow.getLongValue("start_time", null));
-	    	}
-    		dateId = minuteDateFormatter.format(startDate).toString();
-			Map<String , Object> timeMap = new HashMap<String, Object>();
-
-			//Get userUid
-			if(activityRow.getStringValue("gooru_uid", null) != null) {
-				try {
-					 userUid = activityRow.getStringValue("gooru_uid", null);
-					 userName = dimUser.getUserName(activityRow.getStringValue("gooru_uid", null)); 
-				} catch (ConnectionException e) {
-					logger.info("Error while fetching User uid ");
-				}			
-			 } else if (activityRow.getStringValue("user_id", null) != null) {
-				 try {
-					userUid = dimUser.getUserUid(activityRow.getStringValue("user_id", null));
-					userName = dimUser.getUserName(activityRow.getStringValue("user_id", null));						
-				} catch (ConnectionException e) {
-					logger.info("Error while fetching User uid ");
-				}
-			 }
-		    this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
-
-	    	activityMap.put("userUid",userUid);
-	    	activityMap.put("eventId", eventId);
-	    	activityMap.put("eventName", activityRow.getStringValue("event_name", null));
-	    	activityMap.put("dateId", dateId);
-	    	activityMap.put("userName", userName);
-	    	activityMap.put("apiKey", activityRow.getStringValue("apiKey", null));
-	        activityMap.put("existingColumnName", timeMap.get("existingColumnName"));
-	        
-	    	eventMap.put("start_time", timeMap.get("startTime"));
-	    	eventMap.put("end_time", timeMap.get("endTime"));
-	    	eventMap.put("event_type", timeMap.get("event_type"));
-	        eventMap.put("timeSpent", timeMap.get("timeSpent"));
-	
-	    	eventMap.put("user_uid",userUid);
-	    	eventMap.put("username",userName);
-	    	eventMap.put("eventdetail_fields",activityRow.getStringValue("fields", null));
-	    	eventMap.put("content_gooru_oid", activityRow.getStringValue("content_gooru_oid", null));
-	    	eventMap.put("parent_gooru_oid", activityRow.getStringValue("parent_gooru_oid", null));
-	    	eventMap.put("organization_uid", activityRow.getStringValue("organization_uid", null));
-	    	eventMap.put("event_name", activityRow.getStringValue("event_name", null));
-	    	eventMap.put("event_value", activityRow.getStringValue("event_value", null));
-	
-	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
-	    	
-	    	activityStreamDao.saveActivity(activityMap);
-    	}
-	}
-    
-    public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap){
-    	Long startTime = activityRow.getLongValue("start_time", 0L), endTime = activityRow.getLongValue("end_time", 0L);
-    	String eventType = activityRow.getStringValue("event_type", null);
-    	JsonElement jsonElement = null;
-    	JsonObject existingEventObj = null;
-    	String existingColumnName = null;
-    	
-        long timeInMillisecs = 0L;
-        if (endTime != null && startTime != null) {
-            timeInMillisecs = endTime - startTime;
-        }
-
-        if (!StringUtils.isEmpty(eventType)) {
-    		Map<String,Object> existingRecord = activityStreamDao.isEventIdExists(userUid, eventId);
-    		if(existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
-			    jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
-				existingEventObj = jsonElement.getAsJsonObject();
-			    if ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
-					existingColumnName = existingRecord.get("existingColumnName").toString();
-				    startTime = existingEventObj.get("start_time").getAsLong();
-			    } else {
-				    endTime = existingEventObj.get("end_time").getAsLong();
-			    }
-    		}
-    		
-			// Time taken for the event in milliseconds derived from the start / stop events.
-			if (endTime != null && startTime != null) {
-				timeInMillisecs = endTime - startTime;
-			}
-			if (timeInMillisecs > 1147483647) {
-			    // When time in Milliseconds is very very huge, set to min time to serve the call.
-			    timeInMillisecs = 30;
-			    // Since this is an error condition, log it.
-			}
-        }
-        timeMap.put("startTime", startTime);
-        timeMap.put("endTime", endTime);
-        timeMap.put("event_type", eventType);
-        timeMap.put("existingColumnName", existingColumnName);
-        timeMap.put("timeSpent", timeInMillisecs);    
-        
-    }
     /**
      * @return the connectionProvider
      */

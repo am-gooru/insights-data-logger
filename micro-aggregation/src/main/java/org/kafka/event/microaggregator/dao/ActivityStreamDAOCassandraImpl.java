@@ -68,19 +68,17 @@ public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		 String rowKey = null;
 		 String dateId = "0";
 		 String columnName = null;
-		 rowKey = activities.get("userUid") != null ? null : activities.get("userUid").toString();
-		 
-		 if(activities.get("dateId") != null){
-			 dateId = activities.get("dateId").toString();
-		 } 
+		 String eventName = null;
+		 rowKey = activities.get("userUid") != null ?  activities.get("userUid").toString() : null;
+		 dateId = activities.get("dateId") != null ?  activities.get("dateId").toString() : null; 
+		 eventName = activities.get("eventName") != null ?  activities.get("eventName").toString() : null;
 		 if(activities.get("existingColumnName") == null){
-			 columnName = ((dateId.toString() == null ? "0L" : dateId.toString()) + "~" + (activities.get("eventName").toString() == null ? "NA" : activities.get("eventName").toString()) + "~" + activities.get("eventId").toString());
+			 columnName = ((dateId.toString() == null ? "0L" : dateId.toString()) + "~" + (eventName == null ? "NA" : activities.get("eventName").toString()) + "~" + activities.get("eventId").toString());
 		 } else{
 			 columnName = activities.get("existingColumnName").toString();
 		 }
 	 
-	     try {
-	        	
+	     try {        	
 			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);	
 			 m.withRow(activityStreamCF, rowKey)
 			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
@@ -89,9 +87,9 @@ public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			 .putColumnIfNotNull("username", activities.get("userName") != null ? activities.get("userName").toString():null, null)
 			 .putColumnIfNotNull("user_uid", activities.get("userUid") != null ? activities.get("userUid").toString():null, null);
 	            m.execute();
-        } catch (ConnectionException e) {
-            logger.info("Error while inserting to cassandra ", e);       
-        }
+       } catch (ConnectionException e) {
+           logger.info("Error while inserting to cassandra ", e);       
+       }
 	}
 	
 	public Map<String, Object> isEventIdExists(String userUid, String eventId){
