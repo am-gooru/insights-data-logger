@@ -313,8 +313,8 @@ public class CassandraDataLoader {
 			 */
 			if (eventData.getFields() != null) {
 				eventDetailDao.saveEvent(eventData, "GLP");
-				//kafkaLogWriter.sendEventLog(eventData.getFields());
-				//logger.info("CORE: Writing to activity log - :"+ eventData.getFields().toString());
+				kafkaLogWriter.sendEventLog(eventData.getFields());
+				logger.info("CORE: Writing to activity log - :"+ eventData.getFields().toString());
 			}
 	    
 	
