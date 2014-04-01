@@ -93,5 +93,25 @@ public interface Constants {
 	public String USERID = "gooru_uid";
 	
 	public String CLASSPAGEID = "classpage_id";
+	
+	public String MINUTEDATEFORMATTER = "yyyyMMddkkmm";
+
+	public String FIELDS = "fields";
+		
+	public String START_TIME = "start_time";
+	
+	public String END_TIME = "end_time";
+	
+	public String APIKEY = "apiKey";
+	
+	public String ORGANIZATIONUID = "organizationUid";
+	
+	public String EVENT_VALUE = "event_value";
+	
+	public String CONTENT_GOORU_OID = "content_gooru_oid";
+
+	public String PARENT_GOORU_OID = "parent_gooru_oid";
+	
+	public String EVENT_TYPE = "event_type";
 
 }

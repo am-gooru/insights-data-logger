@@ -21,14 +21,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
-package org.logger.event.cassandra.loader.dao;
+package org.kafka.event.microaggregator.dao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
+import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +42,15 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 
-public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl implements ActivityStreamDao{
-
-    private static final Logger logger = LoggerFactory.getLogger(ActivityStreamDaoCassandraImpl.class);
+public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl implements ActivityStreamDAO {
+	
+    private static final Logger logger = LoggerFactory.getLogger(ActivityStreamDAOCassandraImpl.class);
+    
     private final ColumnFamily<String, String> activityStreamCF;
+    
     private static final String CF_ACTIVITY_STREAM = "activity_stream";
     
-	public ActivityStreamDaoCassandraImpl(CassandraConnectionProvider connectionProvider) {
+	public ActivityStreamDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		activityStreamCF = new ColumnFamily<String, String>(
 				CF_ACTIVITY_STREAM, // Column Family Name
@@ -57,8 +59,8 @@ public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 
 	 /**
-     * @param activities
-     *           raw data from event detail table
+     * @param activitt stream
+     *           raw data from event detail
      * @throws ConnectionException
      *             if there is an error while inserting a record or unavailable host 
      */
@@ -66,17 +68,19 @@ public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl impleme
 		 String rowKey = null;
 		 String dateId = "0";
 		 String columnName = null;
-		 String eventName = null;
-		 rowKey = activities.get("userUid") != null ?  activities.get("userUid").toString() : null;
-		 dateId = activities.get("dateId") != null ?  activities.get("dateId").toString() : null; 
-		 eventName = activities.get("eventName") != null ?  activities.get("eventName").toString() : null;
+		 rowKey = activities.get("userUid") != null ? null : activities.get("userUid").toString();
+		 
+		 if(activities.get("dateId") != null){
+			 dateId = activities.get("dateId").toString();
+		 } 
 		 if(activities.get("existingColumnName") == null){
-			 columnName = ((dateId.toString() == null ? "0L" : dateId.toString()) + "~" + (eventName == null ? "NA" : activities.get("eventName").toString()) + "~" + activities.get("eventId").toString());
+			 columnName = ((dateId.toString() == null ? "0L" : dateId.toString()) + "~" + (activities.get("eventName").toString() == null ? "NA" : activities.get("eventName").toString()) + "~" + activities.get("eventId").toString());
 		 } else{
 			 columnName = activities.get("existingColumnName").toString();
 		 }
 	 
-	     try {        	
+	     try {
+	        	
 			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);	
 			 m.withRow(activityStreamCF, rowKey)
 			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
@@ -112,9 +116,8 @@ public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl impleme
 					}
 				}
 			}
-		} catch (ConnectionException e) {
-			logger.info("Cassandra Connection Exception thrown!!");
-			e.printStackTrace();
+		} catch (ConnectionException e) {		
+			logger.info("Error while retrieveing data : {}" ,e);
 		}
 		if(!isExists){
 			resultMap.put("isExists", isExists);

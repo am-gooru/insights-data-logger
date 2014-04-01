@@ -23,27 +23,39 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.core;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.kafka.event.microaggregator.dao.CounterDetailsDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.RealTimeOperationConfigDAOImpl;
 import org.kafka.event.microaggregator.model.EventObject;
 import org.kafka.event.microaggregator.model.JSONDeserializer;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
+import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.EventDetailDAOCassandraImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.query.ColumnFamilyQuery;
 
+import flexjson.JSONSerializer;
 
-public class MicroAggregationLoader {
+
+public class MicroAggregationLoader implements Constants{
 
     private static final Logger logger = LoggerFactory.getLogger(MicroAggregationLoader.class);
    
@@ -54,6 +66,12 @@ public class MicroAggregationLoader {
     private CassandraConnectionProvider connectionProvider;
         
     private CounterDetailsDAOCassandraImpl counterDetailsDao;
+    
+    private EventDetailDAOCassandraImpl eventDetailDao;
+
+    private DimUserDAOCassandraImpl dimUser;
+    
+    private ActivityStreamDAOCassandraImpl activityStreamDao;
     
     private RealTimeOperationConfigDAOImpl realTimeOperation;
     
@@ -77,10 +95,12 @@ public class MicroAggregationLoader {
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         
         microAggregator = new MicroAggregatorProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
+        this.gson = new Gson();
     }
 
     public MicroAggregationLoader(Map<String, String> configOptionsMap) {
         init(configOptionsMap);
+        this.gson = new Gson();
     }
 
     /**
@@ -95,6 +115,9 @@ public class MicroAggregationLoader {
         this.getConnectionProvider().init(configOptionsMap);
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
+        this.eventDetailDao = new EventDetailDAOCassandraImpl(getConnectionProvider());
+        this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
+        this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
 
     }
@@ -117,6 +140,164 @@ public class MicroAggregationLoader {
 		 if(aggregatorJson != null && !aggregatorJson.isEmpty()){
 			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
 		 }
+		 updateActivityStream(eventObject.getEventId());
+    }
+    
+ private void updateActivityStream(String eventId) throws JSONException {
+    	
+    	if (eventId != null){
+
+	    	Map<String,String> rawMap = new HashMap<String, String>();
+		    String apiKey = null;
+	    	String userName = null;
+	    	String dateId = null;
+	    	String userUid = null;
+	    	String contentGooruId = null;
+	    	String parentGooruId = null;
+	    	String organizationUid = null;
+	    	Date endDate = new Date();
+	    	
+	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
+	    	String fields = activityRow.getStringValue(FIELDS, null);
+
+	    	if (fields != null){
+		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
+		        	EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
+			    	rawMap = JSONDeserializer.deserializeEventObject(eventObject);
+	    	} else {
+	    		logger.error("Fields is empty or invalid");
+	    	}
+	         	
+	    	SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
+	    	HashMap<String, Object> activityMap = new HashMap<String, Object>();
+	    	Map<String, Object> eventMap = new HashMap<String, Object>();       
+	    	if(activityRow.getLongValue(END_TIME, null) != null) {
+	    		endDate = new Date(activityRow.getLongValue(END_TIME, null));
+	    	} else {
+	    		endDate = new Date(activityRow.getLongValue(START_TIME, null));
+	    	}
+    		dateId = minuteDateFormatter.format(endDate).toString();
+			Map<String , Object> timeMap = new HashMap<String, Object>();
+
+			//Get userUid
+			if (rawMap != null && rawMap.get("gooruUId") != null) {
+				 try {
+					 userUid = rawMap.get("gooruUId");
+					 userName = dimUser.getUserName(userUid);
+				 } catch (ConnectionException e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 } else if (activityRow.getStringValue("gooru_uid", null) != null) {
+				try {
+					 userUid = activityRow.getStringValue("gooru_uid", null);
+					 userName = dimUser.getUserName(activityRow.getStringValue("gooru_uid", null)); 
+				} catch (ConnectionException e) {
+					logger.info("Error while fetching User uid ");
+				}			
+			 } else if (activityRow.getStringValue("user_id", null) != null) {
+				 try {
+					userUid = dimUser.getUserUid(activityRow.getStringValue("user_id", null));
+					userName = dimUser.getUserName(activityRow.getStringValue("user_id", null));						
+				} catch (ConnectionException e) {
+					logger.info("Error while fetching User uid ");
+				}
+			 } 		
+		    this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
+
+		    if(rawMap != null && rawMap.get(APIKEY) != null) {
+		    	apiKey = rawMap.get(APIKEY);
+		    } else if(activityRow.getStringValue(APIKEY, null) != null){
+		    	apiKey = activityRow.getStringValue(APIKEY, null);
+		    }
+		    if(rawMap != null && rawMap.get(CONTENTGOORUOID) != null){
+		    	contentGooruId = rawMap.get(CONTENTGOORUOID);
+		    } else if(activityRow.getStringValue(CONTENT_GOORU_OID, null) != null){
+		    	contentGooruId = activityRow.getStringValue(CONTENT_GOORU_OID, null);
+		    }
+		    if(rawMap != null && rawMap.get(PARENTGOORUOID) != null){
+		    	parentGooruId = rawMap.get(PARENTGOORUOID);
+		    } else if(activityRow.getStringValue(PARENT_GOORU_OID, null) != null){
+		    	parentGooruId = activityRow.getStringValue(PARENT_GOORU_OID, null);
+		    }
+		    if(rawMap != null && rawMap.get(ORGANIZATIONUID) != null){
+		    	organizationUid = rawMap.get(ORGANIZATIONUID);
+		    } else if (activityRow.getStringValue("organization_uid", null) != null){
+		    	organizationUid = activityRow.getStringValue("organization_uid", null);
+		    }
+	    	activityMap.put("eventId", eventId);
+	    	activityMap.put("eventName", activityRow.getStringValue(EVENTNAME, null));
+	    	activityMap.put("userUid",userUid);
+	    	activityMap.put("dateId", dateId);
+	    	activityMap.put("userName", userName);
+	    	activityMap.put("apiKey", apiKey);
+	    	activityMap.put("organizationUid", organizationUid);
+	        activityMap.put("existingColumnName", timeMap.get("existingColumnName"));
+	        
+	    	eventMap.put("start_time", timeMap.get("startTime"));
+	    	eventMap.put("end_time", timeMap.get("endTime"));
+	    	eventMap.put("event_type", timeMap.get("event_type"));
+	        eventMap.put("timeSpent", timeMap.get("timeSpent"));
+	
+	    	eventMap.put("user_uid",userUid);
+	    	eventMap.put("username",userName);
+	    	eventMap.put("raw_data",activityRow.getStringValue(FIELDS, null));
+	    	eventMap.put("content_gooru_oid", contentGooruId);
+	    	eventMap.put("parent_gooru_oid", parentGooruId);
+	    	eventMap.put("organization_uid", organizationUid);
+	    	eventMap.put("event_name", activityRow.getStringValue(EVENTNAME, null));
+	    	eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
+	
+	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
+	    	
+	    	activityStreamDao.saveActivity(activityMap);
+    	}
+	}
+    
+    public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap){
+    	Long startTime = activityRow.getLongValue(START_TIME, 0L), endTime = activityRow.getLongValue(END_TIME, 0L);
+    	String eventType = null;
+    	JsonElement jsonElement = null;
+    	JsonObject existingEventObj = null;
+    	String existingColumnName = null;
+    	
+    	if (activityRow.getStringValue(EVENT_TYPE, null) != null){
+    		eventType = activityRow.getStringValue(EVENT_TYPE, null);
+    	}
+    	
+        long timeInMillisecs = 0L;
+        if (endTime != null && startTime != null) {
+            timeInMillisecs = endTime - startTime;
+        }
+
+        if (!StringUtils.isEmpty(eventType)) {
+    		Map<String,Object> existingRecord = activityStreamDao.isEventIdExists(userUid, eventId);
+    		if(existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
+			    jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
+				existingEventObj = jsonElement.getAsJsonObject();
+			    if ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
+					existingColumnName = existingRecord.get("existingColumnName").toString();
+				    startTime = existingEventObj.get(START_TIME).getAsLong();
+			    } else {
+				    endTime = existingEventObj.get(END_TIME).getAsLong();
+			    }
+    		}
+    		
+			// Time taken for the event in milliseconds derived from the start / stop events.
+			if (endTime != null && startTime != null) {
+				timeInMillisecs = endTime - startTime;
+			}
+			if (timeInMillisecs > 1147483647) {
+			    // When time in Milliseconds is very very huge, set to min time to serve the call.
+			    timeInMillisecs = 30;
+			    // Since this is an error condition, log it.
+			}
+        }
+        timeMap.put("startTime", startTime);
+        timeMap.put("endTime", endTime);
+        timeMap.put("event_type", eventType);
+        timeMap.put("existingColumnName", existingColumnName);
+        timeMap.put("timeSpent", timeInMillisecs);    
+        
     }
 
     /**

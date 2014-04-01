@@ -152,3 +152,7 @@ ALTER TABLE job_status ADD jobs_count bigint;
 ALTER TABLE stging_event_resource_user ADD open_ended_text text;
 
 ALTER TABLE agg_event_resource_user_hour ADD open_ended_text text;
+
+ALTER TABLE activity_stream ADD user_uid text;
+ALTER TABLE activity_stream ADD organization_uid text;
+ALTER TABLE activity_stream ADD api_key text;

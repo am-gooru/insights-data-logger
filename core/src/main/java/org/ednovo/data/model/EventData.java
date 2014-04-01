@@ -79,6 +79,8 @@ public class EventData implements Serializable{
 	private String requestMethod ;
 	private String context ;
 	private String version;
+	private String collectionId;
+	private String resourceId;
 	
 	public String getOpenEndedText() {
 		return openEndedText;
@@ -393,5 +395,17 @@ public class EventData implements Serializable{
 	}
 	public void setVersion(String version) {
 		this.version = version;
+	}
+	public void setCollectionId(String collectionId) {
+		this.collectionId = collectionId;
+	}
+	public String getCollectionId() {
+		return collectionId;
+	}
+	public void setResourceId(String resourceId) {
+		this.resourceId = resourceId;
+	}
+	public String getResourceId() {
+		return resourceId;
 	}
 }
