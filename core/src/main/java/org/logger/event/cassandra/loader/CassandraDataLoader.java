@@ -380,10 +380,10 @@ public class CassandraDataLoader {
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		//To be revoked
-		if(aggregatorJson != null && !aggregatorJson.isEmpty()){
+		/*if(aggregatorJson != null && !aggregatorJson.isEmpty()){
 			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-		}
-		//microAggregator.sendEventForAggregation(eventObject.getFields());
+		}*/
+		microAggregator.sendEventForAggregation(eventObject.getFields());
 		
     }
     /**
