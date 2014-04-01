@@ -114,6 +114,6 @@ public interface Constants {
 	
 	public String EVENT_TYPE = "event_type";
 	
-	public String EVENT_NAME = "eventName";
+	public String EVENT_NAME = "event_name";
 	
 }
