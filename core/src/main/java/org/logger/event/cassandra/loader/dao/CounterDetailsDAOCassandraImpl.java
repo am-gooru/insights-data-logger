@@ -338,6 +338,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) +SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ATTEMPTS,attemptTrySequence.length,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null);
 					}      				     
 				}

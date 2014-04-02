@@ -58,6 +58,8 @@ public interface Constants {
 
 	public String CHOICE = "choice";
 	
+	public String ATTEMPTS = "attempts";
+	
 	public String OPTIONS = "options";
 	
 	public String COUNTER = "counter";
