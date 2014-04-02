@@ -225,8 +225,9 @@ public class MicroAggregationLoader implements Constants{
 		    } else if (activityRow.getStringValue("organization_uid", null) != null){
 		    	organizationUid = activityRow.getStringValue("organization_uid", null);
 		    }
-		    if(rawMap != null && rawMap.get("score") != null){
-		    	score = rawMap.get("score");
+		    if(rawMap != null && rawMap.get(SCORE) != null){
+		    	score = rawMap.get(SCORE);
+		    	eventMap.put("score", score);
 		    }
 	    	activityMap.put("eventId", eventId);
 	    	activityMap.put("eventName", activityRow.getStringValue(EVENT_NAME, null));
@@ -250,7 +251,6 @@ public class MicroAggregationLoader implements Constants{
 	    	eventMap.put("organization_uid", organizationUid);
 	    	eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
 	    	eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
-	    	eventMap.put("score", score);
 	
 	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
 	    	

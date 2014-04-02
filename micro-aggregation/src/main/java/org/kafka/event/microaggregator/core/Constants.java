@@ -123,4 +123,6 @@ public interface Constants {
 	public String STUDY = "study";
 	
 	public String PREVIEW = "preview";
+	
+	public String SCORE = "score";
 }
