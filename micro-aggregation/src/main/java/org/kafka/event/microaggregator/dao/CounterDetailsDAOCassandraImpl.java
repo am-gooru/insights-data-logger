@@ -98,7 +98,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
-    	
+    	if(eventMap.get(MODE).equalsIgnoreCase(STUDY)){
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
@@ -219,6 +219,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        for(String localKey : keysList){
 	        	this.realTimeAggregator(localKey,eventMap);
 	        }
+    	}
     	}
     }
     
