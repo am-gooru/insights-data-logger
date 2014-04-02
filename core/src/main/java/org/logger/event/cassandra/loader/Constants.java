@@ -113,5 +113,7 @@ public interface Constants {
 	public String PARENT_GOORU_OID = "parent_gooru_oid";
 	
 	public String EVENT_TYPE = "event_type";
+	
+	public String EVENT_NAME = "event_name";
 
 }
