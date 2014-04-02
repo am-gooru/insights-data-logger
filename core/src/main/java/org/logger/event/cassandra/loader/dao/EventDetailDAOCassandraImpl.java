@@ -102,15 +102,12 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     		eventValue = "NA";
     	}
     	String parentGooruOid = eventData.getParentGooruId();
-    	logger.info("parentGooruOid{}",parentGooruOid);
     	if((parentGooruOid == null || parentGooruOid.isEmpty()) && eventData.getCollectionId() != null){
     		parentGooruOid = eventData.getCollectionId();
-        	logger.info("parentGooruOid - collectionId {}",parentGooruOid);
     	}
     	if(parentGooruOid == null || parentGooruOid.isEmpty()){
     		parentGooruOid = "NA";
     	}
-    	logger.info("parentGooruOid{}",parentGooruOid);
     	if(gooruOid == null || gooruOid.isEmpty()){
     		gooruOid = "NA";
     	}	
