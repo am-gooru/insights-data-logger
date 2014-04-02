@@ -186,7 +186,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
 	    				updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
 	    				updatePostAggregator(localKey,key+SEPERATOR+option);
-	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){	    					
+	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){	    					
 	    					updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
 	    					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
 	    				}
