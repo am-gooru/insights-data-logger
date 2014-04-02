@@ -156,9 +156,13 @@ public class EventServiceImpl implements EventService {
 		List<Map<String, Object>>  resultList = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>>  valueList = new ArrayList<Map<String, Object>>();
 		JsonElement jsonElement = null;
+		ColumnList<String> activityJsons;
 
 		//ColumnList<String> activityJsons = activityStreamDao.readColumnsWithPrefix("83ebb116-2d2d-4e89-90ea-a07027474b30","201307170531", "201307170535", "collection-play-dots"  );
-		ColumnList<String> activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
+		activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
+		if(activityJsons == null || activityJsons.isEmpty()) {
+			activityJsons = activityStreamDao.readLastNcolumns(userUid, eventsToRead);
+		}	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
 			activity = activityJson.getStringValue();
@@ -183,13 +187,16 @@ public class EventServiceImpl implements EventService {
 					if(eventObj.get("username") != null){
 						valueMap.put("username", eventObj.get("username").toString().replaceAll("\"", ""));
 					}
+					if(eventObj.get("score") != null){
+						valueMap.put("score", eventObj.get("score").toString().replaceAll("\"", ""));
+					}
 				} catch (JsonParseException e) {
 				    // Invalid.
 					logger.error("OOPS! Invalid JSON", e);
 				}		
 			}
 			valueList.add(valueMap);
-		}
+		}		
 		resultList.addAll(valueList);
 		return resultList;
 	}

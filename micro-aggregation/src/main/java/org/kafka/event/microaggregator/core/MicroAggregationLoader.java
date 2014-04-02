@@ -155,6 +155,7 @@ public class MicroAggregationLoader implements Constants{
 	    	String contentGooruId = null;
 	    	String parentGooruId = null;
 	    	String organizationUid = null;
+	    	String score = null;
 	    	Date endDate = new Date();
 	    	
 	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
@@ -224,6 +225,9 @@ public class MicroAggregationLoader implements Constants{
 		    } else if (activityRow.getStringValue("organization_uid", null) != null){
 		    	organizationUid = activityRow.getStringValue("organization_uid", null);
 		    }
+		    if(rawMap != null && rawMap.get("score") != null){
+		    	score = rawMap.get("score");
+		    }
 	    	activityMap.put("eventId", eventId);
 	    	activityMap.put("eventName", activityRow.getStringValue(EVENT_NAME, null));
 	    	activityMap.put("userUid",userUid);
@@ -246,6 +250,7 @@ public class MicroAggregationLoader implements Constants{
 	    	eventMap.put("organization_uid", organizationUid);
 	    	eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
 	    	eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
+	    	eventMap.put("score", score);
 	
 	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
 	    	
