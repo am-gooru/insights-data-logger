@@ -160,9 +160,10 @@ public class EventServiceImpl implements EventService {
 
 		//ColumnList<String> activityJsons = activityStreamDao.readColumnsWithPrefix("83ebb116-2d2d-4e89-90ea-a07027474b30","201307170531", "201307170535", "collection-play-dots"  );
 		activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
-		if(activityJsons == null || activityJsons.isEmpty()) {
+		logger.info("activityJsons SIZE >>"+activityJsons.size());
+		/*if(activityJsons == null || activityJsons.isEmpty()) {
 			activityJsons = activityStreamDao.readLastNcolumns(userUid, eventsToRead);
-		}	
+		}*/	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
 			activity = activityJson.getStringValue();
