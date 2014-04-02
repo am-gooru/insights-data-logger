@@ -94,23 +94,24 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
     	if(gooruOid == null){
     		gooruOid = eventData.getGooruId();
     	}
-    	if(gooruOid == null){
+    	if(gooruOid == null && eventData.getResourceId() != null){
     		gooruOid = eventData.getResourceId();
+    	} else {
+    		gooruOid = "NA";
     	}
     	String eventValue = eventData.getQuery();
     	if(eventValue == null){
     		eventValue = "NA";
     	}
     	String parentGooruOid = eventData.getParentGooruId();
-    	if(parentGooruOid == null){
+		logger.info("parentGooruOid {}",parentGooruOid);
+    	if(parentGooruOid == null && eventData.getCollectionId() != null){
+    		parentGooruOid = eventData.getCollectionId();
+    		logger.info("collectionId {}",parentGooruOid);
+    	} else {
     		parentGooruOid = "NA";
     	}
-    	if(parentGooruOid == null){
-    		parentGooruOid = eventData.getCollectionId();
-    	}
-    	if(gooruOid == null){
-    		gooruOid = "NA";
-    	}	
+		logger.info("parentGooruOid {}",parentGooruOid);
     	String organizationUid  = eventData.getOrganizationUid();
     	if(organizationUid == null){
     		organizationUid = "NA";

@@ -310,7 +310,6 @@ public class CassandraDataLoader implements Constants {
 	        if (eventKeyUUID == null) {
 	            return;
 	        }
-        
 	        /**
 			 * write the JSON to Log file using kafka log writer module in aysnc
 			 * mode. This will store/write all data to activity log file in log/event_api_logs/activity.log
@@ -350,7 +349,6 @@ public class CassandraDataLoader implements Constants {
     	eventObject.setEventType(eventMap.get("type"));
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
-    	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
@@ -1038,16 +1036,16 @@ public class CassandraDataLoader implements Constants {
    	    	Date endDate = new Date();
    	    	
    	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
+   	    	if (activityRow != null){
    	    	String fields = activityRow.getStringValue(FIELDS, null);
 
-   	    	if (fields != null){
+   	    	/*if (fields != null){
    		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
-   		        	EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
-   			    	rawMap = JSONDeserializer.deserializeEventObject(eventObject);
+   		        	EventData eventdata = gson.fromJson(rawJson, EventData.class);
+   			    	//rawMap = JSONDeserializer.deserializeEventObject(eventObject);
    	    	} else {
    	    		logger.error("Fields is empty or invalid");
-   	    	}
-   	         	
+   	    	}*/  	         	
    	    	SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
    	    	HashMap<String, Object> activityMap = new HashMap<String, Object>();
    	    	Map<String, Object> eventMap = new HashMap<String, Object>();       
@@ -1081,8 +1079,13 @@ public class CassandraDataLoader implements Constants {
    				} catch (ConnectionException e) {
    					logger.info("Error while fetching User uid ");
    				}
-   			 } 		
-   		    this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
+   			 } 	
+   			if(userUid != null && eventId != null){
+   				logger.info("userUid {} ",userUid);
+   				this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
+   			} else {
+   				return;
+   			}
 
    		    if(rawMap != null && rawMap.get(APIKEY) != null) {
    		    	apiKey = rawMap.get(APIKEY);
@@ -1129,7 +1132,10 @@ public class CassandraDataLoader implements Constants {
    	
    	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
    	    	
-   	    	activityStreamDao.saveActivity(activityMap);
+   	    	if(userUid != null){
+   	    		activityStreamDao.saveActivity(activityMap);
+   	    	}
+   	    	}
        	}
    	}
        
@@ -1149,7 +1155,7 @@ public class CassandraDataLoader implements Constants {
                timeInMillisecs = endTime - startTime;
            }
 
-           if (!StringUtils.isEmpty(eventType)) {
+           if (!StringUtils.isEmpty(eventType) && userUid != null) {
        		Map<String,Object> existingRecord = activityStreamDao.isEventIdExists(userUid, eventId);
        		if(existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
    			    jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
