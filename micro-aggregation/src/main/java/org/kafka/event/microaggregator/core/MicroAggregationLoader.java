@@ -251,6 +251,11 @@ public class MicroAggregationLoader implements Constants{
 	    	eventMap.put("organization_uid", organizationUid);
 	    	eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
 	    	eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
+	    	
+	    	eventMap.put("event_id", eventId);
+	    	eventMap.put("api_key", apiKey);
+	    	eventMap.put("organization_uid", organizationUid);
+	    	eventMap.put("date_time", dateId);
 	
 	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
 	    	

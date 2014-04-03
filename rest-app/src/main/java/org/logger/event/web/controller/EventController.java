@@ -488,7 +488,7 @@ public class EventController {
 				@RequestParam(value = "apiKey", required = false) String apiKey,
 				@RequestParam(value = "eventName", required = false) String eventName,
 				@RequestParam(value = "minutesToRead", required = false, defaultValue= "30") Integer minutesToRead,
-				@RequestParam(value = "eventsToRead", required = false) Integer eventsToRead,
+				@RequestParam(value = "eventsToRead", required = false, defaultValue= "30") Integer eventsToRead,
 				HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 		SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -499,8 +499,6 @@ public class EventController {
     	Date decrementedTime =cal.getTime(); 
     	String decremenedMinute = minuteDateFormatter.format(decrementedTime);
 	 	
-		//List<String> resourceIds = eventService.readUserLastNEvents("83ebb116-2d2d-4e89-90ea-a07027474b30","201307170531", "201307170535", "collection-play-dots");
-		// List<String> resourceIds = eventService.readUserLastNEventsResourceIds(userUid,"201307170531", "201307170535", eventName);
 		List<Map<String, Object>> resultMap = eventService.readUserLastNEventsResourceIds(userUid, decremenedMinute, currentMinute, eventName, eventsToRead);
 		JSONObject resultJson = new JSONObject();
 		resultJson.put("activity", resultMap);

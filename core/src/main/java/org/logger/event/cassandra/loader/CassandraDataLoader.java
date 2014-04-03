@@ -1038,14 +1038,7 @@ public class CassandraDataLoader implements Constants {
    	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
    	    	if (activityRow != null){
    	    	String fields = activityRow.getStringValue(FIELDS, null);
-
-   	    	/*if (fields != null){
-   		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
-   		        	EventData eventdata = gson.fromJson(rawJson, EventData.class);
-   			    	//rawMap = JSONDeserializer.deserializeEventObject(eventObject);
-   	    	} else {
-   	    		logger.error("Fields is empty or invalid");
-   	    	}*/  	         	
+  	         	
    	    	SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
    	    	HashMap<String, Object> activityMap = new HashMap<String, Object>();
    	    	Map<String, Object> eventMap = new HashMap<String, Object>();       
@@ -1130,6 +1123,10 @@ public class CassandraDataLoader implements Constants {
    	    	eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
    	    	eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
    	
+	    	eventMap.put("event_id", eventId);
+	    	eventMap.put("api_key",apiKey);
+	    	eventMap.put("organization_uid",organizationUid);
+	    	
    	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
    	    	
    	    	if(userUid != null){
