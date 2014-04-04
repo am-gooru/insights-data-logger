@@ -153,7 +153,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			
 			
 		}
-		if(!keysList.isEmpty()){
+		if(keysList != null && keysList.size() > 0 ){
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 		}
      }
