@@ -161,5 +161,6 @@ public interface Constants {
 	public String COLLECTION_GOORU_OID = "collection_gooru_oid";
 	
 	public String RESOURCE_GOORU_OID = "resource_gooru_oid";
-	
+
+	public String SCORE = "score";
 }
