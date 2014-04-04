@@ -153,8 +153,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			
 			
 		}
-
-		
+		if(!keysList.isEmpty()){
+			this.startCounters(eventMap, aggregatorJson, keysList, key);
+		}
      }
     
     public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
