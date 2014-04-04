@@ -134,13 +134,11 @@ public class MicroAggregationLoader implements Constants{
     	eventObject.setEventType(eventMap.get("type"));
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
-
+    	
     	String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
-		 
-		 if(aggregatorJson != null && !aggregatorJson.isEmpty()){
-			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-		 }
-		 updateActivityStream(eventObject.getEventId());
+    	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+		
+    	updateActivityStream(eventObject.getEventId());
     }
     
  private void updateActivityStream(String eventId) throws JSONException {

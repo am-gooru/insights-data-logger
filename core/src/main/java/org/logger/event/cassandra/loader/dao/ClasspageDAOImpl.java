@@ -39,18 +39,18 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
 
-public class CollectionItemDAOImpl extends BaseDAOCassandraImpl implements CollectionItemDAO,Constants{
+public class ClasspageDAOImpl extends BaseDAOCassandraImpl implements ClasspageDAO,Constants{
 
-	 private static final Logger logger = LoggerFactory.getLogger(CollectionItemDAOImpl.class);
+	 private static final Logger logger = LoggerFactory.getLogger(ClasspageDAOImpl.class);
 
-	 private final ColumnFamily<String, String> collectionItemCF;
+	 private final ColumnFamily<String, String> classpageCF;
 	 
-	 private static final String CF_COLLECTION_ITEM_NAME = "collection_item";
+	 private static final String CF_CLASSPAGE = "classpage";
 	    
-	public CollectionItemDAOImpl(CassandraConnectionProvider connectionProvider) {
+	public ClasspageDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
-		collectionItemCF = new ColumnFamily<String, String>(
-				CF_COLLECTION_ITEM_NAME, // Column Family Name
+		classpageCF = new ColumnFamily<String, String>(
+				CF_CLASSPAGE, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
         
@@ -62,7 +62,7 @@ public List<String> getParentId(String Key){
 	List<String> classPages = new ArrayList<String>();
 	String parentId = null;
 	try {
-		collectionItem = getKeyspace().prepareQuery(collectionItemCF)
+		collectionItem = getKeyspace().prepareQuery(classpageCF)
 			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 		 	.searchWithIndex().setRowLimit(1)
 			.addExpression()
@@ -82,18 +82,19 @@ public List<String> getParentId(String Key){
 	return classPages; 
 	} 
 
-	public void updateCollectionItem(Map<String ,String> eventMap){
+	public void updateClasspage(Map<String ,String> eventMap){
 	
-	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    
-	 m.withRow(collectionItemCF, eventMap.get(COLLECTIONITEMID))
-     .putColumnIfNotNull(CONTENT_ID,eventMap.get(CONTENTID))
-     .putColumnIfNotNull(PARENT_CONTENT_ID,eventMap.get(PARENTCONTENTID))
-     .putColumnIfNotNull(RESOURCE_GOORU_OID,eventMap.get(CONTENT_GOORU_OID))
-     .putColumnIfNotNull(COLLECTION_GOORU_OID,eventMap.get(PARENT_GOORU_OID))
-     .putColumnIfNotNull(ITEM_SEQUENCE,eventMap.get(ITEMSEQUENCE))
-     .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
-    ;
-    
-}
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        
+        m.withRow(classpageCF, eventMap.get(CONTENT_GOORU_OID))
+        .putColumnIfNotNull(USER_GROUP_UID,eventMap.get(GROUPUID))
+        .putColumnIfNotNull(CLASSPAGE_CONTENT_ID,eventMap.get(CONTENTID))
+        .putColumnIfNotNull(CLASSPAGE_CODE,eventMap.get(CLASSCODE))
+        .putColumnIfNotNull(USER_GROUP_CODE,eventMap.get(CONTENT_GOORU_OID))
+        .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENT_GOORU_OID))
+        .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
+        
+        ;
+        
+	}
 }

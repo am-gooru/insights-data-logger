@@ -98,11 +98,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
-    	if(eventMap.get(MODE).equalsIgnoreCase(STUDY)){
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
@@ -127,7 +126,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				}
 		}
 
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+		if(eventMap.get(MODE).equalsIgnoreCase(STUDY) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
@@ -153,7 +152,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			
 		}
 
-		JSONObject j = new JSONObject(aggregatorJson);
+		
+     }
+    
+    public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
+    	
+    	JSONObject j = new JSONObject(aggregatorJson);
 
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
@@ -182,6 +186,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	    			}
 	        			}	
 	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	    				String openEndedText = eventMap.get(TEXT);
+	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+	    					option = "A";
+	    				}
 	    				updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
 	    				updatePostAggregator(localKey,key+SEPERATOR+option);
 	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){	    					
@@ -220,9 +228,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        	this.realTimeAggregator(localKey,eventMap);
 	        }
     	}
-    	}
     }
-    
     /**
      * @param key,columnName,count
      * @throws ConnectionException
@@ -561,4 +567,5 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while clearing counters : {}",e);
 		}
 	}
+
 }

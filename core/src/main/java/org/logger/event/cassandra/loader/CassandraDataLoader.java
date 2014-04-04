@@ -49,13 +49,11 @@ import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
-import org.kafka.event.microaggregator.dao.MicroAggregationDAOImpl;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.CounterDetailsDAO;
 import org.logger.event.cassandra.loader.dao.CounterDetailsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
@@ -66,6 +64,7 @@ import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.UpdateRawDataDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -130,6 +129,8 @@ public class CassandraDataLoader implements Constants {
     
     private MicroAggregatorProducer microAggregator;
     
+    private UpdateRawDataDAOImpl rawDataUpdate;
+    
     private Gson gson = new Gson();
     
     /**
@@ -185,6 +186,7 @@ public class CassandraDataLoader implements Constants {
         this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
+        this.rawDataUpdate = new UpdateRawDataDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
 
     }
@@ -386,12 +388,14 @@ public class CassandraDataLoader implements Constants {
 
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
-		//To be revoked
-		/*if(aggregatorJson != null && !aggregatorJson.isEmpty()){
-			 counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-		}*/
-		microAggregator.sendEventForAggregation(eventObject.getFields());
+		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+	    	microAggregator.sendEventForAggregation(eventObject.getFields());
+	    	//counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+		}
 		
+		if(aggregatorJson != null  && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+			rawDataUpdate.updateRawData(eventMap);
+		}
     }
     /**
      * 

@@ -106,7 +106,7 @@ public interface Constants {
 	
 	public String APIKEY = "apiKey";
 	
-	public String ORGANIZATIONUID = "organizationUid";
+	public String ORGANIZATIONUID = "organizationUId";
 	
 	public String EVENT_VALUE = "event_value";
 	
@@ -123,4 +123,43 @@ public interface Constants {
 	public String STUDY = "study";
 	
 	public String PREVIEW = "preview";
+	
+	public String USER_GROUP_UID =	"user_group_uid"; 
+	
+	public String CLASSPAGE_CONTENT_ID = "classpage_content_id";
+	
+	public String CLASSPAGE_CODE = "classpage_code";				
+	
+	public String USER_GROUP_CODE = "user_group_code";
+	
+	public String CLASSPAGE_GOORU_OID = "classpage_gooru_oid"; 
+	
+	public String ORGANIZATION_UID = "organization_uid";
+	
+	public String RAWUPDATE = "rawupdate";
+	
+	public String GROUPUID = "groupUId";
+	
+	public String CLASSCODE = "classCode";
+	
+	public String CONTENTID = "contentId";
+	
+	public String CONTENT_ID = "content_id";
+	
+	public String COLLECTIONITEMID = "collectionItemId";
+	
+	public String COLLECTION_ITEM_ID = "collection_item_id";
+	
+	public String PARENTCONTENTID = "parentContentId";
+	
+	public String PARENT_CONTENT_ID = "parent_content_id";
+	
+	public String ITEMSEQUENCE = "itemSequence";
+	
+	public String ITEM_SEQUENCE = "item_sequence";
+
+	public String COLLECTION_GOORU_OID = "collection_gooru_oid";
+	
+	public String RESOURCE_GOORU_OID = "resource_gooru_oid";
+	
 }

@@ -121,6 +121,10 @@ public enum LoaderConstants {
     
 	CLPV1("classpage.view"),
     
+	CLPCV1("classpage.create"),
+	
+	CCV1("classpage.create"),
+	
 	CLASSPAGE("classpage"),
     
     ;
