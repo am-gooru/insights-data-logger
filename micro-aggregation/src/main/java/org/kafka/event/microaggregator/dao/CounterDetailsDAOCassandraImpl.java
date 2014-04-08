@@ -329,6 +329,14 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		.putColumnIfNotNull(CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID),null);
 		;
 
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			long totalTimeSpent = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
+			long views = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName());
+			m.withRow(realTimeAggregator, keyValue)
+			.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
+			.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.AVGTS.getName(),(totalTimeSpent/views),null)
+			;
+		}
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
