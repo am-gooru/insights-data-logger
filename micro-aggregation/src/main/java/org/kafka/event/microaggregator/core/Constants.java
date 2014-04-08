@@ -165,4 +165,6 @@ public interface Constants {
 	public String RESOURCE_GOORU_OID = "resource_gooru_oid";
 	
 	public String SCORE = "score";
+	
+    public String SESSIONID = "sessionId";
 }

@@ -34,6 +34,7 @@ import org.kafka.event.microaggregator.dao.CounterDetailsDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.RealTimeOperationConfigDAOImpl;
 import org.kafka.event.microaggregator.model.EventObject;
 import org.kafka.event.microaggregator.model.JSONDeserializer;
+import org.kafka.event.microaggregator.model.TypeConverter;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
@@ -154,6 +155,8 @@ public class MicroAggregationLoader implements Constants{
 	    	String parentGooruId = null;
 	    	String organizationUid = null;
 	    	String score = null;
+            String eventType = null;
+            int[] attempStatus;
 	    	Date endDate = new Date();
 	    	
 	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
@@ -223,9 +226,20 @@ public class MicroAggregationLoader implements Constants{
 		    } else if (activityRow.getStringValue("organization_uid", null) != null){
 		    	organizationUid = activityRow.getStringValue("organization_uid", null);
 		    }
-		    if(rawMap != null && rawMap.get(SCORE) != null){
-		    	score = rawMap.get(SCORE);
-		    	eventMap.put("score", score);
+		    if(rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY) && rawMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)) {
+		    	if(rawMap != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID).toString() != null){
+			    	score = rawMap.get(SCORE).toString();
+			    	eventMap.put("score", score);
+			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+					attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS)) ;
+			    	eventMap.put("first_attempt_status", attempStatus[0]);
+			    }
+		    } else if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
+		    	if(rawMap != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID).toString() != null){
+			    	score = rawMap.get(SCORE).toString();
+			    	eventMap.put("score", score);
+			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+			    }
 		    }
 	    	activityMap.put("eventId", eventId);
 	    	activityMap.put("eventName", activityRow.getStringValue(EVENT_NAME, null));

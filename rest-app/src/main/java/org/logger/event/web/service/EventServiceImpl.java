@@ -189,6 +189,12 @@ public class EventServiceImpl implements EventService {
 					if(eventObj.get("score") != null){
 						valueMap.put("score", eventObj.get("score").toString().replaceAll("\"", ""));
 					}
+					if(eventObj.get("session_id") != null){
+						valueMap.put("sessionId", eventObj.get("session_id").toString().replaceAll("\"", ""));
+					}
+					if(eventObj.get("first_attempt_status") != null){
+						valueMap.put("firstAttemptStatus", eventObj.get("first_attempt_status").toString().replaceAll("\"", ""));
+					}
 					/*if(eventObj.get("date_time") != null){
 						valueMap.put("dateTime", eventObj.get("date_time").toString().replaceAll("\"", ""));
 					}*/
