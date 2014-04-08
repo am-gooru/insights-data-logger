@@ -195,6 +195,9 @@ public class EventServiceImpl implements EventService {
 					if(eventObj.get("first_attempt_status") != null){
 						valueMap.put("firstAttemptStatus", eventObj.get("first_attempt_status").toString().replaceAll("\"", ""));
 					}
+					if(eventObj.get("answer_status") != null){
+						valueMap.put("answerStatus", eventObj.get("answer_status").toString().replaceAll("\"", ""));
+					}
 					/*if(eventObj.get("date_time") != null){
 						valueMap.put("dateTime", eventObj.get("date_time").toString().replaceAll("\"", ""));
 					}*/

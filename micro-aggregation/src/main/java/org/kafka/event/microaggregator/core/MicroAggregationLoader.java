@@ -232,7 +232,20 @@ public class MicroAggregationLoader implements Constants{
 			    	eventMap.put("score", score);
 			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
 					attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS)) ;
-			    	eventMap.put("first_attempt_status", attempStatus[0]);
+					if(attempStatus.length > 0){
+						eventMap.put("first_attempt_status", attempStatus[0]);
+					}
+    				String answerStatus = null;
+					if(attempStatus.length == 0){
+    					answerStatus = LoaderConstants.SKIPPED.getName();
+        			}else {
+    	    			if(attempStatus[0] == 1){
+    	    				answerStatus = LoaderConstants.CORRECT.getName();
+    	    			}else if(attempStatus[0] == 0){
+    	    				answerStatus = LoaderConstants.INCORRECT.getName();
+    	    			}
+        			}
+    				eventMap.put("answer_status", answerStatus);
 			    }
 		    } else if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
 		    	if(rawMap != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID).toString() != null){
