@@ -219,8 +219,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	                   this.updateRealTimeAggregator(localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageR);
 	               }
 	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)){
-	        			   updateForPostAggregate(localKey+SEPERATOR+key, eventMap.get(GOORUID), 1L);
-	        			   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key);
+	        			   updateForPostAggregate(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString(), eventMap.get(GOORUID), 1L);
+	        			   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString());
 		                   this.updateRealTimeAggregator(localKey,key+SEPERATOR+entry.getKey().toString(), sumOf);
 		               }
 	                        
@@ -343,7 +343,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						}						
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) +SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ATTEMPTS,attemptTrySequence.length,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null);
@@ -459,15 +459,15 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		if(eventMap.get(CLASSPAGEGOORUOID) == null){
 	    		ColumnList<String> eventDetail = eventDetailDao.readEventDetail(eventMap.get(PARENTEVENTID));
 		    	if(eventDetail != null && eventDetail.size() > 0){
-		    		if(eventDetail.getStringValue("event_name", null) != null && (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
-		    			classPages.add(eventDetail.getStringValue("content_gooru_oid", null));
+		    		if(eventDetail.getStringValue(EVENT_NAME, null) != null && (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+		    			classPages.add(eventDetail.getStringValue(CONTENT_GOORU_OID, null));
 		    		}		    		
-		    		if(eventDetail.getStringValue("event_name", null) != null &&  (eventDetail.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-			    		if(eventDetail.getStringValue("parent_gooru_oid", null) == null || eventDetail.getStringValue("parent_gooru_oid", null).isEmpty()){
-			    			classPages = collectionItem.getParentId(eventDetail.getStringValue("content_gooru_oid", null));
+		    		if(eventDetail.getStringValue(EVENT_NAME, null) != null &&  (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			    		if(eventDetail.getStringValue(PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
+			    			classPages = collectionItem.getParentId(eventDetail.getStringValue(CONTENT_GOORU_OID, null));
 			    			classPages = this.getClassPagesFromItems(classPages);
 			    		}else{
-			    			classPages.add(eventDetail.getStringValue("parent_gooru_oid", null));
+			    			classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    		}
 		    		}
 		    	}
@@ -479,18 +479,18 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    		if(eventMap.get(CLASSPAGEGOORUOID) == null){
 	            ColumnList<String> R = eventDetailDao.readEventDetail(eventMap.get(PARENTEVENTID));
 	            if(R != null && R.size() > 0){
-	            	String parentEventId = R.getStringValue("parent_event_id", null);
+	            	String parentEventId = R.getStringValue(PARENT_EVENT_ID, null);
 	            	if(parentEventId != null ){
 	            		ColumnList<String> C = eventDetailDao.readEventDetail(parentEventId);
-	            		if(C.getStringValue("event_name", null) != null && (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
-			    			classPages.add(C.getStringValue("content_gooru_oid", null));
+	            		if(C.getStringValue(EVENT_NAME, null) != null && (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
+			    			classPages.add(C.getStringValue(CONTENT_GOORU_OID, null));
 			    		}
-			    		if(C.getStringValue("event_name", null) != null &&  (C.getStringValue("event_name", null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-				    		if(C.getStringValue("parent_gooru_oid", null) == null || C.getStringValue("parent_gooru_oid", null).isEmpty()){
-				    			classPages = collectionItem.getParentId(C.getStringValue("content_gooru_oid", null));
+			    		if(C.getStringValue(EVENT_NAME, null) != null &&  (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+				    		if(C.getStringValue(PARENT_GOORU_OID, null) == null || C.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
+				    			classPages = collectionItem.getParentId(C.getStringValue(CONTENT_GOORU_OID, null));
 				    			classPages = this.getClassPagesFromItems(classPages);
 				    		}else{
-				    			classPages.add(C.getStringValue("parent_gooru_oid", null));
+				    			classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
 				    		}
 			    		}
 	            	}

@@ -30,6 +30,8 @@ public interface Constants {
 	
 	public String PARENTEVENTID = "parentEventId";
 	
+	public String PARENT_EVENT_ID = "parent_event_id";
+	
 	public String CLASSPAGEGOORUOID= "classPageGooruId";
 	
 	public String VERSION = "version";
