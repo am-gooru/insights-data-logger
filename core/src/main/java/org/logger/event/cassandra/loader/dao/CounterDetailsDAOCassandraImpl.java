@@ -106,10 +106,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
+		logger.info("Collection play mode : {} ", eventMap.get(MODE).equalsIgnoreCase(STUDY));
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
+					logger.info("Collection play mode : {} ", this.isClasspageOwner(classPage));
 					if(!this.isClasspageOwner(classPage)){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
@@ -137,6 +139,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
+					logger.info("Collection Reource play mode : {} ", this.isClasspageOwner(classPage));
 					if(!this.isClasspageOwner(classPage)){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
@@ -415,19 +418,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}	
 	
 	public Long getAggregatorLongValue(String key,String columnName){
-		Column<String>  result = null;
+		ColumnList<String>  result = null;
 		Long score = 0L;
     	try {
     		 result = getKeyspace().prepareQuery(realTimeAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
 		
-    	score = result.getLongValue();
+		if (result.getLongValue(columnName, null) != null) {
+			score = result.getLongValue(columnName, null);
+    	}
     	return (score);
 		
 	}

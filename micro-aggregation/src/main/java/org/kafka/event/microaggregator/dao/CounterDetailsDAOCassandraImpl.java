@@ -413,19 +413,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}	
 	
 	public Long getAggregatorLongValue(String key,String columnName){
-		Column<String>  result = null;
+		ColumnList<String>  result = null;
 		Long score = 0L;
     	try {
     		 result = getKeyspace().prepareQuery(realTimeAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
 		
-    	score = result.getLongValue();
+		if (result.getLongValue(columnName, null) != null) {
+			score = result.getLongValue(columnName, null);
+    	}
     	return (score);
 		
 	}
