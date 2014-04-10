@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
@@ -97,4 +98,23 @@ public List<String> getParentId(String Key){
         ;
         
 	}
+
+	public int getIntegerValue(String key,String columnName){
+
+		ColumnList<String>  result = null;
+		int count = 0;
+    	try {
+    		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+        		    .getKey(key)
+        		    .execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data: {}" ,e);
+		}
+    	if (result.getIntegerValue(columnName, null) != null) {
+    		count = result.getIntegerValue(columnName, null);
+    	}
+    	return (count);
+	
+	}
+	
 }

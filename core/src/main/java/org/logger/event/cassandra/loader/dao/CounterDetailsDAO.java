@@ -30,5 +30,4 @@ public interface CounterDetailsDAO {
 
 	void updateCounter(String key,String columnName, long viewcount);
 	
-	void getIncrementer(EventData eventData); 
 }

@@ -325,9 +325,14 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			String collectionStatus = "in-progress";
+			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+				collectionStatus = "completed";
+			}
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_status",collectionStatus,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
