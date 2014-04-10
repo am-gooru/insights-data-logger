@@ -262,7 +262,6 @@ public class CassandraDataLoader implements Constants {
     public void handleLogMessage(EventData eventData) {
     	
     	// Increment Resource view counts for real time
-    	   counterDetailsDao.getIncrementer(eventData);
     	
     	this.getAndSetAnswerStatus(eventData);
     	

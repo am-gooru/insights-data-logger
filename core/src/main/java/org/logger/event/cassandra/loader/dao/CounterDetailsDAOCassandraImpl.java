@@ -349,10 +349,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 			long totalTimeSpent = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
 			long views = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName());
-			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
-			.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.AVGTS.getName(),(totalTimeSpent/views),null)
-			;
+			if(views != 0L){
+				m.withRow(realTimeAggregator, keyValue)
+				.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
+				.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.AVGTS.getName(),(totalTimeSpent/views),null)
+				;
+			}
 		}
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
