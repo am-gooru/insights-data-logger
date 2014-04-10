@@ -531,7 +531,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 	public boolean isClasspageOwner(String userUid){
 		
-		int isGroupOwner = classpage.getIntegerValue(userUid, "is_group_owner");
+		int isGroupOwner = classpage.getClassPageOwnerInfo(userUid);
 		
 		if(isGroupOwner == 1){
 			return true;	

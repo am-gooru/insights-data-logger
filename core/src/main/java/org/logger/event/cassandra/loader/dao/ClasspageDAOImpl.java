@@ -99,19 +99,24 @@ public List<String> getParentId(String Key){
         
 	}
 
-	public int getIntegerValue(String key,String columnName){
+	public int getClassPageOwnerInfo(String key){
 
-		ColumnList<String>  result = null;
+		Rows<String, String>  result = null;
 		int count = 0;
     	try {
     		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-        		    .getKey(key)
-        		    .execute().getResult();
+    		 	.searchWithIndex().setRowLimit(1)
+				.addExpression()
+				.whereColumn("gooru_uid")
+				.equals().value(key).execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data: {}" ,e);
 		}
-    	if (result.getIntegerValue(columnName, null) != null) {
-    		count = result.getIntegerValue(columnName, null);
+		
+    	if (result != null && !result.isEmpty()) {
+    		 for(Row<String, String> column : result){		 
+    			 count = column.getColumns().getIntegerValue("is_group_owner", 0);
+    		 }
     	}
     	return (count);
 	
