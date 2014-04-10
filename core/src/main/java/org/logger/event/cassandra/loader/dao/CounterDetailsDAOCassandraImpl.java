@@ -337,7 +337,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			}
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
-			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_status",collectionStatus,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
