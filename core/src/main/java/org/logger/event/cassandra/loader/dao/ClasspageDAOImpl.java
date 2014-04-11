@@ -99,10 +99,9 @@ public List<String> getParentId(String Key){
         
 	}
 
-	public int getClassPageOwnerInfo(String key){
+	public boolean getClassPageOwnerInfo(String key ,String classPageGooruOid){
 
 		Rows<String, String>  result = null;
-		int count = 0;
     	try {
     		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
     		 	.searchWithIndex().setRowLimit(1)
@@ -114,11 +113,16 @@ public List<String> getParentId(String Key){
 		}
 		
     	if (result != null && !result.isEmpty()) {
-    		 for(Row<String, String> column : result){		 
-    			 count = column.getColumns().getIntegerValue("is_group_owner", 0);
+      		 for(Row<String, String> column : result){	
+    			 String classId = column.getColumns().getStringValue("classpage_gooru_oid", null);
+    			int ownerStatus = column.getColumns().getIntegerValue("is_group_owner", null);
+    			 if(classId != null && classPageGooruOid.equalsIgnoreCase(classId) && ownerStatus == 1 ){
+    				 return true;
+    			 }
+    			 
     		 }
     	}
-    	return (count);
+    	return false;
 	
 	}
 	

@@ -110,17 +110,18 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
+					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					logger.info("Collection play mode : {} ", this.isClasspageOwner(classPage));
-					if(!this.isClasspageOwner(classPage)){
+					logger.info("Collection play mode : {} ", isOwner);
+					if(!isOwner){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					if(!this.isClasspageOwner(classPage)){
+					if(!isOwner){
 						this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
-					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID)) && !this.isClasspageOwner(classPage)){
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID)) && !isOwner){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -141,16 +142,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
-					logger.info("Collection Reource play mode : {} ", this.isClasspageOwner(classPage));
-					if(!this.isClasspageOwner(classPage)){
+					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
+					logger.info("Collection Reource play mode : {} ", isOwner);
+					if(!isOwner){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					if(!this.isClasspageOwner(classPage)){
+					if(!isOwner){
 						this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
-					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID)) && !this.isClasspageOwner(classPage)){
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID)) && !isOwner){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -532,19 +534,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	}
 	    	return classPages;
 	}
-
-	public boolean isClasspageOwner(String userUid){
-		
-		int isGroupOwner = classpage.getClassPageOwnerInfo(userUid);
-		
-		if(isGroupOwner == 1){
-			return true;	
-		}
-		
-		return false;
-		
-	}
-	
 	private long iterateAndFindAvg(String key){
 		ColumnList<String> columns = null;
 		long values = 0L;
