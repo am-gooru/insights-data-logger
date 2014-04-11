@@ -106,7 +106,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
-					logger.info("If row available {} ", this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)));
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
 					if(!isOwner){
@@ -139,7 +138,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
-					logger.info("Collection Reource play mode : {} ", isOwner);
 					if(!isOwner){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
@@ -452,10 +450,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		}
 		String storedSession = result.getStringValue(columnName, null);
 		if (storedSession != null && !storedSession.equalsIgnoreCase(currentSession)) {
-			logger.info("Is empty : {}",result.getStringValue(columnName, null));
 			return true;
     	}		
-		logger.info("Key : {} : columnaNmae :{}",key,columnName);
 		return false;
 		
 	}
