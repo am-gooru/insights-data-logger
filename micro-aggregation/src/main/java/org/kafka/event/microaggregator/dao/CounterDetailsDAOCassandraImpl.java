@@ -444,7 +444,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		Rows<String, String> stagedRecords = null;
     	try {
-    		stagedRecords = (getKeyspace().prepareQuery(realTimeAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		stagedRecords = (getKeyspace().prepareQuery(microAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 					 .getKeySlice(key)
 					 .withColumnSlice(columnName)
 					 .execute().getResult());
