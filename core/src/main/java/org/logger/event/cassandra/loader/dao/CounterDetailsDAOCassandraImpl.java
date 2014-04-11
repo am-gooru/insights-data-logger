@@ -444,21 +444,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 
 	private boolean isRowAvailable(String key,String columnName){
-		
-		Column<String> stagedRecords = null;
+		ColumnList<String>  result = null;
     	try {
-    		stagedRecords = (getKeyspace().prepareQuery(microAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-					 .getKey(key)
-					 .getColumn(columnName)
-					 .execute().getResult());
+    		 result = getKeyspace().prepareQuery(realTimeAggregator)
+    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+        		    .getKey(key)
+        		    .execute().getResult();
 		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data : {}" ,e);
+			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		logger.info("Key : {} : columnaNmae :{}",key,columnName);
-		logger.info("Is empty : {}",stagedRecords);
-		if(stagedRecords != null){
+		if (result.getStringValue(columnName, null) != null) {
+			logger.info("Is empty : {}",result.getStringValue(columnName, null));
 			return true;
-		}
+    	}		
+		logger.info("Key : {} : columnaNmae :{}",key,columnName);
 		return false;
 		
 	}
