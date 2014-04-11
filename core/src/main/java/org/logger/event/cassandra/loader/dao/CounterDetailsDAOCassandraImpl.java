@@ -106,13 +106,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
-		logger.info("Collection play mode : {} ", eventMap.get(MODE).equalsIgnoreCase(STUDY));
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
+					logger.info("If row available {} ", this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID)));
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					logger.info("Collection play mode : {} ", isOwner);
 					if(!isOwner){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
@@ -444,19 +443,23 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 	}
 
-	private boolean isRowAvailable(String key,String ... columnName){
+	private boolean isRowAvailable(String key,String columnName){
 		
-		Rows<String, String> stagedRecords = null;
+		Column<String> stagedRecords = null;
     	try {
     		stagedRecords = (getKeyspace().prepareQuery(microAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-					 .getKeySlice(key)
-					 .withColumnSlice(columnName)
+					 .getKey(key)
+					 .getColumn(columnName)
 					 .execute().getResult());
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data : {}" ,e);
 		}
-		
-		return !stagedRecords.isEmpty();
+		logger.info("Key : {} : columnaNmae :{}",key,columnName);
+		logger.info("Is empty : {}",stagedRecords);
+		if(stagedRecords != null){
+			return true;
+		}
+		return false;
 		
 	}
 	

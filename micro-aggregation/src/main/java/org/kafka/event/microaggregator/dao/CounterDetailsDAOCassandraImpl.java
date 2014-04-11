@@ -48,7 +48,6 @@ import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
 public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl implements CounterDetailsDAO,Constants {
 	
@@ -440,19 +439,23 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 	}
 
-	private boolean isRowAvailable(String key,String ... columnName){
+	private boolean isRowAvailable(String key,String  columnName){
 		
-		Rows<String, String> stagedRecords = null;
+		Column<String> stagedRecords = null;
     	try {
     		stagedRecords = (getKeyspace().prepareQuery(microAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-					 .getKeySlice(key)
-					 .withColumnSlice(columnName)
+					 .getKey(key)
+					 .getColumn(columnName)
 					 .execute().getResult());
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data : {}" ,e);
 		}
-		
-		return !stagedRecords.isEmpty();
+		logger.info("Key : {} : columnaNmae :{}",key,columnName);
+		logger.info("Is empty : {}",stagedRecords);
+		if(stagedRecords != null){
+			return true;
+		}
+		return false;
 		
 	}
 	
