@@ -248,7 +248,7 @@ public class MicroAggregationLoader implements Constants{
     				eventMap.put("answer_status", answerStatus);
 			    }
 		    } else if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
-		    	if(rawMap != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID).toString() != null){
+		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID) != null && rawMap.get(SESSIONID).toString() != null){
 			    	score = rawMap.get(SCORE).toString();
 			    	eventMap.put("score", score);
 			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
