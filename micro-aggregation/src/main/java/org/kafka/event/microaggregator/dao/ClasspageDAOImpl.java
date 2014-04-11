@@ -104,7 +104,7 @@ public List<String> getParentId(String Key){
 		Rows<String, String>  result = null;
     	try {
     		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-    		 	.searchWithIndex().setRowLimit(1)
+    		 	.searchWithIndex()
 				.addExpression()
 				.whereColumn("gooru_uid")
 				.equals().value(key).execute().getResult();
