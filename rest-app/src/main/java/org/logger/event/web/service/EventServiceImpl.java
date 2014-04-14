@@ -159,7 +159,7 @@ public class EventServiceImpl implements EventService {
 		ColumnList<String> activityJsons;
 
 		activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
-		if(activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0) {
+		if((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
 			activityJsons = activityStreamDao.readLastNcolumns(userUid, eventsToRead);
 		}	
 		for (Column<String> activityJson : activityJsons) {
