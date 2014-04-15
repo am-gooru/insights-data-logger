@@ -444,7 +444,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	private boolean isRowAvailable(String key,String  columnName,String currentSession){
 		ColumnList<String>  result = null;
     	try {
-    		 result = getKeyspace().prepareQuery(realTimeAggregator)
+    		 result = getKeyspace().prepareQuery(microAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
         		    .execute().getResult();
