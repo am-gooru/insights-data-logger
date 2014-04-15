@@ -240,8 +240,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		               }
 	                        
 	        	}
-	        }
-	        for(String localKey : keysList){
 	        	this.realTimeAggregator(localKey,eventMap);
 	        }
     	}
