@@ -117,7 +117,7 @@ public List<String> getParentId(String Key){
       		 for(Row<String, String> column : result){	
       			 String classId = column.getColumns().getStringValue("classpage_gooru_oid", null);
       			 int ownerStatus = column.getColumns().getIntegerValue("is_group_owner", null);
-    			 if(classId != null && classPageGooruOid.equalsIgnoreCase(classId) && ownerStatus == 1 ){
+    			 if(classId != null && classPageGooruOid != null && classPageGooruOid.equalsIgnoreCase(classId) && ownerStatus == 1 ){
     				 return true;
     			 }
     			 

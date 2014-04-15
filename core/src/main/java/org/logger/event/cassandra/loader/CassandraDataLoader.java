@@ -641,7 +641,7 @@ public class CassandraDataLoader implements Constants {
 	    			continue;
 	    		}
 	    		String eventSource = row.getColumns().getStringValue("event_source", null);
-	    		if((searchType.equalsIgnoreCase(LoaderConstants.CQPD.getName())
+	    		if(eventSource != null && (searchType.equalsIgnoreCase(LoaderConstants.CQPD.getName())
 	    				|| searchType.equalsIgnoreCase(LoaderConstants.CQRPD.getName())
 	    				|| searchType.equalsIgnoreCase(LoaderConstants.QPD.getName()) 
 	    				|| searchType.equalsIgnoreCase(LoaderConstants.RPD.getName()) 
