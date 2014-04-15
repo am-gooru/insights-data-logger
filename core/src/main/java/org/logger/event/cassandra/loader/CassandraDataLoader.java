@@ -640,19 +640,6 @@ public class CassandraDataLoader implements Constants {
 	    		if(searchType.equalsIgnoreCase("session-expired")) {
 	    			continue;
 	    		}
-	    		String eventSource = row.getColumns().getStringValue("event_source", null);
-	    		if(eventSource != null && (searchType.equalsIgnoreCase(LoaderConstants.CQPD.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CQRPD.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.QPD.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.RPD.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CRPD.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CPD.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CRPV1.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CPV1.getName()))
-	    				
-	    				&& eventSource.equalsIgnoreCase(LoaderConstants.ESKL.getName())){
-	    			continue;
-	        	}
 	    		//Skip Duplicate events
 	    		if(searchType.equalsIgnoreCase(LoaderConstants.CP.getName()) 
 	    				|| searchType.equalsIgnoreCase(LoaderConstants.CPD.getName()) 
