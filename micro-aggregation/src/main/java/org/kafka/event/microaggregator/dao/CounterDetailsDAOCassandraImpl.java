@@ -192,16 +192,15 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
 	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 	    				String answerStatus = null;
-	    				if(attempStatus.length == 0){
-	    					answerStatus = LoaderConstants.SKIPPED.getName();
-	        			}else {
-	    	    			if(attempStatus[0] == 1){
-	    	    				answerStatus = LoaderConstants.CORRECT.getName();
-	    	    			}else if(attempStatus[0] == 0){
-	    	    				answerStatus = LoaderConstants.INCORRECT.getName();
-	    	    			}
-	        			}	
-	    				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+						if(attempStatus[0] == 1){
+							answerStatus = LoaderConstants.CORRECT.getName();
+						}else if(attempStatus[0] == 0){
+							answerStatus = LoaderConstants.INCORRECT.getName();
+						}
+	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	    	    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    	    			answerStatus = 	option;
+	    	    		}
 	    				String openEndedText = eventMap.get(TEXT);
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
@@ -209,7 +208,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    					updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
 
 	    				updatePostAggregator(localKey,key+SEPERATOR+option);
-	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){	    					
+	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
 	    					updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
 	    					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
 	    				}
