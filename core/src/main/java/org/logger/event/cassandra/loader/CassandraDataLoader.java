@@ -342,12 +342,25 @@ public class CassandraDataLoader implements Constants {
 
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException{
     
+    	String userUid = null;
+    	String organizationUid = null;
+    	
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
     	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
     	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
+    	
+    	if (eventMap != null && eventMap.get("gooruUId") != null) {
+				 try {
+					 userUid = eventMap.get("gooruUId");
+					 organizationUid = dimUser.getOrganizationUid(userUid);
+				 } catch (Exception e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 }
+    	eventMap.put("organizationUid",organizationUid);
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));

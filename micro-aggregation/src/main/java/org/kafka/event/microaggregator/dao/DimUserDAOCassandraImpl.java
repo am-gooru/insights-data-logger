@@ -79,5 +79,23 @@ public class DimUserDAOCassandraImpl extends BaseDAOCassandraImpl implements Dim
 		}
 		return userName;
 	}
+	
+	public String getOrganizationUid(String userUid) throws ConnectionException{
+		String organizationUid = null;
+		Rows<String, String> user = getKeyspace().prepareQuery(dimUserCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+		.searchWithIndex()
+		.addExpression()
+		.whereColumn("gooru_uid").equals().value(userUid)
+		.execute().getResult();
+		for (Row<String, String> userRow : user) {
+			Map<String, Object> columnMap = new HashMap<String, Object>();
+			for (Column<String> column : userRow.getColumns()) {
+				if (column.getName().equalsIgnoreCase("organization_uid")) {
+					organizationUid =  column.getStringValue();
+				}
+			}
+		}
+		return organizationUid;
+	}
 
 }

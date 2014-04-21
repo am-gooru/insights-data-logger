@@ -124,7 +124,8 @@ public class MicroAggregationLoader implements Constants{
     }
     
     public void microRealTimeAggregation(String eventJSON) throws JSONException{
-
+    	String userUid = null;
+    	String organizationUid = null;
     	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
     	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
@@ -133,6 +134,15 @@ public class MicroAggregationLoader implements Constants{
     	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
+    	if (eventMap != null && eventMap.get("gooruUId") != null) {
+				 try {
+					 userUid = eventMap.get("gooruUId");
+					 organizationUid = dimUser.getOrganizationUid(userUid);
+				 } catch (Exception e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 }
+    	eventMap.put("organizationUid",organizationUid);
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	
