@@ -211,6 +211,7 @@ logger.info("GooruUId : {}",GooruUId);
                 .putColumnIfNotNull("user",eventObject.getUser().toString(),null)
                 .putColumnIfNotNull("context",eventObject.getContext().toString(),null)
         		.putColumnIfNotNull("event_type",eventObject.getEventType().toString(),null)
+        		.putColumnIfNotNull("organization_uid",eventObject.getOrganizationUid(),null)
         		.putColumnIfNotNull("parent_event_id",eventObject.getParentEventId(), null);
         try {
             m.execute();

@@ -65,6 +65,16 @@ public class EventObject implements Serializable {
 
 	private String eventType;
 	
+	private String organizationUid;
+	
+	public String getOrganizationUid() {
+		return organizationUid;
+	}
+
+	public void setOrganizationUid(String organizationUid) {
+		this.organizationUid = organizationUid;
+	}
+
 	public String getEventType() {
 		return eventType;
 	}

@@ -64,6 +64,8 @@ public class EventObject implements Serializable {
 	private String version;
 
 	private String eventType;
+
+	private String organizationUid;
 	
 	public String getEventType() {
 		return eventType;
@@ -71,6 +73,14 @@ public class EventObject implements Serializable {
 
 	public void setEventType(String eventType) {
 		this.eventType = eventType;
+	}
+
+	public String getOrganizationUid() {
+		return organizationUid;
+	}
+
+	public void setOrganizationUid(String organizationUid) {
+		this.organizationUid = organizationUid;
 	}
 
 	public String getParentEventId() {
