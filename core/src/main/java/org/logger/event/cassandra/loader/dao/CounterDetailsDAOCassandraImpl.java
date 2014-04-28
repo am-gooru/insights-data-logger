@@ -24,7 +24,14 @@ package org.logger.event.cassandra.loader.dao;
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -99,6 +106,35 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
     }
     
+    public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
+    	String contentGooruOId = "";
+		String eventName = "";
+		String gooruUId = "";
+		
+		if(eventMap.containsKey(EVENTNAME) && eventMap.containsKey(GOORUID)) {
+			contentGooruOId = eventMap.get(CONTENTGOORUOID);
+			gooruUId = eventMap.get(GOORUID);
+			eventName = eventMap.get(EVENTNAME);
+			Calendar currentDate = Calendar.getInstance(); //Get the current date			
+			int week = currentDate.get(Calendar.WEEK_OF_MONTH);
+			int month = currentDate.get(Calendar.MONTH);
+			month = month + 1;
+			int year = currentDate.get(Calendar.YEAR);
+			int date = currentDate.get(Calendar.DATE);
+
+			List<String> returnDate = new ArrayList<String>();
+			returnDate.add(year+month+date+SEPERATOR+eventName);
+			returnDate.add(year+SEPERATOR+month+SEPERATOR+week+SEPERATOR+eventName);
+			returnDate.add(year+SEPERATOR+month+SEPERATOR+eventName);
+			returnDate.add(year+SEPERATOR+eventName);
+
+			for(String key : returnDate) {
+				updateCounter(key,contentGooruOId+SEPERATOR+VIEWS,1);
+				updateCounter(key,gooruUId+SEPERATOR+VIEWS,1);
+				updateCounter(key,""+SEPERATOR+VIEWS,1);
+			}
+		}
+    }
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
     	List<String> classPages = this.getClassPages(eventMap);

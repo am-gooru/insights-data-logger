@@ -82,6 +82,8 @@ public interface Constants {
 	
 	public String TEXT = "text";
 	
+	public String VIEWS = "views";
+	
 	public String QUESTION = "question";
 
 	public String ATTMPTTRYSEQ = "attemptTrySequence";
