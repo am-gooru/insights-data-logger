@@ -24,14 +24,9 @@ package org.logger.event.cassandra.loader.dao;
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,7 +105,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	String contentGooruOId = "";
 		String eventName = "";
 		String gooruUId = "";
-		
+		long start = System.currentTimeMillis();
 		if(eventMap.containsKey(EVENTNAME) && eventMap.containsKey(GOORUID)) {
 			contentGooruOId = eventMap.get(CONTENTGOORUOID);
 			gooruUId = eventMap.get(GOORUID);
@@ -123,17 +118,25 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			int date = currentDate.get(Calendar.DATE);
 
 			List<String> returnDate = new ArrayList<String>();
-			returnDate.add(year+month+date+SEPERATOR+eventName);
+			returnDate.add(year+SEPERATOR+month+SEPERATOR+date+SEPERATOR+eventName);
 			returnDate.add(year+SEPERATOR+month+SEPERATOR+week+SEPERATOR+eventName);
 			returnDate.add(year+SEPERATOR+month+SEPERATOR+eventName);
 			returnDate.add(year+SEPERATOR+eventName);
-
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : returnDate) {
-				updateCounter(key,contentGooruOId+SEPERATOR+VIEWS,1);
-				updateCounter(key,gooruUId+SEPERATOR+VIEWS,1);
-				updateCounter(key,""+SEPERATOR+VIEWS,1);
+				generateCounter(key,contentGooruOId+SEPERATOR+VIEWS,1, m);
+				generateCounter(key,gooruUId+SEPERATOR+VIEWS,1, m);
+				generateCounter(key,VIEWS,1,m);
 			}
+			try {
+	            m.execute();
+	        } catch (ConnectionException e) {
+	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+	        }
 		}
+		
+		long stop = System.currentTimeMillis();
+		logger.info("Time spent for counters : {}",(stop-start));	
     }
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
@@ -201,24 +204,25 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 		if(keysList != null && keysList.size() > 0 ){
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
+			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
 		}
      }
     
-    public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
-    	
+    public void postAggregatorUpdate(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
     	JSONObject j = new JSONObject(aggregatorJson);
-
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
     	
     	for (Entry entry : entrySet) {
+
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
 	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-	        			updateCounter(localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
-	        			updatePostAggregator(localKey,key+SEPERATOR+entry.getKey().toString());
+	        			long value = this.getCounterLongValue(localKey, key+SEPERATOR+entry.getKey().toString());
+	        	    	this.generateAggregator(localKey, key+SEPERATOR+entry.getKey().toString(),value,m);
 					}
 	        		
 	        		if(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
@@ -238,12 +242,63 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    					updateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()));
+	    				long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
+	        	    	this.generateAggregator(localKey,key+SEPERATOR+option,value,m);
+	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+	    					long values = this.getCounterLongValue(localKey,key+SEPERATOR+answerStatus);
+		        	    	this.generateAggregator(localKey,key+SEPERATOR+answerStatus,values,m);
+	    				}
+					}
+	        		
+	        	}	
+	        	this.realTimeAggregator(localKey,eventMap);
+	        }
+    	
+    	}
+    	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+    }
+    public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
+    	
+    	JSONObject j = new JSONObject(aggregatorJson);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
+    	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
+    	
+    	for (Entry entry : entrySet) {
+        	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
+        	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
+	        for(String localKey : keysList){
+	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
+	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+	        			generateCounter(localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+					}
+	        		
+	        		if(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+	    				String answerStatus = null;
+						if(attempStatus[0] == 1){
+							answerStatus = LoaderConstants.CORRECT.getName();
+						}else if(attempStatus[0] == 0){
+							answerStatus = LoaderConstants.INCORRECT.getName();
+						}
+	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	    	    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    	    			answerStatus = 	option;
+	    	    		}
+	    				String openEndedText = eventMap.get(TEXT);
+	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+	    					option = "A";
+	    				}
+	    				generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
 
 	    				updatePostAggregator(localKey,key+SEPERATOR+option);
 	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
-	    					updateCounter(localKey ,key+SEPERATOR+answerStatus,1L);
-	    					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+	    					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
 	    				}
 					}
 	        		
@@ -272,9 +327,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		               }
 	                        
 	        	}
-	        	this.realTimeAggregator(localKey,eventMap);
 	        }
     	}
+    	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
     }
     /**
      * @param key,columnName,count
@@ -293,6 +352,16 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         }
     }
 
+    public void generateCounter(String key,String columnName, long count ,MutationBatch m) {
+        m.withRow(realTimeCounter, key)
+        .incrementCounterColumn(columnName, count);
+    }
+    
+    public void generateAggregator(String key,String columnName, long count,MutationBatch m ) {
+        m.withRow(realTimeAggregator, key)
+        .putColumnIfNotNull(columnName, count);
+    }
+        
     public void updateAggregator(String key,String columnName, long count ) {
 
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);

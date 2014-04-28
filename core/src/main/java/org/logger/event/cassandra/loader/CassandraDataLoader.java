@@ -383,7 +383,7 @@ public class CassandraDataLoader implements Constants {
       
 		if (eventObject.getFields() != null) {
 			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-			kafkaLogWriter.sendEventLog(eventObject.getFields());
+//			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
    
 
@@ -402,8 +402,14 @@ public class CassandraDataLoader implements Constants {
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-	    	microAggregator.sendEventForAggregation(eventObject.getFields());
-	    	//counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+	    	//microAggregator.sendEventForAggregation(eventObject.getFields());
+	    	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+	    	try {
+				counterDetailsDao.callCounters(eventMap);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+	    	
 		}
 		
 		if(aggregatorJson != null  && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
