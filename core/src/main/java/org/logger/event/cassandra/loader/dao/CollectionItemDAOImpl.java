@@ -64,7 +64,7 @@ public List<String> getParentId(String Key){
 	try {
 		collectionItem = getKeyspace().prepareQuery(collectionItemCF)
 			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-		 	.searchWithIndex().setRowLimit(1)
+		 	.searchWithIndex()
 			.addExpression()
 			.whereColumn("resource_gooru_oid")
 			.equals()

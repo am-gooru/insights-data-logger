@@ -1,5 +1,5 @@
 /*******************************************************************************
- * CollectionItemDAOImpl.java
+ * CollectionIte`mDAOImpl.java
  * insights-event-logger
  * Created by Gooru on 2014
  * Copyright (c) 2014 Gooru. All rights reserved.
@@ -21,14 +21,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
-package org.kafka.event.microaggregator.dao;
+package org.logger.event.cassandra.loader.dao;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
-import org.kafka.event.microaggregator.core.Constants;
+import org.logger.event.cassandra.loader.CassandraConnectionProvider;
+import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,62 +39,49 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.serializers.StringSerializer;
 
-public class CollectionItemDAOImpl extends BaseDAOCassandraImpl implements CollectionItemDAO,Constants{
+public class ContentClassificationDAOImpl extends BaseDAOCassandraImpl implements ContentClassificationDAO,Constants{
 
-	 private static final Logger logger = LoggerFactory.getLogger(CollectionItemDAOImpl.class);
+	 private static final Logger logger = LoggerFactory.getLogger(ContentClassificationDAOImpl.class);
 
-	 private final ColumnFamily<String, String> collectionItemCF;
+	 private final ColumnFamily<String, String> contentClassificationCF;
 	 
-	 private static final String CF_COLLECTION_ITEM_NAME = "collection_item";
+	 private static final String CF_CONTENT_CLASSIFICATION = "dim_content_classification";
 	    
-	public CollectionItemDAOImpl(CassandraConnectionProvider connectionProvider) {
+	public ContentClassificationDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
-		collectionItemCF = new ColumnFamily<String, String>(
-				CF_COLLECTION_ITEM_NAME, // Column Family Name
+		contentClassificationCF = new ColumnFamily<String, String>(
+				CF_CONTENT_CLASSIFICATION, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
         
 	}
 	
-	public List<String> getParentId(String Key){
-	
-		Rows<String, String> collectionItem = null;
-		List<String> classPages = new ArrayList<String>();
-		String parentId = null;
+public Long[] getParentId(String Key){
+
+	Rows<String, String> resourceMappings = null;
+	Long[] codeIds = null ;
+	Long codeId = 0L;
 		try {
-			collectionItem = getKeyspace().prepareQuery(collectionItemCF)
+			resourceMappings = getKeyspace().prepareQuery(contentClassificationCF)
 				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-			 	.searchWithIndex()
+			 	.searchWithIndex().setRowLimit(1)
 				.addExpression()
-				.whereColumn("resource_gooru_oid")
+				.whereColumn("gooru_oid")
 				.equals()
 				.value(Key).execute().getResult();
-		} catch (ConnectionException e) {
-			
+			} catch (ConnectionException e) {
 			logger.info("Error while retieveing data : {}" ,e);
 		}
-		if(collectionItem != null){
-			for(Row<String, String> collectionItems : collectionItem){
-				parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue() == null ? "NA" : collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
-				classPages.add(parentId);
+		
+			if(resourceMappings != null){
+			codeIds = new Long[resourceMappings.size()];
+			for(Row<String, String> collectionItems : resourceMappings){ 
+				int i = 1;
+				codeId =  collectionItems.getColumns().getColumnByName("code_id").getLongValue() == 0L ? 0L : collectionItems.getColumns().getColumnByName("code_id").getLongValue();
+				codeIds[i] = codeId;
+				i++;
 			 }
 		}
-		return classPages; 
-		}
-
-
-	public void updateCollectionItem(Map<String ,String> eventMap){
-	
-	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	
-	 m.withRow(collectionItemCF, eventMap.get(COLLECTIONITEMID))
-	 .putColumnIfNotNull(CONTENT_ID,eventMap.get(CONTENTID))
-	 .putColumnIfNotNull(PARENT_CONTENT_ID,eventMap.get(PARENTCONTENTID))
-	 .putColumnIfNotNull(RESOURCE_GOORU_OID,eventMap.get(CONTENT_GOORU_OID))
-	 .putColumnIfNotNull(COLLECTION_GOORU_OID,eventMap.get(PARENT_GOORU_OID))
-	 .putColumnIfNotNull(ITEM_SEQUENCE,eventMap.get(ITEMSEQUENCE))
-	 .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
-	;
-
-}
+		return codeIds; 
+	} 
 }
