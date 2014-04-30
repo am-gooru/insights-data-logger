@@ -78,6 +78,8 @@ public interface Constants {
 	
 	public String STOP = "stop";
 	
+	public String START = "start";
+	
 	public String ANS = "answers";
 	
 	public String TEXT = "text";
@@ -103,6 +105,8 @@ public interface Constants {
 	public String FIELDS = "fields";
 		
 	public String START_TIME = "start_time";
+	
+	public String STARTTIME = "startTime";
 	
 	public String END_TIME = "end_time";
 	

@@ -25,8 +25,10 @@ package org.logger.event.cassandra.loader.dao;
  ******************************************************************************/
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -78,6 +80,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private ClasspageDAOImpl classpage;
     
+    private SimpleDateFormat secondsDateFormatter;
+    
     public CounterDetailsDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -99,6 +103,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
+        this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
     }
     
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
@@ -143,6 +148,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
+		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) && eventMap.get(TYPE).equalsIgnoreCase(START)){
+			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
+	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
+			this.addSession( eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+		}
+		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
@@ -558,26 +570,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 	}
 	
-	private String getSession(String key,String columnName){
-		
-		String session = null; 
-		
-		Column<String> stagedRecords = null;
-    	try {
-    		stagedRecords = (getKeyspace().prepareQuery(realTimeAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-					 .getKey(key)
-					 .getColumn(columnName)
-					 .execute().getResult());
-		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data : {}" ,e);
-		}
-		
-		if(stagedRecords != null){
-			session = stagedRecords.getStringValue();
-		}
-		return session;
-		
-	}
 	private List<String> getClassPages(Map<String,String> eventMap){
     	List<String> classPages = new ArrayList<String>();
     	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null){
@@ -679,26 +671,18 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    		this.updateRealTimeAggregator(localKey,columnToUpdate, average);
 	    	}
     	}
-
-	private void clearAggregatoRow(String key){
-		
-		MutationBatch m = getKeyspace().prepareMutationBatch();
-		m.withRow(realTimeAggregator, key).delete();
-		try {
-			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Error while clearing counters : {}",e);
-		}
-	}
 	
-	private void clearCounterRow(String key){
-		MutationBatch m = getKeyspace().prepareMutationBatch();
-		m.withRow(realTimeCounter, key).delete();
-		try {
-			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Error while clearing counters : {}",e);
-		}
-	}
+	public void addSession(String rowKey,String columnName,String value){
 
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		m.withRow(microAggregator, rowKey)
+		.putColumnIfNotNull(columnName, value)
+		;
+		 try{
+	         	m.execute();
+	         } catch (ConnectionException e) {
+	         	logger.info("Error while adding session - ", e);
+	         }
+	}
 }
