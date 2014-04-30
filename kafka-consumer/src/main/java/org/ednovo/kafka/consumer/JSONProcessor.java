@@ -25,6 +25,7 @@ package org.ednovo.kafka.consumer;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventObject;
 
 import com.google.gson.Gson;
 
@@ -44,15 +45,6 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		}
 		
 		long startTime = System.currentTimeMillis(), firstStartTime = System.currentTimeMillis();
-		EventData eventData = null;
-		try {
-			eventData = gson.fromJson(jsonRowObject, EventData.class);
-			eventData.setFields(jsonRowObject);
-			
-		} catch (Exception e) {
-			LOG.error("Had a problem trying to parse JSON from the raw line {}", jsonRowObject, e);
-			return;
-		}
 		
 		if(row == null) {
 			LOG.error("The row was null. This is invalid");
@@ -60,9 +52,27 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		}
 		
 		// Override and set fields to be the original log message / JSON. 
-        eventData.setFields(jsonRowObject);
-        
-		getNextRowHandler().processRow(eventData);
+	      EventData eventData = null;
+	        EventObject eventObject = null;
+	        try {
+	            eventData = gson.fromJson(jsonRowObject, EventData.class);
+	            eventData.setFields(jsonRowObject);
+	            getNextRowHandler().processRow(eventData);
+	            eventObject = gson.fromJson(jsonRowObject, EventObject.class);
+	        } catch (Exception e) {
+	            LOG.error("Had a problem trying to parse JSON from the raw line {}", jsonRowObject, e);
+	            return;
+	        }
+	        try {
+	            eventObject = gson.fromJson(jsonRowObject, EventObject.class);
+	            eventObject.setFields(jsonRowObject);        
+	            getNextRowHandler().processRow(eventObject);
+	        } catch (Exception e) {
+	            LOG.error("Had a problem trying to parse EventObject JSON from the raw line {}", jsonRowObject, e);
+	            return;
+	        }
+
+	        
 		long partEndTime = System.currentTimeMillis();
 		LOG.trace("Cassandra update: {} ms : Total : {} ms " , (partEndTime - startTime),  (partEndTime  - firstStartTime));
 	}

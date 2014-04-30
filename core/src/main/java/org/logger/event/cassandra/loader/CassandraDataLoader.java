@@ -154,6 +154,16 @@ public class CassandraDataLoader implements Constants {
     public CassandraDataLoader(Map<String, String> configOptionsMap) {
         init(configOptionsMap);
         this.gson = new Gson();
+
+        String KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
+        String KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
+        String KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
+        String KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
+        String KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
+        String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
+        String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
+        
+        kafkaLogWriter = new KafkaLogProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
     }
 
     public static long getTimeFromUUID(UUID uuid) {
