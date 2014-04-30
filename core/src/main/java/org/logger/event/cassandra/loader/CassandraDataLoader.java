@@ -374,6 +374,7 @@ public class CassandraDataLoader implements Constants {
     	eventMap.put("organizationUId",eventObject.getOrganizationUid());
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
+    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
