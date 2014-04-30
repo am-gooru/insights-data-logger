@@ -205,12 +205,12 @@ logger.info("GooruUId : {}",GooruUId);
                 .putColumnIfNotNull("content_gooru_oid",eventObject.getContentGooruId(),null)
                 .putColumnIfNotNull("parent_gooru_oid",eventObject.getParentGooruId(),null)
                 .putColumnIfNotNull("event_name", eventObject.getEventName(),null)
-                .putColumnIfNotNull("session",eventObject.getSession().toString(),null)
-                .putColumnIfNotNull("metrics",eventObject.getMetrics().toString(),null)
-                .putColumnIfNotNull("pay_load_object",eventObject.getPayLoadObject().toString(),null)
-                .putColumnIfNotNull("user",eventObject.getUser().toString(),null)
-                .putColumnIfNotNull("context",eventObject.getContext().toString(),null)
-        		.putColumnIfNotNull("event_type",eventObject.getEventType().toString(),null)
+                .putColumnIfNotNull("session",eventObject.getSession(),null)
+                .putColumnIfNotNull("metrics",eventObject.getMetrics(),null)
+                .putColumnIfNotNull("pay_load_object",eventObject.getPayLoadObject(),null)
+                .putColumnIfNotNull("user",eventObject.getUser(),null)
+                .putColumnIfNotNull("context",eventObject.getContext(),null)
+        		.putColumnIfNotNull("event_type",eventObject.getEventType(),null)
         		.putColumnIfNotNull("organization_uid",eventObject.getOrganizationUid(),null)
         		.putColumnIfNotNull("parent_event_id",eventObject.getParentEventId(), null);
         try {

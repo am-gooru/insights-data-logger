@@ -98,11 +98,7 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         		logger.warn("EventName or Context is empty. This is an error in EventObject");
         		return;
          	}
-         	
-        	if (eventObject.getFields() == null || eventObject.getFields().isEmpty()) {
-                logger.warn("fields are empty. This is an error in EventObject");
-                return;
-            }
+
         	eventObjectValidator.validateEventObject(eventObject);
          	dataLoader.handleEventObjectMessage(eventObject);
          }

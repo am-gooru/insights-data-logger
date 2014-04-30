@@ -29,6 +29,8 @@ import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.EventObjectValidator;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "5673eaa7-15e3-4d6b-b3ef-5f7729c82de3";
 	private final String EVENT_SOURCE = "kafka-logged";
+	private EventObjectValidator eventObjectValidator;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
 	public CassandraProcessor() {
@@ -49,43 +52,62 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	}
 
 	protected void init() {
-
 		gson = new Gson();
 		dataLoader = new CassandraDataLoader();
-
+		eventObjectValidator = new EventObjectValidator(null);
 	}
 
 	@Override
 	public void handleRow(Object row) throws Exception {
 
-        if (row == null || !(row instanceof EventData)) {
-            logger.warn("row null or not instance of EventData. This is an error");
-            return;
-        }
-        EventData eventData = (EventData) row;
+        if (row != null && (row instanceof EventData)) {
+      
+           EventData eventData = (EventData) row;
+           /*
+            * Skip new version  events  
+            */
+           if(eventData.getVersion() != null){
+           	return;
+           }
+           logger.info("EventName : {}",eventData.getEventName());
+           cleanseData(eventData);
 
-        cleanseData(eventData);
-        
-        if (eventData.getVersion() != null || eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
-            return;
-        }
+           if (eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
+           	return;
+           }
+           // Update into Cassandra through logger-core
+           String fields = eventData.getFields();
+           if (fields == null || fields.isEmpty()) {
+               logger.warn("fields is empty. This is an error");
+               return;
+           }
+           
+   		if ( "Add%20Segment%20Name".equalsIgnoreCase(eventData.getQuery()) ||  "*".equalsIgnoreCase(eventData.getQuery())){
+   			return;
+   		}  
+           eventData.setApiKey(GOORU_EVENT_LOGGER_API_KEY);
+           eventData.setEventSource(EVENT_SOURCE);
+           dataLoader.handleLogMessage(eventData);
+           
+           handleRowByNextHandler(eventData);
+       }
+        if (row != null && (row instanceof EventObject)) {
+       	
+       	 EventObject eventObject = (EventObject) row;
+        	
+       	 if(eventObject.getVersion() == null){
+            	return;
+            }
+       	 
+       	if (eventObject.getEventName() == null || eventObject.getEventName().isEmpty() || eventObject.getContext() == null) {
+       		logger.warn("EventName or Context is empty. This is an error in EventObject");
+       		return;
+        	}
 
-        // Update into Cassandra through logger-core
-        String fields = eventData.getFields();
-        if (fields == null || fields.isEmpty()) {
-            logger.warn("fields is empty. This is an error");
-            return;
+       	eventObjectValidator.validateEventObject(eventObject);
+        	dataLoader.handleEventObjectMessage(eventObject);
         }
-        
-		if ( "Add%20Segment%20Name".equalsIgnoreCase(eventData.getQuery()) ||  "*".equalsIgnoreCase(eventData.getQuery())){
-			return;
-		}  
-        eventData.setEventSource(EVENT_SOURCE);
-        dataLoader.handleLogMessage(eventData);
-        logger.info("Pushing data from kafka-consumer:" + fields.toString() );
-        
-        handleRowByNextHandler(eventData);
-    }
+	}
         public void updateToStaging(String statTime,String endTime,String eventName){
         	try {
 				dataLoader.updateStaging(statTime, endTime,eventName);
