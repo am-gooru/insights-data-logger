@@ -171,4 +171,6 @@ public interface Constants {
 	public String SCORE = "score";
 	
     public String SESSIONID = "sessionId";
+    
+    public String QUESTION_COUNT = "question_count";
 }

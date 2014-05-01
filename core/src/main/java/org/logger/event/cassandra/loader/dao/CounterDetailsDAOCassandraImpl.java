@@ -86,6 +86,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private SimpleDateFormat secondsDateFormatter;
     
+    private long questionCountInQuiz = 0L;
+    
     public CounterDetailsDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -165,6 +167,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
+			questionCountInQuiz = this.getQuestionCount(eventMap);
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
@@ -458,11 +461,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
 			}
-			long questionCount = this.getQuestionCount(eventMap);
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
-			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"question_count",questionCount,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT,questionCountInQuiz,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
@@ -564,7 +566,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 
 	public long getQuestionCount(Map<String,String> eventMap) {
-		String contentGooruOId = eventMap.get(CONTENT_GOORU_OID);
+		String contentGooruOId = eventMap.get(CONTENTGOORUOID);
 		ColumnList<String> questionLists = null;
 		long totalQuestion = 0L;
 		long oeQuestion = 0L;
