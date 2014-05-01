@@ -64,6 +64,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private final ColumnFamily<String, String> microAggregator;
     
+    private final ColumnFamily<String,String> questionCount;
+    
+    private static final String CF_QUESTION_COUNT = "question_count";
+    
     private static final String CF_RT_COUNTER = "real_time_counter";
     
     private static final String CF_RT_AGGREGATOR = "real_time_aggregator";
@@ -99,6 +103,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         		CF_MICRO_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
+        
+        questionCount = new ColumnFamily<String, String>(
+                CF_QUESTION_COUNT, // Column Family Name
+         StringSerializer.get(), // Key Serializer
+         StringSerializer.get()); // Column Serializer
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -552,6 +561,28 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 	}
 
+	public Long getQuestionCount(Map<String,String> eventMap) {
+		String contentGooruOId = eventMap.get(CONTENT_GOORU_OID);
+		ColumnList<String> questionLists = null;
+		Long totalQuestion = 0L;
+		Long oeQuestion = 0L;
+		Long updatedQuestionCount = 0L;
+			try {
+				questionLists = getKeyspace().prepareQuery(questionCount)
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(contentGooruOId).execute()
+					.getResult();
+			} catch (ConnectionException e) {			
+				logger.info("Error while retieveing data : {}" ,e);
+			}
+			
+			if((questionLists != null) && (!questionLists.isEmpty())){
+					totalQuestion =  (Long) (questionLists.getColumnByName("questionCount").getStringValue() == null ? 0 : questionLists.getColumnByName("questionCount").getStringValue());
+					oeQuestion =   (Long) (questionLists.getColumnByName("oeCount").getStringValue() == null ? 0 : questionLists.getColumnByName("oeCount").getStringValue());
+					updatedQuestionCount = totalQuestion - oeQuestion;
+			}
+    	return updatedQuestionCount;
+	}
+	
 	private boolean isRowAvailable(String key,String  columnName,String currentSession){
 		ColumnList<String>  result = null;
     	try {
