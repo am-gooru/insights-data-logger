@@ -75,8 +75,10 @@ public class CollectionItemDAOImpl extends BaseDAOCassandraImpl implements Colle
 		}
 		if(collectionItem != null){
 			for(Row<String, String> collectionItems : collectionItem){
-				parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue() == null ? "NA" : collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+				parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+				if(parentId != null){
 				classPages.add(parentId);
+				}
 			 }
 		}
 		return classPages; 

@@ -75,8 +75,10 @@ public List<String> getParentId(String Key){
 	}
 	if(collectionItem != null){
 		for(Row<String, String> collectionItems : collectionItem){
-			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue() == null ? "NA" : collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
-			classPages.add(parentId);
+			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+			if(parentId != null){
+				classPages.add(parentId);
+			}
 		 }
 	}
 	return classPages; 

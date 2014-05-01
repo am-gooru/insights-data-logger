@@ -608,8 +608,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	private List<String> getClassPages(Map<String,String> eventMap){
     	List<String> classPages = new ArrayList<String>();
     	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null){
-    		classPages = collectionItem.getParentId(eventMap.get(CONTENTGOORUOID));
-    		classPages = this.getClassPagesFromItems(classPages);
+    		List<String> parents = collectionItem.getParentId(eventMap.get(CONTENTGOORUOID));
+    		if(!parents.isEmpty()){    			
+    			classPages = this.getClassPagesFromItems(classPages);
+    		}
     	}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
     		classPages.add(eventMap.get(PARENTGOORUOID));
     	}
@@ -622,8 +624,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		    		}		    		
 		    		if(eventDetail.getStringValue(EVENT_NAME, null) != null &&  (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			    		if(eventDetail.getStringValue(PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
-			    			classPages = collectionItem.getParentId(eventDetail.getStringValue(CONTENT_GOORU_OID, null));
-			    			classPages = this.getClassPagesFromItems(classPages);
+			    			List<String> parents = collectionItem.getParentId(eventDetail.getStringValue(CONTENT_GOORU_OID, null));
+			    			if(!parents.isEmpty()){    			
+			        			classPages = this.getClassPagesFromItems(classPages);
+			        		}
 			    		}else{
 			    			classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    		}
@@ -645,8 +649,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			    		}
 			    		if(C.getStringValue(EVENT_NAME, null) != null &&  (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				    		if(C.getStringValue(PARENT_GOORU_OID, null) == null || C.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
-				    			classPages = collectionItem.getParentId(C.getStringValue(CONTENT_GOORU_OID, null));
-				    			classPages = this.getClassPagesFromItems(classPages);
+				    			List<String> parents = collectionItem.getParentId(C.getStringValue(CONTENT_GOORU_OID, null));
+				    			if(!parents.isEmpty()){    			
+				        			classPages = this.getClassPagesFromItems(classPages);
+				        		}
 				    		}else{
 				    			classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
 				    		}
