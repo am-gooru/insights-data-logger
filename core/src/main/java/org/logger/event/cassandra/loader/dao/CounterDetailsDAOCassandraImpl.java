@@ -458,9 +458,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
 			}
+			long questionCount = this.getQuestionCount(eventMap);
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"question_count",questionCount,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
@@ -561,12 +563,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 	}
 
-	public Long getQuestionCount(Map<String,String> eventMap) {
+	public long getQuestionCount(Map<String,String> eventMap) {
 		String contentGooruOId = eventMap.get(CONTENT_GOORU_OID);
 		ColumnList<String> questionLists = null;
-		Long totalQuestion = 0L;
-		Long oeQuestion = 0L;
-		Long updatedQuestionCount = 0L;
+		long totalQuestion = 0L;
+		long oeQuestion = 0L;
+		long updatedQuestionCount = 0L;
 			try {
 				questionLists = getKeyspace().prepareQuery(questionCount)
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(contentGooruOId).execute()
@@ -576,8 +578,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			}
 			
 			if((questionLists != null) && (!questionLists.isEmpty())){
-					totalQuestion =  (Long) (questionLists.getColumnByName("questionCount").getStringValue() == null ? 0 : questionLists.getColumnByName("questionCount").getStringValue());
-					oeQuestion =   (Long) (questionLists.getColumnByName("oeCount").getStringValue() == null ? 0 : questionLists.getColumnByName("oeCount").getStringValue());
+					totalQuestion =  questionLists.getColumnByName("questionCount").getLongValue();
+					oeQuestion =   questionLists.getColumnByName("oeCount").getLongValue();
 					updatedQuestionCount = totalQuestion - oeQuestion;
 			}
     	return updatedQuestionCount;
