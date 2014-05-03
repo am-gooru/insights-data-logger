@@ -457,14 +457,18 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			long scoreInPercentage = 0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
+				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+				scoreInPercentage = ((score/questionCountInQuiz)*100);
 			}
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT,questionCountInQuiz,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE_IN_PERCENTAGE,scoreInPercentage,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
@@ -712,6 +716,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    		this.updateRealTimeAggregator(localKey,columnToUpdate, average);
 	    	}
     	}
+
+	public void calculateScoreInPercentage(){
+		
+	}
 	
 	public void addSession(String rowKey,String columnName,String value){
 

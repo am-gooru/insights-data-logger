@@ -173,4 +173,6 @@ public interface Constants {
     public String SESSIONID = "sessionId";
     
     public String QUESTION_COUNT = "question_count";
+    
+    public String SCORE_IN_PERCENTAGE = "score_in_percentage";
 }
