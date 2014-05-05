@@ -825,7 +825,7 @@ public class CassandraDataLoader implements Constants {
 	        	eventMap.put("eventName", eventObject.getEventName());
 	        	eventMap.put("eventId", eventObject.getEventId());
 	        	
-	        	logger.info("Event JSON : {}",eventJSON);
+	        	counterDetailsDao.migrationAndUpdate(eventMap);
 	    		}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
