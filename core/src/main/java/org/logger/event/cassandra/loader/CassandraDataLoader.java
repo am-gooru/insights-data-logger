@@ -577,7 +577,7 @@ public class CassandraDataLoader implements Constants {
      * @param customEventName
      * @throws ParseException
      */
-    public void updateStaging (String startTime , String endTime,String customEventName) throws ParseException {
+    public void updateStagingOld(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
@@ -726,6 +726,110 @@ public class CassandraDataLoader implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
+    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException, JSONException{
+
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	
+    	String dateId = null;
+    	String minuteId = null;
+    	String hourId = null;
+    	String eventId = null;
+    	String userUid = null;
+    	String processingDate = null;
+    	
+    	//Get all the event name and store for Caching
+    	HashMap<String, String> events = eventNameDao.readAllEventNames();
+    	
+    	//Process records for every minute
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+    		
+    		//Get Time ID and Hour ID
+    		Rows<String, String> timeDetails = dimTime.getTimeId(""+currentHour,""+currentMinute);	
+	   		 
+    		 for(Row<String, String> timeIds : timeDetails){
+	   			 minuteId = timeIds.getColumns().getStringValue("time_hm_id", null);
+				 hourId = timeIds.getColumns().getLongValue("time_h_id", null).toString();
+			 }
+	   		 
+   		 	if(!currentDate.equalsIgnoreCase(processingDate)){
+   		 			processingDate = currentDate;
+   		 			dateId = dimDate.getDateId(currentDate);
+   		 	}
+   		 	
+   		 	//Retry 100 times to get Date ID if Cassandra failed to respond
+   		 	int dateTrySeq = 1;
+   		 	while((dateId == null || dateId.equalsIgnoreCase("0")) && dateTrySeq < 100){
+   		 		dateId = dimDate.getDateId(currentDate);
+   		 		dateTrySeq++;
+   		 	}
+   		 	
+   		 	//Generate Key if loads custom Event Name
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = timelineDao.readTimeLine(timeLineKey);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	Collection<String> eventDetailkeys = new ArrayList<String>();
+	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+	    		eventDetailkeys.add(eventDetailUUID);
+	    	}
+	    	
+	    	//Read all records from Event Detail
+	    	Rows<String, String> eventDetailsNew = eventDetailDao.readEventDetailList(eventDetailkeys);
+	    	for (Row<String, String> row : eventDetailsNew) {
+	    		row.getColumns().getStringValue("event_name", null);
+	    		String eventJSON = row.getColumns().getStringValue("fields", null);
+
+	        	String organizationUid = null;
+	        	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
+	        	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
+	        	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
+	        	
+	        	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+	        	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+	        	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+	        	eventObject.setEventType(eventMap.get("type"));
+	        	if (eventMap != null && eventMap.get("gooruUId") != null) {
+	    				 try {
+	    					 userUid = eventMap.get("gooruUId");
+	    					 organizationUid = dimUser.getOrganizationUid(userUid);
+	    					 eventObject.setOrganizationUid(organizationUid);
+	    				 } catch (Exception e) {
+	    						logger.info("Error while fetching User uid ");
+	    				 }
+	    			 }
+	        	eventMap.put("organizationUId",eventObject.getOrganizationUid());
+	        	eventMap.put("eventName", eventObject.getEventName());
+	        	eventMap.put("eventId", eventObject.getEventId());
+	        	
+	        	logger.info("Event JSON : {}",eventJSON);
+	    		}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+    	}
+    	logger.info("Process Ends  : Inserted successfully");
+    
+    }
     //Creating staging Events
     public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
     	HashMap<String, String> stagingEvents = new HashMap<String, String>();
