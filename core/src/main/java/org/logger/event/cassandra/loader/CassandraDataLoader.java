@@ -800,7 +800,7 @@ public class CassandraDataLoader implements Constants {
 	        	String organizationUid = null;
 	        	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
 	        	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
-	        	Map<String, String> eventMap;
+	        	Map<String, String> eventMap = new HashMap<String, String>();
 				try {
 					eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 				} catch (JSONException e1) {
