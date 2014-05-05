@@ -462,7 +462,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
 				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-				scoreInPercentage = ((score/questionCountInQuiz)*100);
+				if(questionCountInQuiz != 0L){
+					scoreInPercentage = ((score/questionCountInQuiz)*100);
+				}
 			}
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
@@ -803,7 +805,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				long scoreInPercentage = 0L;
 				if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 					long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-					scoreInPercentage = ((score/questionCountInQuiz)*100);
+					if(questionCountInQuiz != 0L){
+						scoreInPercentage = ((score/questionCountInQuiz)*100);
+					}
 				}
 				m.withRow(realTimeAggregator, keyValue)
 				.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT,questionCountInQuiz,null)
