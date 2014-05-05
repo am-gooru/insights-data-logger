@@ -463,7 +463,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				collectionStatus = "completed";
 				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
 				if(questionCountInQuiz != 0L){
-					scoreInPercentage = ((score/questionCountInQuiz)*100);
+					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
 			}
 			m.withRow(realTimeAggregator, keyValue)
@@ -804,17 +804,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	public void completeMigration(Map<String,String> eventMap,List<String> keysList){
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if(keysList != null && keysList.size() > 0 ){
-			logger.info("KeyList : {}",keysList);
 			for(String keyValue : keysList){
 				if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 					long scoreInPercentage = 0L;
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 						long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-						logger.info("Key values :  ",keyValue);
-						logger.info("Column values : {}",eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-						logger.info("Score : {} - questionCount : {}",score,scoreInPercentage);
 						if(questionCountInQuiz != 0L){
-							scoreInPercentage = ((score/questionCountInQuiz)*100);
+							scoreInPercentage = (score*100/questionCountInQuiz);
 						}
 					}
 					m.withRow(realTimeAggregator, keyValue)
