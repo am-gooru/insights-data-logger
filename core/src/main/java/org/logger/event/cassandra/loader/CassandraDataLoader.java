@@ -312,7 +312,8 @@ public class CassandraDataLoader implements Constants {
 	         ColumnList<String> existingEventRecord = eventNameDao.readEventName(eventData);
 	
 	         if(existingEventRecord == null && existingEventRecord.isEmpty()){
-	        	 eventNameDao.saveEventName(eventData);
+	        	 logger.info("Please add new event in to events table ");
+	        	 return;
 	         }
          
 	         updateEventCompletion(eventData);
@@ -824,7 +825,7 @@ public class CassandraDataLoader implements Constants {
 	        	eventMap.put("organizationUId",eventObject.getOrganizationUid());
 	        	eventMap.put("eventName", eventObject.getEventName());
 	        	eventMap.put("eventId", eventObject.getEventId());
-	        	
+	        	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
 	        	counterDetailsDao.migrationAndUpdate(eventMap);
 	    		}
 	    	//Incrementing time - one minute
