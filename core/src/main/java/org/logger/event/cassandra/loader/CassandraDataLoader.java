@@ -726,7 +726,7 @@ public class CassandraDataLoader implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
-    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException, JSONException{
+    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException{
 
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
@@ -800,7 +800,13 @@ public class CassandraDataLoader implements Constants {
 	        	String organizationUid = null;
 	        	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
 	        	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
-	        	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
+	        	Map<String, String> eventMap;
+				try {
+					eventMap = JSONDeserializer.deserializeEventObject(eventObject);
+				} catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 	        	
 	        	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
 	        	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
