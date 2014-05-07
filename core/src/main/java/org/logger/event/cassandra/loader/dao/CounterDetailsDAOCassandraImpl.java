@@ -461,7 +461,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
-				long score = this.getAggregatorLongValue(keyValue,eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
 				
 				logger.info("keyValue : {} -  column : {}",keyValue,eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
 				logger.info("score :{} - questionCountInQuiz : {}",score,questionCountInQuiz);
@@ -557,21 +557,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}	
 	
 	public Long getAggregatorLongValue(String key,String columnName){
-		Column<String>  result = null;
+		ColumnList<String>  result = null;
 		Long score = 0L;
     	try {
     		 result = getKeyspace().prepareQuery(realTimeAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
 		
-		if (result != null) {
-			score = result.getLongValue();
-		}
+		if (result.getLongValue(columnName, null) != null) {
+			score = result.getLongValue(columnName, null);
+    	}
     	return score;
 		
 	}
