@@ -578,7 +578,7 @@ public class CassandraDataLoader implements Constants {
      * @param customEventName
      * @throws ParseException
      */
-    public void updateStagingOld(String startTime , String endTime,String customEventName) throws ParseException {
+    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
@@ -727,7 +727,7 @@ public class CassandraDataLoader implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
-    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException{
+    public void updateStagingMigration(String startTime , String endTime,String customEventName) throws ParseException{
 
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
