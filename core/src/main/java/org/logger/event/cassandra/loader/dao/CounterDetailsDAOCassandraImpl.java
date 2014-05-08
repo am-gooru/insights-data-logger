@@ -564,7 +564,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
 		
-		if (result != null && !result.isEmpty()) {
+		if (result != null && !result.isEmpty() && result.getColumnByName(columnName) != null) {
 			score = result.getColumnByName(columnName).getLongValue();
     	}
     	return score;
