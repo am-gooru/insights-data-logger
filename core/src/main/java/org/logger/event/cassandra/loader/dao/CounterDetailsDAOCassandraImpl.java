@@ -462,12 +462,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
 				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-				
-				logger.info("keyValue : {} -  column : {}",keyValue,eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-				logger.info("score :{} - questionCountInQuiz : {}",score,questionCountInQuiz);
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
-					logger.info("scoreInPercentage :{}",scoreInPercentage);
 				}
 			}
 			m.withRow(realTimeAggregator, keyValue)
@@ -560,7 +556,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		ColumnList<String>  result = null;
 		Long score = 0L;
     	try {
-    		 result = getKeyspace().prepareQuery(realTimeAggregator)
+    		 result = getKeyspace().prepareQuery(realTimeCounter)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
         		    .execute().getResult();
@@ -818,7 +814,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						}
 					}
 					m.withRow(realTimeAggregator, keyValue)
-					.deleteColumn(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"score_in_percentage")
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE_IN_PERCENTAGE, scoreInPercentage)
 					;
 				}
 			}
