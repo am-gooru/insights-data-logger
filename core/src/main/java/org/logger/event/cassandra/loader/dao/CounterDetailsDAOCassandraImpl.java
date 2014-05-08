@@ -748,8 +748,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) && eventMap.get(TYPE).equalsIgnoreCase(START)){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        	this.addSession(eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+	        if(classPages != null && classPages.size() > 0){
+				for(String classPage : classPages){
+					this.addSession(classPage+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+				}
 	        }
 			this.addSession(eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
