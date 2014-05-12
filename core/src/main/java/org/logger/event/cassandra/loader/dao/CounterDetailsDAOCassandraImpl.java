@@ -303,8 +303,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(AGG)){
 	        		if(e.get(AGGMODE)!= null &&  e.get(AGGMODE).toString().equalsIgnoreCase(AVG)){
-	        			logger.info("Key: {} Divisor : {}",localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString());
-	        			logger.info("Dividend : {} - columnToUpdate",eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
 	                   this.calculateAvg(localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
 	        		}
 	        		
@@ -739,10 +737,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
 		long d = this.getCounterLongValue(localKey, divisor);
-		logger.info("views : {}",d);
 	    	if(d != 0L){
 	    		long average = (this.getCounterLongValue(localKey, dividend)/d);
-	    		logger.info("average : {}",average);
 	    		this.updateRealTimeAggregator(localKey,columnToUpdate, average);
 	    	}
     	}
