@@ -232,6 +232,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(keysList != null && keysList.size() > 0 ){
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
+			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
 		}
      }
     
@@ -288,8 +289,48 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
     }
-    public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
+
+    public void startCounterAggregator(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
     	
+    	JSONObject j = new JSONObject(aggregatorJson);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
+    	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
+    	
+    	for (Entry entry : entrySet) {
+        	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
+        	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
+	        for(String localKey : keysList){
+	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(AGG)){
+	        		if(e.get(AGGMODE)!= null &&  e.get(AGGMODE).toString().equalsIgnoreCase(AVG)){
+	        			logger.info("Key: {} Divisor : {}",localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString());
+	        			logger.info("Dividend : {} - columnToUpdate",eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
+	                   this.calculateAvg(localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
+	        		}
+	        		
+	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUMOFAVG)){
+	                   long averageC = this.iterateAndFindAvg(localKey);
+	                   this.updateRealTimeAggregator(localKey,eventMap.get(PARENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageC);
+	                   long averageR = this.iterateAndFindAvg(localKey+SEPERATOR+eventMap.get(CONTENTGOORUOID));
+	                   this.updateRealTimeAggregator(localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageR);
+	               }
+	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)){
+	        			   updateForPostAggregate(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString(), eventMap.get(GOORUID), 1L);
+	        			   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString());
+		                   this.updateRealTimeAggregator(localKey,key+SEPERATOR+entry.getKey().toString(), sumOf);
+		               }
+	                        
+	        	}
+	        }
+    	}
+    	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+    }
+    
+    public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{    	
     	JSONObject j = new JSONObject(aggregatorJson);
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
@@ -335,25 +376,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		        		updateAggregator(localKey,key+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
 	        		}
 	        	}				
-	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(AGG)){
-
-	        		if(e.get(AGGMODE)!= null &&  e.get(AGGMODE).toString().equalsIgnoreCase(AVG)){
-	                   this.calculateAvg(localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVISOR).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+e.get(DIVIDEND).toString(), eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString());
-	        		}
-	        		
-	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUMOFAVG)){
-	                   long averageC = this.iterateAndFindAvg(localKey);
-	                   this.updateRealTimeAggregator(localKey,eventMap.get(PARENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageC);
-	                   long averageR = this.iterateAndFindAvg(localKey+SEPERATOR+eventMap.get(CONTENTGOORUOID));
-	                   this.updateRealTimeAggregator(localKey,eventMap.get(CONTENTGOORUOID)+SEPERATOR+entry.getKey().toString(), averageR);
-	               }
-	        		if(e.get(AGGMODE)!= null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)){
-	        			   updateForPostAggregate(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString(), eventMap.get(GOORUID), 1L);
-	        			   long sumOf = this.iterateAndFindSum(localKey+SEPERATOR+key+SEPERATOR+entry.getKey().toString());
-		                   this.updateRealTimeAggregator(localKey,key+SEPERATOR+entry.getKey().toString(), sumOf);
-		               }
-	                        
-	        	}
 	        }
     	}
     	try {
@@ -468,14 +490,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
-				long totalTimeSpent = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
-				long views = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());			
-				if(views != 0L){
-					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
-					.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.AVGTS.getName(),(totalTimeSpent/views),null)
-					;
-				}
 			}
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(COLLECTION+ SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID),null)
@@ -493,6 +507,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 			long totalTimeSpent = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
 			long views = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());			
+			logger.info("keyValue : {}",keyValue,eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());
 			if(views != 0L){
 				m.withRow(realTimeAggregator, keyValue)
 				.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
@@ -724,8 +739,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 	private void calculateAvg(String localKey,String divisor,String dividend,String columnToUpdate){
 		long d = this.getCounterLongValue(localKey, divisor);
+		logger.info("views : {}",d);
 	    	if(d != 0L){
 	    		long average = (this.getCounterLongValue(localKey, dividend)/d);
+	    		logger.info("average : {}",average);
 	    		this.updateRealTimeAggregator(localKey,columnToUpdate, average);
 	    	}
     	}
