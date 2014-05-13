@@ -265,8 +265,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    					}
 	    				}
 						if(attempStatus[status] == 1){
+							eventMap.put("score", "1");
 							answerStatus = LoaderConstants.CORRECT.getName();
 						}else if(attempStatus[status] == 0){
+							eventMap.put("score", "0");
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
 	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
@@ -362,8 +364,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    					}
 	    				}
 						if(attempStatus[status] == 1){
+							eventMap.put("score", "1");
 							answerStatus = LoaderConstants.CORRECT.getName();
 						}else if(attempStatus[status] == 0){
+							eventMap.put("score", "0");
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
 	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
