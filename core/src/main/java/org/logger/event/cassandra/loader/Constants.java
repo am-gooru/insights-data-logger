@@ -60,6 +60,10 @@ public interface Constants {
 
 	public String CHOICE = "choice";
 	
+	public String ANSWER_OBECT = "answer_object";
+	
+	public String ANSWEROBECT = "answerObject";
+	
 	public String ATTEMPTS = "attempts";
 	
 	public String OPTIONS = "options";

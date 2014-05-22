@@ -539,6 +539,10 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						JSONObject answersJson = new JSONObject(answers);
 						JSONArray names = answersJson.names();
 						String firstChoosenAns = null;
+						String answerObject = null;
+						if(eventMap.containsKey(ANSWEROBECT)){
+							answerObject = eventMap.get(ANSWEROBECT).toString();
+						}
 						if(names != null && names.length() != 0){
 							firstChoosenAns = names.getString(0);
 						}						
@@ -546,7 +550,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null);
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
+				      ;
 					}      				     
 				}
 			 try{
