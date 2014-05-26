@@ -258,20 +258,16 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 	    				String answerStatus = null;
 	    				int status = 0;
-	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase("MA")){
 	    					status = Integer.parseInt(eventMap.get("attemptCount"));
 	    					if(status != 0){
 						         status = status-1;
 	    					}
-	    				}
 						if(attempStatus[status] == 1){
-							eventMap.put("score", "1");
 							answerStatus = LoaderConstants.CORRECT.getName();
 						}else if(attempStatus[status] == 0){
-							eventMap.put("score", "0");
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
-	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
 	    	    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
 	    	    			answerStatus = 	option;
 	    	    		}
@@ -357,20 +353,19 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 	    				String answerStatus = null;
 	    				int status = 0;
-	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase("MA")){
-	    					status = Integer.parseInt(eventMap.get("attemptCount"));
-	    					if(status != 0){
-						         status = status-1;
-	    					}
-	    				}
+	    				
+	    				status = Integer.parseInt(eventMap.get("attemptCount"));
+    					if(status != 0){
+					         status = status-1;
+    					}
+    					
 						if(attempStatus[status] == 1){
-							eventMap.put("score", "1");
 							answerStatus = LoaderConstants.CORRECT.getName();
 						}else if(attempStatus[status] == 0){
-							eventMap.put("score", "0");
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
-	    	    		String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]);
+	    	    		
+						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
 	    	    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
 	    	    			answerStatus = 	option;
 	    	    		}
@@ -766,10 +761,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    	}
     	}
 
-	public void calculateScoreInPercentage(){
-		
-	}
-	
 	public void addSession(String rowKey,String columnName,String value){
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
