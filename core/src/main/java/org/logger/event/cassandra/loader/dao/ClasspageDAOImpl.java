@@ -126,5 +126,28 @@ public List<String> getParentId(String Key){
     	return false;
 	
 	}
+
+	public boolean isUserPartOfClass(String key ,String classPageGooruOid){
+
+		Rows<String, String>  result = null;
+    	try {
+    		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		 	.searchWithIndex()
+				.addExpression()
+				.whereColumn("classpage_gooru_oid")
+				.equals().value(classPageGooruOid)
+				.addExpression()
+				.whereColumn("gooru_uid")
+				.equals().value(key)
+				.execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data: {}" ,e);
+		}
+		
+    	if (result != null && !result.isEmpty()) {
+    		return true;
+    	}
+    	return false;
 	
+	}
 }

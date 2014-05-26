@@ -160,11 +160,16 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
 		
+		boolean isStudent = false;
+		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) && eventMap.get(TYPE).equalsIgnoreCase(START)){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        	this.addSession(eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+	        	isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID));
+	        	if(isStudent){
+	        		this.addSession(eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+	        	}
 	        }
 			this.addSession( eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
@@ -174,16 +179,24 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
+					
 					logger.info("isOwner : {}",isOwner);
+					
+					isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),classPage);
+					
+					logger.info("isStudent : {}",isStudent);
+					
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					if(!isOwner){
+					if(!isOwner && isStudent){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					}
+					
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner){
+					
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -205,13 +218,16 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
-					if(!isOwner){
+					
+					isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),classPage);
+					
+					if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
-					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner){
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -529,6 +545,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
 						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+						int status = 0;
+	    				
+	    				status = Integer.parseInt(eventMap.get("attemptCount"));
+    					if(status != 0){
+					         status = status-1;
+    					}
+    					
 						String openEndedText = eventMap.get(TEXT);						
 						String answers = eventMap.get(ANS);
 						JSONObject answersJson = new JSONObject(answers);
@@ -543,7 +566,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						}						
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[0]),null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
@@ -795,16 +818,19 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
+					
+					boolean isMember = classpage.isUserPartOfClass(eventMap.get(GOORUID),classPage);
+					
 					logger.info("isOwner : {}",isOwner);
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					if(!isOwner){
+					if(!isOwner && isMember){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					if(!isOwner){
+					if(!isOwner && isMember){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -823,7 +849,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
 					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
-					if(!isOwner){
+					boolean isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),classPage);
+					if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
