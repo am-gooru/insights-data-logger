@@ -361,8 +361,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
 	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-		        		if(entry.getKey().toString().equalsIgnoreCase(SCORE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && this.isUserAlreadyAnsweredCorrectly(localKey, key)){
-			        		 generateCounter(localKey,key+SEPERATOR+entry.getKey(),-1L,m);
+		        		if(entry.getKey().toString().equalsIgnoreCase(SCORE)){
+			        		 logger.info("Don't do anything ...");
 		        		}else{
 		        			 generateCounter(localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
 		        		}
@@ -393,7 +393,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    					option = "A";
 	    				}
 	    				boolean answerCorrectly = this.isUserAlreadyAnsweredCorrectly(localKey, key);
-        				
+        				logger.info("answerCorrectly : {}",answerCorrectly);
 	    				if(option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && !answerCorrectly){        					
         					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
         					updatePostAggregator(localKey,key+SEPERATOR+option);
@@ -519,6 +519,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
+		
+		if(eventMap.get(TYPE).equalsIgnoreCase(STOP) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
+			m.withRow(realTimeAggregator, keyValue)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,eventMap.get(SCORE),null)
+			;
+		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			long scoreInPercentage = 0L;
@@ -828,6 +834,9 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null){
 			long views = counterColumns.getLongValue(columnPrefix+SEPERATOR+"views", null);
 			long score = counterColumns.getLongValue(columnPrefix+SEPERATOR+"score", null);
+			logger.info("views : {} ",views);
+			logger.info("score : {} ",score);
+			logger.info("key : {} ",key);
 			if(score != 0L){
 				return true;
 			}
