@@ -361,9 +361,12 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
 	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-	        			generateCounter(localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
-					}
-	        		
+		        		if(entry.getKey().toString().equalsIgnoreCase(SCORE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && this.isUserAlreadyAnsweredCorrectly(localKey, key)){
+			        		 generateCounter(localKey,key+SEPERATOR+entry.getKey(),-1L,m);
+		        		}else{
+		        			 generateCounter(localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+		        		}
+				}	
 	        		if(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 	    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
 	    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
@@ -389,12 +392,21 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    				generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
-
-	    				updatePostAggregator(localKey,key+SEPERATOR+option);
-	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
-	    					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
-	    				}
+	    				boolean answerCorrectly = this.isUserAlreadyAnsweredCorrectly(localKey, key);
+        				
+	    				if(option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && !answerCorrectly){        					
+        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+        					updatePostAggregator(localKey,key+SEPERATOR+option);
+        				}
+        				
+        				if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){        					
+        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+        					updatePostAggregator(localKey,key+SEPERATOR+option);
+        				}
+        				
+        				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+        					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
+        				}
 					}
 	        		
 	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null){
@@ -497,8 +509,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-    	if (result.getLongValue(metric, null) != null) {
-    		count = result.getLongValue(metric, null);
+		if (result != null && !result.isEmpty() && result.getColumnByName(metric) != null) {
+			count = result.getColumnByName(metric).getLongValue();
     	}
     	return (count);
 	}
@@ -513,7 +525,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
-				long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+				long score = this.getCounterLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
@@ -532,8 +544,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		;
 
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
-			long totalTimeSpent = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
-			long views = this.getAggregatorLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());			
+			long totalTimeSpent = this.getCounterLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName());
+			long views = this.getCounterLongValue(keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());			
 			if(views != 0L){
 				m.withRow(realTimeAggregator, keyValue)
 				.putColumnIfNotNull(eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent,null)
@@ -604,7 +616,20 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		return classPageGooruOids;
 	}
 	
-	public ColumnList<String> getRawStagedRecords(String Key){
+	public ColumnList<String> getAllCounterColumns(String Key){
+		
+		ColumnList<String> stagedRecords = null;
+    	try {
+    		stagedRecords = getKeyspace().prepareQuery(realTimeCounter).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					 .getKey(Key)
+					 .execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data : {}" ,e);
+		}
+		return stagedRecords;
+	}	
+	
+public ColumnList<String> getAllAggregatorColumns(String Key){
 		
 		ColumnList<String> stagedRecords = null;
     	try {
@@ -615,13 +640,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			logger.info("Error while retieveing data : {}" ,e);
 		}
 		return stagedRecords;
-	}	
-	
+	}
+
 	public Long getAggregatorLongValue(String key,String columnName){
 		ColumnList<String>  result = null;
 		Long score = 0L;
     	try {
-    		 result = getKeyspace().prepareQuery(realTimeCounter)
+    		 result = getKeyspace().prepareQuery(realTimeAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
         		    .execute().getResult();
@@ -797,7 +822,19 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	         	logger.info("Error while adding session - ", e);
 	         }
 	}
-	
+
+	public boolean isUserAlreadyAnsweredCorrectly(String key,String columnPrefix){
+		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
+		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null){
+			long views = counterColumns.getLongValue(columnPrefix+SEPERATOR+"views", null);
+			long score = counterColumns.getLongValue(columnPrefix+SEPERATOR+"score", null);
+			if(score != 0L){
+				return true;
+			}
+		}
+		return false;
+		
+	}
 	public void migrationAndUpdate(Map<String,String> eventMap){
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
@@ -878,7 +915,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 					long scoreInPercentage = 0L;
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-						long score = this.getAggregatorLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+						long score = this.getCounterLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
 						if(questionCountInQuiz != 0L){
 							scoreInPercentage = (score*100/questionCountInQuiz);
 						}
