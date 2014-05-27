@@ -827,7 +827,7 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 
 	public boolean isUserAlreadyAnsweredCorrectly(String key,String columnPrefix){
 		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
-		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null){
+		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null && counterColumns.getColumnByName(columnPrefix+SEPERATOR+"score") != null ){
 			long views = counterColumns.getLongValue(columnPrefix+SEPERATOR+"views", null);
 			long score = counterColumns.getLongValue(columnPrefix+SEPERATOR+"score", null);
 			logger.info("views : {} ",views);
