@@ -65,6 +65,7 @@ public class DataLoader  {
     	options.addOption( "st", "startTime", true, "StartTime to process stagind data" );
     	options.addOption( "et", "endTime", true, "EndTime to process stagind data" );
     	options.addOption( "en", "eventName", true, "Load particular event in staging" );
+    	options.addOption( "postUpdate", "postUpdate", true, "Load events for post aggregation" );
     	
     	options.addOption( "dryRun", "dryRun", true, "DryRun. pass true to make a dryrun. default true" );
         options.addOption( "tsStart", "tsStart", true, "time stamp Start. start of timestamp" );
