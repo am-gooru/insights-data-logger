@@ -298,8 +298,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    				long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
-	        	    	this.generateAggregator(localKey,key+SEPERATOR+option,value,m);
+	    				boolean answered = this.isUserAlreadyAnswered(localKey, key);
+        				
+	    				if(answered){
+	    					if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    						long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
+	    						this.generateAggregator(localKey,key+SEPERATOR+option,value,m);	    						
+	    					}
+	    				}else{
+	    					long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
+    						this.generateAggregator(localKey,key+SEPERATOR+option,value,m);	    
+	    				}
 	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
 	    					long values = this.getCounterLongValue(localKey,key+SEPERATOR+answerStatus);
 		        	    	this.generateAggregator(localKey,key+SEPERATOR+answerStatus,values,m);
@@ -874,16 +883,18 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 
 	public boolean isUserAlreadyAnswered(String key,String columnPrefix){
 		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
-		boolean skipped= true;
-		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.SKIPPED.getName()) != null ){
-			long skippedCount = counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.SKIPPED.getName(), null);		
-			if(skippedCount > 0L){
-				skipped = false;
+		boolean status= false;
+		
+		long correctCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName(), null) : 0L;
+		long inCorrectCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName(), null) : 0L;
+		
+		if(correctCount > 0L || inCorrectCount > 0L){
+				status = true;
 			}else{
-				skipped = true;
-			}
+				status = false;
 		}
-		return skipped;
+		
+		return status;
 		
 	}
 	public void migrationAndUpdate(Map<String,String> eventMap){
