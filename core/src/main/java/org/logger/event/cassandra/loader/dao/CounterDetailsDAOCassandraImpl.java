@@ -547,7 +547,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
-				long score = this.getCounterLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+				long score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
