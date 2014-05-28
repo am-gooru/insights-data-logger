@@ -32,7 +32,9 @@ public interface Constants {
 	
 	public String PARENT_EVENT_ID = "parent_event_id";
 	
-	public String CLASSPAGEGOORUOID= "classPageGooruId";
+	//public String CLASSPAGEGOORUOID= "classPageGooruId";
+	
+	public String CLASSPAGEGOORUOID= "classpageGooruOid";
 	
 	public String VERSION = "version";
 
@@ -87,6 +89,14 @@ public interface Constants {
 	public String ANS = "answers";
 	
 	public String TEXT = "text";
+	
+	public String FEEDBACK = "feed_back";
+	
+	public String FEEDBACKPROVIDER = "feed_back_provider";
+	
+	public String PROVIDER = "feedbackProviderUId";
+	
+	public String TIMESTAMP = "feed_back_timestamp";
 	
 	public String VIEWS = "views";
 	

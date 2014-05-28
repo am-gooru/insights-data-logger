@@ -125,6 +125,8 @@ public enum LoaderConstants {
 	
 	CCV1("classpage.create"),
 	
+	RUFB("resource.user.feedback"),
+	
 	CLASSPAGE("classpage"),
     
     ;

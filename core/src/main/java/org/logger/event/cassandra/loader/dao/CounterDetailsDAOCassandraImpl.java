@@ -245,6 +245,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			
 		}
 
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+			if(classPages != null && classPages.size() > 0){				
+				for(String classPage : classPages){
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+				}
+			}
+		}
 		if(keysList != null && keysList.size() > 0 ){
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
@@ -522,6 +529,14 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			;
 		}
 		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+			m.withRow(realTimeAggregator, keyValue)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK,eventMap.get(TEXT),null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.get(PROVIDER),null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,eventMap.get(STARTTIME),null)
+			;
+		}
+		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			long scoreInPercentage = 0L;
 			String collectionStatus = "in-progress";
@@ -731,8 +746,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 			    		}
 		    		}
 		    	}
-	    	}else{
-	    		classPages.add(eventMap.get(CLASSPAGEGOORUOID));
 	    	}
     	}
 	    	if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)){
@@ -757,10 +770,12 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 			    		}
 	            	}
 	            }
-	        }else{
+	        }
+    	}
+	    	if(eventMap.containsKey(CLASSPAGEGOORUOID) && eventMap.get(CLASSPAGEGOORUOID) != null){
 	    		classPages.add(eventMap.get(CLASSPAGEGOORUOID));
 	    	}
-    	}
+	    	
 	    	return classPages;
 	}
 
