@@ -62,7 +62,7 @@ public interface Constants {
 
 	public String CHOICE = "choice";
 	
-	public String STATUS = "status";
+	public String STATUS = "question_status";
 	
 	public String ANSWER_OBECT = "answer_object";
 	
