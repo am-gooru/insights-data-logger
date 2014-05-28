@@ -531,41 +531,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
-		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
-			int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
-			int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
-			String answerStatus = null;
-			int status = 0;
-			long scoreL = 0L;
-			
-			String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
-    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
-    			answerStatus = 	option;
-    		}
-			String openEndedText = eventMap.get(TEXT);
-			if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
-				option = "A";
-			}
-			boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
-			
-			if(eventMap.get(SCORE) != null){
-				scoreL = Long.parseLong(eventMap.get(SCORE).toString());
-			}
-			
-			if(answered){
-				if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
-					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-					;								
-				}
-			}else{
-				m.withRow(realTimeAggregator, keyValue)
-				.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-				;
-			}
-			
-			
-		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
 			logger.info("keyValue : {} ",keyValue);
@@ -578,10 +543,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			long scoreInPercentage = 0L;
+			long score =  0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
-				long score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
+				 score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
@@ -591,6 +557,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT,questionCountInQuiz,null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE_IN_PERCENTAGE,scoreInPercentage,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,score,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
@@ -611,17 +578,45 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		}
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
-						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
-						int status = 0;
-	    				
-	    				status = Integer.parseInt(eventMap.get("attemptCount"));
+    					int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+    					int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+    					String answerStatus = null;
+    					int status = 0;
+    					long scoreL = 0L;
+    					status = Integer.parseInt(eventMap.get("attemptCount"));
     					if(status != 0){
-					         status = status-1;
+    						status = status-1;
     					}
     					int attemptStatus = attempStatus[status];
     					
-						String openEndedText = eventMap.get(TEXT);						
+    					
+    					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
+    		    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    		    			answerStatus = 	option;
+    		    		}
+    					String openEndedText = eventMap.get(TEXT);
+
+    					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+    						option = "A";
+    					}
+    					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+    					
+    					if(eventMap.get(SCORE) != null){
+    						scoreL = Long.parseLong(eventMap.get(SCORE).toString());
+    					}
+    					
+    					if(answered){
+    						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    							m.withRow(realTimeAggregator, keyValue)
+    							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+    							;								
+    						}
+    					}else{
+    						m.withRow(realTimeAggregator, keyValue)
+    						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+    						;
+    					}
+    					    					
 						String answers = eventMap.get(ANS);
 						JSONObject answersJson = new JSONObject(answers);
 						JSONArray names = answersJson.names();
