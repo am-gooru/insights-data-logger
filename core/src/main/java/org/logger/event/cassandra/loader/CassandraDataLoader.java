@@ -727,7 +727,7 @@ public class CassandraDataLoader implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
-    public void updateStagingMigration(String startTime , String endTime,String customEventName) throws ParseException{
+    public void postMigration(String startTime , String endTime,String customEventName) throws ParseException{
 
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");

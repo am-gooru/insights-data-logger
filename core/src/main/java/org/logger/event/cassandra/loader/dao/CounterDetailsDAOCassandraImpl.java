@@ -213,7 +213,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				}
 		}
 
-		if(eventMap.get(MODE).equalsIgnoreCase(STUDY) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
+		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
@@ -298,8 +298,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    				long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
-	        	    	this.generateAggregator(localKey,key+SEPERATOR+option,value,m);
+	    				boolean answered = this.isUserAlreadyAnswered(localKey, key);
+        				
+	    				if(answered){
+	    					if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    						long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
+	    						this.generateAggregator(localKey,key+SEPERATOR+option,value,m);	    						
+	    					}
+	    				}else{
+	    					long value = this.getCounterLongValue(localKey,key+SEPERATOR+option);
+    						this.generateAggregator(localKey,key+SEPERATOR+option,value,m);	    
+	    				}
 	    				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
 	    					long values = this.getCounterLongValue(localKey,key+SEPERATOR+answerStatus);
 		        	    	this.generateAggregator(localKey,key+SEPERATOR+answerStatus,values,m);
@@ -395,23 +404,22 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    				boolean answerCorrectly = this.isUserAlreadyAnsweredCorrectly(localKey, key);
-        				logger.info("answerCorrectly : {}",answerCorrectly);
-	    				if(option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && !answerCorrectly){        					
-        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
-        					updatePostAggregator(localKey,key+SEPERATOR+option);
-        				}
+	    				boolean answered = this.isUserAlreadyAnswered(localKey, key);
         				
-        				if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){        					
-        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+	    				if(answered){
+	    					if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    						generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+	        					updatePostAggregator(localKey,key+SEPERATOR+option);
+	    					}
+	    				}else{
+	    					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
         					updatePostAggregator(localKey,key+SEPERATOR+option);
-        				}
+	    				}
         				
         				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
         					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
         				}
 					}
-	        		
 	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null){
 		        		updateForPostAggregate(localKey,key+SEPERATOR+eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
 		        		updateForPostAggregate(localKey+SEPERATOR+key,eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
@@ -523,15 +531,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
-		if(eventMap.get(TYPE).equalsIgnoreCase(STOP) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
-			long scoreL = 0L;
-			if(eventMap.get(SCORE) != null){
-				scoreL = Long.parseLong(eventMap.get(SCORE).toString());
-			}
-			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-			;
-		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
 			logger.info("keyValue : {} ",keyValue);
@@ -544,10 +543,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			long scoreInPercentage = 0L;
+			long score =  0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				collectionStatus = "completed";
-				long score = this.getCounterLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
+				 score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
 				}
@@ -557,6 +557,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus,null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT,questionCountInQuiz,null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE_IN_PERCENTAGE,scoreInPercentage,null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,score,null)
 			;
 		}
 		m.withRow(realTimeAggregator, keyValue)
@@ -577,16 +578,45 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		}
 			if(resourceType != null && resourceType.equalsIgnoreCase(QUESTION)){		 
 					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
-						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
-						int status = 0;
-	    				
-	    				status = Integer.parseInt(eventMap.get("attemptCount"));
+    					int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+    					int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+    					String answerStatus = null;
+    					int status = 0;
+    					long scoreL = 0L;
+    					status = Integer.parseInt(eventMap.get("attemptCount"));
     					if(status != 0){
-					         status = status-1;
+    						status = status-1;
+    					}
+    					int attemptStatus = attempStatus[status];
+    					
+    					
+    					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
+    		    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    		    			answerStatus = 	option;
+    		    		}
+    					String openEndedText = eventMap.get(TEXT);
+
+    					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+    						option = "A";
+    					}
+    					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+    					
+    					if(eventMap.get(SCORE) != null){
+    						scoreL = Long.parseLong(eventMap.get(SCORE).toString());
     					}
     					
-						String openEndedText = eventMap.get(TEXT);						
+    					if(answered){
+    						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    							m.withRow(realTimeAggregator, keyValue)
+    							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+    							;								
+    						}
+    					}else{
+    						m.withRow(realTimeAggregator, keyValue)
+    						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+    						;
+    					}
+    					    					
 						String answers = eventMap.get(ANS);
 						JSONObject answersJson = new JSONObject(answers);
 						JSONArray names = answersJson.names();
@@ -602,6 +632,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
+				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+STATUS,Long.valueOf(attemptStatus),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
 				      ;
@@ -845,68 +876,29 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 	         }
 	}
 
-	public boolean isUserAlreadyAnsweredCorrectly(String key,String columnPrefix){
+	public boolean isUserAlreadyAnswered(String key,String columnPrefix){
 		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
-		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null && counterColumns.getColumnByName(columnPrefix+SEPERATOR+"score") != null ){
-			long views = counterColumns.getLongValue(columnPrefix+SEPERATOR+"views", null);
-			long score = counterColumns.getLongValue(columnPrefix+SEPERATOR+"score", null);
-			logger.info("views : {} ",views);
-			logger.info("score : {} ",score);
-			logger.info("key : {} ",key);
-			if(score != 0L){
-				return true;
-			}
+		boolean status= false;
+		
+		long correctCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName(), null) : 0L;
+		long inCorrectCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName(), null) : 0L;
+		
+		if(correctCount > 0L || inCorrectCount > 0L){
+				status = true;
+			}else{
+				status = false;
 		}
-		return false;
+		
+		return status;
 		
 	}
 	public void migrationAndUpdate(Map<String,String> eventMap){
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
-		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) && eventMap.get(TYPE).equalsIgnoreCase(START)){
-			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
-	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-	        if(classPages != null && classPages.size() > 0){
-				for(String classPage : classPages){
-					this.addSession(classPage+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-				}
-	        }
-			this.addSession(eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-		}
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
-			questionCountInQuiz = this.getQuestionCount(eventMap);
-			if(classPages != null && classPages.size() > 0){
-				for(String classPage : classPages){
-					boolean isOwner = classpage.getClassPageOwnerInfo(eventMap.get(GOORUID),classPage);
-					
-					boolean isMember = classpage.isUserPartOfClass(eventMap.get(GOORUID),classPage);
-					
-					logger.info("isOwner : {}",isOwner);
-					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					if(!isOwner && isMember){
-					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
-					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					}
-					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					if(!isOwner && isMember){
-						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-						this.addColumnForAggregator(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					}
-					
-				}
-			}
-				keysList.add(ALLSESSION+key);
-				keysList.add(ALLSESSION+key+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(eventMap.get(SESSION)+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-				this.addColumnForAggregator(RECENTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					keysList.add(FIRSTSESSION+key+SEPERATOR+eventMap.get(GOORUID));
-		}
+				
 
-		if(eventMap.get(MODE).equalsIgnoreCase(STUDY) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
+		if(eventMap.get(MODE) != null && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
@@ -917,14 +909,12 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					this.addColumnForAggregator(RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
 					keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				}
 			}
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID));
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-				this.addColumnForAggregator(RECENTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
 				keysList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 			
 			
@@ -937,25 +927,36 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if(keysList != null && keysList.size() > 0 ){
 			for(String keyValue : keysList){
-				if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-					long scoreInPercentage = 0L;
-					if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-						long score = this.getCounterLongValue(keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE);
-						if(questionCountInQuiz != 0L){
-							scoreInPercentage = (score*100/questionCountInQuiz);
-						}
+				if(eventMap.get(RESOURCETYPE) != null && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+					
+					int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+    				String answerStatus = null;
+					long score = 0L;
+					if(attempStatus[0] == 1){
+						score = 1L;
+						answerStatus = LoaderConstants.CORRECT.getName();
+					}else if(attempStatus[0] == 0){
+						score = 0L;
+						answerStatus = LoaderConstants.INCORRECT.getName();
 					}
+					int Status = attempStatus[0];
+					
+					logger.info("attempStatus : {} ",attempStatus);
+					logger.info("Status : {} ",Status);
+					logger.info("score : {} ",score); 
+					
 					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE_IN_PERCENTAGE, scoreInPercentage)
-					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+QUESTION_COUNT, questionCountInQuiz)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+STATUS, Long.valueOf(Status))
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE, score)
 					;
 				}
 			}
 		}
-	 	try{
+	 	/*try{
          	m.execute();
          } catch (ConnectionException e) {
          	logger.info("Error while inserting to cassandra - JSON - ", e);
-         }
+         }*/
 	}
 }

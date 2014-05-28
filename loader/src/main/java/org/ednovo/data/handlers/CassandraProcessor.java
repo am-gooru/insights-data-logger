@@ -113,6 +113,15 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 			}
         }
 
+        public void postAggregation(String statTime,String endTime,String eventName){
+        	try {
+				dataLoader.postMigration(statTime, endTime,eventName);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        
         public void geoLocationUpdate(String statTime,String endTime){
         	try {
 				dataLoader.updateGeoLocation(statTime, endTime);
