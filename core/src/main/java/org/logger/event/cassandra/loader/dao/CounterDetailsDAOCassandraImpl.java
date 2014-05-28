@@ -213,7 +213,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				}
 		}
 
-		if(eventMap.get(MODE).equalsIgnoreCase(STUDY) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
+		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
