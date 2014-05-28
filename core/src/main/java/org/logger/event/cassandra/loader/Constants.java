@@ -34,7 +34,7 @@ public interface Constants {
 	
 	//public String CLASSPAGEGOORUOID= "classPageGooruId";
 	
-	public String CLASSPAGEGOORUOID= "classpageGooruOid";
+	public String CLASSPAGEGOORUOID= "classpageGooruId";
 	
 	public String VERSION = "version";
 
@@ -61,6 +61,8 @@ public interface Constants {
 	public String DIVISOR = "divisor" ;
 
 	public String CHOICE = "choice";
+	
+	public String STATUS = "status";
 	
 	public String ANSWER_OBECT = "answer_object";
 	
