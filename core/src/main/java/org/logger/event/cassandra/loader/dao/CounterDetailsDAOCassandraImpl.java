@@ -523,7 +523,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
-		if(eventMap.get(TYPE).equalsIgnoreCase(STOP) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
+		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
 			long scoreL = 0L;
 			if(eventMap.get(SCORE) != null){
 				scoreL = Long.parseLong(eventMap.get(SCORE).toString());
