@@ -52,8 +52,6 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
     
     private static final String CF_DIM_EVENTS = "dim_events";
 
-    
-    
 	public DimEventsDAOCassandraImpl(
 			CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
@@ -157,17 +155,24 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 
 	@Async
 	public void saveEventNameByName(String name) {
-		
-	    UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-	    
-	    String displayName = null;
-	    int displayOrder = 0;
-
-	    MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    eventTimelineMutation.withRow(dimEventCF, name)
-	    .putColumn("event_id", eventColumnTimeUUID.toString(), null);
+		int lastEventId=1000;
+		try {
+			ColumnList<String> existingEventRecord = getKeyspace().prepareQuery(dimEventCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey("update-event-id").execute().getResult();
+			lastEventId = Integer.parseInt(existingEventRecord.getColumnByName("event_id").getStringValue());
+		} catch (ConnectionException e1) {
+			logger.info("unable to get existing eventId", e1);
+			e1.printStackTrace();
+		}
+	    lastEventId++;
+	    MutationBatch eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    eventIdMutation.withRow(dimEventCF, name)
+	    .putColumn("event_id", lastEventId, null);
 	    try {
-	        eventTimelineMutation.execute();
+	    	eventIdMutation.execute();
+	    	eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		    eventIdMutation.withRow(dimEventCF, "update-event-id")
+		    .putColumn("event_id", lastEventId, null);
+		    eventIdMutation.execute();
 	    } catch (ConnectionException e) {
 	        logger.info("Error while inserting event data to cassandra", e);
 	        return ;
