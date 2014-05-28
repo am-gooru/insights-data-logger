@@ -395,23 +395,22 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
 	    					option = "A";
 	    				}
-	    				boolean answerCorrectly = this.isUserAlreadyAnsweredCorrectly(localKey, key);
+	    				boolean answered = this.isUserAlreadyAnswered(localKey, key);
         				
-	    				if(option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && !answerCorrectly){        					
-        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+	    				if(answered){
+	    					if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+	    						generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+	        					updatePostAggregator(localKey,key+SEPERATOR+option);
+	    					}
+	    				}else{
+	    					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
         					updatePostAggregator(localKey,key+SEPERATOR+option);
-        				}
-        				
-        				if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){        					
-        					generateCounter(localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
-        					updatePostAggregator(localKey,key+SEPERATOR+option);
-        				}
+	    				}
         				
         				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
         					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
         				}
 					}
-	        		
 	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null){
 		        		updateForPostAggregate(localKey,key+SEPERATOR+eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
 		        		updateForPostAggregate(localKey+SEPERATOR+key,eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
@@ -524,13 +523,39 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
 		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
+			int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+			int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+			String answerStatus = null;
+			int status = 0;
 			long scoreL = 0L;
+			
+			String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
+    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    			answerStatus = 	option;
+    		}
+			String openEndedText = eventMap.get(TEXT);
+			if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+				option = "A";
+			}
+			boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+			
 			if(eventMap.get(SCORE) != null){
 				scoreL = Long.parseLong(eventMap.get(SCORE).toString());
 			}
-			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-			;
+			
+			if(answered){
+				if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+					m.withRow(realTimeAggregator, keyValue)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+					;								
+				}
+			}else{
+				m.withRow(realTimeAggregator, keyValue)
+				.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+				;
+			}
+			
+			
 		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
@@ -847,17 +872,18 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 	         }
 	}
 
-	public boolean isUserAlreadyAnsweredCorrectly(String key,String columnPrefix){
+	public boolean isUserAlreadyAnswered(String key,String columnPrefix){
 		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
-		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+"views") != null && counterColumns.getColumnByName(columnPrefix+SEPERATOR+"score") != null ){
-			long views = counterColumns.getLongValue(columnPrefix+SEPERATOR+"views", null);
-			long score = counterColumns.getLongValue(columnPrefix+SEPERATOR+"score", null);
-			
-			if(score != 0L){
-				return true;
+		boolean skipped= true;
+		if(counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.SKIPPED.getName()) != null ){
+			long skippedCount = counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.SKIPPED.getName(), null);		
+			if(skippedCount > 0L){
+				skipped = false;
+			}else{
+				skipped = true;
 			}
 		}
-		return false;
+		return skipped;
 		
 	}
 	public void migrationAndUpdate(Map<String,String> eventMap){
