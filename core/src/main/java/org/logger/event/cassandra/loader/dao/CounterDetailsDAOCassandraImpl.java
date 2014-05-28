@@ -524,12 +524,17 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
 		if(eventMap.get(TYPE).equalsIgnoreCase(STOP) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()))){
+			long scoreL = 0L;
+			if(eventMap.get(SCORE) != null){
+				scoreL = Long.parseLong(eventMap.get(SCORE).toString());
+			}
 			m.withRow(realTimeAggregator, keyValue)
-			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,eventMap.get(SCORE),null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
 			;
 		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+			logger.info("keyValue : {} ",keyValue);
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK,eventMap.get(TEXT),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.get(PROVIDER),null)
