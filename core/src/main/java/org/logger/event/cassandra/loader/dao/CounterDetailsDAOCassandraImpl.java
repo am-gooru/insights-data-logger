@@ -594,12 +594,19 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
     		    			answerStatus = 	option;
     		    		}
-    					String openEndedText = null;
-
-    					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
-    						option = "A";
+    					String textValue = null;
+    					    					
+    					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){
+    						String openEndedtextValue = eventMap.get(TEXT);
+    						if(openEndedtextValue != null && !openEndedtextValue.isEmpty()){
+    							option = "A";
+    						}
     					}
+    					
+    					
     					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+    					logger.info("keyValue : {} : option : {} ",keyValue, option);
+    					logger.info("keyValue : {} : answered : {} ",keyValue , answered);
     					String answerObject = null;
     					
     					if(eventMap.get(SCORE) != null){
@@ -608,23 +615,24 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     					
     					if(answered){
     						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
-    							openEndedText = eventMap.get(TEXT);
-    							
+    							textValue = eventMap.get(TEXT);
     							if(eventMap.containsKey(ANSWEROBECT)){
     								answerObject = eventMap.get(ANSWEROBECT).toString();
     							}
     							m.withRow(realTimeAggregator, keyValue)
+    							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
     							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
     							;								
     						}
     					}else{
-    						openEndedText = eventMap.get(TEXT);
+    						textValue = eventMap.get(TEXT);
     						
     						if(eventMap.containsKey(ANSWEROBECT)){
     							answerObject = eventMap.get(ANSWEROBECT).toString();
     						}
     						m.withRow(realTimeAggregator, keyValue)
     						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+    						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
     						;
     					}
     					    					
@@ -641,7 +649,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,openEndedText,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+STATUS,Long.valueOf(attemptStatus),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
