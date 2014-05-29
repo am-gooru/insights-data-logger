@@ -533,11 +533,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
-			logger.info("keyValue : {} ",keyValue);
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK,eventMap.get(TEXT),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.get(PROVIDER),null)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,eventMap.get(STARTTIME),null)
+			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+ACTIVE,eventMap.get(ACTIVE),null)
 			;
 		}
 		
@@ -635,7 +635,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						
 						if(names != null && names.length() != 0){
 							firstChoosenAns = names.getString(0);
-						}						
+						}
+						
+						
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
 				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]),null)
@@ -893,8 +895,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 		
 		if(correctCount > 0L || inCorrectCount > 0L){
 				status = true;
-			}else{
-				status = false;
 		}
 		
 		return status;
@@ -949,10 +949,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 						answerStatus = LoaderConstants.INCORRECT.getName();
 					}
 					int Status = attempStatus[0];
-					
-					logger.info("attempStatus : {} ",attempStatus);
-					logger.info("Status : {} ",Status);
-					logger.info("score : {} ",score); 
 					
 					m.withRow(realTimeAggregator, keyValue)
 					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+STATUS, Long.valueOf(Status))
