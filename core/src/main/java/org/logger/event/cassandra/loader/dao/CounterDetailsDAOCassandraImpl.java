@@ -582,7 +582,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     					int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
     					String answerStatus = null;
     					int status = 0;
-    					long scoreL = 0L;
     					status = Integer.parseInt(eventMap.get("attemptCount"));
     					if(status != 0){
     						status = status-1;
@@ -601,53 +600,28 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     						if(openEndedtextValue != null && !openEndedtextValue.isEmpty()){
     							option = "A";
     						}
+    					}else {
+    						option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
     					}
     					
     					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
-    					String answerObject = null;    					
-    					if(eventMap.get(SCORE) != null){
-    						scoreL = Long.parseLong(eventMap.get(SCORE).toString());
-    					}
+    					    					
     					
     					if(answered){
     						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
-    							textValue = eventMap.get(TEXT);
-    							if(eventMap.containsKey(ANSWEROBECT)){
-    								answerObject = eventMap.get(ANSWEROBECT).toString();
-    							}
-    							m.withRow(realTimeAggregator, keyValue)
-    							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
-    							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-    							;								
+    							m = this.addObjectForAggregator(eventMap, keyValue, m,option,attemptStatus);
     						}
     					}else{
-    						textValue = eventMap.get(TEXT);
-    						
-    						if(eventMap.containsKey(ANSWEROBECT)){
-    							answerObject = eventMap.get(ANSWEROBECT).toString();
-    						}
-    						m.withRow(realTimeAggregator, keyValue)
-    						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
-    						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
-    						;
+    						m = this.addObjectForAggregator(eventMap, keyValue, m,option,attemptStatus);
     					}
     					    					
-						String answers = eventMap.get(ANS);
-						JSONObject answersJson = new JSONObject(answers);
-						JSONArray names = answersJson.names();
-						String firstChoosenAns = null;
 						
-						if(names != null && names.length() != 0){
-							firstChoosenAns = names.getString(0);
-						}
 						
 						
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+STATUS,Long.valueOf(attemptStatus),null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
-				      			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
+				      			
+				      			
 				      ;
 					}      				     
 				}
@@ -659,6 +633,41 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			
 	}
 			
+	public MutationBatch addObjectForAggregator(Map<String,String> eventMap , String keyValue , MutationBatch m,String options , int attemptStatus) throws JSONException{
+		
+		String textValue = null ;
+		String answerObject = null;
+		long scoreL = 0L;
+		
+		textValue = eventMap.get(TEXT);
+		if(eventMap.containsKey(ANSWEROBECT)){
+			answerObject = eventMap.get(ANSWEROBECT).toString();
+		}
+		String answers = eventMap.get(ANS);
+		JSONObject answersJson = new JSONObject(answers);
+		JSONArray names = answersJson.names();
+		String firstChoosenAns = null;
+		
+		
+		if(names != null && names.length() != 0){
+			firstChoosenAns = names.getString(0);
+		}
+		
+		if(eventMap.get(SCORE) != null){
+			scoreL = Long.parseLong(eventMap.get(SCORE).toString());
+		}
+		
+		
+		m.withRow(realTimeAggregator, keyValue)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,options,null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+STATUS,Long.valueOf(attemptStatus),null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ANSWER_OBECT,answerObject,null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,firstChoosenAns,null)
+		;
+		return m;								
+	}
 	private void updateRealTimeAggregator(String key,String columnName,long columnValue){
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			m.withRow(realTimeAggregator, key)
@@ -958,6 +967,8 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 						answerStatus = LoaderConstants.INCORRECT.getName();
 					}
 					int Status = attempStatus[0];
+					
+					logger.info("Status : {} ",Status);
 					
 					m.withRow(realTimeAggregator, keyValue)
 					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+STATUS, Long.valueOf(Status))
