@@ -63,7 +63,6 @@ import com.netflix.astyanax.model.Rows;
 
 
 @Controller
-@EnableAsync
 @RequestMapping(value="/event")
 public class EventController {
 
