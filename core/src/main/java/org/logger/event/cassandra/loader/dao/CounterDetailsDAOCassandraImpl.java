@@ -594,12 +594,13 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
     		    			answerStatus = 	option;
     		    		}
-    					String openEndedText = eventMap.get(TEXT);
+    					String openEndedText = null;
 
     					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
     						option = "A";
     					}
     					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+    					String answerObject = null;
     					
     					if(eventMap.get(SCORE) != null){
     						scoreL = Long.parseLong(eventMap.get(SCORE).toString());
@@ -607,11 +608,21 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     					
     					if(answered){
     						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+    							openEndedText = eventMap.get(TEXT);
+    							
+    							if(eventMap.containsKey(ANSWEROBECT)){
+    								answerObject = eventMap.get(ANSWEROBECT).toString();
+    							}
     							m.withRow(realTimeAggregator, keyValue)
     							.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
     							;								
     						}
     					}else{
+    						openEndedText = eventMap.get(TEXT);
+    						
+    						if(eventMap.containsKey(ANSWEROBECT)){
+    							answerObject = eventMap.get(ANSWEROBECT).toString();
+    						}
     						m.withRow(realTimeAggregator, keyValue)
     						.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
     						;
@@ -621,10 +632,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 						JSONObject answersJson = new JSONObject(answers);
 						JSONArray names = answersJson.names();
 						String firstChoosenAns = null;
-						String answerObject = null;
-						if(eventMap.containsKey(ANSWEROBECT)){
-							answerObject = eventMap.get(ANSWEROBECT).toString();
-						}
+						
 						if(names != null && names.length() != 0){
 							firstChoosenAns = names.getString(0);
 						}						
