@@ -603,12 +603,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     						}
     					}
     					
-    					
     					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
-    					logger.info("keyValue : {} : option : {} ",keyValue, option);
-    					logger.info("keyValue : {} : answered : {} ",keyValue , answered);
-    					String answerObject = null;
-    					
+    					String answerObject = null;    					
     					if(eventMap.get(SCORE) != null){
     						scoreL = Long.parseLong(eventMap.get(SCORE).toString());
     					}
