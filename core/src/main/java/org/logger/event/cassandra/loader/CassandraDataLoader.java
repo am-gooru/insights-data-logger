@@ -414,13 +414,14 @@ public class CassandraDataLoader implements Constants {
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-	    	//microAggregator.sendEventForAggregation(eventObject.getFields());
-	    	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-	    	try {
+			counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+	    	microAggregator.sendEventForAggregation(eventObject.getFields());
+	    	// To be enable 
+	    	/*try {
 				counterDetailsDao.callCounters(eventMap);
 			} catch (ParseException e) {
 				e.printStackTrace();
-			}
+			}*/
 	    	
 		}
 		
