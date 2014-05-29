@@ -158,13 +158,13 @@ public class EventController {
 	
 				if (responseDTO.getErrors().getErrorCount() > 0) {
 		            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		            throw new IllegalArgumentException(eventObjDTO.getErrors().getFieldError().getDefaultMessage());
+		            throw new IllegalArgumentException(responseDTO.getErrors().getFieldError().getDefaultMessage());
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
 				eventObjects.setFields(eventJson.getAsJsonObject().toString());
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
-					if (eventObjDTO.getErrors().getErrorCount() > 0) {
+					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			           throw new IllegalArgumentException(eventObjDTO.getErrors().getFieldError().getDefaultMessage());
 					}
