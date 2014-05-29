@@ -35,17 +35,16 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.bouncycastle.mail.smime.examples.SendSignedAndEncryptedMail;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.JSONException;
 import org.json.simple.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,6 +63,7 @@ import com.netflix.astyanax.model.Rows;
 
 
 @Controller
+@EnableAsync
 @RequestMapping(value="/event")
 public class EventController {
 
