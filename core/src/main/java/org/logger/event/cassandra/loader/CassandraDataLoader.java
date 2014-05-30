@@ -795,7 +795,7 @@ public class CassandraDataLoader implements Constants {
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		row.getColumns().getStringValue("event_name", null);
 	    		String eventJSON = row.getColumns().getStringValue("fields", null);
-
+	    		logger.info("eventJSON : {} ",eventJSON);
 	        	String organizationUid = null;
 	        	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
 	        	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
