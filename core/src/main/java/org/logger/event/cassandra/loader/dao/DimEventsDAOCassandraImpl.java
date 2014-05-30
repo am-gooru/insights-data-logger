@@ -158,24 +158,20 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 		int lastEventId=1000;
 		try {
 			ColumnList<String> existingEventRecord = getKeyspace().prepareQuery(dimEventCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey("update-event-id").execute().getResult();
-			if(existingEventRecord.getColumnByName("event_id").getStringValue() != null){
-				logger.info("Event IDDDD : {} " ,existingEventRecord.getStringValue("event_id",null));
-				lastEventId = Integer.parseInt(existingEventRecord.getStringValue("event_id", null));
-			}
+			lastEventId = Integer.parseInt(existingEventRecord.getColumnByName("event_id").getStringValue());
 		} catch (ConnectionException e1) {
 			logger.info("unable to get existing eventId", e1);
 			e1.printStackTrace();
 		}
-		
 	    lastEventId++;
 	    MutationBatch eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 	    eventIdMutation.withRow(dimEventCF, name)
-	    .putColumn("event_id", lastEventId, null);
+	    .putColumn("event_id", String.valueOf(lastEventId), null);
 	    try {
 	    	eventIdMutation.execute();
 	    	eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		    eventIdMutation.withRow(dimEventCF, "update-event-id")
-		    .putColumn("event_id", lastEventId, null);
+		    .putColumn("event_id", String.valueOf(lastEventId), null);
 		    eventIdMutation.execute();
 	    } catch (ConnectionException e) {
 	        logger.info("Error while inserting event data to cassandra", e);
