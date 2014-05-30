@@ -101,6 +101,11 @@ public List<String> getParentId(String Key){
         
         ;
         
+         try{
+          	m.execute();
+          } catch (ConnectionException e) {
+          	logger.info("Error while inserting to cassandra - JSON - ", e);
+          }
 	}
 
 	public boolean getClassPageOwnerInfo(String key ,String classPageGooruOid){
