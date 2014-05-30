@@ -933,11 +933,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 					keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				}
 			}
-				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID));
-				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-			
 			
 		}
 
@@ -947,29 +942,17 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 	public void completeMigration(Map<String,String> eventMap,List<String> keysList){
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if(keysList != null && keysList.size() > 0 ){
-			for(String keyValue : keysList){
-				if(eventMap.get(RESOURCETYPE) != null && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-					
-					int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
-    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
-    				String answerStatus = null;
-					long score = 0L;
-					if(attempStatus[0] == 1){
-						score = 1L;
-						answerStatus = LoaderConstants.CORRECT.getName();
-					}else if(attempStatus[0] == 0){
-						score = 0L;
-						answerStatus = LoaderConstants.INCORRECT.getName();
-					}
-					int Status = attempStatus[0];
-					
-					logger.info("Status : {} ",Status);
-					
-					m.withRow(realTimeAggregator, keyValue)
-					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+STATUS, Long.valueOf(Status))
-					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE, score)
-					;
-				}
+			for(String keyValue : keysList){	
+				ColumnList<String> counterColumns = this.getAllCounterColumns(keyValue);
+    			
+    			long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName(), 0L) : 0L;
+    			long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(), 0L) : 0L;
+    			logger.info("keyValue : {} ",keyValue);
+    			logger.info("views : {} : timeSpent : {} ",views,timeSpent);
+    			
+    			if(views == 0L && timeSpent > 0L ){
+    				generateCounter(keyValue,eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName(), 1L ,m);
+    			}
 			}
 		}
 	 	/*try{
