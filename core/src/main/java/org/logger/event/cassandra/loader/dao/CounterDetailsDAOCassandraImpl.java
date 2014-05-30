@@ -84,6 +84,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     
     private ClasspageDAOImpl classpage;
     
+    private CollectionDAOImpl collection;
+    
     private SimpleDateFormat secondsDateFormatter;
     
     private long questionCountInQuiz = 0L;
@@ -114,6 +116,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
+        this.collection = new CollectionDAOImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
     }
     
@@ -977,5 +980,16 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
          } catch (ConnectionException e) {
          	logger.info("Error while inserting to cassandra - JSON - ", e);
          }*/
+	}
+	@Async
+	public void updateRawData(Map<String,String> eventMap){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CCV1.getName())){
+			collection.updateCollection(eventMap);
+			collectionItem.updateCollectionItem(eventMap);
+		}
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLUAV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLPCV1.getName())){
+			classpage.updateClasspage(eventMap);
+		}
+		
 	}
 }

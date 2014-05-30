@@ -64,7 +64,6 @@ import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.UpdateRawDataDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -129,7 +128,6 @@ public class CassandraDataLoader implements Constants {
     
     private MicroAggregatorProducer microAggregator;
     
-    private UpdateRawDataDAOImpl rawDataUpdate;
     
     private Gson gson = new Gson();
     
@@ -196,7 +194,6 @@ public class CassandraDataLoader implements Constants {
         this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
-        this.rawDataUpdate = new UpdateRawDataDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
 
     }
@@ -426,7 +423,7 @@ public class CassandraDataLoader implements Constants {
 		}
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-			rawDataUpdate.updateRawData(eventMap);
+			counterDetailsDao.updateRawData(eventMap);
 		}
     }
     /**
