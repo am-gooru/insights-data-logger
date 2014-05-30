@@ -90,10 +90,13 @@ public List<String> getParentId(String Key){
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
         
 		logger.info("Classpage KEY : {} ", eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID));
-  
+		//for create classpage group owner should be 1.
+		int isGroupOwner = 0;
+		
          m.withRow(classpageCF, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID))
         .putColumnIfNotNull(USER_GROUP_UID,eventMap.get(GROUPUID))
         .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENTGOORUOID))
+        .putColumnIfNotNull("is_group_owner",isGroupOwner)
         .putColumnIfNotNull(USERID,eventMap.get(GOORUID))
         .putColumnIfNotNull(CLASSPAGE_CODE,eventMap.get(CLASSCODE))
         .putColumnIfNotNull(USER_GROUP_CODE,eventMap.get(CONTENT_GOORU_OID))

@@ -570,9 +570,6 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			;
 		}
 		
-		logger.info("Feedback keyValue : {}",keyValue);
-		logger.info("Content Gooru Oid : {} ",eventMap.get(CONTENTGOORUOID));
-		
 		// For user feed back
 		m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null,null)
