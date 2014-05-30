@@ -548,7 +548,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCETYPE);
 		
-		
+		logger.info("Feedback keyValue : {}",keyValue);
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
 			m.withRow(realTimeAggregator, keyValue)
 			.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK,eventMap.get(TEXT),null)
@@ -604,14 +604,11 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     						status = status-1;
     					}
     					int attemptStatus = attempStatus[status];
-    					
-    					
     					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
     		    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
     		    			answerStatus = 	option;
     		    		}
     					String textValue = null;
-    					    					
     					if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)){
     						String openEndedtextValue = eventMap.get(TEXT);
     						if(openEndedtextValue != null && !openEndedtextValue.isEmpty()){
@@ -620,10 +617,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     					}else {
     						option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
     					}
-    					
     					boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
-    					    					
-    					
     					if(answered){
     						if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
     							m = this.addObjectForAggregator(eventMap, keyValue, m,option,attemptStatus);
@@ -631,14 +625,8 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     					}else{
     						m = this.addObjectForAggregator(eventMap, keyValue, m,option,attemptStatus);
     					}
-    					    					
-						
-						
-						
 				      m.withRow(realTimeAggregator, keyValue)
 				                .putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+TYPE ,eventMap.get(QUESTIONTYPE),null)
-				      			
-				      			
 				      ;
 					}      				     
 				}
