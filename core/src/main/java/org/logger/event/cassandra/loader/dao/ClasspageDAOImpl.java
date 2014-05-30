@@ -48,8 +48,11 @@ public class ClasspageDAOImpl extends BaseDAOCassandraImpl implements ClasspageD
 	 
 	 private static final String CF_CLASSPAGE = "classpage";
 	    
+	 private CassandraConnectionProvider connectionProvider;
+	 
 	public ClasspageDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
+		this.connectionProvider = connectionProvider;
 		classpageCF = new ColumnFamily<String, String>(
 				CF_CLASSPAGE, // Column Family Name
                 StringSerializer.get(), // Key Serializer
@@ -84,10 +87,11 @@ public List<String> getParentId(String Key){
 	} 
 
 	public void updateClasspage(Map<String ,String> eventMap){
-	
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        logger.info("Classpage KEY : {} ", eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID));
-        m.withRow(classpageCF, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID))
+        
+		logger.info("Classpage KEY : {} ", eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID));
+  
+         m.withRow(classpageCF, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID))
         .putColumnIfNotNull(USER_GROUP_UID,eventMap.get(GROUPUID))
         .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENTGOORUOID))
         .putColumnIfNotNull(USERID,eventMap.get(GOORUID))
