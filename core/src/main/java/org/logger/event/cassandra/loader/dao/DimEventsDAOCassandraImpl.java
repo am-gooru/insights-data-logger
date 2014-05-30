@@ -158,13 +158,15 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 		int lastEventId=1000;
 		try {
 			ColumnList<String> existingEventRecord = getKeyspace().prepareQuery(dimEventCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey("update-event-id").execute().getResult();
-			if(existingEventRecord.getColumnByName("event_id").getStringValue() != null && !existingEventRecord.getColumnByName("event_id").getStringValue().isEmpty()){
-				lastEventId = Integer.parseInt(existingEventRecord.getColumnByName("event_id").getStringValue());
+			if(existingEventRecord.getColumnByName("event_id").getStringValue() != null){
+				logger.info("Event IDDDD : {} " ,existingEventRecord.getStringValue("event_id",null));
+				lastEventId = Integer.parseInt(existingEventRecord.getStringValue("event_id", null));
 			}
 		} catch (ConnectionException e1) {
 			logger.info("unable to get existing eventId", e1);
 			e1.printStackTrace();
 		}
+		
 	    lastEventId++;
 	    MutationBatch eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 	    eventIdMutation.withRow(dimEventCF, name)
