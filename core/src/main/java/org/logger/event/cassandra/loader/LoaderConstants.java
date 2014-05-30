@@ -123,7 +123,9 @@ public enum LoaderConstants {
     
 	CLPCV1("classpage.create"),
 	
-	CCV1("classpage.create"),
+	CLUAV1("classpage.user.add"),
+	
+	CCV1("collection.create"),
 	
 	RUFB("resource.user.feedback"),
 	

@@ -86,13 +86,13 @@ public List<String> getParentId(String Key){
 	public void updateClasspage(Map<String ,String> eventMap){
 	
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        
-        m.withRow(classpageCF, eventMap.get(CONTENT_GOORU_OID))
+        logger.info("Classpage KEY : {} ", eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID));
+        m.withRow(classpageCF, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID))
         .putColumnIfNotNull(USER_GROUP_UID,eventMap.get(GROUPUID))
-        .putColumnIfNotNull(CLASSPAGE_CONTENT_ID,eventMap.get(CONTENTID))
+        .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENTGOORUOID))
+        .putColumnIfNotNull(USERID,eventMap.get(GOORUID))
         .putColumnIfNotNull(CLASSPAGE_CODE,eventMap.get(CLASSCODE))
         .putColumnIfNotNull(USER_GROUP_CODE,eventMap.get(CONTENT_GOORU_OID))
-        .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENT_GOORU_OID))
         .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
         
         ;

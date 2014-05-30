@@ -37,5 +37,9 @@ public class UpdateRawDataDAOImpl extends BaseDAOCassandraImpl implements Update
 			collection.updateCollection(eventMap);
 			collectionItem.updateCollectionItem(eventMap);
 		}
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLUAV1.getName())){
+			classpage.updateClasspage(eventMap);
+		}
+		
 	}
 }

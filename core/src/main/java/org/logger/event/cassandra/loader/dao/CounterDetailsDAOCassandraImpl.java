@@ -904,14 +904,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 	public boolean isUserAlreadyAnswered(String key,String columnPrefix){
 		ColumnList<String> counterColumns = this.getAllCounterColumns(key);
 		boolean status= false;
-		
-		/*	long correctCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.CORRECT.getName(), null) : 0L;
-			long inCorrectCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName()) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+LoaderConstants.INCORRECT.getName(), null) : 0L;
-			
-			if(correctCount > 0L || inCorrectCount > 0L){
-					status = true;
-			}*/
-		
 		long attemptCount = counterColumns.getColumnByName(columnPrefix+SEPERATOR+ATTEMPTS) != null ? counterColumns.getLongValue(columnPrefix+SEPERATOR+ATTEMPTS, null) : 0L;
 		
 		if(attemptCount > 0L){

@@ -425,7 +425,7 @@ public class CassandraDataLoader implements Constants {
 	    	
 		}
 		
-		if(aggregatorJson != null  && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			rawDataUpdate.updateRawData(eventMap);
 		}
     }
