@@ -16,7 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
@@ -24,7 +23,7 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveDashBoardDAO,Constants{
 
-	private static final Logger logger = LoggerFactory.getLogger(CounterDetailsDAOCassandraImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 
     private final ColumnFamily<String, String> microAggregator;
     
@@ -83,22 +82,22 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			
 			boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
 			
+			logger.info("Is row available : {} ", isRowAvailable);
+			
 			if(!isRowAvailable){
 				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
 			}
 			List<String> keys = this.generateYMWDKey();
 			
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			MutationBatch ma = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
 				generateCounter(key,eventName,1, m);
 				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
-				generateAggregator(key, LASTACCESSED, createdOn, ma);
-				generateAggregator(key, LASTACCESSEDUSER, gooruUId, ma);
+				generateAggregator(key, LASTACCESSED, createdOn, m);
+				generateAggregator(key, LASTACCESSEDUSER, gooruUId, m);
 			}
 			try {
 	            m.execute();
-	            ma.execute();
 	        } catch (ConnectionException e) {
 	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
 	        }
@@ -161,7 +160,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 		returnDate.add(year+SEPERATOR+month+SEPERATOR+date);
 		returnDate.add(year+SEPERATOR+month+SEPERATOR+week);
-		returnDate.add(year+SEPERATOR+month+SEPERATOR);
+		returnDate.add(year+SEPERATOR+month);
 		returnDate.add(String.valueOf(year));
 
 		return returnDate;
