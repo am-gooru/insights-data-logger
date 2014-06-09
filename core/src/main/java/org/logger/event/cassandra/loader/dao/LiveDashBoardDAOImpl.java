@@ -89,14 +89,16 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			List<String> keys = this.generateYMWDKey();
 			
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			MutationBatch ma = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
 				generateCounter(key,eventName,1, m);
 				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
-				generateAggregator(key, LASTACCESSED, createdOn, m);
-				generateAggregator(key, LASTACCESSEDUSER, gooruUId, m);
+				generateAggregator(key, LASTACCESSED, createdOn, ma);
+				generateAggregator(key, LASTACCESSEDUSER, gooruUId, ma);
 			}
 			try {
 	            m.execute();
+	            ma.execute();
 	        } catch (ConnectionException e) {
 	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
 	        }
@@ -160,7 +162,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		returnDate.add(year+SEPERATOR+month+SEPERATOR+date);
 		returnDate.add(year+SEPERATOR+month+SEPERATOR+week);
 		returnDate.add(year+SEPERATOR+month+SEPERATOR);
-		returnDate.add(year+SEPERATOR);
+		returnDate.add(String.valueOf(year));
 
 		return returnDate;
 		
