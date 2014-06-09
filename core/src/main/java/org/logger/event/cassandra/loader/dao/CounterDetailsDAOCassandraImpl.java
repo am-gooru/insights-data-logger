@@ -120,6 +120,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
     }
     
+    @Async
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
     	String contentGooruOId = "";
 		String eventName = "";

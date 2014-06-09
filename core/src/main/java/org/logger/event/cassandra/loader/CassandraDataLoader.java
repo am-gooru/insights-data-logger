@@ -61,6 +61,7 @@ import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimUserDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
@@ -120,6 +121,8 @@ public class CassandraDataLoader implements Constants {
   
     private CounterDetailsDAOCassandraImpl counterDetailsDao;
         
+    private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
+
     private ActivityStreamDaoCassandraImpl activityStreamDao;
 
     private RealTimeOperationConfigDAOImpl realTimeOperation;
@@ -191,6 +194,7 @@ public class CassandraDataLoader implements Constants {
         this.apiDao = new APIDAOCassandraImpl(getConnectionProvider());
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(getConnectionProvider());    
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
+        this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
@@ -413,17 +417,17 @@ public class CassandraDataLoader implements Constants {
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 			counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
 	    	microAggregator.sendEventForAggregation(eventObject.getFields());
-	    	// To be enable 
-	    	/*try {
-				counterDetailsDao.callCounters(eventMap);
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}*/
-	    	
 		}
-		
+	  
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			counterDetailsDao.updateRawData(eventMap);
+		}
+		
+		//Track activities
+	  	try {
+    		liveDashBoardDAOImpl.callCounters(eventMap);
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
     }
     /**

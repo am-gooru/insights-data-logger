@@ -18,6 +18,10 @@ public interface Constants {
 	
 	public String METRICS = "metrics";
 	
+	public String LASTACCESSEDUSER = "last~accessed~user";
+	
+	public String LASTACCESSED = "last~accessed";
+	
 	public String EVENTNAME = "eventName";
 	
 	public String CONTENTGOORUOID = "contentGooruId";
