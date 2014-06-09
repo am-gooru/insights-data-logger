@@ -18,6 +18,7 @@ import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
@@ -130,19 +131,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	private boolean isRowAvailable(String key,String  columnName){
-		Column<String>  result = null;
+		ColumnList<String>  result = null;
     	try {
     		 result = getKeyspace().prepareQuery(microAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		String column = result.getName();
-		if (column != null && !column.isEmpty()) {
-			return true;
+		if (result != null && !result.isEmpty() && result.getColumnByName(columnName) != null) {
+				return true;
     	}		
 		return false;
 		
