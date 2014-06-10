@@ -408,15 +408,21 @@ public class CassandraDataLoader implements Constants {
 		    timelineDao.updateTimelineObject(eventObject, eventRowKey,eventKeyUUID.toString());
 		}
 		
-		//To be revoked		
+		//To be revoked
+		long startEvent = System.currentTimeMillis();
 		EventData eventData= getAndSetEventData(eventMap);
 		this.updateEvent(eventData); 
-
+		long stopEvent = System.currentTimeMillis();
+		logger.info("Get and Set Event Data : {} ",(stopEvent - startEvent));
+		
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+			long startCounterDetail = System.currentTimeMillis();
 			counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-	    	microAggregator.sendEventForAggregation(eventObject.getFields());
+			long stopCounterDetail = System.currentTimeMillis();
+			logger.info("counterDetail : {} ",(stopCounterDetail - startCounterDetail));
+			microAggregator.sendEventForAggregation(eventObject.getFields());
 		}
 	  
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
@@ -424,11 +430,14 @@ public class CassandraDataLoader implements Constants {
 		}
 		
 		//Track activities
+		long startActivity = System.currentTimeMillis();
 	  	try {
     		liveDashBoardDAOImpl.callCounters(eventMap);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		long stopActivity = System.currentTimeMillis();
+		logger.info("Activity : {} ",(stopActivity - startActivity));
     }
     /**
      * 

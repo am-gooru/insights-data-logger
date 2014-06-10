@@ -70,14 +70,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     @Async
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
-    	String contentGooruOId = "";
-		String eventName = "";
-		String gooruUId = "";
-		long start = System.currentTimeMillis();
 		if(eventMap.containsKey(EVENTNAME) && eventMap.containsKey(GOORUID)) {
-			contentGooruOId = eventMap.get(CONTENTGOORUOID);
-			gooruUId = eventMap.get(GOORUID);
-			eventName = eventMap.get(EVENTNAME);
+			String gooruUId = eventMap.get(GOORUID);
+			String eventName = eventMap.get(EVENTNAME);
 			String createdOn = eventMap.get(STARTTIME);
 			
 			boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
@@ -103,8 +98,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	        }
 		}
 		
-		long stop = System.currentTimeMillis();
-		logger.info("Time spent for counters : {}",(stop-start));	
     }
     
     public void generateCounter(String key,String columnName, long count ,MutationBatch m) {
@@ -158,9 +151,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		int date = currentDate.get(Calendar.DATE);
 		List<String> returnDate = new ArrayList<String>();			
 		
-		returnDate.add(year+SEPERATOR+month+SEPERATOR+date);
-		returnDate.add(year+SEPERATOR+month+SEPERATOR+week);
-		returnDate.add(year+SEPERATOR+month);
+		returnDate.add(String.valueOf(year)+month+date);
+		returnDate.add(String.valueOf(year)+month+week);
+		returnDate.add(String.valueOf(year)+month);
 		returnDate.add(String.valueOf(year));
 
 		return returnDate;
