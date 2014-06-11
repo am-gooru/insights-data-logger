@@ -41,6 +41,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private DimResourceDAOImpl dimResource;
     
+    private DimUserDAOCassandraImpl dimUser;
+    
     private ClasspageDAOImpl classpage;
     
     private CollectionDAOImpl collection;
@@ -65,15 +67,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
         this.collection = new CollectionDAOImpl(this.connectionProvider);
+        this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
     }
 
     @Async
-    public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
+    public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException, ConnectionException {
 		if(eventMap.containsKey(EVENTNAME) && eventMap.containsKey(GOORUID)) {
 			String gooruUId = eventMap.get(GOORUID);
 			String eventName = eventMap.get(EVENTNAME);
 			String createdOn = eventMap.get(STARTTIME);
+			String userName = dimUser.getUserName(gooruUId);
 			
 			boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
 			
@@ -89,7 +93,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				generateCounter(key,eventName,1, m);
 				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
-				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, gooruUId, m);
+				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
+				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
 			}
 			try {
 	            m.execute();

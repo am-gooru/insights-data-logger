@@ -352,7 +352,7 @@ public class CassandraDataLoader implements Constants {
        }
     }
 
-    public void handleEventObjectMessage(EventObject eventObject) throws JSONException{
+    public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException{
     
     	String userUid = null;
     	String organizationUid = null;
