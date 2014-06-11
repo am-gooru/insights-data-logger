@@ -193,7 +193,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		returnDate.add(""+year+""+updatedMonth+""+updatedWeek);
 		returnDate.add(""+year+""+updatedMonth);
 		returnDate.add(String.valueOf(year));
-		returnDate.add("ALL");
+		returnDate.add("all");
 		return returnDate; 
 		
 		
