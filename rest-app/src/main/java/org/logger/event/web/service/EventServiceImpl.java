@@ -51,6 +51,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
@@ -215,7 +216,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Async
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(
-			EventObject eventObject) throws JSONException {
+			EventObject eventObject) throws JSONException, ConnectionException {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {

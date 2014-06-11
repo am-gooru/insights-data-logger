@@ -33,6 +33,7 @@ import org.json.JSONException;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;
 
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
@@ -41,7 +42,7 @@ import com.netflix.astyanax.model.Rows;
 public interface EventService {
 	
 	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
-	public ActionResponseDTO<EventObject> handleEventObjectMessage(EventObject eventObject) throws JSONException;
+	public ActionResponseDTO<EventObject> handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException;
 	public AppDO verifyApiKey(String apiKeyToken);
 	public ColumnList<String> readEventDetail(String eventKey);
 	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead);
