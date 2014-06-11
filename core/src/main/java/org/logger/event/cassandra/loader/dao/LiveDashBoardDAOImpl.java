@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -148,7 +149,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	public List<String> generateYMWDKey(){
 
-		Calendar currentDate = Calendar.getInstance(); //Get the current date			
+		/*Calendar currentDate = Calendar.getInstance(); //Get the current date			
 		int week = currentDate.get(Calendar.WEEK_OF_MONTH);
 		int month = currentDate.get(Calendar.MONTH);
 		month = month + 1;
@@ -160,8 +161,41 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		returnDate.add(String.valueOf(year)+month+week);
 		returnDate.add(String.valueOf(year)+month);
 		returnDate.add(String.valueOf(year));
+		returnDate.add("ALL"); */
 
-		return returnDate;
+		String updatedMonth ="0";
+		String updatedWeek = "0";
+		String updatedDate = "0";
+		Calendar currentDate = Calendar.getInstance(TimeZone.getTimeZone("UTC")); //Get the current date			
+		int week = currentDate.get(Calendar.WEEK_OF_MONTH);
+		int month = currentDate.get(Calendar.MONTH);
+		month = month + 1;
+		if(month < 10) {
+			updatedMonth +=month;
+		}else{
+			updatedMonth =""+month;
+		}
+		if(week < 10) {
+			updatedWeek +=week;
+		}else{
+			updatedWeek =""+week;
+		}
+		int year = currentDate.get(Calendar.YEAR);
+		int date = currentDate.get(Calendar.DATE);
+		if(date < 10) {
+			updatedDate +=date;
+		}else{
+			updatedDate =""+date;
+		}
+		List<String> returnDate = new ArrayList<String>();			
+		
+		returnDate.add(""+year+""+updatedMonth+""+updatedDate);
+		returnDate.add(""+year+""+updatedMonth+""+updatedWeek);
+		returnDate.add(""+year+""+updatedMonth);
+		returnDate.add(String.valueOf(year));
+		returnDate.add("ALL");
+		return returnDate; 
+		
 		
 	}
 }
