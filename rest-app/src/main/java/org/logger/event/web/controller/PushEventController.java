@@ -27,7 +27,7 @@ public class PushEventController extends AtmosphereResolver {
 	
 	@RequestMapping(value = "/push", method = RequestMethod.GET)
 	public ModelAndView trackEvent(){
-		return new ModelAndView("chat");
+		return new ModelAndView("show");
 	}
 	
 
@@ -35,18 +35,14 @@ public class PushEventController extends AtmosphereResolver {
     @ResponseBody public void onRequest(AtmosphereResource atmosphereResource, HttpSession session) throws IOException {
 
         AtmosphereRequest atmosphereRequest = atmosphereResource.getRequest();
-
-        System.out.println("Test : "+atmosphereRequest.getHeader("negotiating"));
+        
         if(atmosphereRequest.getHeader("negotiating") == null) {
             atmosphereResource.resumeOnBroadcast(atmosphereResource.transport() == AtmosphereResource.TRANSPORT.LONG_POLLING).suspend();
         } else {
             atmosphereResource.getResponse().getWriter().write("OK");
         }
-        System.out.print("Response : "+ atmosphereResource.getResponse());
         for(HttpSession httpSession : subscribers) {
         	subscribers.add(session);
-        	System.out.println("Subscribers: " + subscribers.size());
-            System.out.println(httpSession);
         }
 
     }
