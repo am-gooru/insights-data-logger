@@ -46,7 +46,7 @@ $(function () {
             return;
         }
 
-        if (!logged) {
+/*        if (!logged) {
             logged = true;
             status.text(myName + ': ').css('color', 'blue');
             input.removeAttr('disabled').focus();
@@ -55,8 +55,8 @@ $(function () {
 
             var me = json.author == author;
             var date = typeof(json.time) == 'string' ? parseInt(json.time) : json.time;
-            addMessage(message);
         }
+*/        addMessage(message);
     };
 
     request.onClose = function(response) {
