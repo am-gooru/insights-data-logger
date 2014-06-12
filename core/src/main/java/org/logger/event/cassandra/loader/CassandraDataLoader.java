@@ -65,6 +65,8 @@ import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
+import org.restlet.data.Form;
+import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -359,6 +361,7 @@ public class CassandraDataLoader implements Constants {
     	
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
+    	
     	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
     	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
@@ -395,6 +398,8 @@ public class CassandraDataLoader implements Constants {
 		}
       
 		if (eventObject.getFields() != null) {
+			logger.info("Push events for atmosphere ");
+			this.pushMessage(eventObject.getFields().toString());
 			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
@@ -1325,7 +1330,16 @@ public class CassandraDataLoader implements Constants {
            timeMap.put("timeSpent", timeInMillisecs);    
            
        }
-       
+
+       @Async
+       public void pushMessage(String fields){
+    	ClientResource clientResource = null;
+    	clientResource = new ClientResource("http://dev-logapi.goorulearning.org:8080/api/atmosphere/v2/push/message");
+    	Form forms = new Form();
+		forms.add("data", fields);
+		clientResource.post(forms.getWebRepresentation());
+		
+       }
     /**
      * @return the connectionProvider
      */

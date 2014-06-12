@@ -52,28 +52,12 @@ public class PushEventController extends AtmosphereResolver {
 
         AtmosphereRequest atmosphereRequest = atmosphereResource.getRequest();
 
-       String author =  atmosphereRequest.getParameter("author");
-       String message = atmosphereRequest.getParameter("message");
+       String data =  atmosphereRequest.getParameter("data");
 
         
-        atmosphereResource.getBroadcaster().broadcast(new Data(author, message).toString());
+        atmosphereResource.getBroadcaster().broadcast(data);
        
     }
     
-    private final static class Data {
-
-        private final String text;
-        private final String author;
-
-        public Data(String author, String text) {
-            this.author = author;
-            this.text = text;
-        }
-
-        public String toString() {
-            return "{ \"text\" : \"" + text + "\", \"author\" : \"" + author + "\" , \"time\" : " + new Date().getTime() + "}";
-        }
-
-    }
 
 }
