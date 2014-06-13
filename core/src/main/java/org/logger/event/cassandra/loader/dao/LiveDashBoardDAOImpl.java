@@ -189,10 +189,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		List<String> returnDate = new ArrayList<String>();			
 		
-		returnDate.add(""+year+""+updatedMonth+""+updatedDate);
-		returnDate.add(""+year+""+updatedMonth+""+updatedWeek);
-		returnDate.add(""+year+""+updatedMonth);
-		returnDate.add(String.valueOf(year));
+		returnDate.add("D"+year+""+updatedMonth+""+updatedDate);
+		returnDate.add("W"+year+""+updatedMonth+""+updatedWeek);
+		returnDate.add("M"+year+""+updatedMonth);
+		returnDate.add("Y"+year);
 		returnDate.add("all");
 		return returnDate; 
 		
