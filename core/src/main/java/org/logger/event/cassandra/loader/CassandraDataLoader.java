@@ -399,7 +399,7 @@ public class CassandraDataLoader implements Constants {
       
 		if (eventObject.getFields() != null) {
 			logger.info("Push events for atmosphere ");
-			this.pushMessage(eventObject.getFields().toString());
+			//this.pushMessage(eventObject.getFields().toString());
 			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}

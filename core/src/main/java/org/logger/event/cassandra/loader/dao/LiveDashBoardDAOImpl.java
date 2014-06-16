@@ -3,10 +3,9 @@ package org.logger.event.cassandra.loader.dao;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -48,8 +47,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
-    private SimpleDateFormat secondsDateFormatter;
+    private SimpleDateFormat customDateFormatter;
 
+    private JobConfigSettingsDAOCassandraImpl configSettings;
+    
+    private String dashboardKeys = null;
+    
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -69,7 +72,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
         this.collection = new CollectionDAOImpl(this.connectionProvider);
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
-        this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+        this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
+        this.customDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+        dashboardKeys = configSettings.getConstants("dashboard~keys");
+
     }
 
     @Async
@@ -87,7 +93,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			if(!isRowAvailable){
 				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
 			}
-			List<String> keys = this.generateYMWDKey();
+			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
 			
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
@@ -147,53 +153,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 	}
 	
-	public List<String> generateYMWDKey(){
-
-		/*Calendar currentDate = Calendar.getInstance(); //Get the current date			
-		int week = currentDate.get(Calendar.WEEK_OF_MONTH);
-		int month = currentDate.get(Calendar.MONTH);
-		month = month + 1;
-		int year = currentDate.get(Calendar.YEAR);
-		int date = currentDate.get(Calendar.DATE);
-		List<String> returnDate = new ArrayList<String>();			
+	public List<String> generateYMWDKey(String eventTime){
 		
-		returnDate.add(String.valueOf(year)+month+date);
-		returnDate.add(String.valueOf(year)+month+week);
-		returnDate.add(String.valueOf(year)+month);
-		returnDate.add(String.valueOf(year));
-		returnDate.add("ALL"); */
-
-		String updatedMonth ="0";
-		String updatedWeek = "0";
-		String updatedDate = "0";
-		Calendar currentDate = Calendar.getInstance(TimeZone.getTimeZone("UTC")); //Get the current date			
-		int week = currentDate.get(Calendar.WEEK_OF_MONTH);
-		int month = currentDate.get(Calendar.MONTH);
-		month = month + 1;
-		if(month < 10) {
-			updatedMonth +=month;
-		}else{
-			updatedMonth =""+month;
-		}
-		if(week < 10) {
-			updatedWeek +=week;
-		}else{
-			updatedWeek =""+week;
-		}
-		int year = currentDate.get(Calendar.YEAR);
-		int date = currentDate.get(Calendar.DATE);
-		if(date < 10) {
-			updatedDate +=date;
-		}else{
-			updatedDate =""+date;
-		}
 		List<String> returnDate = new ArrayList<String>();			
-		
-		returnDate.add("D~"+year+""+updatedMonth+""+updatedDate);
-		returnDate.add("W~"+year+""+updatedMonth+""+updatedWeek);
-		returnDate.add("M~"+year+""+updatedMonth);
-		returnDate.add("Y~"+year);
-		returnDate.add("all");
+		if(dashboardKeys != null){
+			for(String key : dashboardKeys.split(",")){
+				customDateFormatter = new SimpleDateFormat(key);
+				Date eventDateTime = new Date(eventTime);
+				String rowKey = customDateFormatter.format(eventDateTime).toString();
+		        returnDate.add(rowKey);
+			}
+		}
 		return returnDate; 
 		
 		
