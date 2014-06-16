@@ -74,7 +74,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
         this.customDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-        dashboardKeys = configSettings.getConstants("dashboard~keys");
+        dashboardKeys = configSettings.getConstants("dashboard~keys","supported~keys");
 
     }
 

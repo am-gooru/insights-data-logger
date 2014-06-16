@@ -993,8 +993,8 @@ public class CassandraDataLoader implements Constants {
 		}
 		logger.info("Serilizer : {}",new JSONSerializer().serialize(dataJSONList));
 		boolean flagError = false;
-		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName());
-		String VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName());
+		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),"constant_value");
+		String VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),"constant_value");
 		String result = null;
 		
 		try{

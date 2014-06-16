@@ -146,7 +146,7 @@ public long getJobsCount(){
 }
 
 @Caching
-public String getConstants(String KEY){
+public String getConstants(String KEY,String columnName){
 
 	String constantName = null;
 	ColumnList<String> jobConstants = null;
@@ -157,7 +157,7 @@ public String getConstants(String KEY){
 	}
 	
 	if(jobConstants != null){
-		constantName = jobConstants.getStringValue("constant_value", null);
+		constantName = jobConstants.getStringValue(columnName, null);
 	}
 	
 	return constantName;
