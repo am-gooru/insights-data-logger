@@ -94,7 +94,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
 			}
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
-			logger.info("keys : {}",keys);
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
 				generateCounter(key,eventName,1, m);
