@@ -51,7 +51,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     private JobConfigSettingsDAOCassandraImpl configSettings;
     
-    private String dashboardKeys = null;
+    String dashboardKeys = null;
     
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
@@ -94,11 +94,13 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
 			}
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
-			
+			logger.info("keys : {}",keys);
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
 				generateCounter(key,eventName,1, m);
 				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
+				generateCounter(eventName,key,1, m);
+				generateCounter(eventName+SEPERATOR+gooruUId,key,1, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
@@ -154,18 +156,16 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	public List<String> generateYMWDKey(String eventTime){
-		
-		List<String> returnDate = new ArrayList<String>();			
+		List<String> returnDate = new ArrayList<String>();	
 		if(dashboardKeys != null){
 			for(String key : dashboardKeys.split(",")){
 				customDateFormatter = new SimpleDateFormat(key);
-				Date eventDateTime = new Date(eventTime);
+				Date eventDateTime = new Date(Long.valueOf(eventTime));
 				String rowKey = customDateFormatter.format(eventDateTime).toString();
 		        returnDate.add(rowKey);
+		        
 			}
 		}
 		return returnDate; 
-		
-		
 	}
 }
