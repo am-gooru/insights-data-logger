@@ -74,7 +74,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
         this.customDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-        dashboardKeys = configSettings.getConstants("dashboard~keys","supported~keys");
+        dashboardKeys = configSettings.getConstants("constant_value","supported~keys");
 
     }
 
@@ -96,6 +96,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
+				logger.info("Keysss : {}");
 				generateCounter(key,eventName,1, m);
 				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
 				generateCounter(eventName,key,1, m);
@@ -156,8 +157,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	public List<String> generateYMWDKey(String eventTime){
 		List<String> returnDate = new ArrayList<String>();	
+		logger.info("dashboardKeys : {}",dashboardKeys);
 		if(dashboardKeys != null){
 			for(String key : dashboardKeys.split(",")){
+				logger.info("key : {}",key);
 				customDateFormatter = new SimpleDateFormat(key);
 				Date eventDateTime = new Date(Long.valueOf(eventTime));
 				String rowKey = customDateFormatter.format(eventDateTime).toString();
