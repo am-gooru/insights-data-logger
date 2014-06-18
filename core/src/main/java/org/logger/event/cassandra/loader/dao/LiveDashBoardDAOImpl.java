@@ -85,6 +85,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			String eventName = eventMap.get(EVENTNAME);
 			String createdOn = eventMap.get(STARTTIME);
 			String userName = dimUser.getUserName(gooruUId);
+			String organizationUId = eventMap.get(DEFAULT_ORGANIZATION_UID);
+			if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()) {
+					organizationUId = eventMap.get(ORGANIZATIONUID);
+			}
 			
 			boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
 			
@@ -96,10 +100,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
-				generateCounter(key,eventName,1, m);
-				generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
-				generateCounter(eventName,key,1, m);
-				generateCounter(eventName+SEPERATOR+gooruUId,key,1, m);
+				if(eventMap.get(TYPE).equals(eventMap.get(START))) {
+					// Increment the view using start events
+					generateCounter(key,eventName,1, m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
+				}
+				if(eventMap.get(TYPE).equals(eventMap.get(STOP))) {
+					// Calculate the timestamp using stop events
+					generateCounter(key,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);						
+				}
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
