@@ -10,6 +10,7 @@ import java.util.Map;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -107,13 +108,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
 				}
-				if(eventMap.get(TYPE).equals(eventMap.get(STOP))) {
 					// Calculate the timestamp using stop events
-					generateCounter(key,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+gooruUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+organizationUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);						
-				}
+					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);						
+
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
