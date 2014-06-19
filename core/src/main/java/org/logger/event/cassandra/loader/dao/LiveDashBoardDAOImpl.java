@@ -101,7 +101,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
-				if(!eventMap.containsKey(TYPE) && eventMap.get(TYPE).equals(START)) {
+				if(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equals(START)) {
 					// Increment the view using start events
 					generateCounter(key,eventName,1, m);
 					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
@@ -109,10 +109,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
 				}
 					// Calculate the timestamp using stop events
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,Long.valueOf(eventMap.get(TIMEINMS)), m);						
+					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);						
 
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
