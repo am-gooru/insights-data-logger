@@ -86,7 +86,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			String eventName = eventMap.get(EVENTNAME);
 			String createdOn = eventMap.get(STARTTIME);
 			String userName = dimUser.getUserName(gooruUId);
-			String organizationUId = eventMap.get(DEFAULT_ORGANIZATION_UID);
+			String organizationUId = DEFAULT_ORGANIZATION_UID;
 			if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()) {
 					organizationUId = eventMap.get(ORGANIZATIONUID);
 			}
@@ -101,7 +101,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for(String key : keys) {
-				if(eventMap.get(TYPE).equals(eventMap.get(START))) {
+				if(eventMap.get(TYPE).equals(START)) {
 					// Increment the view using start events
 					generateCounter(key,eventName,1, m);
 					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);

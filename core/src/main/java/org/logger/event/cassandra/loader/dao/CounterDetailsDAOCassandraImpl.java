@@ -953,7 +953,6 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
     			
     			long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName(), 0L) : 0L;
     			long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(), 0L) : 0L;
-    			logger.info("keyValue : {} ",keyValue);
     			logger.info("views : {} : timeSpent : {} ",views,timeSpent);
     			
     			if(views == 0L && timeSpent > 0L ){
