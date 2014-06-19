@@ -115,29 +115,19 @@ public List<String> getParentId(String Key){
 	public boolean getClassPageOwnerInfo(String key ,String classPageGooruOid){
 
 		Rows<String, String>  result = null;
-		boolean isOwner;
     	try {
-    		 result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-    		 	.searchWithIndex()
-				.addExpression()
-				.whereColumn("gooru_uid")
-				.equals().value(key).execute().getResult();
-		} catch (ConnectionException e) {
+			result = getKeyspace().prepareQuery(classpageCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex()
+					.addExpression().whereColumn("gooru_uid").equals().value(key)
+					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid)
+					.addExpression().whereColumn("is_group_owner").equals().value(1)
+					.execute().getResult();
+	} catch (ConnectionException e) {
 			logger.info("Error while retieveing data: {}" ,e);
 		}
-		
     	if (result != null && !result.isEmpty()) {
-      		 for(Row<String, String> column : result){	
-      			 String classId = column.getColumns().getStringValue("classpage_gooru_oid", null);
-      			 int ownerStatus = column.getColumns().getIntegerValue("is_group_owner", null);
-    			 if(classId != null && classPageGooruOid != null && classPageGooruOid.equalsIgnoreCase(classId) && ownerStatus == 1 ){
-    				 return true;
-    			 }
-    			 
-    		 }
+    	return true;	
     	}
     	return false;
-	
 	}
 
 	public boolean isUserPartOfClass(String key ,String classPageGooruOid){
