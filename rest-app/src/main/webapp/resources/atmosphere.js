@@ -6,7 +6,7 @@ $(function () {
     var socket = $.atmosphere;
 
     // We are now ready to cut the request
-    var request = { url: document.location.toString() + '/message',
+    var request = { url: 'http://dev-insights.goorulearning.org:8080/insights-api-dev/atmosphere/push/message',
         contentType : "application/json",
         logLevel : 'debug',
         transport : 'websocket' ,
@@ -45,6 +45,8 @@ $(function () {
             + 'socket or the server is down' }));
     };
 
+    var subSocket = socket.subscribe(request);
+    
     function addMessage(json) {
         content.html('<p><span style="color:black">' + json + '</span> </p>');
     }
