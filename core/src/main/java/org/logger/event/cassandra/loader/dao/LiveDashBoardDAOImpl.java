@@ -172,11 +172,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		List<String> returnDate = new ArrayList<String>();	
 		if(dashboardKeys != null){
 			for(String key : dashboardKeys.split(",")){
+				String rowKey = null;
+				if(!key.equalsIgnoreCase("all")) {
 				customDateFormatter = new SimpleDateFormat(key);
 				Date eventDateTime = new Date(Long.valueOf(eventTime));
-				String rowKey = customDateFormatter.format(eventDateTime).toString();
+				 rowKey = customDateFormatter.format(eventDateTime).toString();
+				} else {
+					rowKey = key;
+				}
 		        returnDate.add(rowKey);
-		        
 			}
 		}
 		return returnDate; 
