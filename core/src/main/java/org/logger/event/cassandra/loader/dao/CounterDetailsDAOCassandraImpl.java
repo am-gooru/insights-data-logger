@@ -706,6 +706,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		m.withRow(realTimeAggregator, keyValue)
 		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+CHOICE,textValue,null)
+		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+ACTIVE,"false",null)
 		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+SCORE,scoreL,null)
 		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+OPTIONS,options,null)
 		.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID) + SEPERATOR+STATUS,Long.valueOf(attemptStatus),null)
