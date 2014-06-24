@@ -30,6 +30,7 @@ import org.ednovo.data.model.EventData;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -63,7 +64,7 @@ public class DimUserDAOCassandraImpl extends BaseDAOCassandraImpl implements Dim
 		return existingEventRecord.getStringValue("gooru_uid", null);
 		
 	}
-	
+	@Async
 	public String getUserName(String userUid) throws ConnectionException{
 		String userName = null;
 		Rows<String, String> user = getKeyspace().prepareQuery(dimUserCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)

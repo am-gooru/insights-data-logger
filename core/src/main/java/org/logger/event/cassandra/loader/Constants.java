@@ -88,6 +88,8 @@ public interface Constants {
 	
 	public String TYPE = "type";
 	
+	public String ITEMTYPE = "itemType";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";

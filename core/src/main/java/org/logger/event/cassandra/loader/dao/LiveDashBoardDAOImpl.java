@@ -85,7 +85,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			String gooruUId = eventMap.get(GOORUID);
 			String eventName = eventMap.get(EVENTNAME);
 			String createdOn = eventMap.get(STARTTIME);
-			String userName = dimUser.getUserName(gooruUId);
+			//String userName = dimUser.getUserName(gooruUId);
 			String organizationUId = DEFAULT_ORGANIZATION_UID;
 			if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()) {
 					organizationUId = eventMap.get(ORGANIZATIONUID);
@@ -108,15 +108,48 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
 				}
-					// Calculate the timestamp using stop events
 					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);						
-
+				
+				if(eventMap.containsKey(ITEMTYPE)){
+						generateCounter(key,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+						
+				}
+				
+				if(eventMap.containsKey(MODE)){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+				}
+				
+				if(eventMap.containsKey(ITEMTYPE) && eventMap.containsKey(MODE)){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TIMEINMS) ? Long.valueOf(eventMap.get(TIMEINMS)) : 0L, m);
+				}
+				
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
-				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
+				//generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
 			}
 			try {
 	            m.execute();
