@@ -574,6 +574,26 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 		
 		// For user feed back
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+			if(eventMap.get(SESSION).equalsIgnoreCase("AS")) {
+				String sessionKey = null;
+				String sessionId = null;
+				String newKey = null;
+				if((eventMap.get(CLASSPAGEGOORUOID) != null) && (!eventMap.get(CLASSPAGEGOORUOID).isEmpty())) {
+					sessionKey = "RS"+SEPERATOR+eventMap.get(CLASSPAGEGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID);
+				} else {
+					sessionKey = "RS"+SEPERATOR+eventMap.get(CONTENTGOORUOID);
+				}
+				sessionId = this.getMicroAggregatorValue(sessionKey,eventMap.get(USERID));
+				if((sessionId != null) && (!sessionId.isEmpty())) {
+					newKey = keyValue.replaceFirst("AS~", sessionId+SEPERATOR);
+					m.withRow(realTimeAggregator, newKey)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null,null)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null,null)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,Long.valueOf(eventMap.get(STARTTIME)),null)
+					.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+ACTIVE,eventMap.containsKey(ACTIVE) ? eventMap.get(ACTIVE) : null,null)
+					;
+				}
+			}
 			m.withRow(realTimeAggregator, keyValue)
 				.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null,null)
 				.putColumnIfNotNull(eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null,null)
@@ -641,7 +661,24 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	         }
 			
 	}
-			
+	
+	public String getMicroAggregatorValue(String Key,String columnName) {
+		ColumnList<String> getData = null;
+		String sessionId = null;
+    	try {
+    		getData = getKeyspace().prepareQuery(microAggregator).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					 .getKey(Key)
+					 .execute().getResult();
+
+    	} catch (ConnectionException e) {
+			logger.info("Error while retieveing data : {}" ,e);
+		}
+    	if((columnName != null) && (!columnName.isEmpty())) {
+    		sessionId = getData.getColumnByName(columnName).getStringValue();
+    	}
+    	return sessionId;
+	}
+	
 	public MutationBatch addObjectForAggregator(Map<String,String> eventMap , String keyValue , MutationBatch m,String options , int attemptStatus) throws JSONException{
 		
 		String textValue = null ;
