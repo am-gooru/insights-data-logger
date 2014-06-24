@@ -32,6 +32,8 @@ public interface Constants {
 	
 	public String TIMEINMS = "timeInMillSec";
 	
+	public String TOTALTIMEINMS = "totalTimeSpentInMs";
+	
 	public String EVENTIS = "eventId";
 	
 	public String PARENTEVENTID = "parentEventId";
