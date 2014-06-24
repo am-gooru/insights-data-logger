@@ -583,7 +583,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				} else {
 					sessionKey = "RS"+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				}
-				sessionId = this.getMicroAggregatorValue(sessionKey,eventMap.get(USERID));
+				sessionId = this.getMicroAggregatorValue(sessionKey,eventMap.get(GOORUID));
 				if((sessionId != null) && (!sessionId.isEmpty())) {
 					newKey = keyValue.replaceFirst("AS~", sessionId+SEPERATOR);
 					m.withRow(realTimeAggregator, newKey)
@@ -663,6 +663,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 	}
 	
 	public String getMicroAggregatorValue(String Key,String columnName) {
+		
+		logger.info("Key : {} ",Key);
+		logger.info("columnName : {} ",columnName);
 		ColumnList<String> getData = null;
 		String sessionId = null;
     	try {
