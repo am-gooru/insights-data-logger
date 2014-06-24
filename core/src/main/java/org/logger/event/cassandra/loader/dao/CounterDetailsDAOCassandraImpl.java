@@ -579,9 +579,9 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 				String sessionId = null;
 				String newKey = null;
 				if((eventMap.get(CLASSPAGEGOORUOID) != null) && (!eventMap.get(CLASSPAGEGOORUOID).isEmpty())) {
-					sessionKey = "RS"+SEPERATOR+eventMap.get(CLASSPAGEGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID);
+					sessionKey = "RS"+SEPERATOR+eventMap.get(CLASSPAGEGOORUOID)+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				} else {
-					sessionKey = "RS"+SEPERATOR+eventMap.get(CONTENTGOORUOID);
+					sessionKey = "RS"+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				}
 				sessionId = this.getMicroAggregatorValue(sessionKey,eventMap.get(USERID));
 				if((sessionId != null) && (!sessionId.isEmpty())) {
