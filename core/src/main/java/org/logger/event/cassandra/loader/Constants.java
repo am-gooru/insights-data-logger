@@ -92,6 +92,8 @@ public interface Constants {
 	
 	public String ITEMTYPE = "itemType";
 	
+	public String REGISTERTYPE = "registerType";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";
