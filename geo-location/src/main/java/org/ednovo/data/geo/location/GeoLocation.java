@@ -27,13 +27,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-//import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.DatabaseReader;
 
 
 public class GeoLocation  {
@@ -139,4 +138,17 @@ public class GeoLocation  {
 		return (Country);
 	}
 
+	public CityResponse getGeoResponse(String ip) throws IOException{
+		ip = ip.trim();
+		File database = new File(getFileNamemmdb());
+		CityResponse response = null;
+		DatabaseReader reader = new DatabaseReader.Builder(database).build();
+    	try {
+			 response = reader.city(InetAddress.getByName(ip));
+		} catch (Exception e) {
+			logger.info("Exception while get geo location : {}",e);
+		}
+		reader.close();
+		return response;
+	}
 }

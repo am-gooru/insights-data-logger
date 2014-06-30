@@ -46,6 +46,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
@@ -77,6 +78,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
+import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
@@ -441,11 +443,28 @@ public class CassandraDataLoader implements Constants {
 		//Track activities
 		
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
-			String city = geo.getGeoCityByIP(eventMap.get("userIp"));
-        	String country = geo.getGeoCountryByIP(eventMap.get("userIp"));
-			String state = geo.getGeoRegionByIP(eventMap.get("userIp"));
-			logger.info("city : {} : country : {}",city,country);
-			logger.info("state : {}",state);
+			
+			GeoData geoData = new GeoData();
+			
+			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
+			if(res != null && res.getCountry().getName() != null){
+				geoData.setCountry(res.getCountry().getName());
+			}
+			if(res != null && res.getCity().getName() != null){
+				geoData.setCity(res.getCity().getName());
+			}
+			if(res != null && res.getLocation().getLatitude() != null){
+				geoData.setLatitude(res.getLocation().getLatitude());
+			}
+			if(res != null && res.getLocation().getLongitude() != null){
+				geoData.setLongitude(res.getLocation().getLongitude());
+			}
+			if(res != null && res.getMostSpecificSubdivision().getName() != null){
+				geoData.setState(res.getMostSpecificSubdivision().getName());
+			}
+			logger.info("City Names  : {}",res.getCity().getNames());
+			logger.info("city : {} : country : {}",res.getCity().getName(),res.getCountry().getName());
+			logger.info("state : {}",res.getMostSpecificSubdivision().getName());
 		}
 		long startActivity = System.currentTimeMillis();
 	  	try {
