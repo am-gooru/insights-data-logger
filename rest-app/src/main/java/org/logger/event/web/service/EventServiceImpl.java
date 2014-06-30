@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +52,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
@@ -221,7 +223,11 @@ public class EventServiceImpl implements EventService {
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
         		eventObjectValidator.validateEventObject(eventObject);
-				dataLoaderService.handleEventObjectMessage(eventObject);
+				try {
+					dataLoaderService.handleEventObjectMessage(eventObject);
+				} catch (Exception e) {
+					logger.info("Eception : {}",e);
+				}
         }
         
         
