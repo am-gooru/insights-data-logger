@@ -133,6 +133,7 @@ public class CassandraDataLoader implements Constants {
     
     private MicroAggregatorProducer microAggregator;
     
+    private static GeoLocation geo;
     
     private Gson gson = new Gson();
     
@@ -201,7 +202,7 @@ public class CassandraDataLoader implements Constants {
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
-
+        geo = new GeoLocation();
     }
 
     /**
@@ -354,7 +355,7 @@ public class CassandraDataLoader implements Constants {
        }
     }
 
-    public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException{
+    public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
     
     	String userUid = null;
     	String organizationUid = null;
@@ -436,8 +437,16 @@ public class CassandraDataLoader implements Constants {
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			counterDetailsDao.updateRawData(eventMap);
 		}
-		
+		logger.info("userIp : {} ",eventMap.get("userIp"));
 		//Track activities
+		
+		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
+			String city = geo.getGeoCityByIP(eventMap.get("userIp"));
+        	String country = geo.getGeoCountryByIP(eventMap.get("userIp"));
+			String state = geo.getGeoRegionByIP(eventMap.get("userIp"));
+			logger.info("city : {} : country : {}",city,country);
+			logger.info("state : {}",state);
+		}
 		long startActivity = System.currentTimeMillis();
 	  	try {
     		liveDashBoardDAOImpl.callCounters(eventMap);
@@ -1069,7 +1078,6 @@ public class CassandraDataLoader implements Constants {
        	String state = null ;
        	String ip = "" ;
 
-    	GeoLocation geo = new GeoLocation();
     	if(eventData.getUserIp() != null){
 	    	try {
 	    		ip = eventData.getUserIp().trim();
