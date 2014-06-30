@@ -377,6 +377,9 @@ public class CassandraDataLoader implements Constants {
 						logger.info("Error while fetching User uid ");
 				 }
 			 }
+    	if(eventObject.getUserIp() != null && !eventObject.getUserIp().isEmpty()){
+    		eventMap.put("userIp", eventObject.getUserIp());
+    	}
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
@@ -1334,7 +1337,7 @@ public class CassandraDataLoader implements Constants {
        @Async
        public void pushMessage(String fields){
     	ClientResource clientResource = null;
-    	clientResource = new ClientResource("http://dev-logapi.goorulearning.org:8080/api/atmosphere/v2/push/message");
+    	clientResource = new ClientResource("http://dev-insights.goorulearning.org/insights-api-dev/atmosphere/push/message");
     	Form forms = new Form();
 		forms.add("data", fields);
 		clientResource.post(forms.getWebRepresentation());

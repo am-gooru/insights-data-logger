@@ -163,6 +163,7 @@ public class EventController {
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
 				eventObjects.setFields(eventJson.getAsJsonObject().toString());
+				eventObjects.setUserIp(userIp);
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
