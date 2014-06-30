@@ -38,7 +38,7 @@ import com.maxmind.geoip2.DatabaseReader;
 
 public class GeoLocation  {
 
-	private static String fileNameCity = System.getProperty("user.dir")+"/db/GeoLite2-City.mmdb";
+	private static String fileNameCity = System.getenv("GEO_LOCATION_DB_FILE");
     private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
 
     /**
@@ -48,8 +48,7 @@ public class GeoLocation  {
     
     public String getFileNamemmdb(){
 		String currPath = "";
-		//currPath = System.getenv("GEO_LOCATION_DB_FILE");
-		currPath = fileNameCity;
+		currPath = System.getenv("GEO_LOCATION_DB_FILE");
 		logger.info("GEO_LOCATION_DB_FILE = {}", currPath);
 		return (currPath);
     }

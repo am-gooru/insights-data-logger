@@ -226,7 +226,7 @@ public class EventServiceImpl implements EventService {
 				try {
 					dataLoaderService.handleEventObjectMessage(eventObject);
 				} catch (Exception e) {
-					logger.info("Eception : {}",e);
+					logger.info("Exception : {}",e);
 				}
         }
         
