@@ -218,16 +218,12 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Async
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(
-			EventObject eventObject) throws JSONException, ConnectionException {
+			EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
         		eventObjectValidator.validateEventObject(eventObject);
-				try {
-					dataLoaderService.handleEventObjectMessage(eventObject);
-				} catch (Exception e) {
-					logger.info("Exception : {}",e);
-				}
+				dataLoaderService.handleEventObjectMessage(eventObject);
         }
         
         
