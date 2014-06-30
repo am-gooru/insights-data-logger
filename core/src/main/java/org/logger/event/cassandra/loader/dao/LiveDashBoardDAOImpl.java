@@ -113,6 +113,13 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);						
 				
+				if(!eventMap.containsKey(TYPE)) {
+					generateCounter(key,eventName,1, m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
+				}					
+					
 				if(eventMap.containsKey(ITEMTYPE)){
 						generateCounter(key,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
 						generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
