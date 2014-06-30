@@ -48,7 +48,6 @@ public class GeoLocation  {
     public String getFileNamemmdb(){
 		String currPath = "";
 		currPath = System.getenv("GEO_LOCATION_DB_FILE");
-		logger.info("GEO_LOCATION_DB_FILE = {}", currPath);
 		return (currPath);
     }
     

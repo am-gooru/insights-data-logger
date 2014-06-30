@@ -73,6 +73,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -463,6 +465,10 @@ public class CassandraDataLoader implements Constants {
 			if(res != null && res.getMostSpecificSubdivision().getName() != null){
 				geoData.setState(res.getMostSpecificSubdivision().getName());
 			}
+			ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+			String json = ow.writeValueAsString(geoData);
+			
+			logger.info("Json : {} ",json);
 			logger.info("city : {} : country : {}",res.getCity().getName(),res.getCountry().getName());
 			logger.info("state : {}",res.getMostSpecificSubdivision().getName());
 			logger.info("Latitude : {} : Longitude : {} ",res.getLocation().getLatitude(),res.getLocation().getLongitude());
