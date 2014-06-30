@@ -132,6 +132,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 						
 				}
 				
+				if(eventMap.containsKey(REGISTERTYPE) && eventMap.get(REGISTERTYPE) != null && !eventMap.get(REGISTERTYPE).isEmpty()){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
+					generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
+					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+				}
+				
 				if(eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
 					generateCounter(key,eventName+SEPERATOR+eventMap.get(MODE),1, m);
 					generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(MODE),1, m);
