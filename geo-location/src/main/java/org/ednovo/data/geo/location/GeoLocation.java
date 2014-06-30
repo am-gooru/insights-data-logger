@@ -138,16 +138,12 @@ public class GeoLocation  {
 		return (Country);
 	}
 
-	public CityResponse getGeoResponse(String ip) throws IOException{
+	public CityResponse getGeoResponse(String ip) throws IOException, GeoIp2Exception{
 		ip = ip.trim();
 		File database = new File(getFileNamemmdb());
 		CityResponse response = null;
 		DatabaseReader reader = new DatabaseReader.Builder(database).build();
-    	try {
-			 response = reader.city(InetAddress.getByName(ip));
-		} catch (Exception e) {
-			logger.info("Exception while get geo location : {}",e);
-		}
+		response = reader.city(InetAddress.getByName(ip));
 		reader.close();
 		return response;
 	}

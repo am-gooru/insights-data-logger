@@ -447,6 +447,7 @@ public class CassandraDataLoader implements Constants {
 			GeoData geoData = new GeoData();
 			
 			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
+
 			if(res != null && res.getCountry().getName() != null){
 				geoData.setCountry(res.getCountry().getName());
 			}
@@ -462,10 +463,11 @@ public class CassandraDataLoader implements Constants {
 			if(res != null && res.getMostSpecificSubdivision().getName() != null){
 				geoData.setState(res.getMostSpecificSubdivision().getName());
 			}
-			logger.info("City Names  : {}",res.getCity().getNames());
 			logger.info("city : {} : country : {}",res.getCity().getName(),res.getCountry().getName());
 			logger.info("state : {}",res.getMostSpecificSubdivision().getName());
+			logger.info("Latitude : {} : Longitude : {} ",res.getLocation().getLatitude(),res.getLocation().getLongitude());
 		}
+		
 		long startActivity = System.currentTimeMillis();
 	  	try {
     		liveDashBoardDAOImpl.callCounters(eventMap);
