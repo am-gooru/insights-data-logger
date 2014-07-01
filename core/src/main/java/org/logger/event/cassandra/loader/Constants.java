@@ -94,6 +94,8 @@ public interface Constants {
 	
 	public String REGISTERTYPE = "registerType";
 	
+	public String CLIENTSOURCE = "clientSource";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";
