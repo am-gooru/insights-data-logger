@@ -26,6 +26,7 @@ package org.ednovo.data.geo.location;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,13 +138,17 @@ public class GeoLocation  {
 		return (Country);
 	}
 
-	public CityResponse getGeoResponse(String ip) throws IOException, GeoIp2Exception{
+	public CityResponse getGeoResponse(String ip) throws IOException{
 		ip = ip.trim();
 		File database = new File(getFileNamemmdb());
 		CityResponse response = null;
 		DatabaseReader reader = new DatabaseReader.Builder(database).build();
-		response = reader.city(InetAddress.getByName(ip));
-		reader.close();
+		try {
+			response = reader.city(InetAddress.getByName(ip));
+		} catch (Exception e) {
+			reader.close();
+			return null;
+		} 
 		return response;
 	}
 }

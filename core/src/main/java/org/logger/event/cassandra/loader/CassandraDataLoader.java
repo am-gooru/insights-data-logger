@@ -55,7 +55,7 @@ import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.CounterDetailsDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
@@ -125,7 +125,7 @@ public class CassandraDataLoader implements Constants {
     
     private KafkaLogProducer kafkaLogWriter;
   
-    private CounterDetailsDAOCassandraImpl counterDetailsDao;
+    private MicroAggregatorDAOmpl liveAggregator;
         
     private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
@@ -200,7 +200,7 @@ public class CassandraDataLoader implements Constants {
         this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
         this.apiDao = new APIDAOCassandraImpl(getConnectionProvider());
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(getConnectionProvider());    
-        this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
+        this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
         this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
@@ -432,14 +432,14 @@ public class CassandraDataLoader implements Constants {
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 			long startCounterDetail = System.currentTimeMillis();
-			counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
+			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 			long stopCounterDetail = System.currentTimeMillis();
 			logger.info("counterDetail : {} ",(stopCounterDetail - startCounterDetail));
 			microAggregator.sendEventForAggregation(eventObject.getFields());
 		}
 	  
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-			counterDetailsDao.updateRawData(eventMap);
+			liveAggregator.updateRawData(eventMap);
 		}
 		logger.info("userIp : {} ",eventMap.get("userIp"));
 		//Track activities
@@ -465,13 +465,10 @@ public class CassandraDataLoader implements Constants {
 			if(res != null && res.getMostSpecificSubdivision().getName() != null){
 				geoData.setState(res.getMostSpecificSubdivision().getName());
 			}
-			ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-			String json = ow.writeValueAsString(geoData);
 			
-			logger.info("Json : {} ",json);
-			logger.info("city : {} : country : {}",res.getCity().getName(),res.getCountry().getName());
-			logger.info("state : {}",res.getMostSpecificSubdivision().getName());
-			logger.info("Latitude : {} : Longitude : {} ",res.getLocation().getLatitude(),res.getLocation().getLongitude());
+			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
+				liveDashBoardDAOImpl.saveGeoLocation(geoData);
+			}
 		}
 		
 		long startActivity = System.currentTimeMillis();
@@ -881,7 +878,7 @@ public class CassandraDataLoader implements Constants {
 	        	eventMap.put("eventName", eventObject.getEventName());
 	        	eventMap.put("eventId", eventObject.getEventId());
 	        	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
-	        	counterDetailsDao.migrationAndUpdate(eventMap);
+	        	liveAggregator.migrationAndUpdate(eventMap);
 	    		}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
@@ -1007,7 +1004,7 @@ public class CassandraDataLoader implements Constants {
      * 		To update real time view count 
      */
     public void updateViewCount(String gooruoid, long viewcount ) {
-    	counterDetailsDao.updateCounter(gooruoid,LoaderConstants.VIEWS.getName(), viewcount );
+    	liveAggregator.updateCounter(gooruoid,LoaderConstants.VIEWS.getName(), viewcount );
     }
     
     public void addAggregators(String eventName, String json ,String updateBy) {
@@ -1025,7 +1022,7 @@ public class CassandraDataLoader implements Constants {
 		for (Row<String, String> row : dataDetail) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			String recentResources = row.getKey();
-			count = counterDetailsDao.getCounterLongValue(recentResources, "resource-view");
+			count = liveAggregator.getCounterLongValue(recentResources, "resource-view");
 			map.put("gooruOid", recentResources);
 			map.put("views", count);
 			dataJSONList.add(map);

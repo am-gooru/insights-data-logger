@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.ednovo.data.model.GeoData;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
@@ -15,6 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
@@ -173,6 +177,25 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	        }
 		}
 		
+    }
+    
+    @Async
+    public void saveGeoLocation(GeoData geoData){
+    	ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    	String json = null ;
+    	String rowKey = "geo~locations";
+    	String columnName = null;
+    	if(geoData.getLatitude() != null && geoData.getLongitude() != null){    		
+    		 columnName = geoData.getLatitude()+"x"+geoData.getLongitude();
+    	}
+		try {
+			 json = ow.writeValueAsString(geoData);
+		} catch (JsonProcessingException e) {
+			logger.info("Exception while converting Object as JSON : {}",e);
+		}
+		if(columnName != null){
+			this.addRowColumn(rowKey, columnName, json);
+		}
     }
     
     public void generateCounter(String key,String columnName, long count ,MutationBatch m) {
