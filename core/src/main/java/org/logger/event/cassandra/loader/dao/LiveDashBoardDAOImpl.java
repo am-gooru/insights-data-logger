@@ -111,19 +111,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
-				}
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);						
+				}					
 				
 				if(!eventMap.containsKey(TYPE)) {
 					generateCounter(key,eventName,1, m);
 					generateCounter(key+SEPERATOR+gooruUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId,eventName,1, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,eventName,1, m);
-				}					
-					
+				}
+				
 				if(eventMap.containsKey(ITEMTYPE)){
 						generateCounter(key,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
 						generateCounter(key+SEPERATOR+gooruUId,eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
@@ -133,15 +129,27 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+						if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+							generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+							generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+							generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+							generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+						}
 						
 				}
 				
 				if(eventMap.containsKey(REGISTERTYPE) && eventMap.get(REGISTERTYPE) != null && !eventMap.get(REGISTERTYPE).isEmpty()){
-					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru",1, m);
-					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
-					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru",1, m);
-					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
-					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru"+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
+					generateCounter(key,eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
+					generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
+				}
+				
+				if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+					generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName,1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName,1, m);
+					generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 				}
 				
 				if(eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
@@ -153,6 +161,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+						
+					}
 				}
 				
 				if(eventMap.containsKey(ITEMTYPE) && eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
@@ -164,7 +175,47 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+					
+					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
+						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+							
+					}
 				}
+				
+				if(eventMap.containsKey("country") && eventMap.get("country") != null && !eventMap.get("country").isEmpty()){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get("country"),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get("country"),1, m);
+					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("country"),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("country"),1, m);
+					}
+				}
+				
+				if(eventMap.containsKey("state") && eventMap.get("state") != null && !eventMap.get("state").isEmpty()){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get("state"),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get("state"),1, m);
+					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("state"),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("state"),1, m);
+					}
+				}
+				
+				if(eventMap.containsKey("city") && eventMap.get("city") != null && !eventMap.get("city").isEmpty()){
+					generateCounter(key,eventName+SEPERATOR+eventMap.get("city"),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get("city"),1, m);
+					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
+						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("city"),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventName+SEPERATOR+eventMap.get("city"),1, m);
+					}
+				}
+				
+				generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+				generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+				generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
+				generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);						
 				
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
 				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);

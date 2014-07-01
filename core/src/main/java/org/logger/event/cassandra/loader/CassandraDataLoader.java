@@ -452,9 +452,11 @@ public class CassandraDataLoader implements Constants {
 
 			if(res != null && res.getCountry().getName() != null){
 				geoData.setCountry(res.getCountry().getName());
+				eventMap.put("country", res.getCountry().getName());
 			}
 			if(res != null && res.getCity().getName() != null){
 				geoData.setCity(res.getCity().getName());
+				eventMap.put("city", res.getCity().getName());
 			}
 			if(res != null && res.getLocation().getLatitude() != null){
 				geoData.setLatitude(res.getLocation().getLatitude());
@@ -464,6 +466,7 @@ public class CassandraDataLoader implements Constants {
 			}
 			if(res != null && res.getMostSpecificSubdivision().getName() != null){
 				geoData.setState(res.getMostSpecificSubdivision().getName());
+				eventMap.put("state", res.getMostSpecificSubdivision().getName());
 			}
 			
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
