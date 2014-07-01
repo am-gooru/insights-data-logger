@@ -133,11 +133,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				}
 				
 				if(eventMap.containsKey(REGISTERTYPE) && eventMap.get(REGISTERTYPE) != null && !eventMap.get(REGISTERTYPE).isEmpty()){
-					generateCounter(key,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
-					generateCounter(key,eventName+SEPERATOR+eventMap.get(CLIENTSOURCE),1, m);
-					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(REGISTERTYPE),1, m);
-					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.get(CLIENTSOURCE),1, m);
-					generateCounter(key,eventName+SEPERATOR+eventMap.get(REGISTERTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE),1, m);
+					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru",1, m);
+					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru",1, m);
+					generateCounter(key+SEPERATOR+organizationUId,eventName+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
+					generateCounter(key,eventName+SEPERATOR+eventMap.containsKey(REGISTERTYPE) != null ? eventMap.get(REGISTERTYPE).toLowerCase() : "gooru"+SEPERATOR+eventMap.containsKey(CLIENTSOURCE) != null ? eventMap.get(CLIENTSOURCE).toLowerCase() : "web",1, m);
 				}
 				
 				if(eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
