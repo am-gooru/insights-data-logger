@@ -107,6 +107,8 @@ public enum LoaderConstants {
     
     TS("time_spent"),
     
+    COUNT("count"),
+    
     AVGTS("avg_time_spent"),
     
     TOTALVIEWS("views"),

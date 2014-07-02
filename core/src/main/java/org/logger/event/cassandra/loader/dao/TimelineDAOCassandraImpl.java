@@ -72,6 +72,10 @@ public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements Ti
 
         eventTimelineMutation.withRow(eventTimelineCF, (rowKey+"~"+eventData.getEventName())).putColumn(
                 eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+
+        eventTimelineMutation.withRow(eventTimelineCF, (rowKey.substring(0, 8)+"~"+eventData.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+        
         try {
             eventTimelineMutation.execute();
         } catch (ConnectionException e) {
@@ -91,6 +95,10 @@ public class TimelineDAOCassandraImpl extends BaseDAOCassandraImpl implements Ti
 
         eventTimelineMutation.withRow(eventTimelineCF, (rowKey+"~"+eventObject.getEventName())).putColumn(
                 eventColumnTimeUUID.toString(), CoulmnValue, null);
+        
+        eventTimelineMutation.withRow(eventTimelineCF, (rowKey.substring(0, 8)+"~"+eventObject.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+        
         try {
             eventTimelineMutation.execute();
         } catch (ConnectionException e) {
