@@ -149,6 +149,7 @@ public class GeoLocation  {
 			reader.close();
 			return null;
 		} 
+		reader.close();
 		return response;
 	}
 }
