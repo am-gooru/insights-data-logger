@@ -139,6 +139,8 @@ public class CassandraDataLoader implements Constants {
     
     private static GeoLocation geo;
     
+    public Collection<String> pushingEvents ;
+    
     private Gson gson = new Gson();
     
     /**
@@ -207,6 +209,7 @@ public class CassandraDataLoader implements Constants {
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
         geo = new GeoLocation();
+        pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
     }
 
     /**
@@ -406,8 +409,6 @@ public class CassandraDataLoader implements Constants {
 		}
       
 		if (eventObject.getFields() != null) {
-			logger.info("Push events for atmosphere ");
-			//this.pushMessage(eventObject.getFields().toString());
 			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
@@ -472,6 +473,11 @@ public class CassandraDataLoader implements Constants {
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
 				liveDashBoardDAOImpl.saveGeoLocation(geoData);
 			}
+			logger.info("pushingEvents : {} ",pushingEvents);
+			if(pushingEvents.contains(eventMap.get("eventName"))){				
+				this.pushMessage(eventObject.getFields().toString());
+			}
+			
 		}
 		
     }

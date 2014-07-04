@@ -162,4 +162,17 @@ public String getConstants(String KEY,String columnName){
 	
 	return constantName;
 }
+
+@Caching
+public ColumnList<String> getColumnList(String KEY){
+
+		ColumnList<String> jobConstants = null;
+		try {
+			jobConstants = getKeyspace().prepareQuery(jobConfigCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		return jobConstants;
+	}
 }
