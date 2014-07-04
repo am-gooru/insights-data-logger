@@ -442,11 +442,7 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 
-	  	try {
-    		liveDashBoardDAOImpl.callCounters(eventMap);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
+	  	liveDashBoardDAOImpl.callCounters(eventMap);
 		
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
 			
