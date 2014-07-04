@@ -441,8 +441,12 @@ public class CassandraDataLoader implements Constants {
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			liveAggregator.updateRawData(eventMap);
 		}
-		logger.info("userIp : {} ",eventMap.get("userIp"));
-		//Track activities
+
+	  	try {
+    		liveDashBoardDAOImpl.callCounters(eventMap);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
 			
@@ -474,14 +478,6 @@ public class CassandraDataLoader implements Constants {
 			}
 		}
 		
-		long startActivity = System.currentTimeMillis();
-	  	try {
-    		liveDashBoardDAOImpl.callCounters(eventMap);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		long stopActivity = System.currentTimeMillis();
-		logger.info("Activity : {} ",(stopActivity - startActivity));
     }
     /**
      * 

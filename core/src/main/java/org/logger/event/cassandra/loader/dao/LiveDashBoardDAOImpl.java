@@ -95,15 +95,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					organizationUId = eventMap.get(ORGANIZATIONUID);
 			}
 			
-			boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
+			/*boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
 			
 			logger.info("Is row available : {} ", isRowAvailable);
 			
-			if(!isRowAvailable){
+			if(!isRowAvailable){*/
 				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
-			}
+			//}
 			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
+			
+			logger.info("keys : {} ",keys);
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			
 			for(String key : keys) {
 				if(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equals(START)) {
 					// Increment the view using start events
