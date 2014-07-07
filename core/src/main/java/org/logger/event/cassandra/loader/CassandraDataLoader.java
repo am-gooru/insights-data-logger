@@ -379,7 +379,6 @@ public class CassandraDataLoader implements Constants {
 					 userUid = eventMap.get("gooruUId");
 					 organizationUid = dimUser.getOrganizationUid(userUid);
 					 eventObject.setOrganizationUid(organizationUid);
-			    	 eventMap.put("organizationUId",eventObject.getOrganizationUid());
 			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
 			    	 sessionObj.put("organizationUId", organizationUid);
 			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
@@ -388,10 +387,12 @@ public class CassandraDataLoader implements Constants {
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");
 				 }
+				 eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 			 }
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
