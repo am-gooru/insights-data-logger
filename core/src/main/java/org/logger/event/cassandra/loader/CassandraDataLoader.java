@@ -364,7 +364,7 @@ public class CassandraDataLoader implements Constants {
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
     
     	String userUid = null;
-    	String organizationUid = null;
+    	String organizationUid = DEFAULT_ORGANIZATION_UID;
     	
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
