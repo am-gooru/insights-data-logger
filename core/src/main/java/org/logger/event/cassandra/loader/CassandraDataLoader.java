@@ -380,10 +380,10 @@ public class CassandraDataLoader implements Constants {
 					 organizationUid = dimUser.getOrganizationUid(userUid);
 					 eventObject.setOrganizationUid(organizationUid);
 			    	 eventMap.put("organizationUId",eventObject.getOrganizationUid());
-			    	 JSONObject useObj = new JSONObject(eventObject.getUser());
-			    	 useObj.put("organizationUId", organizationUid);
+			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+			    	 sessionObj.put("organizationUId", organizationUid);
 			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
-			    	 fieldsObj.put("user", useObj.toString());
+			    	 fieldsObj.put("session", sessionObj.toString());
 			    	 eventObject.setFields(fieldsObj.toString());
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");

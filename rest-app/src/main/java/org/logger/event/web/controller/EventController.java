@@ -169,8 +169,10 @@ public class EventController {
 				useObj.put("userIp", userIp);
 				useObj.put("userAgent", userAgent);
 				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
+				logger.info("useObj : {} ",useObj.toString());
 				fieldsObj.put("user", useObj.toString());
 				eventObjects.setFields(fieldsObj.toString());
+				logger.info("fieldsObj : {} ",fieldsObj.toString());
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
