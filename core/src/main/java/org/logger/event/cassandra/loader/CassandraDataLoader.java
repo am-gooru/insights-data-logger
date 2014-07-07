@@ -374,7 +374,7 @@ public class CassandraDataLoader implements Constants {
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
     	
-    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null &&  !eventMap.get("organizationUId").isEmpty()) {
+    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
 					 organizationUid = dimUser.getOrganizationUid(userUid);
