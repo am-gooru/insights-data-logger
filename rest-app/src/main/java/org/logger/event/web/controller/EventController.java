@@ -162,8 +162,11 @@ public class EventController {
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				eventObjects.setFields(eventJson.getAsJsonObject().toString());
-				eventObjects.setUserIp(userIp);
+				JsonObject jsonObj = eventJson.getAsJsonObject();
+				jsonObj.addProperty("userIp", userIp);
+				jsonObj.addProperty("userAgent", userAgent);
+				logger.info("Json Field : {} ",jsonObj.toString());
+				eventObjects.setFields(jsonObj.toString());
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

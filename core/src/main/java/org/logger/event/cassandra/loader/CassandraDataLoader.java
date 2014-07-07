@@ -50,12 +50,12 @@ import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
@@ -63,6 +63,7 @@ import org.logger.event.cassandra.loader.dao.DimUserDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
+import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
@@ -73,8 +74,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -381,13 +380,13 @@ public class CassandraDataLoader implements Constants {
 					 organizationUid = dimUser.getOrganizationUid(userUid);
 					 eventObject.setOrganizationUid(organizationUid);
 			    	 eventMap.put("organizationUId",eventObject.getOrganizationUid());
+			    	 JSONObject jsonObj = new JSONObject(eventObject.getFields());
+			    	 jsonObj.put("organizationUId", organizationUid);
+			    	 eventObject.setFields(jsonObj.toString());
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");
 				 }
 			 }
-    	if(eventObject.getUserIp() != null && !eventObject.getUserIp().isEmpty()){
-    		eventMap.put("userIp", eventObject.getUserIp());
-    	}
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
