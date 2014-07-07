@@ -169,7 +169,7 @@ public class EventController {
 				useObj.put("userIp", userIp);
 				useObj.put("userAgent", userAgent);
 				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
-				fieldsObj.put("user", useObj);
+				fieldsObj.put("user", useObj.toString());
 				eventObjects.setFields(fieldsObj.toString());
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
