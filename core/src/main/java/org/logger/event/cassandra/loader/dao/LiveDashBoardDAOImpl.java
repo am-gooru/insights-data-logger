@@ -272,6 +272,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	        }
 		}
 		
+		try {
+			this.findDifferenceInCount(eventMap);
+		} catch (ParseException e) {
+			logger.info("Exception while finding difference : {} ",e);
+		}
     }
     
     @Async
