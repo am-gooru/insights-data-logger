@@ -358,6 +358,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	private Long getLiveLongValue(String key,String  columnName){
 
 		Column<String>  result = null;
+		long value = 0L;
     	try {
     		 result = getKeyspace().prepareQuery(liveDashboard)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
@@ -367,12 +368,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		return result.getLongValue();
-		
+		if(result != null){
+			value = result.getLongValue();
+		}
+		return value;
 	}
 	
 	private String getLiveStringValue(String key,String  columnName){
 		Column<String>  result = null;
+		String value = null;
     	try {
     		 result = getKeyspace().prepareQuery(liveDashboard)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
@@ -382,8 +386,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		return result.getStringValue();
-		
+		if(result != null){
+			value = result.getStringValue();
+		}
+		return value;
 	}
 	
     
