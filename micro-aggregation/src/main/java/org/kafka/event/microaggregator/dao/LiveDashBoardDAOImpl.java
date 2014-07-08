@@ -100,7 +100,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements  Micro
 
     public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
     	
-    	Map<String,String>  aggregator = this.generateKeyValues(eventMap.get(STARTTIME));
+    	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
@@ -111,26 +111,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements  Micro
     	    	long difference = (thisCount*100)/lastCount;
     	    	this.generateAggregator(thisCount+SEPERATOR+lastCount, DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	    }
-    	    
-    	    if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
-    	    	 	long thisVal = this.getLiveLongValue(entry.getKey()+SEPERATOR+eventMap.get(GOORUID), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-    	    	    long lastVal = this.getLiveLongValue(entry.getValue()+SEPERATOR+eventMap.get(GOORUID), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-    	    	    if(lastVal != 0L){
-    	    	    	long diff = (thisVal*100)/lastVal;
-    	    	    	this.generateAggregator(thisVal+SEPERATOR+lastVal+SEPERATOR+eventMap.get(GOORUID), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(diff), m);
-    	    	    }
-    	    }
-    	    
-    	    if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()){
-   	    	 	long thisVal = this.getLiveLongValue(entry.getKey()+SEPERATOR+eventMap.get(ORGANIZATIONUID), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-   	    	    long lastVal = this.getLiveLongValue(entry.getValue()+SEPERATOR+eventMap.get(ORGANIZATIONUID), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-   	    	    if(lastVal != 0L){
-   	    	    	long diff = (thisVal*100)/lastVal;
-   	    	    	this.generateAggregator(thisVal+SEPERATOR+lastVal+SEPERATOR+eventMap.get(GOORUID), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(diff), m);
-   	    	    }
-    	    }
-    	}
-    	
+    	}    	
     	try {
             m.execute();
         } catch (ConnectionException e) {
@@ -210,18 +191,24 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements  Micro
 		
 	}
 	
-	public Map<String,String> generateKeyValues(String eventTime) throws ParseException{
+	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
 		Map<String,String> returnDate = new LinkedHashMap<String, String>();
 		if(dashboardKeys != null){
 			for(String key : dashboardKeys.split(",")){
 				String rowKey = null;
 				if(!key.equalsIgnoreCase("all")) {
 					customDateFormatter = new SimpleDateFormat(key);
-					Date eventDateTime = new Date(Long.valueOf(eventTime));
+					Date eventDateTime = new Date(Long.valueOf(eventMap.get(STARTTIME)));
 					rowKey = customDateFormatter.format(eventDateTime);
 					Date lastDate = customDateFormatter.parse(rowKey);
 					Date rowValues = new Date(lastDate.getTime() - 2);
 					returnDate.put(customDateFormatter.format(lastDate), customDateFormatter.format(rowValues));
+					if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()){
+						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(ORGANIZATIONUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(ORGANIZATIONUID));
+					}
+					if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
+						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(GOORUID));
+					}
 				} 
 			}
 		}
