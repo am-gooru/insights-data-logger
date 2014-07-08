@@ -24,6 +24,7 @@
 package org.kafka.event.microaggregator.core;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -130,6 +131,7 @@ public class MicroAggregationLoader implements Constants{
         this.getConnectionProvider().init(configOptionsMap);
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
+        this.liveDashboardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         this.eventDetailDao = new EventDetailDAOCassandraImpl(getConnectionProvider());
         this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
         this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
@@ -165,147 +167,13 @@ public class MicroAggregationLoader implements Constants{
     	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);*/
 		
     	updateActivityStream(eventObject.getEventId());
-    	aggregateEventData(eventMap);
+    	try {
+			liveDashboardDAOImpl.findDifferenceInCount(eventMap);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
     }
     
-	public void aggregateEventData(Map<String,String> eventMap) {
-		DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-		DateFormat monthFormat = new SimpleDateFormat("yyyyMM");
-		DateFormat yearFormat = new SimpleDateFormat("yyyy");
-		DateFormat weekInMonthFormat = new SimpleDateFormat("yyyyMMFF");
-		DateFormat weekInYearFormat = new SimpleDateFormat("yyyyww");
-
-	    boolean hasOrganizationUId = false;
-	    boolean hasGooruUId = false;
-	    if((eventMap.get("organizationUid") != null) && (!eventMap.get("organizationUid").isEmpty())) {
-	    	String organizationUId = eventMap.get("organizationUid");
-	    	hasOrganizationUId = true;
-	    }
-	    if((eventMap.get("gooruUId") != null) && (!eventMap.get("gooruUId").isEmpty())) {
-	    	String eventName = eventMap.get("gooruUId");
-	    	hasGooruUId = true;
-	    }
-
-	    	//	Day level data
-	    	List<String> keyTail = new ArrayList<String>();
-
-	    	if(hasOrganizationUId) {
-	    		keyTail.add("~"+eventMap.get("organizationUid"));
-		    }
-	    	if(hasGooruUId) {
-	    		keyTail.add("~"+eventMap.get("gooruUId"));
-		    }
-	    	if(hasOrganizationUId && hasGooruUId){
-	    		keyTail.add("~"+eventMap.get("organizationUid")+"~"+ eventMap.get("gooruUId"));
-	 		   	
-	    	}
-	    	keyTail.add("");
-	    	for(String keySuffix : keyTail){
-	    	    Calendar dateCalFormat = Calendar.getInstance();
-		    	String todayDate = dateFormat.format(dateCalFormat.getTime());
-	    	ColumnList<String> todayDayData = liveDashboardDAOImpl.getEventRecords(todayDate+keySuffix);
-		    dateCalFormat.add(Calendar.DATE, -1);
-		    String yesterdayDate = dateFormat.format(dateCalFormat.getTime());
-		    ColumnList<String> yesterdayData = liveDashboardDAOImpl.getEventRecords(yesterdayDate+keySuffix);
-			 for(Column<String> currentYearData : todayDayData) {
-				 for(Column<String> prevYearData : yesterdayData) {
-					 if(currentYearData.getName().equalsIgnoreCase(prevYearData.getName())){
-						 long resultantYear = currentYearData.getLongValue()/prevYearData.getLongValue()*100;
-//						 yearResultMap.put(currentYearData.getName(), (currentYearData.getLongValue()/prevYearData.getLongValue())*100+"% "+(currentYearData.getLongValue() > prevYearData.getLongValue() ? "higher": "lower"));
-						 microAggregationDAOImpl.updateEventMetricData(yesterdayDate+"~"+todayDate+keySuffix,currentYearData.getName(),resultantYear);
-						 break;
-					 }
-					 
-				 }
-				 
-			 }
-//		    }
-			 
-		   // Month level data   
-			 Calendar monthCalFormat = Calendar.getInstance();
-		   String currentMonth = monthFormat.format(monthCalFormat.getTime());
-			ColumnList<String> thisMonthData = liveDashboardDAOImpl.getEventRecords(currentMonth+keySuffix);
-		   monthCalFormat.add(Calendar.MONTH, -1);
-		   String previousMonth = monthFormat.format(monthCalFormat.getTime());
-			 ColumnList<String> lastMonthData = liveDashboardDAOImpl.getEventRecords(previousMonth+keySuffix);
-//			    Map<String,String> monthResultMap = new HashMap<String, String>();
-				 for(Column<String> currentMonthData : thisMonthData) {
-					 for(Column<String> prevMonthData : lastMonthData) {
-						 if(currentMonthData.getName().equalsIgnoreCase(prevMonthData.getName())){
-							 long resultantMonth = currentMonthData.getLongValue()/prevMonthData.getLongValue()*100;
-							// monthResultMap.put(currentMonthData.getName(), (currentMonthData.getLongValue()/prevMonthData.getLongValue())*100+"% "+(currentMonthData.getLongValue() > prevMonthData.getLongValue() ? "higher": "lower"));
-							 microAggregationDAOImpl.updateEventMetricData(previousMonth+"~"+currentMonth,currentMonthData.getName(),resultantMonth);
-							 break;
-						 }
-						 
-					 }
-					 
-				 }    
-		   
-		   // Year level data
-		   Calendar yearCalFormat = Calendar.getInstance();
-		   String currentYear = yearFormat.format(yearCalFormat.getTime());
-			ColumnList<String> thisYearData = liveDashboardDAOImpl.getEventRecords(currentYear+keySuffix);
-		   yearCalFormat.add(Calendar.YEAR, -1);
-		   String lastYear = yearFormat.format(yearCalFormat.getTime());
-			ColumnList<String> lastYearData = liveDashboardDAOImpl.getEventRecords(lastYear+keySuffix);
-//		    Map<String,String> yearResultMap = new HashMap<String, String>();
-			 for(Column<String> currentYearData : thisYearData) {
-				 for(Column<String> prevYearData : lastYearData) {
-					 if(currentYearData.getName().equalsIgnoreCase(prevYearData.getName())){
-						 long resultantYear = currentYearData.getLongValue()/prevYearData.getLongValue()*100;
-//						 yearResultMap.put(currentYearData.getName(), (currentYearData.getLongValue()/prevYearData.getLongValue())*100+"% "+(currentYearData.getLongValue() > prevYearData.getLongValue() ? "higher": "lower"));
-						 microAggregationDAOImpl.updateEventMetricData(lastYear+"~"+currentYear,currentYearData.getName(),resultantYear);
-						 break;
-					 }
-					 
-				 }
-				 
-			 }
-			 
-		   // Week in month level data
-		   Calendar weekInMonthCalFormat = Calendar.getInstance();
-		   String currentWIM = weekInMonthFormat.format(weekInMonthCalFormat.getTime());
-			ColumnList<String> thisWIMData = liveDashboardDAOImpl.getEventRecords(currentWIM+keySuffix);
-		   weekInMonthCalFormat.add(Calendar.WEEK_OF_MONTH, -1);
-		   String lastWIM = weekInMonthFormat.format(weekInMonthCalFormat.getTime());
-			ColumnList<String> lastWIMData = liveDashboardDAOImpl.getEventRecords(lastWIM+keySuffix);
-//		    Map<String,String> wimResultMap = new HashMap<String, String>();
-			 for(Column<String> currentWIMData : thisWIMData) {
-				 for(Column<String> prevWIMData : lastWIMData) {
-					 if(currentWIMData.getName().equalsIgnoreCase(prevWIMData.getName())){
-//						 wimResultMap.put(currentWIMData.getName(), (currentWIMData.getLongValue()/prevWIMData.getLongValue())*100+"% "+(currentWIMData.getLongValue() > prevWIMData.getLongValue() ? "higher": "lower"));
-						 long resultantWIM = currentWIMData.getLongValue()/prevWIMData.getLongValue()*100;
-						 microAggregationDAOImpl.updateEventMetricData(lastWIM+"~"+currentWIM,currentWIMData.getName(),resultantWIM);
-						 break;
-					 }
-					 
-				 }
-				 
-			 }
-			
-		   // Week in year level data
-		   Calendar weekInYearCalFormat = Calendar.getInstance();
-		   String currentWIY = weekInYearFormat.format(weekInYearCalFormat.getTime());
-			ColumnList<String> thisWIYData = liveDashboardDAOImpl.getEventRecords(currentWIY+keySuffix);
-		   weekInYearCalFormat.add(Calendar.WEEK_OF_YEAR, -1);
-		   String previousWIY = weekInYearFormat.format(weekInYearCalFormat.getTime());
-			ColumnList<String> lastWIYData = liveDashboardDAOImpl.getEventRecords(previousWIY+keySuffix);
-//		    Map<String,String> wiyResultMap = new HashMap<String, String>();
-			 for(Column<String> currentWIYData : thisWIYData) {
-				 for(Column<String> prevWIYData : lastWIYData) {
-					 if(currentWIYData.getName().equalsIgnoreCase(prevWIYData.getName())){
-						 long resultantWIY = currentWIYData.getLongValue()/prevWIYData.getLongValue()*100;
-//						 wiyResultMap.put(currentWIYData.getName(), (currentWIYData.getLongValue()/prevWIYData.getLongValue())*100+"% "+(currentWIYData.getLongValue() > prevWIYData.getLongValue() ? "higher": "lower"));
-						 microAggregationDAOImpl.updateEventMetricData(previousWIY+"~"+currentWIY,currentWIYData.getName(),resultantWIY);
-						 break;
-					 }
-					 
-				 }
-				 
-			 }
-	    	}
-	}
     
  private void updateActivityStream(String eventId) throws JSONException {
     	
@@ -392,10 +260,10 @@ public class MicroAggregationLoader implements Constants{
 		    	organizationUid = activityRow.getStringValue("organization_uid", null);
 		    }
 		    if(rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY) && rawMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)) {
-		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID) != null && rawMap.get(SESSIONID).toString() != null){
+		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null){
 			    	score = rawMap.get(SCORE).toString();
 			    	eventMap.put("score", score);
-			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+			    	eventMap.put("session_id", rawMap.get(SESSION).toString());
 					attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS)) ;
 					if(attempStatus.length > 0){
 						eventMap.put("first_attempt_status", attempStatus[0]);
@@ -413,10 +281,10 @@ public class MicroAggregationLoader implements Constants{
     				eventMap.put("answer_status", answerStatus);
 			    }
 		    } else if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
-		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID) != null && rawMap.get(SESSIONID).toString() != null){
+		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null){
 			    	score = rawMap.get(SCORE).toString();
 			    	eventMap.put("score", score);
-			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+			    	eventMap.put("session_id", rawMap.get(SESSION).toString());
 			    }
 		    }
 	    	activityMap.put("eventId", eventId);

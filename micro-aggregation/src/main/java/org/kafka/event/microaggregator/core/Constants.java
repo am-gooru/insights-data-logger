@@ -18,6 +18,12 @@ public interface Constants {
 	
 	public String METRICS = "metrics";
 	
+	public String LASTACCESSEDUSERUID = "last~accessed~useruid";
+	
+	public String LASTACCESSEDUSER = "last~accessed~user";
+	
+	public String LASTACCESSED = "last~accessed";
+	
 	public String EVENTNAME = "eventName";
 	
 	public String CONTENTGOORUOID = "contentGooruId";
@@ -26,13 +32,17 @@ public interface Constants {
 	
 	public String TIMEINMS = "timeInMillSec";
 	
+	public String TOTALTIMEINMS = "totalTimeSpentInMs";
+	
 	public String EVENTIS = "eventId";
 	
 	public String PARENTEVENTID = "parentEventId";
 	
 	public String PARENT_EVENT_ID = "parent_event_id";
 	
-	public String CLASSPAGEGOORUOID= "classPageGooruId";
+	//public String CLASSPAGEGOORUOID= "classPageGooruId";
+	
+	public String CLASSPAGEGOORUOID= "classpageGooruId";
 	
 	public String VERSION = "version";
 
@@ -60,6 +70,12 @@ public interface Constants {
 
 	public String CHOICE = "choice";
 	
+	public String STATUS = "question_status";
+	
+	public String ANSWER_OBECT = "answer_object";
+	
+	public String ANSWEROBECT = "answerObject";
+	
 	public String ATTEMPTS = "attempts";
 	
 	public String OPTIONS = "options";
@@ -74,6 +90,12 @@ public interface Constants {
 	
 	public String TYPE = "type";
 	
+	public String ITEMTYPE = "itemType";
+	
+	public String REGISTERTYPE = "registerType";
+	
+	public String CLIENTSOURCE = "clientSource";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";
@@ -83,6 +105,16 @@ public interface Constants {
 	public String ANS = "answers";
 	
 	public String TEXT = "text";
+	
+	public String FEEDBACK = "feed_back";
+	
+	public String FEEDBACKPROVIDER = "feed_back_provider";
+	
+	public String PROVIDER = "feedbackProviderUId";
+	
+	public String TIMESTAMP = "feed_back_timestamp";
+	
+	public String VIEWS = "views";
 	
 	public String QUESTION = "question";
 
@@ -167,12 +199,18 @@ public interface Constants {
 	public String COLLECTION_GOORU_OID = "collection_gooru_oid";
 	
 	public String RESOURCE_GOORU_OID = "resource_gooru_oid";
-	
+
 	public String SCORE = "score";
 	
-    public String SESSIONID = "sessionId";
-    
-    public String QUESTION_COUNT = "question_count";
-    
-    public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	public String QUESTION_COUNT = "question_count";
+	
+	public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	
+	public String ACTIVE = "active";
+	
+	public String COUNT = "count";
+	
+	public String DIFF = "diff";
+	
+	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
 }
