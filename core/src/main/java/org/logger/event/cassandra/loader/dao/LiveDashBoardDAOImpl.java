@@ -237,6 +237,24 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					}
 				}
 				
+				if(eventMap.containsKey(TEXT) && eventMap.get(TEXT) != null && !eventMap.get(TEXT).isEmpty()) {
+					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
+					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
+					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
+					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
+					if(eventMap.containsKey(ITEMTYPE) && eventMap.get(ITEMTYPE) != null && !eventMap.get(ITEMTYPE).isEmpty()){
+						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						
+						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
+					}
+				}
+				
 				generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 				generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
 				generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
