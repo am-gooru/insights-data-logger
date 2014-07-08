@@ -79,7 +79,6 @@ public class MicroAggregatorProducer
 		message.put("raw", new String(eventLog));
 		
 		String messageAsJson = new JSONObject(message).toString();
-		LOG.info("EventJson: {}",messageAsJson);
 		send(messageAsJson);
 	}
 		

@@ -140,6 +140,10 @@ public class MicroAggregationLoader implements Constants{
     }
     
     public void microRealTimeAggregation(String eventJSON) throws JSONException{
+    	
+    	logger.info("Enterssssssssssssss");
+    	
+    	
     	String userUid = null;
     	String organizationUid = null;
     	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
