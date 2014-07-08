@@ -23,9 +23,13 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.core;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -39,6 +43,9 @@ import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.EventDetailDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.LiveDashBoardDAOImpl;
+import org.kafka.event.microaggregator.dao.MicroAggregationDAO;
+import org.kafka.event.microaggregator.dao.MicroAggregationDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +55,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.ColumnFamilyQuery;
 
 import flexjson.JSONSerializer;
@@ -68,6 +78,8 @@ public class MicroAggregationLoader implements Constants{
         
     private CounterDetailsDAOCassandraImpl counterDetailsDao;
     
+    private LiveDashBoardDAOImpl liveDashboardDAOImpl;
+    
     private EventDetailDAOCassandraImpl eventDetailDao;
 
     private DimUserDAOCassandraImpl dimUser;
@@ -79,6 +91,8 @@ public class MicroAggregationLoader implements Constants{
     public static  Map<String,String> realTimeOperators;
     
     private MicroAggregatorProducer microAggregator;
+    
+    private MicroAggregationDAOImpl microAggregationDAOImpl;
     
     private Gson gson = new Gson();
     /**
@@ -151,7 +165,147 @@ public class MicroAggregationLoader implements Constants{
     	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);*/
 		
     	updateActivityStream(eventObject.getEventId());
+    	aggregateEventData(eventMap);
     }
+    
+	public void aggregateEventData(Map<String,String> eventMap) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+		DateFormat monthFormat = new SimpleDateFormat("yyyyMM");
+		DateFormat yearFormat = new SimpleDateFormat("yyyy");
+		DateFormat weekInMonthFormat = new SimpleDateFormat("yyyyMMFF");
+		DateFormat weekInYearFormat = new SimpleDateFormat("yyyyww");
+
+	    boolean hasOrganizationUId = false;
+	    boolean hasGooruUId = false;
+	    if((eventMap.get("organizationUid") != null) && (!eventMap.get("organizationUid").isEmpty())) {
+	    	String organizationUId = eventMap.get("organizationUid");
+	    	hasOrganizationUId = true;
+	    }
+	    if((eventMap.get("gooruUId") != null) && (!eventMap.get("gooruUId").isEmpty())) {
+	    	String eventName = eventMap.get("gooruUId");
+	    	hasGooruUId = true;
+	    }
+
+	    	//	Day level data
+	    	List<String> keyTail = new ArrayList<String>();
+
+	    	if(hasOrganizationUId) {
+	    		keyTail.add("~"+eventMap.get("organizationUid"));
+		    }
+	    	if(hasGooruUId) {
+	    		keyTail.add("~"+eventMap.get("gooruUId"));
+		    }
+	    	if(hasOrganizationUId && hasGooruUId){
+	    		keyTail.add("~"+eventMap.get("organizationUid")+"~"+ eventMap.get("gooruUId"));
+	 		   	
+	    	}
+	    	keyTail.add("");
+	    	for(String keySuffix : keyTail){
+	    	    Calendar dateCalFormat = Calendar.getInstance();
+		    	String todayDate = dateFormat.format(dateCalFormat.getTime());
+	    	ColumnList<String> todayDayData = liveDashboardDAOImpl.getEventRecords(todayDate+keySuffix);
+		    dateCalFormat.add(Calendar.DATE, -1);
+		    String yesterdayDate = dateFormat.format(dateCalFormat.getTime());
+		    ColumnList<String> yesterdayData = liveDashboardDAOImpl.getEventRecords(yesterdayDate+keySuffix);
+			 for(Column<String> currentYearData : todayDayData) {
+				 for(Column<String> prevYearData : yesterdayData) {
+					 if(currentYearData.getName().equalsIgnoreCase(prevYearData.getName())){
+						 long resultantYear = currentYearData.getLongValue()/prevYearData.getLongValue()*100;
+//						 yearResultMap.put(currentYearData.getName(), (currentYearData.getLongValue()/prevYearData.getLongValue())*100+"% "+(currentYearData.getLongValue() > prevYearData.getLongValue() ? "higher": "lower"));
+						 microAggregationDAOImpl.updateEventMetricData(yesterdayDate+"~"+todayDate+keySuffix,currentYearData.getName(),resultantYear);
+						 break;
+					 }
+					 
+				 }
+				 
+			 }
+//		    }
+			 
+		   // Month level data   
+			 Calendar monthCalFormat = Calendar.getInstance();
+		   String currentMonth = monthFormat.format(monthCalFormat.getTime());
+			ColumnList<String> thisMonthData = liveDashboardDAOImpl.getEventRecords(currentMonth+keySuffix);
+		   monthCalFormat.add(Calendar.MONTH, -1);
+		   String previousMonth = monthFormat.format(monthCalFormat.getTime());
+			 ColumnList<String> lastMonthData = liveDashboardDAOImpl.getEventRecords(previousMonth+keySuffix);
+//			    Map<String,String> monthResultMap = new HashMap<String, String>();
+				 for(Column<String> currentMonthData : thisMonthData) {
+					 for(Column<String> prevMonthData : lastMonthData) {
+						 if(currentMonthData.getName().equalsIgnoreCase(prevMonthData.getName())){
+							 long resultantMonth = currentMonthData.getLongValue()/prevMonthData.getLongValue()*100;
+							// monthResultMap.put(currentMonthData.getName(), (currentMonthData.getLongValue()/prevMonthData.getLongValue())*100+"% "+(currentMonthData.getLongValue() > prevMonthData.getLongValue() ? "higher": "lower"));
+							 microAggregationDAOImpl.updateEventMetricData(previousMonth+"~"+currentMonth,currentMonthData.getName(),resultantMonth);
+							 break;
+						 }
+						 
+					 }
+					 
+				 }    
+		   
+		   // Year level data
+		   Calendar yearCalFormat = Calendar.getInstance();
+		   String currentYear = yearFormat.format(yearCalFormat.getTime());
+			ColumnList<String> thisYearData = liveDashboardDAOImpl.getEventRecords(currentYear+keySuffix);
+		   yearCalFormat.add(Calendar.YEAR, -1);
+		   String lastYear = yearFormat.format(yearCalFormat.getTime());
+			ColumnList<String> lastYearData = liveDashboardDAOImpl.getEventRecords(lastYear+keySuffix);
+//		    Map<String,String> yearResultMap = new HashMap<String, String>();
+			 for(Column<String> currentYearData : thisYearData) {
+				 for(Column<String> prevYearData : lastYearData) {
+					 if(currentYearData.getName().equalsIgnoreCase(prevYearData.getName())){
+						 long resultantYear = currentYearData.getLongValue()/prevYearData.getLongValue()*100;
+//						 yearResultMap.put(currentYearData.getName(), (currentYearData.getLongValue()/prevYearData.getLongValue())*100+"% "+(currentYearData.getLongValue() > prevYearData.getLongValue() ? "higher": "lower"));
+						 microAggregationDAOImpl.updateEventMetricData(lastYear+"~"+currentYear,currentYearData.getName(),resultantYear);
+						 break;
+					 }
+					 
+				 }
+				 
+			 }
+			 
+		   // Week in month level data
+		   Calendar weekInMonthCalFormat = Calendar.getInstance();
+		   String currentWIM = weekInMonthFormat.format(weekInMonthCalFormat.getTime());
+			ColumnList<String> thisWIMData = liveDashboardDAOImpl.getEventRecords(currentWIM+keySuffix);
+		   weekInMonthCalFormat.add(Calendar.WEEK_OF_MONTH, -1);
+		   String lastWIM = weekInMonthFormat.format(weekInMonthCalFormat.getTime());
+			ColumnList<String> lastWIMData = liveDashboardDAOImpl.getEventRecords(lastWIM+keySuffix);
+//		    Map<String,String> wimResultMap = new HashMap<String, String>();
+			 for(Column<String> currentWIMData : thisWIMData) {
+				 for(Column<String> prevWIMData : lastWIMData) {
+					 if(currentWIMData.getName().equalsIgnoreCase(prevWIMData.getName())){
+//						 wimResultMap.put(currentWIMData.getName(), (currentWIMData.getLongValue()/prevWIMData.getLongValue())*100+"% "+(currentWIMData.getLongValue() > prevWIMData.getLongValue() ? "higher": "lower"));
+						 long resultantWIM = currentWIMData.getLongValue()/prevWIMData.getLongValue()*100;
+						 microAggregationDAOImpl.updateEventMetricData(lastWIM+"~"+currentWIM,currentWIMData.getName(),resultantWIM);
+						 break;
+					 }
+					 
+				 }
+				 
+			 }
+			
+		   // Week in year level data
+		   Calendar weekInYearCalFormat = Calendar.getInstance();
+		   String currentWIY = weekInYearFormat.format(weekInYearCalFormat.getTime());
+			ColumnList<String> thisWIYData = liveDashboardDAOImpl.getEventRecords(currentWIY+keySuffix);
+		   weekInYearCalFormat.add(Calendar.WEEK_OF_YEAR, -1);
+		   String previousWIY = weekInYearFormat.format(weekInYearCalFormat.getTime());
+			ColumnList<String> lastWIYData = liveDashboardDAOImpl.getEventRecords(previousWIY+keySuffix);
+//		    Map<String,String> wiyResultMap = new HashMap<String, String>();
+			 for(Column<String> currentWIYData : thisWIYData) {
+				 for(Column<String> prevWIYData : lastWIYData) {
+					 if(currentWIYData.getName().equalsIgnoreCase(prevWIYData.getName())){
+						 long resultantWIY = currentWIYData.getLongValue()/prevWIYData.getLongValue()*100;
+//						 wiyResultMap.put(currentWIYData.getName(), (currentWIYData.getLongValue()/prevWIYData.getLongValue())*100+"% "+(currentWIYData.getLongValue() > prevWIYData.getLongValue() ? "higher": "lower"));
+						 microAggregationDAOImpl.updateEventMetricData(previousWIY+"~"+currentWIY,currentWIYData.getName(),resultantWIY);
+						 break;
+					 }
+					 
+				 }
+				 
+			 }
+	    	}
+	}
     
  private void updateActivityStream(String eventId) throws JSONException {
     	
