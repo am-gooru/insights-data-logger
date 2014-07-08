@@ -4,11 +4,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.ednovo.data.model.GeoData;
-import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
@@ -274,6 +275,53 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     @Async
+    public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
+    	
+    	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	
+    	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
+    		
+    	    long thisCount = this.getLiveLongValue(entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
+    	    long lastCount = this.getLiveLongValue(entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
+    	    if(lastCount != 0L){
+    	    	long difference = (thisCount*100)/lastCount;
+    	    	this.generateAggregator(thisCount+SEPERATOR+lastCount, DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
+    	    }
+    	}    	
+    	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+    }
+    
+    @Async
+	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
+		Map<String,String> returnDate = new LinkedHashMap<String, String>();
+		if(dashboardKeys != null){
+			for(String key : dashboardKeys.split(",")){
+				String rowKey = null;
+				if(!key.equalsIgnoreCase("all")) {
+					customDateFormatter = new SimpleDateFormat(key);
+					Date eventDateTime = new Date(Long.valueOf(eventMap.get(STARTTIME)));
+					rowKey = customDateFormatter.format(eventDateTime);
+					Date lastDate = customDateFormatter.parse(rowKey);
+					Date rowValues = new Date(lastDate.getTime() - 2);
+					returnDate.put(customDateFormatter.format(lastDate), customDateFormatter.format(rowValues));
+					if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()){
+						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(ORGANIZATIONUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(ORGANIZATIONUID));
+					}
+					if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
+						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(GOORUID));
+					}
+				} 
+			}
+		}
+		return returnDate; 
+	}
+    
+    @Async
     public void saveGeoLocation(GeoData geoData){
     	ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     	String json = null ;
@@ -301,6 +349,38 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         m.withRow(microAggregator, key)
         .putColumnIfNotNull(columnName, value);
     }
+    
+	private Long getLiveLongValue(String key,String  columnName){
+
+		Column<String>  result = null;
+    	try {
+    		 result = getKeyspace().prepareQuery(liveDashboard)
+    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+        		    .getKey(key)
+        		    .getColumn(columnName)
+        		    .execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data from readViewCount: {}" ,e);
+		}
+		return result.getLongValue();
+		
+	}
+	
+	private String getLiveStringValue(String key,String  columnName){
+		Column<String>  result = null;
+    	try {
+    		 result = getKeyspace().prepareQuery(liveDashboard)
+    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+        		    .getKey(key)
+        		    .getColumn(columnName)
+        		    .execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data from readViewCount: {}" ,e);
+		}
+		return result.getStringValue();
+		
+	}
+	
     
 	public void addRowColumn(String rowKey,String columnName,String value){
 
