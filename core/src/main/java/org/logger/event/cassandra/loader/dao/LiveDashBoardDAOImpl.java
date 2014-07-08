@@ -291,7 +291,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	    long lastCount = this.getLiveLongValue(entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
     	    if(lastCount != 0L){
     	    	long difference = (thisCount*100)/lastCount;
-    	    	this.generateAggregator(thisCount+SEPERATOR+lastCount, DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
+    	    	this.generateAggregator(entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	    }
     	}    	
     	try {
@@ -356,7 +356,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
 	private Long getLiveLongValue(String key,String  columnName){
-		logger.info("columnName : {} ",columnName);
+		
 		ColumnList<String>  result = null;
 		long value = 0L;
     	try {
