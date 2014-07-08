@@ -157,7 +157,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				}
 				
 				if(eventMap.containsKey(USERAGENT) && eventMap.get(USERAGENT) != null && !eventMap.get(USERAGENT).isEmpty()) {
-					
+					generateCounter(key+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
 				}
 				
 				if(eventMap.containsKey(REGISTERTYPE) && eventMap.get(REGISTERTYPE) != null && !eventMap.get(REGISTERTYPE).isEmpty()){
