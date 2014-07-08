@@ -356,38 +356,36 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
 	private Long getLiveLongValue(String key,String  columnName){
-
-		Column<String>  result = null;
+		logger.info("columnName : {} ",columnName);
+		ColumnList<String>  result = null;
 		long value = 0L;
     	try {
     		 result = getKeyspace().prepareQuery(liveDashboard)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		if(result != null){
-			value = result.getLongValue();
+		if(result != null && result.getColumnByName(columnName) != null){
+			value = result.getLongValue(columnName,0L);
 		}
 		return value;
 	}
 	
 	private String getLiveStringValue(String key,String  columnName){
-		Column<String>  result = null;
+		ColumnList<String>  result = null;
 		String value = null;
     	try {
     		 result = getKeyspace().prepareQuery(liveDashboard)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
-        		    .getColumn(columnName)
         		    .execute().getResult();
 		} catch (ConnectionException e) {
 			logger.info("Error while retieveing data from readViewCount: {}" ,e);
 		}
-		if(result != null){
-			value = result.getStringValue();
+		if(result != null && result.getColumnByName(columnName) != null){
+			value = result.getStringValue(columnName, null);
 		}
 		return value;
 	}
