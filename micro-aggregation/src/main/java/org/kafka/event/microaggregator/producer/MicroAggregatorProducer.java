@@ -83,6 +83,8 @@ public class MicroAggregatorProducer
 	}
 		
 	private void send(String message) {
+		LOG.info("message: {}",message);
+		LOG.info("topic: {}",topic);
 		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);
 	}
