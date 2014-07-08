@@ -70,7 +70,6 @@ public class MicroAggregatorConsumer extends Thread {
         KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-        KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         KAFKA_AGGREGATOR_GROUPID = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_GROUPID");
         
