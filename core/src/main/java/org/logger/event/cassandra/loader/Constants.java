@@ -92,6 +92,10 @@ public interface Constants {
 	
 	public String ITEMTYPE = "itemType";
 	
+	public String ACTIONTYPE = "actionType";
+	
+	public String USERAGENT = "userAgent";
+	
 	public String REGISTERTYPE = "registerType";
 	
 	public String CLIENTSOURCE = "clientSource";
