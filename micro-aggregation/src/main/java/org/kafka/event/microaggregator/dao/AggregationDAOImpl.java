@@ -167,7 +167,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			column = new ArrayList<String>();
 			column.add("formula");
 			Map<String, Object> whereCondition = new HashMap<String, Object>();
-			whereCondition.put("aggregateType", "normal");
+			whereCondition.put("aggregate_type", "normal");
 			List<Map<String, Object>> normalFormulaDetails = this.getRowsKeyStringValue(this.readWithIndex(formulaDetail, whereCondition, column), new ArrayList<String>());
 
 			// fetch how many key need this aggregation
