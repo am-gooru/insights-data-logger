@@ -142,6 +142,7 @@ public class CassandraDataLoader implements Constants {
     
     private Gson gson = new Gson();
     
+    private String atmosphereEndPoint;
     /**
      * Get Kafka properties from Environment
      */
@@ -210,6 +211,8 @@ public class CassandraDataLoader implements Constants {
         realTimeOperators = realTimeOperation.getOperators();
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
+        atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", "constant_value");
+        
     }
 
     /**
@@ -477,7 +480,6 @@ public class CassandraDataLoader implements Constants {
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
 				liveDashBoardDAOImpl.saveGeoLocation(geoData);
 			}
-			logger.info("pushingEvents : {} ",pushingEvents);
 			if(pushingEvents.contains(eventMap.get("eventName"))){				
 				this.pushMessage(eventObject.getFields().toString());
 			}
@@ -1374,7 +1376,7 @@ public class CassandraDataLoader implements Constants {
        @Async
        public void pushMessage(String fields){
     	ClientResource clientResource = null;
-    	clientResource = new ClientResource("http://dev-insights.goorulearning.org/insights-api-dev/atmosphere/push/message");
+    	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
 		forms.add("data", fields);
 		clientResource.post(forms.getWebRepresentation());

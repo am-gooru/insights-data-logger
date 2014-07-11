@@ -145,7 +145,6 @@ public long getJobsCount(){
 	
 }
 
-@Caching
 public String getConstants(String KEY,String columnName){
 
 	String constantName = null;
