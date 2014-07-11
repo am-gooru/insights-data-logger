@@ -449,8 +449,6 @@ public class CassandraDataLoader implements Constants {
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			liveAggregator.updateRawData(eventMap);
 		}
-
-	  	liveDashBoardDAOImpl.callCounters(eventMap);
 		
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
 			
@@ -479,11 +477,13 @@ public class CassandraDataLoader implements Constants {
 			
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
 				liveDashBoardDAOImpl.saveGeoLocation(geoData);
-			}
-			if(pushingEvents.contains(eventMap.get("eventName"))){				
-				this.pushMessage(eventObject.getFields().toString());
-			}
-			
+			}			
+		}
+		
+		liveDashBoardDAOImpl.callCounters(eventMap);
+		
+		if(pushingEvents.contains(eventMap.get("eventName"))){				
+			this.pushMessage(eventMap.get("eventName"));
 		}
 		
     }
@@ -1376,9 +1376,10 @@ public class CassandraDataLoader implements Constants {
        @Async
        public void pushMessage(String fields){
     	ClientResource clientResource = null;
+    	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
     	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
-		forms.add("data", fields);
+		forms.add("data", "%7B%22filters%22%3A%7B%22eventName%22%3A%22"+fields+"%22%7D%7D");
 		clientResource.post(forms.getWebRepresentation());
 		
        }
