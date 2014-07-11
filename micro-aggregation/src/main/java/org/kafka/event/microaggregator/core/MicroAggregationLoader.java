@@ -37,6 +37,7 @@ import org.kafka.event.microaggregator.model.JSONDeserializer;
 import org.kafka.event.microaggregator.model.TypeConverter;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.AggregationDAO;
 import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.EventDetailDAOCassandraImpl;
 import org.slf4j.Logger;
@@ -75,6 +76,8 @@ public class MicroAggregationLoader implements Constants{
     private ActivityStreamDAOCassandraImpl activityStreamDao;
     
     private RealTimeOperationConfigDAOImpl realTimeOperation;
+    
+    private AggregationDAO aggregationDAO;
     
     public static  Map<String,String> realTimeOperators;
     
@@ -345,6 +348,14 @@ public class MicroAggregationLoader implements Constants{
         timeMap.put("timeSpent", timeInMillisecs);    
         
     }
+    
+    /*
+     * This will run for every minute
+     */
+	public void staticAggregation(String startTime,String endTime){
+		
+		aggregationDAO.startStaticAggregation(startTime,endTime);
+	}
 
     /**
      * @return the connectionProvider

@@ -52,9 +52,20 @@
            <property name="targetMethod" value="updateViews" />
        </bean>
        
+       <bean id="minuteRunner" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="eventController" />
+           <property name="targetMethod" value="executeForEveryMinute" />
+       </bean>
+       
        <bean id="secondSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
            <property name="jobDetail" ref="firstTaskJobDetail" />
            <property name="repeatInterval" value="5000" />
+           <property name="startDelay" value="1000" />
+       </bean>
+       
+        <bean id="thirdSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="minuteRunner" />
+           <property name="repeatInterval" value="60000" />
            <property name="startDelay" value="1000" />
        </bean>
        
@@ -62,6 +73,9 @@
            <property name="jobDetails">
               <list>
                  <ref bean="firstTaskJobDetail" />
+              </list>
+              <list>
+                 <ref bean="minuteRunner" />
               </list>
            </property>
            <property name="triggers">

@@ -232,4 +232,9 @@ public class EventServiceImpl implements EventService {
         
 	}
 	
+	@Async
+	public void executeForEveryMinute(String startTime,String endTime){
+		
+		dataLoaderService.executeForEveryMinute(startTime, endTime);
+	}
 }

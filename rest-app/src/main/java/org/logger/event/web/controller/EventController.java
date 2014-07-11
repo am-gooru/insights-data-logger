@@ -479,6 +479,12 @@ public class EventController {
 		eventService.updateProdViews();*/
 	}
 	
+	//scheduled for every 1 minute
+	public void executeForEveryMinute(String startTime,String endTime){
+		
+		eventService.executeForEveryMinute(startTime, endTime);
+	}
+	
 	public void runAggregation(){
 		
 	}
