@@ -51,4 +51,6 @@ public interface EventService {
 	public void updateProdViews();
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 	void addAggregators(String eventName, String json, String updateBy);
+	
+	void executeForEveryMinute(String startTime,String endTime);
 }

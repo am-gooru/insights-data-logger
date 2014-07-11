@@ -50,6 +50,7 @@ import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
+import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
@@ -125,6 +126,8 @@ public class CassandraDataLoader implements Constants {
     private KafkaLogProducer kafkaLogWriter;
   
     private MicroAggregatorDAOmpl liveAggregator;
+    
+    private AggregationDAOImpl staticAggregator;
         
     private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
@@ -1390,6 +1393,10 @@ public class CassandraDataLoader implements Constants {
     	return connectionProvider;
     }
     
+    public void executeForEveryMinute(String startTime,String endTime){
+    	
+    	staticAggregator.startStaticAggregation(startTime, endTime);
+    }
     /**
      * @param connectionProvider the connectionProvider to set
      */
