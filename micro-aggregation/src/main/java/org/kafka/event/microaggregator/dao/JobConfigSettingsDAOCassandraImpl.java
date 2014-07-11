@@ -38,7 +38,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
 
 public class JobConfigSettingsDAOCassandraImpl extends BaseDAOCassandraImpl implements JobConfigSettingsDAOCassandra {
-    private static final Logger logger = LoggerFactory.getLogger(JobConfigSettingsDAOCassandraImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventDetailDAOCassandraImpl.class);
     private final ColumnFamily<String, String> jobConfigCF;
     private static final String CF_JOB_CONFIG = "job_config_settings";
    
@@ -146,7 +146,7 @@ public long getJobsCount(){
 }
 
 @Caching
-public String getConstants(String KEY){
+public String getConstants(String KEY,String columnName){
 
 	String constantName = null;
 	ColumnList<String> jobConstants = null;
@@ -157,9 +157,22 @@ public String getConstants(String KEY){
 	}
 	
 	if(jobConstants != null){
-		constantName = jobConstants.getStringValue("constant_value", null);
+		constantName = jobConstants.getStringValue(columnName, null);
 	}
 	
 	return constantName;
 }
+
+@Caching
+public ColumnList<String> getColumnList(String KEY){
+
+		ColumnList<String> jobConstants = null;
+		try {
+			jobConstants = getKeyspace().prepareQuery(jobConfigCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		return jobConstants;
+	}
 }

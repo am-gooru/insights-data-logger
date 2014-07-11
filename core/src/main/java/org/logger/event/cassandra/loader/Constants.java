@@ -92,6 +92,10 @@ public interface Constants {
 	
 	public String ITEMTYPE = "itemType";
 	
+	public String ACTIONTYPE = "actionType";
+	
+	public String USERAGENT = "userAgent";
+	
 	public String REGISTERTYPE = "registerType";
 	
 	public String CLIENTSOURCE = "clientSource";
@@ -207,6 +211,10 @@ public interface Constants {
 	public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
 	
 	public String ACTIVE = "active";
+	
+	public String COUNT = "count";
+	
+	public String DIFF = "diff";
 	
 	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
 }

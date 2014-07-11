@@ -51,12 +51,12 @@ import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.json.JSONException;
 import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
+import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
@@ -64,6 +64,7 @@ import org.logger.event.cassandra.loader.dao.DimUserDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
+import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
 import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
 import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
@@ -74,8 +75,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -142,8 +141,11 @@ public class CassandraDataLoader implements Constants {
     
     private static GeoLocation geo;
     
+    public Collection<String> pushingEvents ;
+    
     private Gson gson = new Gson();
     
+    private String atmosphereEndPoint;
     /**
      * Get Kafka properties from Environment
      */
@@ -174,6 +176,7 @@ public class CassandraDataLoader implements Constants {
         String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         
+        microAggregator = new MicroAggregatorProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
         kafkaLogWriter = new KafkaLogProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
     }
 
@@ -210,6 +213,9 @@ public class CassandraDataLoader implements Constants {
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
         geo = new GeoLocation();
+        pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
+        atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", "constant_value");
+        
     }
 
     /**
@@ -365,7 +371,7 @@ public class CassandraDataLoader implements Constants {
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
     
     	String userUid = null;
-    	String organizationUid = null;
+    	String organizationUid = DEFAULT_ORGANIZATION_UID;
     	
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
@@ -375,22 +381,26 @@ public class CassandraDataLoader implements Constants {
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
     	
-    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null &&  !eventMap.get("organizationUId").isEmpty()) {
+    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
 					 organizationUid = dimUser.getOrganizationUid(userUid);
 					 eventObject.setOrganizationUid(organizationUid);
-			    	 eventMap.put("organizationUId",eventObject.getOrganizationUid());
+			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+			    	 sessionObj.put("organizationUId", organizationUid);
+			    	 eventObject.setSession(sessionObj.toString());
+			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
+			    	 fieldsObj.put("session", sessionObj.toString());
+			    	 eventObject.setFields(fieldsObj.toString());
+			    	 eventMap.put("organizationUId", organizationUid);
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");
 				 }
 			 }
-    	if(eventObject.getUserIp() != null && !eventObject.getUserIp().isEmpty()){
-    		eventMap.put("userIp", eventObject.getUserIp());
-    	}
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventNameByName(eventObject.getEventName());
@@ -409,8 +419,6 @@ public class CassandraDataLoader implements Constants {
 		}
       
 		if (eventObject.getFields() != null) {
-			logger.info("Push events for atmosphere ");
-			//this.pushMessage(eventObject.getFields().toString());
 			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 			kafkaLogWriter.sendEventLog(eventObject.getFields());
 		}
@@ -444,8 +452,8 @@ public class CassandraDataLoader implements Constants {
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 			liveAggregator.updateRawData(eventMap);
 		}
-		logger.info("userIp : {} ",eventMap.get("userIp"));
-		//Track activities
+
+	  	liveDashBoardDAOImpl.callCounters(eventMap);
 		
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
 			
@@ -475,16 +483,12 @@ public class CassandraDataLoader implements Constants {
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
 				liveDashBoardDAOImpl.saveGeoLocation(geoData);
 			}
+			if(pushingEvents.contains(eventMap.get("eventName"))){				
+				this.pushMessage(eventObject.getFields().toString());
+			}
+			
 		}
 		
-		long startActivity = System.currentTimeMillis();
-	  	try {
-    		liveDashBoardDAOImpl.callCounters(eventMap);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		long stopActivity = System.currentTimeMillis();
-		logger.info("Activity : {} ",(stopActivity - startActivity));
     }
     /**
      * 
@@ -1375,7 +1379,7 @@ public class CassandraDataLoader implements Constants {
        @Async
        public void pushMessage(String fields){
     	ClientResource clientResource = null;
-    	clientResource = new ClientResource("http://dev-insights.goorulearning.org/insights-api-dev/atmosphere/push/message");
+    	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
 		forms.add("data", fields);
 		clientResource.post(forms.getWebRepresentation());

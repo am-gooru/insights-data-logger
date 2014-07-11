@@ -57,7 +57,7 @@ public class MicroAggregatorProducer
 	}
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
-		this.topic = topic;
+		this.topic = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");;
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("zk.connect", kafkaIp + ":" + port);		
@@ -79,11 +79,12 @@ public class MicroAggregatorProducer
 		message.put("raw", new String(eventLog));
 		
 		String messageAsJson = new JSONObject(message).toString();
-		LOG.info("EventJson: {}",messageAsJson);
 		send(messageAsJson);
 	}
 		
 	private void send(String message) {
+		LOG.info("message: {}",message);
+		LOG.info("topic: {}",topic);
 		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);
 	}

@@ -38,7 +38,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.simple.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
@@ -162,8 +163,14 @@ public class EventController {
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				eventObjects.setFields(eventJson.getAsJsonObject().toString());
-				eventObjects.setUserIp(userIp);
+				JsonObject jsonObj = eventJson.getAsJsonObject();
+				eventObjects.setFields(jsonObj.toString());
+				JSONObject useObj = new JSONObject(eventObjects.getUser());
+				useObj.put("userIp", userIp);
+				useObj.put("userAgent", userAgent);
+				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
+				fieldsObj.put("user", useObj.toString());
+				eventObjects.setFields(fieldsObj.toString());
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -273,15 +280,14 @@ public class EventController {
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
 		 response.setStatus(responseStatus);
 		 response.setContentType("application/json");
-		 JSONObject resultJson = new JSONObject();
 		 Map<String, Object> resultMap = new HashMap<String, Object>();
 		 
 		 resultMap.put("statusCode", responseStatus);
 		 resultMap.put("message", message);
-		 resultJson.putAll(resultMap);
+		 JSONObject resultJson = new JSONObject(resultMap);
 		 
 		 try {
-			response.getWriter().write(resultJson.toJSONString());
+			response.getWriter().write(resultJson.toString());
 		} catch (IOException e) {
 			logger.error("OOPS! Something went wrong", e);
 		}
@@ -308,15 +314,14 @@ public class EventController {
 			 if(appDO != null)
 			 {
 				 response.setContentType("application/json");
-				 JSONObject resultJson = new JSONObject();
 				 Map<String, Object> resultMap = new HashMap<String, Object>();
 				 
 				 resultMap.put("endPoint", appDO.getEndPoint());
 				 resultMap.put("pushIntervalMs", appDO.getDataPushingIntervalInMillsecs());
-				 resultJson.putAll(resultMap);
+				 JSONObject resultJson = new JSONObject(resultMap);
 				 
 				 try {
-					response.getWriter().write(resultJson.toJSONString());
+					response.getWriter().write(resultJson.toString());
 				} catch (IOException e) {
 					logger.error("OOPS! Something went wrong", e);
 				}
@@ -351,7 +356,6 @@ public class EventController {
 				if (eventDetail != null && !eventDetail.isEmpty()) {
 
 					response.setContentType("application/json");
-					JSONObject resultJson = new JSONObject();
 					Map<String, Object> resultMap = new HashMap<String, Object>();
 
 					resultMap.put("eventJSON", eventDetail.getStringValue("fields", null));
@@ -359,10 +363,10 @@ public class EventController {
 					resultMap.put("endTime", eventDetail.getLongValue("end_time", null));
 					resultMap.put("eventName", eventDetail.getStringValue("event_name", null));
 					resultMap.put("apiKey", eventDetail.getStringValue("api_key", null));
-					resultJson.putAll(resultMap);
+					JSONObject resultJson = new JSONObject(resultMap);
 
 					try {
-						response.getWriter().write(resultJson.toJSONString());
+						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
 						logger.error("OOPS! Something went wrong", e);
 					}
@@ -402,7 +406,6 @@ public class EventController {
 					List<Map<String, Object>> eventJSONList = new ArrayList<Map<String, Object>>();
 					
 					response.setContentType("application/json");
-					JSONObject resultJson = new JSONObject();
 					
 					//Iterate through cassandra rows and get the event JSONS
 					for (Row<String, String> row : eventDetailRows) {
@@ -414,12 +417,10 @@ public class EventController {
 						resultMap.put("apiKey", row.getColumns().getStringValue("api_key", null));
 						eventJSONList.add(resultMap);
 					}
-					
-					resultJson.put("eventDetails", eventJSONList);
-					
+					JSONObject resultJson = new JSONObject(eventJSONList);
 					
 					try {
-						response.getWriter().write(resultJson.toJSONString());
+						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
 						logger.error("OOPS! Something went wrong", e);
 					}
@@ -439,7 +440,7 @@ public class EventController {
 			@RequestBody String fields,
 			@RequestParam(value = "key",  required = true) String key,
 			@RequestParam(value = "eventName",  required = true) String eventName,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws JSONException {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -456,7 +457,7 @@ public class EventController {
 					JSONObject resultJson = new JSONObject();
 					resultJson.put("Status", "Done");
 					try {
-						response.getWriter().write(resultJson.toJSONString());
+						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
 						logger.error("OOPS! Something went wrong", e);
 					}
@@ -510,7 +511,7 @@ public class EventController {
 		JSONObject resultJson = new JSONObject();
 		resultJson.put("activity", resultMap);
 		try {
-			response.getWriter().write(resultJson.toJSONString());
+			response.getWriter().write(resultJson.toString());
 		} catch (IOException e) {
 			logger.error("OOPS! Something went wrong", e);
 		}
