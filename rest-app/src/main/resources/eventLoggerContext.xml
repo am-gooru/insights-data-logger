@@ -73,14 +73,13 @@
            <property name="jobDetails">
               <list>
                  <ref bean="firstTaskJobDetail" />
-              </list>
-              <list>
                  <ref bean="minuteRunner" />
               </list>
            </property>
            <property name="triggers">
               <list>
                  <ref bean="secondSimpleTrigger" />
+                 <ref bean="thirdSimpleTrigger" />
               </list>
            </property>
        </bean>
