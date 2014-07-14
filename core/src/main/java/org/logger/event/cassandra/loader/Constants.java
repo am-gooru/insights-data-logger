@@ -50,6 +50,8 @@ public interface Constants {
 	
 	public String SESSION = "sessionId";
 	
+	public String SESSIONTOKEN = "sessionToken";
+	
 	public String GOORUID = "gooruUId" ;
 	
 	public String AGG = "aggregator";
