@@ -481,11 +481,17 @@ public class EventController {
 	}
 	
 	//scheduled for every 1 minute
-	public void executeForEveryMinute(String startTime,String endTime){
+	public void executeForEveryMinute(){
 		
-		eventService.executeForEveryMinute(startTime, endTime);
+		eventService.executeForEveryMinute(null, null);
 	}
 	
+	//run micro aggregation for the given time range
+	public void executeForEveryMinute(String startTime,String endTime){
+			
+		eventService.executeForEveryMinute(startTime, endTime);
+	}
+		
 	public void runAggregation(){
 		
 	}
