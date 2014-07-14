@@ -488,6 +488,7 @@ public class CassandraDataLoader implements Constants {
 		if(pushingEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}
+		liveDashBoardDAOImpl.addApplicationSession(eventMap);
     }
     /**
      * 

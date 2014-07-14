@@ -64,6 +64,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     String dashboardKeys = null;
     
+	String visitor = "visitor";
+	
+	String visitorType = "loggedInUser";
+	
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -575,10 +579,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 
 	public void addApplicationSession(Map<String,String> eventMap){
+		
 		String dateKey = hourlyDateFormatter.format(new Date()).toString();
-
-		String visitor = "visitor";
-		String visitorType = "loggedInUser";
+		
+		logger.info("dateKey : {}",dateKey);
 		
 		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
 			visitorType = "anonymousUser";
@@ -589,15 +593,21 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
 			this.generateCounter(visitor, visitorType, 1, m);
 		}
-		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()), m);
+		
+		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()).toString(), m);
+		
+		try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
 	}
 	
 	public void watchApplicationSession() throws ParseException{
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		String visitor = "visitor";
-		String visitorType = "loggedInUser";
 		String lastUpdated = configSettings.getConstants("last~updated~session","constant_value");
 		String currentHour = hourlyDateFormatter.format(new Date()).toString();
+
 		if(lastUpdated == null || lastUpdated.equals(currentHour)){
 			this.updateExpiredToken(currentHour);
 		}else{
@@ -620,9 +630,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 
 	public void updateExpiredToken(String timeLine) throws ParseException {
-		String visitor = "visitor";
-		String visitorType = "loggedInUser";
-		
+
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> tokenList= this.getMicroColumnList(timeLine);
 	 	for(int i = 0 ; i < tokenList.size() ; i++) {
@@ -635,8 +643,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 	 		if(!value.equalsIgnoreCase("expired")){
 	 			Date valueInDate = customDateFormatter.parse(value);
-	 			int diffMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
-	 			if(diffMinutes > 30){
+	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
+	 			if(diffInMinutes > 30){
 	 				this.generateAggregator(visitor, visitorType, "expired", m);
 	 				this.generateCounter(visitor, visitorType, -1, m);
 	 			}
