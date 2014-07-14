@@ -54,7 +54,7 @@
        
        <bean id="minuteRunner" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
-           <property name="targetMethod" value="runAggregation" />
+           <property name="targetMethod" value="executeForEveryMinute" />
        </bean>
        
        <bean id="secondSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
