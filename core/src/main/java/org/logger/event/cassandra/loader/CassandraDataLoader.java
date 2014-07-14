@@ -1377,12 +1377,19 @@ public class CassandraDataLoader implements Constants {
        }
 
        @Async
-       public void pushMessage(String fields){
+       public void pushMessage(String fields) throws JSONException{
+   		
+    	JSONObject filtersObj = new JSONObject();
+    	filtersObj.put("eventName", fields);
+
+		JSONObject mainObj = new JSONObject();
+		mainObj.put("filters", filtersObj);		
+
     	ClientResource clientResource = null;
     	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
     	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
-		forms.add("data", "%7B%22filters%22%3A%7B%22eventName%22%3A%22"+fields+"%22%7D%7D");
+		forms.add("data", mainObj.toString());
 		clientResource.post(forms.getWebRepresentation());
 		
        }
