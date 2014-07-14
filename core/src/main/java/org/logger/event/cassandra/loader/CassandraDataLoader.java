@@ -485,6 +485,8 @@ public class CassandraDataLoader implements Constants {
 		
 		liveDashBoardDAOImpl.callCounters(eventMap);
 		
+		liveDashBoardDAOImpl.callCountersV2(eventMap);
+		
 		if(pushingEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}

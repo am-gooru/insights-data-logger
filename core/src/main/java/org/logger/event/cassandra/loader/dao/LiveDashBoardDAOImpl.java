@@ -64,6 +64,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     String dashboardKeys = null;
     
+    ColumnList<String> eventKeys = null;
+    
 	String visitor = "visitor";
 	
 	String visitorType = "loggedInUser";
@@ -405,6 +407,31 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
     
+    public void callCountersV2(Map<String,String> eventMap) {
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	if((eventMap.containsKey(EVENTNAME) && (eventMap.get("eventName").equalsIgnoreCase("collection.play")))) {
+            eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
+            for(int i=0 ; i < eventKeys.size() ; i++ ){
+            	String columnName = eventKeys.getColumnByIndex(i).getName();
+            	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+        		String key = this.generateKeys(eventMap.get(STARTTIME),columnName);
+        		String setData = null ;
+            	for(String value : columnValue.split(",")){
+            		for(String getData : value.split("~")){
+            			if(getData.equalsIgnoreCase("count")) {
+            				setData = LoaderConstants.COUNT.getName();
+            			} else if(getData.equalsIgnoreCase("time_spent")) {
+            				setData = LoaderConstants.TS.getName();
+            			} else { 
+            				setData += SEPERATOR+eventMap.get(getData);
+            			}
+            		}
+            		this.generateCounter(key, setData, 1, m);
+            	}
+            }
+    	}
+    }
+    
     @Async
     public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
    		
@@ -673,5 +700,26 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 		}
 		return returnDate; 
+	}
+	
+	public String generateKeys(String eventTime,String columnName){
+		String rowKey = null;
+		if(eventTime != null){
+				String[] key = columnName.split("~");
+				String newKey = key[0];
+				if(!newKey.equalsIgnoreCase("all")) {
+					customDateFormatter = new SimpleDateFormat(newKey);
+					Date eventDateTime = new Date(Long.valueOf(eventTime));
+				try{					
+					rowKey = customDateFormatter.format(eventDateTime).toString();
+				}
+				catch(Exception e){
+					logger.info("Exception while key generation : {} ",e);
+				}
+				} else {
+					rowKey = newKey;
+				}
+		}
+		return rowKey; 
 	}
 }
