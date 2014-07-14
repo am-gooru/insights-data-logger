@@ -8,12 +8,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JPopupMenu.Separator;
-
 import org.ednovo.data.model.GeoData;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
+import org.restlet.data.Form;
+import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -23,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
@@ -59,6 +60,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     private JobConfigSettingsDAOCassandraImpl configSettings;
     
+    private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
+
     String dashboardKeys = null;
     
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
@@ -399,6 +402,24 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     @Async
+    public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
+   		
+    	JSONObject filtersObj = new JSONObject();
+    	filtersObj.put("eventName", eventMap.get("eventName"));
+
+		JSONObject mainObj = new JSONObject();
+		mainObj.put("filters", filtersObj);		
+
+    	ClientResource clientResource = null;
+    	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
+    	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
+    	Form forms = new Form();
+		forms.add("data", mainObj.toString());
+		clientResource.post(forms.getWebRepresentation());
+       
+    }
+    
+    @Async
     public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
     	
     	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
@@ -492,11 +513,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return value;
 	}
 	
-	private String getLiveStringValue(String key,String  columnName){
+	private String getMicroStringValue(String key,String  columnName){
 		ColumnList<String>  result = null;
 		String value = null;
     	try {
-    		 result = getKeyspace().prepareQuery(liveDashboard)
+    		 result = getKeyspace().prepareQuery(microAggregator)
     		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
         		    .getKey(key)
         		    .execute().getResult();
@@ -509,6 +530,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return value;
 	}
 	
+	private ColumnList<String> getMicroColumnList(String key){
+		ColumnList<String>  result = null;
+    	try {
+    		 result = getKeyspace().prepareQuery(microAggregator)
+    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+        		    .getKey(key)
+        		    .execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data from readViewCount: {}" ,e);
+		}
+		return result;
+	}
     
 	public void addRowColumn(String rowKey,String columnName,String value){
 
@@ -539,6 +572,76 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	}		
 		return false;
 		
+	}
+
+	public void addApplicationSession(Map<String,String> eventMap){
+		String dateKey = hourlyDateFormatter.format(new Date()).toString();
+
+		String visitor = "visitor";
+		String visitorType = "loggedInUser";
+		
+		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
+			visitorType = "anonymousUser";
+		}
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
+			this.generateCounter(visitor, visitorType, 1, m);
+		}
+		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()), m);
+	}
+	
+	public void watchApplicationSession() throws ParseException{
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		String visitor = "visitor";
+		String visitorType = "loggedInUser";
+		String lastUpdated = configSettings.getConstants("last~updated~session","constant_value");
+		String currentHour = hourlyDateFormatter.format(new Date()).toString();
+		if(lastUpdated == null || lastUpdated.equals(currentHour)){
+			this.updateExpiredToken(currentHour);
+		}else{
+			ColumnList<String> tokenList= this.getMicroColumnList(lastUpdated);
+		 	for(int i = 0 ; i < tokenList.size() ; i++) {
+		 		String column = tokenList.getColumnByIndex(i).getName();
+		 		String value = tokenList.getColumnByIndex(i).getStringValue();
+		 		String[] parts = column.split("~");
+		 		
+		 		if(parts[1].equalsIgnoreCase("ANONYMOUS")){
+					visitorType = "anonymousUser";
+				}
+		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(currentHour, column)){
+		 			this.generateCounter(visitor, visitorType, -1, m);
+		 		}else{
+		 			this.generateAggregator(currentHour, column,value, m);
+		 		}
+		 	}
+		}
+	}
+
+	public void updateExpiredToken(String timeLine) throws ParseException {
+		String visitor = "visitor";
+		String visitorType = "loggedInUser";
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		ColumnList<String> tokenList= this.getMicroColumnList(timeLine);
+	 	for(int i = 0 ; i < tokenList.size() ; i++) {
+	 		String column = tokenList.getColumnByIndex(i).getName();
+	 		String value = tokenList.getColumnByIndex(i).getStringValue();
+	 		String[] parts = column.split("~");
+	 		
+	 		if(parts[1].equalsIgnoreCase("ANONYMOUS")){
+				visitorType = "anonymousUser";
+			}
+	 		if(!value.equalsIgnoreCase("expired")){
+	 			Date valueInDate = customDateFormatter.parse(value);
+	 			int diffMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
+	 			if(diffMinutes > 30){
+	 				this.generateAggregator(visitor, visitorType, "expired", m);
+	 				this.generateCounter(visitor, visitorType, -1, m);
+	 			}
+	 		}
+	 	}
 	}
 	
 	public List<String> generateYMWDKey(String eventTime){

@@ -485,10 +485,9 @@ public class CassandraDataLoader implements Constants {
 		
 		liveDashBoardDAOImpl.callCounters(eventMap);
 		
-		if(pushingEvents.contains(eventMap.get("eventName"))){				
-			this.pushMessage(eventMap.get("eventName"));
+		if(pushingEvents.contains(eventMap.get("eventName"))){
+			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}
-		
     }
     /**
      * 
@@ -1376,23 +1375,6 @@ public class CassandraDataLoader implements Constants {
            
        }
 
-       @Async
-       public void pushMessage(String fields) throws JSONException{
-   		
-    	JSONObject filtersObj = new JSONObject();
-    	filtersObj.put("eventName", fields);
-
-		JSONObject mainObj = new JSONObject();
-		mainObj.put("filters", filtersObj);		
-
-    	ClientResource clientResource = null;
-    	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
-    	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
-    	Form forms = new Form();
-		forms.add("data", mainObj.toString());
-		clientResource.post(forms.getWebRepresentation());
-		
-       }
     /**
      * @return the connectionProvider
      */
