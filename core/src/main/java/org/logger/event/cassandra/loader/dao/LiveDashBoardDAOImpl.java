@@ -416,18 +416,21 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.generateKeys(eventMap.get(STARTTIME),columnName);
-        		String setData = null ;
+
             	for(String value : columnValue.split(",")){
-            		for(String getData : value.split("~")){
-            			if(getData.equalsIgnoreCase("count")) {
-            				setData = LoaderConstants.COUNT.getName();
-            			} else if(getData.equalsIgnoreCase("time_spent")) {
-            				setData = LoaderConstants.TS.getName();
-            			} else { 
-            				setData += SEPERATOR+eventMap.get(getData);
-            			}
+            		String setData = null ;
+            		String[] arrayVal = value.split("~");
+            		for(int j=0;j<arrayVal.length;j++) {
+            			 setData += j==0 ? arrayVal[0] : SEPERATOR+eventMap.get(arrayVal[j]); 
             		}
-            		this.generateCounter(key, setData, 1, m);
+            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && setData.startsWith(COUNT+SEPERATOR))) {
+            			this.generateCounter(key, setData, setData.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+            		} 
+                	try {
+                        m.execute();
+                    } catch (ConnectionException e) {
+                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+                    }
             	}
             }
     	}
