@@ -87,7 +87,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	}
 
 	public void handleAggregation(String startTime, String endTime) {
-
+logger.debug("start the job config");
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddkkmm");
 		List<String> keys = new ArrayList<String>();
 		List<String> column = new ArrayList<String>();
@@ -319,10 +319,13 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void incrementCounterValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			ColumnListMutation<String> columnListMutation = null;
-			columnListMutation = mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
-				columnListMutation.incrementCounterColumn(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
+			}
+			try {
+				mutationBatch.execute();
+			} catch (ConnectionException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -330,10 +333,13 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void putLongValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			ColumnListMutation<String> columnListMutation = null;
-			columnListMutation = mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
-				columnListMutation.putColumnIfNotNull(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+			}
+			try {
+				mutationBatch.execute();
+			} catch (ConnectionException e) {
+				e.printStackTrace();
 			}
 		}
 	}
