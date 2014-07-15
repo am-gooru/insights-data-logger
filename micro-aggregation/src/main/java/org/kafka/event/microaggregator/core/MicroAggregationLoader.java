@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.kafka.event.microaggregator.dao.CounterDetailsDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.RealTimeOperationConfigDAOImpl;
 import org.kafka.event.microaggregator.model.EventObject;
@@ -43,6 +44,7 @@ import org.kafka.event.microaggregator.model.TypeConverter;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.AggregationDAO;
+import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
 import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.EventDetailDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.LiveDashBoardDAOImpl;
@@ -90,7 +92,7 @@ public class MicroAggregationLoader implements Constants{
     
     private RealTimeOperationConfigDAOImpl realTimeOperation;
     
-    private AggregationDAO aggregationDAO;
+    private AggregationDAOImpl aggregationDAO;
     
     public static  Map<String,String> realTimeOperators;
     
@@ -137,6 +139,7 @@ public class MicroAggregationLoader implements Constants{
         this.liveDashboardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         this.eventDetailDao = new EventDetailDAOCassandraImpl(getConnectionProvider());
         this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
+        this.aggregationDAO = new AggregationDAOImpl(getConnectionProvider()); 
         this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
 
@@ -378,9 +381,10 @@ public class MicroAggregationLoader implements Constants{
     /*
      * This will run for every minute
      */
-	public void staticAggregation(String startTime,String endTime){
+	public void staticAggregation(String eventJson){
 		
-		aggregationDAO.startStaticAggregation(startTime,endTime);
+		JSONObject jsonObject = new JSONObject(eventJson);
+		aggregationDAO.startStaticAggregation(jsonObject.get("startTime") != null ? jsonObject.get("startTime").toString() : null,jsonObject.get("endTime") != null ? jsonObject.get("endTime").toString() : null);
 	}
 
     /**
