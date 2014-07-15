@@ -127,8 +127,6 @@ public class CassandraDataLoader implements Constants {
   
     private MicroAggregatorDAOmpl liveAggregator;
     
-    private AggregationDAOImpl staticAggregator;
-        
     private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
     private ActivityStreamDaoCassandraImpl activityStreamDao;
@@ -1386,9 +1384,17 @@ public class CassandraDataLoader implements Constants {
     }
     
     public void executeForEveryMinute(String startTime,String endTime){
-    	
-    	staticAggregator.startStaticAggregation(startTime, endTime);
+    	logger.debug("start the static loader");
+    	JSONObject jsonObject = new JSONObject();
+    	try {
+			jsonObject.put("startTime",startTime );
+			jsonObject.put("endTime",endTime );
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+    	microAggregator.sendEventForStaticAggregation(jsonObject.toString());
     }
+    
     /**
      * @param connectionProvider the connectionProvider to set
      */

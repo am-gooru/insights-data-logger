@@ -81,6 +81,15 @@ public class MicroAggregatorProducer
 		String messageAsJson = new JSONObject(message).toString();
 		send(messageAsJson);
 	}
+	
+	public void sendEventForStaticAggregation(String eventLog) {
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("aggregationDetail", new String(eventLog));
+		
+		String messageAsJson = new JSONObject(message).toString();
+		send(messageAsJson);
+	}
 		
 	private void send(String message) {
 		LOG.info("message: {}",message);

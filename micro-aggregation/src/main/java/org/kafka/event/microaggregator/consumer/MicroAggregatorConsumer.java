@@ -116,13 +116,18 @@ public class MicroAggregatorConsumer extends Thread {
 	    	if(messageMap != null)
 	    	{
 	    		String eventJson = (String)messageMap.get("raw");
+	    		if(eventJson != null){
 	    		try {
 	    			LOG.info("EventJson:{}",eventJson);
 					microAggregationLoader.microRealTimeAggregation(eventJson);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-	    		
+	    		}
+	    		eventJson = (String)messageMap.get("aggregationDetail");
+	    		if(eventJson != null){
+	    			microAggregationLoader.staticAggregation(eventJson);
+	    		}
 	    	}
 	    	else
 	    	{
