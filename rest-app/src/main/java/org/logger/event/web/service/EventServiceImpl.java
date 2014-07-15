@@ -225,16 +225,16 @@ public class EventServiceImpl implements EventService {
         		eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
-        
-        
         return new ActionResponseDTO<EventObject>(eventObject, errors);
-    
-        
+	}
+	
+	@Async
+	public void watchSession(){
+		dataLoaderService.watchSession();
 	}
 	
 	@Async
 	public void executeForEveryMinute(String startTime,String endTime){
-		
 		dataLoaderService.executeForEveryMinute(startTime, endTime);
 	}
 }

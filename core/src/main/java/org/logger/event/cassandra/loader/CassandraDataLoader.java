@@ -1395,6 +1395,13 @@ public class CassandraDataLoader implements Constants {
     	microAggregator.sendEventForStaticAggregation(jsonObject.toString());
     }
     
+    public void watchSession(){
+    	try {
+			liveDashBoardDAOImpl.watchApplicationSession();
+		} catch (ParseException e) {
+			logger.info("Exception : {} ",e);
+		}
+    }
     /**
      * @param connectionProvider the connectionProvider to set
      */

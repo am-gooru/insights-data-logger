@@ -497,7 +497,8 @@ public class EventController {
 	}
 	
 	public void watchSession(){
-		System.out.print("Watching session.......");
+		logger.info("watching session");
+		eventService.watchSession();
 	}
 
 	@SuppressWarnings("unchecked")
