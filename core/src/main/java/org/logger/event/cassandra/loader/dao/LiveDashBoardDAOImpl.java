@@ -56,8 +56,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
-    private SimpleDateFormat customDateFormatter;
+    private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
+    private SimpleDateFormat customDateFormatter;
+    
     private JobConfigSettingsDAOCassandraImpl configSettings;
     
     private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
@@ -90,7 +92,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.collection = new CollectionDAOImpl(this.connectionProvider);
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
-        this.customDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
         dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
 
     }
@@ -621,8 +622,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			this.generateCounter(visitor, visitorType, 1, m);
 		}
 	
-		logger.info("values : {}", customDateFormatter.format(new Date()).toString());
-		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()).toString(), m);
+		logger.info("values : {}", secondDateFormatter.format(new Date()).toString());
+		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
 		try {
             m.execute();
@@ -675,7 +676,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				visitorType = "anonymousUser";
 			}
 	 		if(!value.equalsIgnoreCase("expired")){
-	 			Date valueInDate = customDateFormatter.parse(value);
+	 			Date valueInDate = secondDateFormatter.parse(value);
 	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
 	 			if(diffInMinutes > 30){
 	 				this.generateAggregator(visitor, visitorType, "expired", m);
