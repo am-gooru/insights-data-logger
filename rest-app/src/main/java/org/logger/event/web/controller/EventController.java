@@ -496,6 +496,10 @@ public class EventController {
 		
 	}
 	
+	public void watchSession(){
+		System.out.print("Watching session.......");
+	}
+
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
 	public void getUserActivity(@RequestParam String userUid,
