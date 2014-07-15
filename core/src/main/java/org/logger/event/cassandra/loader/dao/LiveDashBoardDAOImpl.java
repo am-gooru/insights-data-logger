@@ -620,7 +620,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
 			this.generateCounter(visitor, visitorType, 1, m);
 		}
-		
+	
+		logger.info("values : {}", customDateFormatter.format(new Date()).toString());
 		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()).toString(), m);
 		
 		try {
@@ -654,6 +655,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		 		}
 		 	}
 		}
+		try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
 	}
 
 	public void updateExpiredToken(String timeLine) throws ParseException {
@@ -677,6 +683,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	 			}
 	 		}
 	 	}
+	 	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
 	}
 	
 	public List<String> generateYMWDKey(String eventTime){
