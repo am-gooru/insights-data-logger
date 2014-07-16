@@ -410,6 +410,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
     
+    @Async
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
@@ -737,7 +738,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 			if(splittedKey.startsWith("E:") && eventMap != null){
 				subKey = splittedKey.split(":");
-				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]) : subKey[1]);
+				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
 			}
 			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
 				try {
