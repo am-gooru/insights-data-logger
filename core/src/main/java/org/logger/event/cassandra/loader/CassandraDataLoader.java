@@ -481,7 +481,7 @@ public class CassandraDataLoader implements Constants {
 			}			
 		}
 		
-		liveDashBoardDAOImpl.callCounters(eventMap);
+//		liveDashBoardDAOImpl.callCounters(eventMap);
 		
 		liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
