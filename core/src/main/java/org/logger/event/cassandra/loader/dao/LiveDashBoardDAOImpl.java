@@ -411,7 +411,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	if((eventMap.containsKey(EVENTNAME) && (eventMap.get("eventName").equalsIgnoreCase("collection.play")))) {
+    	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
             for(int i=0 ; i < eventKeys.size() ; i++ ){
             	String columnName = eventKeys.getColumnByIndex(i).getName();
@@ -425,7 +425,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             			 setData += j==0 ? arrayVal[0] : SEPERATOR+eventMap.get(arrayVal[j]); 
             		}
             		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && setData.startsWith(COUNT+SEPERATOR))) {
-            			this.generateCounter(key, setData, setData.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+            			this.generateCounter(key, setData.trim(), setData.trim().startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
             		} 
                 	try {
                         m.execute();
