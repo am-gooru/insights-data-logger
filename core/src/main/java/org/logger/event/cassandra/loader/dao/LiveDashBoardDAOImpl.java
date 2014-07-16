@@ -410,7 +410,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
     
-    
+    @Async
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
@@ -419,10 +419,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
-        		logger.info("Duplicate Key : {} - Orginal Key : {} ",columnName,key);
             	for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
-            		logger.info("Duplicate Column : {} - Orginal column : {} ",value,orginalColumn);
             		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
             			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
             		} 
