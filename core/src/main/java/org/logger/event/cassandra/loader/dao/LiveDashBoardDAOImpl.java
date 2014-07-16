@@ -1,5 +1,6 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -416,16 +417,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             for(int i=0 ; i < eventKeys.size() ; i++ ){
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-        		String key = this.generateKeys(eventMap.get(STARTTIME),columnName);
+        		String key = this.formOrginalKey(columnName, eventMap);
 
             	for(String value : columnValue.split(",")){
-            		String setData = "" ;
-            		String[] arrayVal = value.split("~");
-            		for(int j=0;j<arrayVal.length;j++) {
-            			 setData += j==0 ? arrayVal[0] : SEPERATOR+eventMap.get(arrayVal[j]); 
-            		}
-            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && setData.startsWith(COUNT+SEPERATOR))) {
-            			this.generateCounter(key, setData.trim(), setData.trim().startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+            		String orginalColumn = this.formOrginalKey(value, eventMap);
+            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
             		} 
                 	try {
                         m.execute();
@@ -717,7 +714,41 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return returnDate; 
 	}
-	
+
+/*	C: defines => Constant
+	D: defines => Date format lookup
+	E: defines => eventMap param lookup*/
+	public String formOrginalKey(String value,Map<String,String> eventMap){
+		Date eventDateTime = new Date();
+		String key = "";
+		for(String splittedKey : value.split("~")){	
+			String[]  subKey = null;
+			if(splittedKey.startsWith("C:")){
+				subKey = splittedKey.split(":");
+				key += "~"+subKey[1];
+			}
+			if(splittedKey.startsWith("D:")){
+				subKey = splittedKey.split(":");
+				customDateFormatter = new SimpleDateFormat(subKey[1]);
+				if(eventMap != null){
+					 eventDateTime = new Date(Long.valueOf(eventMap.get("startTime")));					
+				}
+				key += "~"+customDateFormatter.format(eventDateTime).toString();
+			}
+			if(splittedKey.startsWith("E:") && eventMap != null){
+				subKey = splittedKey.split(":");
+				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]) : subKey[1]);
+			}
+			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
+				try {
+					throw new AccessDeniedException("Unsupported key format : " + splittedKey);
+				} catch (AccessDeniedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return key != null ? key.substring(1).trim():null;
+	}
 	public String generateKeys(String eventTime,String columnName){
 		String finalKey = "";
 	    if(eventTime != null){
