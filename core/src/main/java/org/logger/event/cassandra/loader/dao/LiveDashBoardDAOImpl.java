@@ -3,6 +3,7 @@ package org.logger.event.cassandra.loader.dao;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -418,7 +419,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		String key = this.generateKeys(eventMap.get(STARTTIME),columnName);
 
             	for(String value : columnValue.split(",")){
-            		String setData = null ;
+            		String setData = "" ;
             		String[] arrayVal = value.split("~");
             		for(int j=0;j<arrayVal.length;j++) {
             			 setData += j==0 ? arrayVal[0] : SEPERATOR+eventMap.get(arrayVal[j]); 
@@ -718,23 +719,40 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	public String generateKeys(String eventTime,String columnName){
-		String rowKey = null;
-		if(eventTime != null){
-				String[] key = columnName.split("~");
-				String newKey = key[0];
-				if(!newKey.equalsIgnoreCase("all")) {
-					customDateFormatter = new SimpleDateFormat(newKey);
-					Date eventDateTime = new Date(Long.valueOf(eventTime));
-				try{					
-					rowKey = customDateFormatter.format(eventDateTime).toString();
-				}
-				catch(Exception e){
-					logger.info("Exception while key generation : {} ",e);
-				}
-				} else {
-					rowKey = newKey;
-				}
-		}
-		return rowKey; 
+		String finalKey = "";
+	    if(eventTime != null){
+					String[] key = columnName.split("~");
+	            	String rowKeys = "";
+					String newKey = key[0];
+	                 if(!newKey.equalsIgnoreCase("all") && !newKey.contains("all~")) {
+						customDateFormatter = new SimpleDateFormat(newKey);
+						Date eventDateTime = new Date(Long.valueOf(eventTime));
+	            	   	if(columnName.contains("~")){
+	            			String[] parts = columnName.split("~");
+		    				try{					
+		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
+		    				}
+		    				catch(Exception e){
+		    					logger.info("Exception while key generation : {} ",e);
+		    				}
+	            	        for(int i = 1 ; i < parts.length ; i++){
+	            	        	rowKeys += "~"+parts[i];
+	            	        }
+	            	        finalKey = rowKeys;
+	               	 	}else{
+		    				try{					
+		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
+		               	 		finalKey = rowKeys;
+		    				}
+		    				catch(Exception e){
+		    					logger.info("Exception while key generation : {} ",e);
+		    				}
+	               	 	}
+            	   	} else {
+            	   			finalKey = columnName;
+                    }
+	    }
+	    return finalKey;
 	}
+	
 }
