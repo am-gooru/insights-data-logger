@@ -82,7 +82,9 @@ import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
@@ -140,6 +142,8 @@ public class CassandraDataLoader implements Constants {
     private static GeoLocation geo;
     
     public Collection<String> pushingEvents ;
+    
+    public String viewEvents ;
     
     private Gson gson = new Gson();
     
@@ -212,6 +216,7 @@ public class CassandraDataLoader implements Constants {
         realTimeOperators = realTimeOperation.getOperators();
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
+        viewEvents = configSettings.getConstants("views~events", "constant_value");
         atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", "constant_value");
         
     }
@@ -501,6 +506,10 @@ public class CassandraDataLoader implements Constants {
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}
 		liveDashBoardDAOImpl.addApplicationSession(eventMap);
+		
+		if(viewEvents.contains(eventMap.get("eventName"))){
+			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
+		}
     }
     /**
      * 
@@ -1036,25 +1045,38 @@ public class CassandraDataLoader implements Constants {
      *  Update bulk view count
      */
     public void callAPIViewCount() {
-    	Rows<String, String> dataDetail = null;
-		Long count = 0L;
-		dataDetail = recentViewedResources.readAll();
-				
+
+    	Collection<String> columnList = new ArrayList<String>();
+    	columnList.add("count~views");
+
+    	String lastUpadatedTime = configSettings.getConstants("views~last~updated", "constant_value");
+		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		logger.info("lastUpadatedTime : {} - currentTime : {}",lastUpadatedTime , currentTime);
+		Date lastDate = null;
+		Date currDate = null;
+		try {
+			lastDate = minuteDateFormatter.parse(lastUpadatedTime);
+			currDate = minuteDateFormatter.parse(currentTime);
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}		
+		Date rowValues = new Date(lastDate.getTime() + 1);
+		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
+			logger.info("Reading content ............. ");	
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
-		for (Row<String, String> row : dataDetail) {
+		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(minuteDateFormatter.format(rowValues));		
+		for(int i = 0 ; i < contents.size() ; i++) {
+			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
 			Map<String, Object> map = new HashMap<String, Object>();
-			String recentResources = row.getKey();
-			count = liveAggregator.getCounterLongValue(recentResources, "resource-view");
-			map.put("gooruOid", recentResources);
-			map.put("views", count);
+			for(Column<String> detail : vluesList.getResult()) {
+				map.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+				map.put("views", detail.getLongValue());
+			}
 			dataJSONList.add(map);
 		}
-		logger.info("Serilizer : {}",new JSONSerializer().serialize(dataJSONList));
-		boolean flagError = false;
+		
 		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),"constant_value");
 		String VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),"constant_value");
-		String result = null;
-		
 		try{
 				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
 				
@@ -1067,25 +1089,16 @@ public class CassandraDataLoader implements Constants {
 		 		
 		 		if (response.getStatusLine().getStatusCode() != 200) {
 		 	 		logger.info("View count api call failed...");
-		 			flagError = true;
-		 	 		throw new AccessDeniedException("You can not delete resources! Api fails");
+		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
 		 		} else {
 		 	 		logger.info("View count api call Success...");
 		 		}
 		 			
 		} catch(Exception e){
 			e.printStackTrace();
-		}
-        
-		
-		if (!flagError) {
-			for (Row<String, String> row : dataDetail) {
-				String recentResources = row.getKey();
-				recentViewedResources.deleteRow(recentResources);
-			}
-		}
-		
-    }
+		}		
+	 }
+   }
   
     /**
      * 

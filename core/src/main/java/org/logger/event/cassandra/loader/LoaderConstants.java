@@ -119,6 +119,8 @@ public enum LoaderConstants {
     
     CPV1("collection.play"),
     
+    RP1("resource.play"),
+    
     CRAV1("reaction.create"),
     
 	CLPV1("classpage.view"),

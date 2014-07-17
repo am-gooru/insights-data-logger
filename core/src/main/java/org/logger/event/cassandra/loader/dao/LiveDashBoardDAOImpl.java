@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -60,6 +61,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
+    private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    
     private SimpleDateFormat customDateFormatter;
     
     private JobConfigSettingsDAOCassandraImpl configSettings;
@@ -563,7 +566,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return value;
 	}
 	
-	private ColumnList<String> getMicroColumnList(String key){
+	public ColumnList<String> getMicroColumnList(String key){
 		ColumnList<String>  result = null;
     	try {
     		 result = getKeyspace().prepareQuery(microAggregator)
@@ -607,6 +610,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 	}
 
+	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
 		
 		String dateKey = hourlyDateFormatter.format(new Date()).toString();
@@ -625,6 +629,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 		logger.info("values : {}", secondDateFormatter.format(new Date()).toString());
 		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+		
+		try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+	}
+	
+	@Async
+	public void addContentForPostViews(Map<String,String> eventMap){
+		String dateKey = minDateFormatter.format(new Date()).toString();
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		this.generateAggregator(dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
 		
 		try {
             m.execute();
@@ -785,5 +803,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	    }
 	    return finalKey;
 	}
-	
+
+	public OperationResult<ColumnList<String>> readLiveDashBoard(String key, Collection<String> columnList) {
+		OperationResult<ColumnList<String>> query = null;
+		
+		try {
+			query = getKeyspace().prepareQuery(liveDashboard).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(key)
+			.withColumnSlice(columnList).execute();
+		} catch (ConnectionException e) {
+			logger.info("Exception while read columnlist : {}",e);
+		}
+		return query;
+		
+	}
 }
