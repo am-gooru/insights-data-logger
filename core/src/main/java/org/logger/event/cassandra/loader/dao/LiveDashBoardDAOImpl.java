@@ -1,8 +1,10 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -56,8 +59,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
-    private SimpleDateFormat customDateFormatter;
+    private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
+    private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    
+    private SimpleDateFormat customDateFormatter;
+    
     private JobConfigSettingsDAOCassandraImpl configSettings;
     
     private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
@@ -90,7 +97,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.collection = new CollectionDAOImpl(this.connectionProvider);
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
-        this.customDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
         dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
 
     }
@@ -407,26 +413,25 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
     
+    @Async
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	if((eventMap.containsKey(EVENTNAME) && (eventMap.get("eventName").equalsIgnoreCase("collection.play")))) {
+    	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
             for(int i=0 ; i < eventKeys.size() ; i++ ){
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-        		String key = this.generateKeys(eventMap.get(STARTTIME),columnName);
-        		String setData = null ;
+        		String key = this.formOrginalKey(columnName, eventMap);
             	for(String value : columnValue.split(",")){
-            		for(String getData : value.split("~")){
-            			if(getData.equalsIgnoreCase("count")) {
-            				setData = LoaderConstants.COUNT.getName();
-            			} else if(getData.equalsIgnoreCase("time_spent")) {
-            				setData = LoaderConstants.TS.getName();
-            			} else { 
-            				setData += SEPERATOR+eventMap.get(getData);
-            			}
-            		}
-            		this.generateCounter(key, setData, 1, m);
+            		String orginalColumn = this.formOrginalKey(value, eventMap);
+            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+            		} 
+                	try {
+                        m.execute();
+                    } catch (ConnectionException e) {
+                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+                    }
             	}
             }
     	}
@@ -442,7 +447,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		mainObj.put("filters", filtersObj);		
 
     	ClientResource clientResource = null;
-    	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
     	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
 		forms.add("data", mainObj.toString());
@@ -561,7 +565,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return value;
 	}
 	
-	private ColumnList<String> getMicroColumnList(String key){
+	public ColumnList<String> getMicroColumnList(String key){
 		ColumnList<String>  result = null;
     	try {
     		 result = getKeyspace().prepareQuery(microAggregator)
@@ -605,23 +609,34 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 	}
 
+	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
 		
 		String dateKey = hourlyDateFormatter.format(new Date()).toString();
 		
-		logger.info("dateKey : {}",dateKey);
-		
 		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
 			visitorType = "anonymousUser";
 		}
-		
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
 			this.generateCounter(visitor, visitorType, 1, m);
-		}
+		}	
+		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
-		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(new Date()).toString(), m);
+		try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
+	}
+	
+	@Async
+	public void addContentForPostViews(Map<String,String> eventMap){
+		String dateKey = minDateFormatter.format(new Date()).toString();
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		this.generateAggregator(dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
 		
 		try {
             m.execute();
@@ -654,6 +669,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		 		}
 		 	}
 		}
+		try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
 	}
 
 	public void updateExpiredToken(String timeLine) throws ParseException {
@@ -669,7 +689,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				visitorType = "anonymousUser";
 			}
 	 		if(!value.equalsIgnoreCase("expired")){
-	 			Date valueInDate = customDateFormatter.parse(value);
+	 			Date valueInDate = secondDateFormatter.parse(value);
 	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
 	 			if(diffInMinutes > 30){
 	 				this.generateAggregator(visitor, visitorType, "expired", m);
@@ -677,6 +697,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	 			}
 	 		}
 	 	}
+	 	try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+        }
 	}
 	
 	public List<String> generateYMWDKey(String eventTime){
@@ -701,25 +726,88 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return returnDate; 
 	}
-	
-	public String generateKeys(String eventTime,String columnName){
-		String rowKey = null;
-		if(eventTime != null){
-				String[] key = columnName.split("~");
-				String newKey = key[0];
-				if(!newKey.equalsIgnoreCase("all")) {
-					customDateFormatter = new SimpleDateFormat(newKey);
-					Date eventDateTime = new Date(Long.valueOf(eventTime));
-				try{					
-					rowKey = customDateFormatter.format(eventDateTime).toString();
+
+/*	C: defines => Constant
+	D: defines => Date format lookup
+	E: defines => eventMap param lookup*/
+	public String formOrginalKey(String value,Map<String,String> eventMap){
+		Date eventDateTime = new Date();
+		String key = "";
+		for(String splittedKey : value.split("~")){	
+			String[]  subKey = null;
+			if(splittedKey.startsWith("C:")){
+				subKey = splittedKey.split(":");
+				key += "~"+subKey[1];
+			}
+			if(splittedKey.startsWith("D:")){
+				subKey = splittedKey.split(":");
+				customDateFormatter = new SimpleDateFormat(subKey[1]);
+				if(eventMap != null){
+					 eventDateTime = new Date(Long.valueOf(eventMap.get("startTime")));					
 				}
-				catch(Exception e){
-					logger.info("Exception while key generation : {} ",e);
+				key += "~"+customDateFormatter.format(eventDateTime).toString();
+			}
+			if(splittedKey.startsWith("E:") && eventMap != null){
+				subKey = splittedKey.split(":");
+				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+			}
+			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
+				try {
+					throw new AccessDeniedException("Unsupported key format : " + splittedKey);
+				} catch (AccessDeniedException e) {
+					e.printStackTrace();
 				}
-				} else {
-					rowKey = newKey;
-				}
+			}
 		}
-		return rowKey; 
+		return key != null ? key.substring(1).trim():null;
+	}
+	public String generateKeys(String eventTime,String columnName){
+		String finalKey = "";
+	    if(eventTime != null){
+					String[] key = columnName.split("~");
+	            	String rowKeys = "";
+					String newKey = key[0];
+	                 if(!newKey.equalsIgnoreCase("all") && !newKey.contains("all~")) {
+						customDateFormatter = new SimpleDateFormat(newKey);
+						Date eventDateTime = new Date(Long.valueOf(eventTime));
+	            	   	if(columnName.contains("~")){
+	            			String[] parts = columnName.split("~");
+		    				try{					
+		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
+		    				}
+		    				catch(Exception e){
+		    					logger.info("Exception while key generation : {} ",e);
+		    				}
+	            	        for(int i = 1 ; i < parts.length ; i++){
+	            	        	rowKeys += "~"+parts[i];
+	            	        }
+	            	        finalKey = rowKeys;
+	               	 	}else{
+		    				try{					
+		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
+		               	 		finalKey = rowKeys;
+		    				}
+		    				catch(Exception e){
+		    					logger.info("Exception while key generation : {} ",e);
+		    				}
+	               	 	}
+            	   	} else {
+            	   			finalKey = columnName;
+                    }
+	    }
+	    return finalKey;
+	}
+
+	public OperationResult<ColumnList<String>> readLiveDashBoard(String key, Collection<String> columnList) {
+		OperationResult<ColumnList<String>> query = null;
+		
+		try {
+			query = getKeyspace().prepareQuery(liveDashboard).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(key)
+			.withColumnSlice(columnList).execute();
+		} catch (ConnectionException e) {
+			logger.info("Exception while read columnlist : {}",e);
+		}
+		return query;
+		
 	}
 }

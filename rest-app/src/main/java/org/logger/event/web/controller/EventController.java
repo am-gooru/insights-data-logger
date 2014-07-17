@@ -476,8 +476,7 @@ public class EventController {
 	public void updateViews() throws Exception{
 		System.out.println("Executing every five mintues");
 		
-		/*This is to be re-enbled
-		eventService.updateProdViews();*/
+		eventService.updateProdViews();
 	}
 	
 	//scheduled for every 1 minute
@@ -497,7 +496,8 @@ public class EventController {
 	}
 	
 	public void watchSession(){
-		System.out.print("Watching session.......");
+		logger.info("watching session");
+		eventService.watchSession();
 	}
 
 	@SuppressWarnings("unchecked")
