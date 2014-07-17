@@ -83,7 +83,19 @@ public class JobConfigSettingsDAOCassandraImpl extends BaseDAOCassandraImpl impl
 	        return;
 	    }
    }
+	public void updateOrAddRow(String rowKey,String columnName,String value){
 
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		m.withRow(jobConfigCF, rowKey)
+		.putColumnIfNotNull(columnName, value)
+		;
+		 try{
+	         	m.execute();
+	         } catch (ConnectionException e) {
+	         	logger.info("Error while adding session - ", e);
+	         }
+	}
 public String checkJobStatus(){
 
 	ColumnList<String> jobStatus = null;

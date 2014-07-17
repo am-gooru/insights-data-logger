@@ -1070,10 +1070,10 @@ public class CassandraDataLoader implements Constants {
 		} catch (ParseException e1) {
 			e1.printStackTrace();
 		}		
-		Date rowValues = new Date(lastDate.getTime() + 1);
-		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
+		Date rowValues = new Date(lastDate.getTime() + 60000);
+		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
-		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(minuteDateFormatter.format(rowValues));		
+		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
 			Map<String, Object> map = new HashMap<String, Object>();
@@ -1090,9 +1090,6 @@ public class CassandraDataLoader implements Constants {
 			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-					
-					logger.info("post Url : {}" , url);
-					
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
 			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
 			 		HttpPost  postRequest = new HttpPost(url);
@@ -1103,14 +1100,17 @@ public class CassandraDataLoader implements Constants {
 			 		if (response.getStatusLine().getStatusCode() != 200) {
 			 	 		logger.info("View count api call failed...");
 			 	 		throw new AccessDeniedException("Something went wrong! Api fails");
-			 		} else {
-			 			liveDashBoardDAOImpl.addRowColumn("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+			 		} else {			 			
+			 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 			 	 		logger.info("View count api call Success...");
 			 		}
 			 			
 			} catch(Exception e){
 				e.printStackTrace();
 			}		
+		}else{
+			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+ 	 		logger.info("No content viewed");
 		}
 	 }
    }
