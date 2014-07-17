@@ -1071,7 +1071,7 @@ public class CassandraDataLoader implements Constants {
 			e1.printStackTrace();
 		}		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
-		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
+		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
@@ -1090,9 +1090,6 @@ public class CassandraDataLoader implements Constants {
 			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-					
-					logger.info("post Url : {}" , url);
-					
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
 			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
 			 		HttpPost  postRequest = new HttpPost(url);
@@ -1111,6 +1108,9 @@ public class CassandraDataLoader implements Constants {
 			} catch(Exception e){
 				e.printStackTrace();
 			}		
+		}else{
+			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+ 	 		logger.info("No content viewed");
 		}
 	 }
    }
