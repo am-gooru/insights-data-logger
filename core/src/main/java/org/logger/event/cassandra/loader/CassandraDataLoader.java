@@ -1070,7 +1070,7 @@ public class CassandraDataLoader implements Constants {
 		} catch (ParseException e1) {
 			e1.printStackTrace();
 		}		
-		Date rowValues = new Date(lastDate.getTime() + 1);
+		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
