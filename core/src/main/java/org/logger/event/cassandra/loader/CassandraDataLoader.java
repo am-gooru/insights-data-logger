@@ -1075,6 +1075,8 @@ public class CassandraDataLoader implements Constants {
 			for(Column<String> detail : vluesList.getResult()) {
 				map.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 				map.put("views", detail.getLongValue());
+				
+				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
 			dataJSONList.add(map);
 		}
@@ -1082,6 +1084,8 @@ public class CassandraDataLoader implements Constants {
 		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 		try{
 				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+				
+				logger.info("post Url : {}" , url);
 				
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 		        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
