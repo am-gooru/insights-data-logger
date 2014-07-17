@@ -221,4 +221,6 @@ public interface Constants {
 	public String DIFF = "diff";
 	
 	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
+	
+	public String DEFAULTCOLUMN = "constant_value";
 }

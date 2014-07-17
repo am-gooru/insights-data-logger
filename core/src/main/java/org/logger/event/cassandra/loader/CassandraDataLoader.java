@@ -148,6 +148,9 @@ public class CassandraDataLoader implements Constants {
     private Gson gson = new Gson();
     
     private String atmosphereEndPoint;
+    
+    private String VIEW_COUNT_REST_API_END_POINT;
+    
     /**
      * Get Kafka properties from Environment
      */
@@ -216,8 +219,9 @@ public class CassandraDataLoader implements Constants {
         realTimeOperators = realTimeOperation.getOperators();
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
-        viewEvents = configSettings.getConstants("views~events", "constant_value");
-        atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", "constant_value");
+        viewEvents = configSettings.getConstants("views~events", DEFAULTCOLUMN);
+        atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", DEFAULTCOLUMN);
+        VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),DEFAULTCOLUMN);
         
     }
 
@@ -1049,7 +1053,7 @@ public class CassandraDataLoader implements Constants {
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
 
-    	String lastUpadatedTime = configSettings.getConstants("views~last~updated", "constant_value");
+    	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		logger.info("lastUpadatedTime : {} - currentTime : {}",lastUpadatedTime , currentTime);
 		Date lastDate = null;
@@ -1075,8 +1079,7 @@ public class CassandraDataLoader implements Constants {
 			dataJSONList.add(map);
 		}
 		
-		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),"constant_value");
-		String VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),"constant_value");
+		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 		try{
 				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
 				
