@@ -1067,7 +1067,7 @@ public class CassandraDataLoader implements Constants {
 		Date rowValues = new Date(lastDate.getTime() + 1);
 		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
-		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(minuteDateFormatter.format(rowValues));		
+		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
 			Map<String, Object> map = new HashMap<String, Object>();
@@ -1097,8 +1097,8 @@ public class CassandraDataLoader implements Constants {
 			 		if (response.getStatusLine().getStatusCode() != 200) {
 			 	 		logger.info("View count api call failed...");
 			 	 		throw new AccessDeniedException("Something went wrong! Api fails");
-			 		} else {
-			 			liveDashBoardDAOImpl.addRowColumn("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+			 		} else {			 			
+			 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 			 	 		logger.info("View count api call Success...");
 			 		}
 			 			

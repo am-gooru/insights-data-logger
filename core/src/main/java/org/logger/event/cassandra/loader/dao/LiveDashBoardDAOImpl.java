@@ -636,7 +636,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		String dateKey = minDateFormatter.format(new Date()).toString();
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		
-		this.generateAggregator(dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
+		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
+		
+		this.generateAggregator(VIEWS+SEPERATOR+dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
 		
 		try {
             m.execute();
