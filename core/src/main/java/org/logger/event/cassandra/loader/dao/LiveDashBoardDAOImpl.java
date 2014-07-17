@@ -447,7 +447,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		mainObj.put("filters", filtersObj);		
 
     	ClientResource clientResource = null;
-    	logger.info("atmosphereEndPoint : {} " ,atmosphereEndPoint);
     	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
     	Form forms = new Form();
 		forms.add("data", mainObj.toString());
@@ -615,19 +614,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 		String dateKey = hourlyDateFormatter.format(new Date()).toString();
 		
-		logger.info("dateKey : {}",dateKey);
-		
 		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
 			visitorType = "anonymousUser";
 		}
-		
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
 			this.generateCounter(visitor, visitorType, 1, m);
-		}
-	
-		logger.info("values : {}", secondDateFormatter.format(new Date()).toString());
+		}	
 		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
 		try {

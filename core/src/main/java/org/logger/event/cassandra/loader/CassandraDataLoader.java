@@ -510,7 +510,7 @@ public class CassandraDataLoader implements Constants {
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}
 		liveDashBoardDAOImpl.addApplicationSession(eventMap);
-		
+		logger.info("viewEvents : {} ",viewEvents);
 		if(viewEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
@@ -1066,7 +1066,6 @@ public class CassandraDataLoader implements Constants {
 		}		
 		Date rowValues = new Date(lastDate.getTime() + 1);
 		if(!lastUpadatedTime.equals(currentTime) && (lastDate.getTime() < currDate.getTime())){
-			logger.info("Reading content ............. ");	
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
@@ -1081,30 +1080,32 @@ public class CassandraDataLoader implements Constants {
 			dataJSONList.add(map);
 		}
 		
-		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
-		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-				
-				logger.info("post Url : {}" , url);
-				
-				DefaultHttpClient httpClient = new DefaultHttpClient();   
-		        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
-		 		HttpPost  postRequest = new HttpPost(url);
-		 		postRequest.addHeader("accept", "application/json");
-		 		postRequest.setEntity(input);
-		 		HttpResponse response = httpClient.execute(postRequest);
-		 		
-		 		if (response.getStatusLine().getStatusCode() != 200) {
-		 	 		logger.info("View count api call failed...");
-		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
-		 		} else {
-		 			liveDashBoardDAOImpl.addRowColumn("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-		 	 		logger.info("View count api call Success...");
-		 		}
-		 			
-		} catch(Exception e){
-			e.printStackTrace();
-		}		
+		if(!dataJSONList.isEmpty()){
+			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
+			try{
+					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+					
+					logger.info("post Url : {}" , url);
+					
+					DefaultHttpClient httpClient = new DefaultHttpClient();   
+			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
+			 		HttpPost  postRequest = new HttpPost(url);
+			 		postRequest.addHeader("accept", "application/json");
+			 		postRequest.setEntity(input);
+			 		HttpResponse response = httpClient.execute(postRequest);
+			 		
+			 		if (response.getStatusLine().getStatusCode() != 200) {
+			 	 		logger.info("View count api call failed...");
+			 	 		throw new AccessDeniedException("Something went wrong! Api fails");
+			 		} else {
+			 			liveDashBoardDAOImpl.addRowColumn("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+			 	 		logger.info("View count api call Success...");
+			 		}
+			 			
+			} catch(Exception e){
+				e.printStackTrace();
+			}		
+		}
 	 }
    }
   
