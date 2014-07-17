@@ -1094,6 +1094,7 @@ public class CassandraDataLoader implements Constants {
 		 	 		logger.info("View count api call failed...");
 		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
 		 		} else {
+		 			liveDashBoardDAOImpl.addRowColumn("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 		 	 		logger.info("View count api call Success...");
 		 		}
 		 			
