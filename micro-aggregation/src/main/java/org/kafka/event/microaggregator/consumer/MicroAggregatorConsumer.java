@@ -62,7 +62,7 @@ public class MicroAggregatorConsumer extends Thread {
 	public MicroAggregatorConsumer(String topic)
 	  {
 	    
-		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
+		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_CONSUMER_IP");
         KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
         KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
         KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
