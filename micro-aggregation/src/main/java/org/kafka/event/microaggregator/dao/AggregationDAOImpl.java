@@ -135,7 +135,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			List<String> processedTime = this.listRowColumnStringValue(configData, column);
 			if (checkNull(processedTime)) {
 				Calendar calender = Calendar.getInstance();
-				endTime = format.format(convertListtoString(processedTime));
+				endTime = format.format(processedTime.get(0));
 				keys.add(endTime);
 			} else {
 				Calendar calender = Calendar.getInstance();
