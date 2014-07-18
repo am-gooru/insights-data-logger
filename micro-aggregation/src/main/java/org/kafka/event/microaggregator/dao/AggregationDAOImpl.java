@@ -181,6 +181,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				// iterate for every raw data key
 				Set<String> secondKey = substituteKeyVariable(eventData, tempkey);
 				List<String> firstKey = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(0)));
+				firstKey = convertStringtoList(firstKey.get(0));
 				Set<String> rowKey = new HashSet<String>();
 				try {
 					rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get("key"), format, firstKey), secondKey);
@@ -217,6 +218,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	}
 
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
+		
+		String key = null;
 		for (Map<String, String> map : eventData) {
 
 			// Avoid empty data
@@ -235,7 +238,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				logger.debug("fields is not an json Element");
 			}
 			Set<String> keyData = rawMap.keySet();
-			String key = replaceKey(tempKey, rawMap, keyData);
+			key = replaceKey(tempKey, rawMap, keyData);
 			Map<String, String> contextMap = new HashMap<String, String>();
 			try {
 				jsonElement = new JsonParser().parse(rawMap.get("context"));
@@ -279,7 +282,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			keyData = payLoadMap.keySet();
 			key = replaceKey(key, payLoadMap, keyData);
 		}
-		return convertStringtoSet(tempKey);
+		return convertStringtoSet(key);
 	}
 
 	public OperationResult<Rows<String, String>> readRows(String columnFamilyName, Collection<String> rowKey, Collection<String> columnList) {
