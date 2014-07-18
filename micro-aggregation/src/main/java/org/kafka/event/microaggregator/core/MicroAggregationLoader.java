@@ -384,7 +384,15 @@ public class MicroAggregationLoader implements Constants{
 	public void staticAggregation(String eventJson){
 		try{
 		JSONObject jsonObject = new JSONObject(eventJson);
-		aggregationDAO.startStaticAggregation(jsonObject.get("startTime") != null ? jsonObject.get("startTime").toString() : null,jsonObject.get("endTime") != null ? jsonObject.get("endTime").toString() : null);
+		String startTime = null;
+		String endTime = null;
+		if(jsonObject.has("startTime")){
+			startTime = jsonObject.get("startTime") != null ? jsonObject.get("startTime").toString() : null;
+		}
+		if(jsonObject.has("endTime")){
+			endTime = jsonObject.get("endTime") != null ? jsonObject.get("endTime").toString() : null;
+		}
+		aggregationDAO.startStaticAggregation(startTime,endTime);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
