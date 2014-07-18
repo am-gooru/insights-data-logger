@@ -87,7 +87,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	}
 
 	public void handleAggregation(String startTime, String endTime) {
-logger.debug("start the job config");
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddkkmm");
 		List<String> keys = new ArrayList<String>();
 		List<String> column = new ArrayList<String>();
@@ -96,8 +95,8 @@ logger.debug("start the job config");
 		OperationResult<ColumnList<String>> configData = this.readRow(jobConfigSetting, "aggregation~keys", column);
 		column = new ArrayList<String>();
 		column.add("constant_value");
-		List<String> prcessingKey = this.listRowColumnStringValue(configData,column);
-		
+		List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
+
 		if (checkNull(startTime) && checkNull(endTime)) {
 			try {
 				Date startDate = format.parse(startTime);
@@ -133,19 +132,19 @@ logger.debug("start the job config");
 		} else {
 			column = new ArrayList<String>();
 			column.add("last_processed_time");
-			List<String> processedTime = this.listRowColumnStringValue(configData,column);
-			if(checkNull(processedTime)){
+			List<String> processedTime = this.listRowColumnStringValue(configData, column);
+			if (checkNull(processedTime)) {
 				Calendar calender = Calendar.getInstance();
 				endTime = format.format(convertListtoString(processedTime));
 				keys.add(endTime);
-			}else{
-			Calendar calender = Calendar.getInstance();
-			endTime = format.format(calender.getTime());
-			calender.add(calender.MINUTE, -1);
-			Date startDate = calender.getTime();
-			startTime = format.format(startDate);
-			keys.add(startTime);
-			keys.add(endTime);
+			} else {
+				Calendar calender = Calendar.getInstance();
+				endTime = format.format(calender.getTime());
+				calender.add(calender.MINUTE, -1);
+				Date startDate = calender.getTime();
+				startTime = format.format(startDate);
+				keys.add(startTime);
+				keys.add(endTime);
 			}
 		}
 
@@ -153,7 +152,7 @@ logger.debug("start the job config");
 		List<Map<String, String>> rowData = this.getRowsKeyColumnStringValue(this.readRows(eventTimeLine, keys, new ArrayList<String>()));
 
 		// iterate for every minute
-		for (Map<String,String> fetchedkey : rowData) {
+		for (Map<String, String> fetchedkey : rowData) {
 			column = new ArrayList<String>();
 			column.add("event_name");
 			column.add("fields");
@@ -208,10 +207,11 @@ logger.debug("start the job config");
 					incrementCounterValue(liveDashboard, countMap.get("key").toString(), resultMap);
 				}
 			}
-			Map<String,String> data = new HashMap<String, String>();
+			Map<String, String> data = new HashMap<String, String>();
 			data.put("last_processed_time", fetchedkey.get("key"));
-			putStringValue(liveDashboard,"aggregation~keys",data);
+			putStringValue(liveDashboard, "aggregation~keys", data);
 		}
+		logger.info("Minute Aggregator Runned Successfully");
 	}
 
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
@@ -227,33 +227,53 @@ logger.debug("start the job config");
 			JsonElement jsonElement = new JsonParser().parse(map.get("fields"));
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
 			Map<String, String> rawMap = new HashMap<String, String>();
-			rawMap = gson.fromJson(jsonObject, rawMap.getClass());
+			try {
+				rawMap = gson.fromJson(jsonObject, rawMap.getClass());
+			} catch (Exception e) {
+				logger.debug("fields is not an json Element");
+			}
 			Set<String> keyData = rawMap.keySet();
 			String key = replaceKey(tempKey, rawMap, keyData);
 			Map<String, String> contextMap = new HashMap<String, String>();
-			jsonElement = new JsonParser().parse(rawMap.get("context"));
-			jsonObject = jsonElement.getAsJsonObject();
-			contextMap = gson.fromJson(jsonObject, contextMap.getClass());
-			contextMap.put("organizationUId", contextMap.get("organizationUId") != null && contextMap.get("organizationUId") != "" ? contextMap.get("organizationUId")
-					: "4261739e-ccae-11e1-adfb-5404a609bd14");
+			try {
+				jsonElement = new JsonParser().parse(rawMap.get("context"));
+				jsonObject = jsonElement.getAsJsonObject();
+				contextMap = gson.fromJson(jsonObject, contextMap.getClass());
+				contextMap.put("organizationUId", contextMap.get("organizationUId") != null && contextMap.get("organizationUId") != "" ? contextMap.get("organizationUId")
+						: "4261739e-ccae-11e1-adfb-5404a609bd14");
+			} catch (Exception e) {
+				logger.debug("Context is not an json Element");
+			}
 			keyData = contextMap.keySet();
 			key = replaceKey(key, contextMap, keyData);
 			Map<String, String> sessionMap = new HashMap<String, String>();
-			jsonElement = new JsonParser().parse(rawMap.get("session"));
-			jsonObject = jsonElement.getAsJsonObject();
-			sessionMap = gson.fromJson(jsonObject, sessionMap.getClass());
+			try {
+				jsonElement = new JsonParser().parse(rawMap.get("session"));
+				jsonObject = jsonElement.getAsJsonObject();
+				sessionMap = gson.fromJson(jsonObject, sessionMap.getClass());
+			} catch (Exception e) {
+				logger.debug("session is not an json Element");
+			}
 			keyData = sessionMap.keySet();
 			key = replaceKey(key, sessionMap, keyData);
 			Map<String, String> userMap = new HashMap<String, String>();
-			jsonElement = new JsonParser().parse(rawMap.get("user"));
-			jsonObject = jsonElement.getAsJsonObject();
-			userMap = gson.fromJson(jsonObject, userMap.getClass());
+			try {
+				jsonElement = new JsonParser().parse(rawMap.get("user"));
+				jsonObject = jsonElement.getAsJsonObject();
+				userMap = gson.fromJson(jsonObject, userMap.getClass());
+			} catch (Exception e) {
+				logger.debug("user is not an json Element");
+			}
 			keyData = userMap.keySet();
 			key = replaceKey(key, userMap, keyData);
 			Map<String, String> payLoadMap = new HashMap<String, String>();
-			jsonElement = new JsonParser().parse(rawMap.get("payLoadObject"));
-			jsonObject = jsonElement.getAsJsonObject();
-			payLoadMap = gson.fromJson(jsonObject, payLoadMap.getClass());
+			try {
+				jsonElement = new JsonParser().parse(rawMap.get("payLoadObject"));
+				jsonObject = jsonElement.getAsJsonObject();
+				payLoadMap = gson.fromJson(jsonObject, payLoadMap.getClass());
+			} catch (Exception e) {
+				logger.debug("payLoadObject is not an json Element");
+			}
 			keyData = payLoadMap.keySet();
 			key = replaceKey(key, payLoadMap, keyData);
 		}
@@ -415,8 +435,8 @@ logger.debug("start the job config");
 	}
 
 	public List<Map<String, String>> getRowsKeyColumnStringValue(OperationResult<Rows<String, String>> result) {
-		
-		List<Map<String,String>> data = new ArrayList<Map<String,String>>();
+
+		List<Map<String, String>> data = new ArrayList<Map<String, String>>();
 		for (Row<String, String> row : result.getResult()) {
 			Map<String, String> map = new HashMap<String, String>();
 			StringBuffer columnValue = new StringBuffer();
@@ -428,12 +448,12 @@ logger.debug("start the job config");
 				} else {
 					columnValue.append(column.getStringValue());
 				}
-			
+
 			}
-			if(hasData){
-			map.put("key", row.getKey());
-			map.put("value", columnValue.toString());
-			data.add(map);
+			if (hasData) {
+				map.put("key", row.getKey());
+				map.put("value", columnValue.toString());
+				data.add(map);
 			}
 		}
 		return data;
@@ -686,11 +706,10 @@ logger.debug("start the job config");
 	}
 
 	public String replaceKey(String rowKey, Map<String, String> data, Set<String> keyList) {
-		System.out.println(rowKey + data + keyList);
 		try {
 			if (checkNull(keyList)) {
 				for (String key : keyList) {
-					rowKey = rowKey.replaceAll(key, data.get(key));
+					rowKey = rowKey.replaceAll(key, String.valueOf(data.get(key)));
 				}
 			}
 		} catch (Exception e) {
@@ -733,7 +752,7 @@ logger.debug("start the job config");
 
 		StringBuffer stringBuffer = new StringBuffer();
 		for (String entry : data) {
-			if (checkNull(entry)) {
+			if (checkNull(stringBuffer.toString())) {
 				stringBuffer.append(",");
 			}
 			stringBuffer.append(entry);
