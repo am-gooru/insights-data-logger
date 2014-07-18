@@ -108,7 +108,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					Date d = calender.getTime();
 					startTime = format.format(d);
 				} while (!startTime.equalsIgnoreCase(endTime));
-				keys.add(startTime);
+				keys.add(endTime);
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
@@ -134,7 +134,24 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			column.add("last_processed_time");
 			List<String> processedTime = this.listRowColumnStringValue(configData, column);
 			if (checkNull(processedTime)) {
-				keys.add(processedTime.get(0));
+				Date startDate;
+				Date endDate;
+				try {
+					startDate = format.parse(processedTime.get(0));
+					Calendar calender = Calendar.getInstance();
+					endDate = calender.getTime();
+					endTime = format.format(endDate);
+					calender.setTime(startDate);
+					do {
+						keys.add(startTime);
+						calender.add(calender.MINUTE, 1);
+						Date d = calender.getTime();
+						startTime = format.format(d);
+					} while (!startTime.equalsIgnoreCase(endTime));
+					keys.add(endTime);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
 			} else {
 				Calendar calender = Calendar.getInstance();
 				endTime = format.format(calender.getTime());
