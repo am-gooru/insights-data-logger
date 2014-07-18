@@ -150,17 +150,16 @@ logger.debug("start the job config");
 		}
 
 		// get Event Ids for every minute
-		Map<String, ?> rowKeys = this.getRowsKeyColumnStringValue(this.readRows(eventTimeLine, keys, new ArrayList<String>()));
-		Set<String> keyList = rowKeys.keySet();
+		List<Map<String, String>> rowData = this.getRowsKeyColumnStringValue(this.readRows(eventTimeLine, keys, new ArrayList<String>()));
 
 		// iterate for every minute
-		for (String key : keyList) {
+		for (Map<String,String> fetchedkey : rowData) {
 			column = new ArrayList<String>();
 			column.add("event_name");
 			column.add("fields");
 
 			// get raw data for processing
-			List<Map<String, String>> eventData = this.getRowsColumnStringValue(this.readRows(eventDetail, convertArraytoList(String.valueOf(rowKeys.get(key)).split(",")), column),
+			List<Map<String, String>> eventData = this.getRowsColumnStringValue(this.readRows(eventDetail, convertArraytoList(String.valueOf(fetchedkey.get("value")).split(",")), column),
 					new ArrayList<String>());
 
 			// get normal Formula
@@ -185,7 +184,7 @@ logger.debug("start the job config");
 				List<String> firstKey = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(0)));
 				Set<String> rowKey = new HashSet<String>();
 				try {
-					rowKey = this.combineTwoKey(convertDateFormat(key, format, firstKey), secondKey);
+					rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get("key"), format, firstKey), secondKey);
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
@@ -210,7 +209,7 @@ logger.debug("start the job config");
 				}
 			}
 			Map<String,String> data = new HashMap<String, String>();
-			data.put("last_processed_time", key);
+			data.put("last_processed_time", fetchedkey.get("key"));
 			putStringValue(liveDashboard,"aggregation~keys",data);
 		}
 	}
@@ -415,21 +414,29 @@ logger.debug("start the job config");
 		return dateSet;
 	}
 
-	public Map<String, String> getRowsKeyColumnStringValue(OperationResult<Rows<String, String>> result) {
-
-		Map<String, String> map = new HashMap<String, String>();
+	public List<Map<String, String>> getRowsKeyColumnStringValue(OperationResult<Rows<String, String>> result) {
+		
+		List<Map<String,String>> data = new ArrayList<Map<String,String>>();
 		for (Row<String, String> row : result.getResult()) {
+			Map<String, String> map = new HashMap<String, String>();
 			StringBuffer columnValue = new StringBuffer();
+			boolean hasData = false;
 			for (Column<String> column : row.getColumns()) {
+				hasData = true;
 				if (checkNull(columnValue.toString())) {
 					columnValue.append("," + column.getStringValue());
 				} else {
 					columnValue.append(column.getStringValue());
 				}
+			
 			}
+			if(hasData){
 			map.put("key", row.getKey());
+			map.put("value", columnValue.toString());
+			data.add(map);
+			}
 		}
-		return map;
+		return data;
 	}
 
 	public List<Map<String, Object>> getRowsKeyLongValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
