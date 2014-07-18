@@ -199,7 +199,12 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get("formula").toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
-						resultMap = calculation(countMap, formulaDetail);
+						try {
+							resultMap = calculation(countMap, formulaDetail);
+						} catch (UnknownFunctionException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 					if (!checkNull(resultMap)) {
 						continue;
@@ -790,32 +795,35 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return result;
 	}
 
-	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) {
+	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) throws UnknownFunctionException {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		for (Map.Entry<String, String> jsonEntry : jsonMap.entrySet()) {
 			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue());
 			JsonObject json = new JsonObject();
 			json = jsonElement.getAsJsonObject();
+			System.out.println("json"+json);
 			String name = json.get("name") != null ? json.get("name").toString().replaceAll("\"", "") : jsonEntry.getKey();
+			System.out.println("name"+name);
 			try {
 				Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
 				if (json.has("formula")) {
 					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get("formula").toString().replaceAll("\"", ""));
 					if (json.has("requestValues")) {
-						for (String request : json.get("requestValues").toString().replaceAll("\"", "").split(","))
-							expressionBuilder.withVariable(request, (entry.get(request) != null ? Double.parseDouble(entry.get(request).toString()) : 0L));
+						for (String request : json.get("requestValues").toString().replaceAll("\"", "").split(",")){
+							
+							String variableName = request.replaceAll("[^a-zA-Z0-9]", "");
+							expressionBuilder.withVariable(variableName, (entry.get(request) != null ? Double.parseDouble(entry.get(request).toString()) : 0L));
 					}
 					long calculatedData = Math.round(expressionBuilder.build().calculate());
 					resultMap.put(name, calculatedData);
-
 				}
-			} catch (Exception e) {
+				}
+			} catch (UnparsableExpressionException e) {
 				resultMap.put(name, 0L);
 				e.printStackTrace();
 			}
 		}
 		return resultMap;
 	}
-
 }
