@@ -143,7 +143,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					endTime = format.format(endDate);
 					calender.setTime(startDate);
 					do {
-						keys.add(startTime);
 						calender.add(calender.MINUTE, 1);
 						Date d = calender.getTime();
 						startTime = format.format(d);
