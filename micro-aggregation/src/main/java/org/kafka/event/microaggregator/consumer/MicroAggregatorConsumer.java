@@ -113,7 +113,7 @@ public class MicroAggregatorConsumer extends Thread {
 			// TODO We're only getting raw data now. We'll have to use the
 			// server IP as well for extra information.
 			if (messageMap != null) {
-				microRealTimeAggregation(messageMap);
+			//	microRealTimeAggregation(messageMap);
 				staticAggregation(messageMap);
 			} else {
 				LOG.error("Message Consumer Error messageMap : No data found");
