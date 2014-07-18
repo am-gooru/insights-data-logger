@@ -134,9 +134,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			column.add("last_processed_time");
 			List<String> processedTime = this.listRowColumnStringValue(configData, column);
 			if (checkNull(processedTime)) {
-				Calendar calender = Calendar.getInstance();
-				endTime = format.format(processedTime.get(0));
-				keys.add(endTime);
+				keys.add(processedTime.get(0));
 			} else {
 				Calendar calender = Calendar.getInstance();
 				endTime = format.format(calender.getTime());
