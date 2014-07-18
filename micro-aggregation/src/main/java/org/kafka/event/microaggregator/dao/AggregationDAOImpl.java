@@ -213,7 +213,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				logger.info("processed key" + lastProcessedKey);
 			}
 			Map<String, String> data = new HashMap<String, String>();
-			data.put("last_processed_time", fetchedkey.get("key"));
+			data.put("last_processed_time", fetchedkey.get("key").toString());
 			putStringValue(liveDashboard, "aggregation~keys", data);
 		}
 		logger.info("Minute Aggregator Runned Successfully");
