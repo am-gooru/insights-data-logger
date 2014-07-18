@@ -199,17 +199,14 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get("formula").toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
-						try {
 							resultMap = calculation(countMap, formulaDetail);
-						} catch (UnknownFunctionException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
 					}
 					if (!checkNull(resultMap)) {
 						continue;
 					}
+					System.out.println(countMap.get("key").toString());
 					incrementCounterValue(liveDashboard, countMap.get("key").toString(), resultMap);
+					logger.info("processed key"+countMap.get("key").toString());
 				}
 			}
 			Map<String, String> data = new HashMap<String, String>();
@@ -795,16 +792,14 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return result;
 	}
 
-	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) throws UnknownFunctionException {
+	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		for (Map.Entry<String, String> jsonEntry : jsonMap.entrySet()) {
 			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue());
 			JsonObject json = new JsonObject();
 			json = jsonElement.getAsJsonObject();
-			System.out.println("json"+json);
 			String name = json.get("name") != null ? json.get("name").toString().replaceAll("\"", "") : jsonEntry.getKey();
-			System.out.println("name"+name);
 			try {
 				Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
 				if (json.has("formula")) {
@@ -819,7 +814,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					resultMap.put(name, calculatedData);
 				}
 				}
-			} catch (UnparsableExpressionException e) {
+			} catch (Exception e) {
 				resultMap.put(name, 0L);
 				e.printStackTrace();
 			}
