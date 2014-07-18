@@ -38,6 +38,7 @@ import org.json.JSONException;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.google.gson.Gson;
 
@@ -112,7 +113,7 @@ public class MicroAggregatorConsumer extends Thread {
 			// TODO We're only getting raw data now. We'll have to use the
 			// server IP as well for extra information.
 			if (messageMap != null) {
-				//microRealTimeAggregation(messageMap);
+				microRealTimeAggregation(messageMap);
 				staticAggregation(messageMap);
 			} else {
 				LOG.error("Message Consumer Error messageMap : No data found");
@@ -121,6 +122,7 @@ public class MicroAggregatorConsumer extends Thread {
 		}
 	}
 
+	@Async
 	public void microRealTimeAggregation(Map<String, String> messageMap) {
 		String eventJson = (String) messageMap.get("raw");
 		if (eventJson != null) {
@@ -132,7 +134,8 @@ public class MicroAggregatorConsumer extends Thread {
 			}
 		}
 	}
-
+	
+	@Async
 	public void staticAggregation(Map<String, String> messageMap) {
 		LOG.info("static Aggregator Consumed");
 		String eventJson = (String) messageMap.get("aggregationDetail");

@@ -177,6 +177,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				OperationResult<ColumnList<String>> processResult = readRow(jobConfigSetting, processKey, column);
 				List<String> secondKeyList = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(1)));
 				String tempkey = convertListtoString(secondKeyList);
+				String lastProcessedKey = null;
 
 				// iterate for every raw data key
 				Set<String> secondKey = substituteKeyVariable(eventData, tempkey);
@@ -200,15 +201,16 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get("formula").toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
-							resultMap = calculation(countMap, formulaDetail);
+						resultMap = calculation(countMap, formulaDetail);
 					}
 					if (!checkNull(resultMap)) {
 						continue;
 					}
 					System.out.println(countMap.get("key").toString());
 					incrementCounterValue(liveDashboard, countMap.get("key").toString(), resultMap);
-					logger.info("processed key"+countMap.get("key").toString());
+					lastProcessedKey = countMap.get("key").toString();
 				}
+				logger.info("processed key" + lastProcessedKey);
 			}
 			Map<String, String> data = new HashMap<String, String>();
 			data.put("last_processed_time", fetchedkey.get("key"));
@@ -218,7 +220,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	}
 
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
-		
+
 		String key = null;
 		for (Map<String, String> map : eventData) {
 
@@ -332,10 +334,13 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			ColumnListMutation<String> columnListMutation = null;
-			columnListMutation = mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey);
 			for (Map.Entry<String, String> entry : request.entrySet()) {
-				columnListMutation.putColumnIfNotNull(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+			}
+			try {
+				mutationBatch.execute();
+			} catch (ConnectionException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -808,18 +813,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				if (json.has("formula")) {
 					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get("formula").toString().replaceAll("\"", ""));
 					if (json.has("requestValues")) {
-						for (String request : json.get("requestValues").toString().replaceAll("\"", "").split(",")){
-							
+						for (String request : json.get("requestValues").toString().replaceAll("\"", "").split(",")) {
+
 							String variableName = request.replaceAll("[^a-zA-Z0-9]", "");
 							expressionBuilder.withVariable(variableName, (entry.get(request) != null ? Double.parseDouble(entry.get(request).toString()) : 0L));
+						}
+						long calculatedData = Math.round(expressionBuilder.build().calculate());
+						resultMap.put(name, calculatedData);
 					}
-					long calculatedData = Math.round(expressionBuilder.build().calculate());
-					resultMap.put(name, calculatedData);
-				}
 				}
 			} catch (Exception e) {
 				resultMap.put(name, 0L);
-				e.printStackTrace();
 			}
 		}
 		return resultMap;
