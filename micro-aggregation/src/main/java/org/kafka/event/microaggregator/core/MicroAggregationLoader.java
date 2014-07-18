@@ -52,6 +52,7 @@ import org.kafka.event.microaggregator.dao.MicroAggregationDAO;
 import org.kafka.event.microaggregator.dao.MicroAggregationDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -145,6 +146,7 @@ public class MicroAggregationLoader implements Constants{
 
     }
     
+    @Async
     public void microRealTimeAggregation(String eventJSON) throws JSONException{
     	
     	logger.info("Enterssssssssssssss");
