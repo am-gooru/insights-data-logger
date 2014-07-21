@@ -305,9 +305,7 @@ public class CassandraDataLoader implements Constants {
     	// Increment Resource view counts for real time
     	
     	this.getAndSetAnswerStatus(eventData);
-    	
-    	this.findGeoLocation(eventData);
-    	
+    	    	
     	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CR.getName())){
     		eventData.setQuery(eventData.getReactionType());    		
     	}
