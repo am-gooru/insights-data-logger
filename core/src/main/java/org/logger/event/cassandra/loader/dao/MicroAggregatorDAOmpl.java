@@ -826,7 +826,7 @@ public ColumnList<String> getAllAggregatorColumns(String Key){
 		
 	}
 	
-	private List<String> getClassPages(Map<String,String> eventMap){
+	public List<String> getClassPages(Map<String,String> eventMap){
     	List<String> classPages = new ArrayList<String>();
     	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null){
     		List<String> parents = collectionItem.getParentId(eventMap.get(CONTENTGOORUOID));
