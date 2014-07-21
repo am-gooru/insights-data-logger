@@ -504,7 +504,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				Map<String, Object> map = new HashMap<String, Object>();
 				for (Column<String> column : row.getColumns()) {
 					map.put(column.getName(), column.getLongValue());
-					break;
 				}
 				map.put("key", row.getKey());
 				resultList.add(map);
