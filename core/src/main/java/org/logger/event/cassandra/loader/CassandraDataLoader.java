@@ -305,9 +305,7 @@ public class CassandraDataLoader implements Constants {
     	// Increment Resource view counts for real time
     	
     	this.getAndSetAnswerStatus(eventData);
-    	
-    	this.findGeoLocation(eventData);
-    	
+    	    	
     	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CR.getName())){
     		eventData.setQuery(eventData.getReactionType());    		
     	}
@@ -383,44 +381,16 @@ public class CassandraDataLoader implements Constants {
     }
 
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
-    
-    	String userUid = null;
-    	String organizationUid = DEFAULT_ORGANIZATION_UID;
-    	
     	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
     	
-    	
-    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
-    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
-    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
-    	eventObject.setEventType(eventMap.get("type"));
-    	
-    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
-				 try {
-					 userUid = eventMap.get("gooruUId");
-					 organizationUid = dimUser.getOrganizationUid(userUid);
-					 eventObject.setOrganizationUid(organizationUid);
-			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
-			    	 sessionObj.put("organizationUId", organizationUid);
-			    	 eventObject.setSession(sessionObj.toString());
-			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
-			    	 fieldsObj.put("session", sessionObj.toString());
-			    	 eventObject.setFields(fieldsObj.toString());
-			    	 eventMap.put("organizationUId", organizationUid);
-				 } catch (Exception e) {
-						logger.info("Error while fetching User uid ");
-				 }
-			 }
-    	eventMap.put("eventName", eventObject.getEventName());
-    	eventMap.put("eventId", eventObject.getEventId());
-    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	eventMap = this.formatEventMap(eventObject, eventMap);
     	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
 			 eventNameDao.saveEventName(eventObject.getEventName());
 		 }
 		
-		 try {
+		try {
 			updateEventObjectCompletion(eventObject);
 		} catch (ConnectionException e) {
 			e.printStackTrace();
@@ -451,23 +421,19 @@ public class CassandraDataLoader implements Constants {
 		}
 		
 		//To be revoked
-		long startEvent = System.currentTimeMillis();
 		EventData eventData= getAndSetEventData(eventMap);
 		this.updateEvent(eventData); 
-		long stopEvent = System.currentTimeMillis();
-		logger.info("Get and Set Event Data : {} ",(stopEvent - startEvent));
 		
 		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
 		
 		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-			long startCounterDetail = System.currentTimeMillis();
+
 			try {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 			} catch(Exception e) {
 				logger.info("Exception in real time metrics");
 			}
-			long stopCounterDetail = System.currentTimeMillis();
-			logger.info("counterDetail : {} ",(stopCounterDetail - startCounterDetail));
+
 			try {
 				microAggregator.sendEventForAggregation(eventObject.getFields());
 			} catch(Exception e) {
@@ -479,52 +445,25 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 		
-		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
-			
-			GeoData geoData = new GeoData();
-			
-			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
-
-			if(res != null && res.getCountry().getName() != null){
-				geoData.setCountry(res.getCountry().getName());
-				eventMap.put("country", res.getCountry().getName());
-			}
-			if(res != null && res.getCity().getName() != null){
-				geoData.setCity(res.getCity().getName());
-				eventMap.put("city", res.getCity().getName());
-			}
-			if(res != null && res.getLocation().getLatitude() != null){
-				geoData.setLatitude(res.getLocation().getLatitude());
-			}
-			if(res != null && res.getLocation().getLongitude() != null){
-				geoData.setLongitude(res.getLocation().getLongitude());
-			}
-			if(res != null && res.getMostSpecificSubdivision().getName() != null){
-				geoData.setState(res.getMostSpecificSubdivision().getName());
-				eventMap.put("state", res.getMostSpecificSubdivision().getName());
-			}
-			
-			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
-				liveDashBoardDAOImpl.saveGeoLocation(geoData);
-			}			
-		}
-		
-//		liveDashBoardDAOImpl.callCounters(eventMap);
+		this.saveGeoLocations(eventMap);		
 		
 		liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
+		liveDashBoardDAOImpl.addApplicationSession(eventMap);
+
 		if(pushingEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 		}
-		liveDashBoardDAOImpl.addApplicationSession(eventMap);
-		logger.info("viewEvents : {} ",viewEvents);
-		if(viewEvents.contains(eventMap.get("eventName"))){
-			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
-		}
+
 		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 			liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 		}
-    }
+
+		if(viewEvents.contains(eventMap.get("eventName"))){
+			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
+		}
+		
+   }
     /**
      * 
      * @param eventData
@@ -1085,7 +1024,7 @@ public class CassandraDataLoader implements Constants {
 			for(Column<String> detail : vluesList.getResult()) {
 				map.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 				map.put("views", detail.getLongValue());
-				
+				map.put("resourceType", "resource");
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
 			dataJSONList.add(map);
@@ -1152,40 +1091,6 @@ public class CassandraDataLoader implements Constants {
         return sb.toString();
     }
     
-    private static void findGeoLocation(EventData eventData){
-    	
-    	String city = null;
-       	String country = null ;
-       	String state = null ;
-       	String ip = "" ;
-
-    	if(eventData.getUserIp() != null){
-	    	try {
-	    		ip = eventData.getUserIp().trim();
-				city = geo.getGeoCityByIP(ip);
-	        	country = geo.getGeoCountryByIP(ip);
-				state = geo.getGeoRegionByIP(ip);
-			} catch (IOException e) {
-		        logger.info("Exception fetching geo location {} ", e);
-		        return;
-			} catch (GeoIp2Exception e) {
-		        logger.info("Exception fetching geo location {} ", e);
-		        return;
-			}
-    	}
-    	
-		if(city != null){
-			eventData.setCity(city);
-		}
-		if(state !=null){
-			eventData.setState(state);
-		}
-		if(country != null){
-			eventData.setCountry(country);
-		}
-		
-    	
-    }
 
     private void getAndSetAnswerStatus(EventData eventData){
     	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CQRPD.getName()) || eventData.getEventName().equalsIgnoreCase(LoaderConstants.QPD.getName())){
@@ -1469,6 +1374,72 @@ public class CassandraDataLoader implements Constants {
     	return status;
     }
     
+    private Map<String,String> formatEventMap(EventObject eventObject,Map<String,String> eventMap){
+    	
+    	String userUid = null;
+    	String organizationUid = DEFAULT_ORGANIZATION_UID;
+    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+    	eventObject.setEventType(eventMap.get("type"));
+    	
+    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
+				 try {
+					 userUid = eventMap.get("gooruUId");
+					 organizationUid = dimUser.getOrganizationUid(userUid);
+					 eventObject.setOrganizationUid(organizationUid);
+			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+			    	 sessionObj.put("organizationUId", organizationUid);
+			    	 eventObject.setSession(sessionObj.toString());
+			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
+			    	 fieldsObj.put("session", sessionObj.toString());
+			    	 eventObject.setFields(fieldsObj.toString());
+			    	 eventMap.put("organizationUId", organizationUid);
+				 } catch (Exception e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 }
+    	eventMap.put("eventName", eventObject.getEventName());
+    	eventMap.put("eventId", eventObject.getEventId());
+    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	
+    	return eventMap;
+    }
+
+    private void saveGeoLocations(Map<String,String> eventMap) throws IOException{
+    	
+		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
+			
+			GeoData geoData = new GeoData();
+			
+			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
+
+			if(res != null && res.getCountry().getName() != null){
+				geoData.setCountry(res.getCountry().getName());
+				eventMap.put("country", res.getCountry().getName());
+			}
+			if(res != null && res.getCity().getName() != null){
+				geoData.setCity(res.getCity().getName());
+				eventMap.put("city", res.getCity().getName());
+			}
+			if(res != null && res.getLocation().getLatitude() != null){
+				geoData.setLatitude(res.getLocation().getLatitude());
+			}
+			if(res != null && res.getLocation().getLongitude() != null){
+				geoData.setLongitude(res.getLocation().getLongitude());
+			}
+			if(res != null && res.getMostSpecificSubdivision().getName() != null){
+				geoData.setState(res.getMostSpecificSubdivision().getName());
+				eventMap.put("state", res.getMostSpecificSubdivision().getName());
+			}
+			
+			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
+				liveDashBoardDAOImpl.saveGeoLocation(geoData);
+			}			
+		}
+    }
+
+    
     /**
      * @param connectionProvider the connectionProvider to set
      */
@@ -1482,3 +1453,4 @@ public class CassandraDataLoader implements Constants {
     
 }
 
+  
