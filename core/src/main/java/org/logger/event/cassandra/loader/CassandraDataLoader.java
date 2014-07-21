@@ -57,6 +57,7 @@ import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.DimDateDAO;
 import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
@@ -416,7 +417,7 @@ public class CassandraDataLoader implements Constants {
     	
     	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
 		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
-			 eventNameDao.saveEventNameByName(eventObject.getEventName());
+			 eventNameDao.saveEventName(eventObject.getEventName());
 		 }
 		
 		 try {
@@ -1445,6 +1446,26 @@ public class CassandraDataLoader implements Constants {
 			logger.info("Exception : {} ",e);
 		}
     }
+    
+    public Map<String,String> createEvent(String eventName){
+    	Map<String,String> status = new HashMap<String, String>();
+    	try {
+			if(eventNameDao.isEventNameExists(eventName)){
+				if(eventNameDao.saveEventName(eventName)){
+					status.put("status", eventName+" is Created ");
+					return status;
+				}
+			}else{
+				status.put("status", "Event Name already Exists");
+				return status;
+			}
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+    	status.put("status", "unable to a create this event "+eventName);
+    	return status;
+    }
+    
     /**
      * @param connectionProvider the connectionProvider to set
      */

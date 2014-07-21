@@ -237,4 +237,8 @@ public class EventServiceImpl implements EventService {
 	public void executeForEveryMinute(String startTime,String endTime){
 		dataLoaderService.executeForEveryMinute(startTime, endTime);
 	}
+	
+	public Map<String,String> createEvent(String eventName){
+		return dataLoaderService.createEvent(eventName);
+	}
 }

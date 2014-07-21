@@ -527,4 +527,33 @@ public class EventController {
 		}
 		return;
 	}
+	
+	@RequestMapping(method = RequestMethod.PUT)
+	public void createEvent(HttpServletRequest request,
+			@RequestParam(value="apiKey",required = true) String apiKey,
+			@RequestParam(value="eventName",required = true)String eventName,HttpServletResponse response) throws IOException{
+	
+		//add cross domain support
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+		response.setHeader("Access-Control-Allow-Methods", "PUT");
+				
+		boolean isValid = ensureValidRequest(request, response);
+		if(!isValid) {
+		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+		return;
+		}
+		
+		response.setContentType("application/json");
+		if(!eventName.contains(".") || eventName.startsWith(".")){
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
+			return;
+		}
+		
+		Map<String,String>	status = eventService.createEvent(eventName);
+		status.put("eventName", eventName);
+		
+		JSONObject json = new JSONObject(status);
+		response.getWriter().write(json.toString());
+	}
 }

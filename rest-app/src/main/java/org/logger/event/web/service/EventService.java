@@ -39,18 +39,29 @@ import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
-
 @Service
 public interface EventService {
-	
+
 	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
+
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception;
+
 	public AppDO verifyApiKey(String apiKeyToken);
+
 	public ColumnList<String> readEventDetail(String eventKey);
+
 	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead);
+
 	public void updateProdViews();
+
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
+
 	void addAggregators(String eventName, String json, String updateBy);
-	public void watchSession();	
-	void executeForEveryMinute(String startTime,String endTime);
+
+	public void watchSession();
+
+	void executeForEveryMinute(String startTime, String endTime);
+	
+	Map<String,String> createEvent(String eventName);
+
 }
