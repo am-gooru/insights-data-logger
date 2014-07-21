@@ -214,10 +214,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 						// Increment the counter column
 						incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
-						lastProcessedKey = countMap.get(mapKey.KEY.mapKey()).toString();
 					}
 					logger.info("processed key " + lastProcessedKey);
 				}
+				lastProcessedKey = fetchedkey.get(mapKey.KEY.mapKey());
 			}
 			Map<String, String> data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
