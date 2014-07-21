@@ -226,7 +226,7 @@ public class CassandraDataLoader implements Constants {
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
         viewEvents = configSettings.getConstants("views~events", DEFAULTCOLUMN);
-        atmosphereEndPoint = configSettings.getConstants("atmosphere.endPoint", DEFAULTCOLUMN);
+        atmosphereEndPoint = configSettings.getConstants("atmosphere.end.point", DEFAULTCOLUMN);
         VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),DEFAULTCOLUMN);
         
     }
@@ -519,6 +519,9 @@ public class CassandraDataLoader implements Constants {
 		logger.info("viewEvents : {} ",viewEvents);
 		if(viewEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
+		}
+		if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 		}
     }
     /**

@@ -59,6 +59,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
+    private MicroAggregatorDAOmpl microAggregatorDAOmpl;
+    
     private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
     private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -447,10 +449,54 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		mainObj.put("filters", filtersObj);		
 
     	ClientResource clientResource = null;
-    	clientResource = new ClientResource(atmosphereEndPoint+"/atmosphere/push/message");
+    	clientResource = new ClientResource(atmosphereEndPoint+"/push/message");
     	Form forms = new Form();
 		forms.add("data", mainObj.toString());
 		clientResource.post(forms.getWebRepresentation());
+       
+    }
+
+    @Async
+    public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
+   		
+    	JSONObject filtersObj = new JSONObject();
+    	JSONObject paginateObj = new JSONObject();
+    	Collection<String> fields = new ArrayList<String>();
+    	fields.add("timeSpent");
+    	fields.add("avgTimeSpent");
+    	fields.add("resourceGooruOId");
+    	fields.add("OE");
+    	fields.add("questionType");
+    	fields.add("category");
+    	fields.add("gooruUId");
+    	fields.add("userName");
+    	fields.add("userData");
+    	fields.add("metaData");
+    	fields.add("title");
+    	fields.add("reaction");
+    	fields.add("description");
+    	fields.add("options");
+    	fields.add("skip");
+    	filtersObj.put("session","FS");
+    	paginateObj.put("sortBy","itemSequence");
+    	paginateObj.put("sortOrder","ASC");
+    	
+    	List<String> classpage = microAggregatorDAOmpl.getClassPages(eventMap);
+    	
+    	for(String classId : classpage){
+	    	filtersObj.put("classId",classId);
+			JSONObject mainObj = new JSONObject();
+			mainObj.put("filters", filtersObj);
+			mainObj.put("paginate", paginateObj);
+			mainObj.put("fields", fields);
+	
+	    	ClientResource clientResource = null;
+	    	clientResource = new ClientResource(atmosphereEndPoint+eventMap.get(PARENTGOORUOID)+"/users/usage");
+	    	Form forms = new Form();
+			forms.add("data", mainObj.toString());
+			forms.add("collectionId", eventMap.get(PARENTGOORUOID));
+			clientResource.post(forms.getWebRepresentation());
+    	}
        
     }
     
