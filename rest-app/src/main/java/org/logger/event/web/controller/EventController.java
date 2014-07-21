@@ -553,7 +553,6 @@ public class EventController {
 		Map<String,String>	status = eventService.createEvent(eventName);
 		status.put("eventName", eventName);
 		
-		JSONObject json = new JSONObject(status);
-		response.getWriter().write(json.toString());
+		response.getWriter().write(new JSONObject(status).toString());
 	}
 }

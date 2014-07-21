@@ -143,10 +143,10 @@ public class DimEventsDAOCassandraImpl extends BaseDAOCassandraImpl implements D
 			e1.printStackTrace();
 			return false;
 		}
-	    lastEventId++;
 	    MutationBatch eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 	    eventIdMutation.withRow(dimEventCF, name)
 	    .putColumn("event_id", String.valueOf(lastEventId), null);
+	    lastEventId++;
 	    try {
 	    	eventIdMutation.execute();
 	    	eventIdMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);

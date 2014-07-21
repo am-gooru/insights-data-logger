@@ -220,7 +220,7 @@ public interface Constants {
 	
 	public String EVENT_TIMELINE_KEY_FORMAT ="yyyyMMddkkmm";
 	
-	public String MINUTE_AGGREGATOR_PROCESSOR_KEY="aggregation~keys";
+	public String MINUTE_AGGREGATOR_PROCESSOR_KEY="aggregation~events";
 	
 	public String FORMULA ="formula";
 	
