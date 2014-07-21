@@ -1077,6 +1077,7 @@ public class CassandraDataLoader implements Constants {
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
+		Map<String, Object> dataMap = new HashMap<String, Object>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
@@ -1088,6 +1089,7 @@ public class CassandraDataLoader implements Constants {
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
 			dataJSONList.add(map);
+			dataMap.put("statisticsData", dataJSONList);
 		}
 		
 		if(!dataJSONList.isEmpty()){
@@ -1095,7 +1097,8 @@ public class CassandraDataLoader implements Constants {
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
-			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
+			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataMap).toString());
+			        System.out.print("Input : "+ input);
 			 		HttpPost  postRequest = new HttpPost(url);
 			 		postRequest.addHeader("accept", "application/json");
 			 		postRequest.setEntity(input);
