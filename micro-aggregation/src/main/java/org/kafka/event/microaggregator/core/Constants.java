@@ -213,4 +213,102 @@ public interface Constants {
 	public String DIFF = "diff";
 	
 	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
+	
+	public String CONSTANT_VALUE = "constant_value";
+	
+	public String LAST_PROCESSED_TIME = "last_processed_time";
+	
+	public String EVENT_TIMELINE_KEY_FORMAT ="yyyyMMddkkmm";
+	
+	public String MINUTE_AGGREGATOR_PROCESSOR_KEY="aggregation~keys";
+	
+	public String FORMULA ="formula";
+	
+	public String COMMA =",";
+	
+	public String ITEM_VALUE = "item_value";
+	
+	public String EMPTY ="";
+	
+	public String DOUBLE_QUOTES ="\"";
+	
+	public String AVOID_SPECIAL_CHARACTER ="[^a-zA-Z0-9]";
+	
+	public enum eventJSON{
+		
+		SESSION("session"),CONTEXT("context"),PAYLOADOBJECT("payLoadObject"),USER("user");
+		
+		private String eventJSON;
+		
+		private eventJSON(String value){
+			eventJSON = value;
+		}
+		
+		public String eventJSON(){
+			return eventJSON;
+		}
+		
+	}
+	
+	public enum formulaDetail{
+		
+		NAME("name"),FORMULA("formula"),REQUEST_VALUES("requestValues");
+		
+		private String formulaKey;
+		
+		private formulaDetail(String value){
+			formulaKey = value;
+		}
+		
+		public String formulaDetail(){
+			return formulaKey;
+		}
+	}
+	public enum mapKey{
+		
+		KEY("key"),VALUE("value");
+		
+		private String map;
+		
+		private mapKey(String value){
+			map = value;
+		}
+		
+		public String mapKey(){
+			return map;
+		}
+		
+	}
+	
+	public enum aggregateType{
+	
+		KEY("aggregate_type"),NORMAL("normal"),AGGREGATE("aggregate");
+		
+		private String aggregateName;
+		
+		private aggregateType(String value){
+			aggregateName = value;
+		}
+		
+		public String aggregateType(){
+			return aggregateName;
+		}
+		
+	}
+	
+	public enum columnFamily{
+		
+		LIVE_DASHBOARD("live_dashboard"),AGGREGATION_DETAIL("aggregation_detail"),FORMULA_DETAIL("formula_detail"),EVENT_TIMELINE("event_timeline"),
+		EVENT_DETAIL("event_detail"),JOB_CONFIG_SETTING("job_config_settings");
+		
+		private String columnFamily;
+		
+		private columnFamily(String value){
+			columnFamily = value;
+		}
+		
+		public String columnFamily(){
+		return columnFamily;	
+		}
+	}
 }

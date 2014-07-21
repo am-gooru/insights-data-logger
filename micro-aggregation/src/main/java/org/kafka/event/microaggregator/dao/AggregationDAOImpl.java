@@ -6,29 +6,21 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.bcel.generic.DASTORE;
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
+import org.kafka.event.microaggregator.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import atg.taglib.json.util.JSONException;
-import atg.taglib.json.util.JSONObject;
-
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
@@ -39,36 +31,18 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.AllRowsQuery;
-import com.netflix.astyanax.query.IndexColumnExpression;
 import com.netflix.astyanax.query.IndexQuery;
 import com.netflix.astyanax.query.RowQuery;
 import com.netflix.astyanax.query.RowSliceQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 
-import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
-import de.congrace.exp4j.UnknownFunctionException;
-import de.congrace.exp4j.UnparsableExpressionException;
 
-public class AggregationDAOImpl extends BaseDAOCassandraImpl implements AggregationDAO {
+public class AggregationDAOImpl extends BaseDAOCassandraImpl implements AggregationDAO, Constants {
 
 	Gson gson = new Gson();
 
 	public static final Logger logger = LoggerFactory.getLogger(AggregationDAOImpl.class);
-
-	public static final String aggregatorDetail = "aggregation_detail";
-
-	public static final String formulaDetail = "formula_detail";
-
-	public static final String eventTimeLine = "event_timeline";
-
-	public static final String eventDetail = "event_detail";
-
-	public static final String liveDashboard = "live_dashboard";
-
-	public static final String jobConfigSetting = "job_config_settings";
-
-	public static final String separator = "~";
 
 	public AggregationDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
@@ -85,16 +59,20 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		handleAggregation(startTime, endTime);
 
 	}
-
+	
+	/*
+	 * @param startTime has the starting Date in the format of yyyyMMDDkkmm
+	 * @param endTime has the ending Date in the format of yyyyMMDDkkmm
+	 */
 	public void handleAggregation(String startTime, String endTime) {
-		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddkkmm");
+		SimpleDateFormat format = new SimpleDateFormat(EVENT_TIMELINE_KEY_FORMAT);
 		List<String> keys = new ArrayList<String>();
 		List<String> column = new ArrayList<String>();
-		column.add("constant_value");
-		column.add("last_processed_time");
-		OperationResult<ColumnList<String>> configData = this.readRow(jobConfigSetting, "aggregation~keys", column);
+		column.add(CONSTANT_VALUE);
+		column.add(LAST_PROCESSED_TIME);
+		OperationResult<ColumnList<String>> configData = this.readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
 		column = new ArrayList<String>();
-		column.add("constant_value");
+		column.add(CONSTANT_VALUE);
 		List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
 
 		if (checkNull(startTime) && checkNull(endTime)) {
@@ -131,7 +109,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 		} else {
 			column = new ArrayList<String>();
-			column.add("last_processed_time");
+			column.add(LAST_PROCESSED_TIME);
 			List<String> processedTime = this.listRowColumnStringValue(configData, column);
 			if (checkNull(processedTime)) {
 				Date startDate;
@@ -163,32 +141,33 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 
 		// get Event Ids for every minute
-		List<Map<String, String>> rowData = this.getRowsKeyColumnStringValue(this.readRows(eventTimeLine, keys, new ArrayList<String>()));
+		List<Map<String, String>> rowData = this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>()));
 
 		// iterate for every minute
 		for (Map<String, String> fetchedkey : rowData) {
 			column = new ArrayList<String>();
-			column.add("event_name");
-			column.add("fields");
+			column.add(EVENT_NAME);
+			column.add(FIELDS);
 
 			// get raw data for processing
-			List<Map<String, String>> eventData = this.getRowsColumnStringValue(this.readRows(eventDetail, convertArraytoList(String.valueOf(fetchedkey.get("value")).split(",")), column),
-					new ArrayList<String>());
+			List<Map<String, String>> eventData = this.getRowsColumnStringValue(
+					this.readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column), new ArrayList<String>());
 
 			// get normal Formula
 			column = new ArrayList<String>();
-			column.add("formula");
+			column.add(FORMULA);
 			Map<String, Object> whereCondition = new HashMap<String, Object>();
-			whereCondition.put("aggregate_type", "normal");
-			List<Map<String, Object>> normalFormulaDetails = this.getRowsKeyStringValue(this.readWithIndex(formulaDetail, whereCondition, column), new ArrayList<String>());
+			whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
+			List<Map<String, Object>> normalFormulaDetails = this
+					.getRowsKeyStringValue(this.readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column), new ArrayList<String>());
 
 			// fetch how many key need this aggregation
 			for (String processKey : prcessingKey) {
 
 				column = new ArrayList<String>();
-				column.add("constant_value");
-				column.add("item_value");
-				OperationResult<ColumnList<String>> processResult = readRow(jobConfigSetting, processKey, column);
+				column.add(CONSTANT_VALUE);
+				column.add(ITEM_VALUE);
+				OperationResult<ColumnList<String>> processResult = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), processKey, column);
 				List<String> secondKeyList = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(1)));
 				String tempkey = convertListtoString(secondKeyList);
 				String lastProcessedKey = null;
@@ -199,53 +178,63 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				firstKey = convertStringtoList(firstKey.get(0));
 				Set<String> rowKey = new HashSet<String>();
 				try {
-					rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get("key"), format, firstKey), secondKey);
+					rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get(mapKey.KEY.mapKey()), format, firstKey), secondKey);
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
 
 				// update live dashboard
-				List<Map<String, Object>> dashboardData = this.getRowsKeyLongValue(this.readRows(liveDashboard, rowKey, new ArrayList<String>()), new ArrayList<String>());
+				List<Map<String, Object>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), rowKey, new ArrayList<String>()), new ArrayList<String>());
 
 				// insert data for normal aggregation
 				for (Map<String, Object> countMap : dashboardData) {
 					Map<String, Long> resultMap = new HashMap<String, Long>();
 					for (Map<String, Object> formulaMap : normalFormulaDetails) {
 						Map<String, String> formulaDetail = new HashMap<String, String>();
-						JsonElement jsonElement = new JsonParser().parse(formulaMap.get("formula").toString());
+						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
+
 						resultMap = calculation(countMap, formulaDetail);
 					}
 					if (!checkNull(resultMap)) {
 						continue;
 					}
-					System.out.println(countMap.get("key").toString());
-					incrementCounterValue(liveDashboard, countMap.get("key").toString(), resultMap);
-					lastProcessedKey = countMap.get("key").toString();
+
+					// delete existing column since it was an dynamic column
+					Set<String> columnNames = resultMap.keySet();
+					deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
+
+					// Increment the counter column
+					incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
+					lastProcessedKey = countMap.get(mapKey.KEY.mapKey()).toString();
 				}
-				logger.info("processed key" + lastProcessedKey);
+				logger.info("processed key " + lastProcessedKey);
 			}
 			Map<String, String> data = new HashMap<String, String>();
-			data.put("last_processed_time", fetchedkey.get("key").toString());
-			putStringValue(jobConfigSetting, "aggregation~keys", data);
+			data.put(LAST_PROCESSED_TIME, fetchedkey.get(mapKey.KEY.mapKey()).toString());
+			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
 		}
 		logger.info("Minute Aggregator Runned Successfully");
 	}
 
+	/*
+	 * @param eventData the JSON data to substitute
+	 * @param tempKey the format of key where the value is got replaced
+	 */
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
 
 		String key = null;
 		for (Map<String, String> map : eventData) {
 
 			// Avoid empty data
-			if (!checkNull(map.get("event_name")) || !checkNull(map.get("fields"))) {
+			if (!checkNull(map.get(EVENT_NAME)) || !checkNull(map.get(FIELDS))) {
 				continue;
 			}
 
 			Map<String, JsonElement> rawData = new HashMap<String, JsonElement>();
-			String eventName = map.get("event_name");
-			JsonElement jsonElement = new JsonParser().parse(map.get("fields"));
+			String eventName = map.get(EVENT_NAME);
+			JsonElement jsonElement = new JsonParser().parse(map.get(FIELDS));
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
 			Map<String, String> rawMap = new HashMap<String, String>();
 			try {
@@ -257,11 +246,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			key = replaceKey(tempKey, rawMap, keyData);
 			Map<String, String> contextMap = new HashMap<String, String>();
 			try {
-				jsonElement = new JsonParser().parse(rawMap.get("context"));
+				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.CONTEXT.eventJSON()));
 				jsonObject = jsonElement.getAsJsonObject();
 				contextMap = gson.fromJson(jsonObject, contextMap.getClass());
-				contextMap.put("organizationUId", contextMap.get("organizationUId") != null && contextMap.get("organizationUId") != "" ? contextMap.get("organizationUId")
-						: "4261739e-ccae-11e1-adfb-5404a609bd14");
+				contextMap.put(ORGANIZATIONUID, contextMap.get(ORGANIZATIONUID) != null && contextMap.get(ORGANIZATIONUID) != "" ? contextMap.get(ORGANIZATIONUID) : DEFAULT_ORGANIZATION_UID);
 			} catch (Exception e) {
 				logger.debug("Context is not an json Element");
 			}
@@ -269,7 +257,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			key = replaceKey(key, contextMap, keyData);
 			Map<String, String> sessionMap = new HashMap<String, String>();
 			try {
-				jsonElement = new JsonParser().parse(rawMap.get("session"));
+				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.SESSION.eventJSON()));
 				jsonObject = jsonElement.getAsJsonObject();
 				sessionMap = gson.fromJson(jsonObject, sessionMap.getClass());
 			} catch (Exception e) {
@@ -279,7 +267,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			key = replaceKey(key, sessionMap, keyData);
 			Map<String, String> userMap = new HashMap<String, String>();
 			try {
-				jsonElement = new JsonParser().parse(rawMap.get("user"));
+				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.USER.eventJSON()));
 				jsonObject = jsonElement.getAsJsonObject();
 				userMap = gson.fromJson(jsonObject, userMap.getClass());
 			} catch (Exception e) {
@@ -289,7 +277,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			key = replaceKey(key, userMap, keyData);
 			Map<String, String> payLoadMap = new HashMap<String, String>();
 			try {
-				jsonElement = new JsonParser().parse(rawMap.get("payLoadObject"));
+				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.PAYLOADOBJECT.eventJSON()));
 				jsonObject = jsonElement.getAsJsonObject();
 				payLoadMap = gson.fromJson(jsonObject, payLoadMap.getClass());
 			} catch (Exception e) {
@@ -301,6 +289,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return convertStringtoSet(key);
 	}
 
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is collection of keys
+	 * @param  columnList will list column needs to be fetched
+	 */
 	public OperationResult<Rows<String, String>> readRows(String columnFamilyName, Collection<String> rowKey, Collection<String> columnList) {
 
 		OperationResult<Rows<String, String>> result = null;
@@ -313,12 +306,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
-			logger.error("Exception while getting row data");
+			logger.error("Exception while getting rows data of "+columnFamilyName);
 			e.printStackTrace();
 		}
 		return result;
 	}
 
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  columnList will list column needs to be fetched
+	 */
 	public OperationResult<ColumnList<String>> readRow(String columnFamilyName, String rowKey, Collection<String> columnList) {
 
 		OperationResult<ColumnList<String>> result = null;
@@ -331,35 +329,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
-			logger.error("Exception while getting row data");
+			logger.error("Exception while getting row data of " + columnFamilyName);
 			e.printStackTrace();
 		}
 		return result;
 	}
 
-	public Map<String, Long> defaultCounterValue(Collection<String> column, Long counter) {
-		Map<String, Long> resultSet = new HashMap<String, Long>();
-		for (String columnName : column) {
-			resultSet.put(columnName, counter);
-		}
-		return resultSet;
-	}
-
-	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
-		if (checkNull(rowKey) && checkNull(request)) {
-			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			for (Map.Entry<String, String> entry : request.entrySet()) {
-				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
-			}
-			try {
-				mutationBatch.execute();
-			} catch (ConnectionException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  request contains data needs to be incremented in counter
+	 */
 	public void incrementCounterValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
+
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
@@ -368,12 +350,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			try {
 				mutationBatch.execute();
 			} catch (ConnectionException e) {
+				logger.error("Exception while increment the counter in " + columnFamilyName);
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  request contains data need to be inserted
+	 */
 	public void putLongValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
+
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
@@ -381,12 +370,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			try {
 				mutationBatch.execute();
+
 			} catch (ConnectionException e) {
+				logger.error("Exception while inserting the Long value in " + columnFamilyName);
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  columnList has the list of columns
+	 */
 	public OperationResult<ColumnList<String>> readColumns(String columnFamilyName, String rowKey, Collection<String> columnList) {
 
 		OperationResult<ColumnList<String>> result = null;
@@ -398,21 +394,153 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
-			logger.error("Exception while getting column data");
+			logger.error("Exception while getting column data of " + columnFamilyName);
 			e.printStackTrace();
 		}
 		return result;
 	}
 
-	public Map<String, String> getRowStringValue(OperationResult<ColumnList<String>> result) {
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  columns has the set of columns needs to be deleted
+	 */
+	public boolean deleteColumns(String columnFamilyName, String rowKey, Set<String> columns) {
 
-		Map<String, String> resultList = new HashMap<String, String>();
-		for (Column<String> column : result.getResult()) {
-			resultList.put(column.getName(), column.getStringValue());
+		MutationBatch mutationBatch = getKeyspace().prepareMutationBatch();
+		try {
+			for (String columnName : columns) {
+				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).deleteColumn(columnName);
+			}
+			mutationBatch.execute();
+			return true;
+		} catch (ConnectionException e) {
+			logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+			e.printStackTrace();
+			return false;
 		}
-		return resultList;
 	}
 
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  column has the columnName to check of its occurrences
+	 */
+	public boolean isColumnExists(String columnFamilyName, String rowKey, String column) {
+
+		try {
+			OperationResult<Column<String>> result = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getKey(rowKey).getColumn(column).execute();
+			return checkNull(result);
+
+		} catch (ConnectionException e) {
+			logger.error("Exception while checking the column data exists of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param  column has the list of columnName
+	 */
+	public OperationResult<Rows<String, String>> readAllRows(String columnFamilyName, List<String> column) {
+
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		OperationResult<Rows<String, String>> result = null;
+		AllRowsQuery<String, String> rowsResult = null;
+		try {
+			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getAllRows().setExceptionCallback(new ExceptionCallback() {
+
+				@Override
+				public boolean onException(ConnectionException arg0) {
+
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+
+					}
+					return true;
+				}
+			});
+
+			if (checkNull(column)) {
+				rowsResult.withColumnSlice(column);
+			}
+
+			result = rowsResult.execute();
+		} catch (ConnectionException e) {
+			logger.error("Exception while Reading all the data of " + columnFamilyName);
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param whereColumns contains the column value to be filtered
+	 * @param  column has the list of columnName
+	 */
+	public OperationResult<Rows<String, String>> readWithIndex(String columnFamilyName, Map<String, Object> whereColumns, List<String> column) {
+
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		OperationResult<Rows<String, String>> result = null;
+		IndexQuery<String, String> rowsResult = null;
+		try {
+			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).searchWithIndex();
+
+			if (checkNull(whereColumns)) {
+				for (Map.Entry<String, Object> whereColumn : whereColumns.entrySet())
+					rowsResult.addExpression().whereColumn(whereColumn.getKey()).equals().value(String.valueOf(whereColumn.getValue()));
+			}
+			rowsResult.autoPaginateRows(true);
+			if (checkNull(column)) {
+				rowsResult.withColumnSlice(column);
+			}
+
+			result = rowsResult.execute();
+		} catch (ConnectionException e) {
+			logger.error("Exception while reading the column with Index of(columnFamily~ColumnName) " + columnFamilyName + SEPERATOR + whereColumns.keySet());
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	/*
+	 * @param column is name of column name
+	 * @param counter is the value to be parsed in counter
+	 */
+	public Map<String, Long> defaultCounterValue(Collection<String> column, Long counter) {
+		Map<String, Long> resultSet = new HashMap<String, Long>();
+		for (String columnName : column) {
+			resultSet.put(columnName, counter);
+		}
+		return resultSet;
+	}
+
+	/*
+	 * @param columnFamilyName is name of columnFamily
+	 * @param rowKey is value of key
+	 * @param  request contains column and its string value to be inserted
+	 */
+	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
+		if (checkNull(rowKey) && checkNull(request)) {
+			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			for (Map.Entry<String, String> entry : request.entrySet()) {
+				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+			}
+			try {
+				mutationBatch.execute();
+			} catch (ConnectionException e) {
+				logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/*
+	 * @param result is the result of Cassandra Row query with list of columns
+	 * @param result is the list of columnNames needs to be filtered
+	 */
 	public List<String> listRowColumnStringValue(OperationResult<ColumnList<String>> result, List<String> columnNames) {
 
 		List<String> resultList = new ArrayList<String>();
@@ -432,6 +560,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultList;
 	}
 
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 */
 	public List<String> listRowsStringValue(OperationResult<Rows<String, String>> result) {
 
 		List<String> resultList = new ArrayList<String>();
@@ -443,105 +574,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultList;
 	}
 
-	public Set<String> convertDateFormat(String currentDate, SimpleDateFormat format, List<String> firstKey) throws ParseException {
-		Set<String> dateSet = new HashSet<String>();
-		Date date = format.parse(currentDate);
-		for (String key : firstKey) {
-			try {
-				SimpleDateFormat keyFormat = new SimpleDateFormat(key);
-				String resultKey = keyFormat.format(date);
-				dateSet.add(resultKey);
-			} catch (Exception e) {
-				dateSet.add(key);
-			}
-		}
-		return dateSet;
-	}
-
-	public List<Map<String, String>> getRowsKeyColumnStringValue(OperationResult<Rows<String, String>> result) {
-
-		List<Map<String, String>> data = new ArrayList<Map<String, String>>();
-		for (Row<String, String> row : result.getResult()) {
-			Map<String, String> map = new HashMap<String, String>();
-			StringBuffer columnValue = new StringBuffer();
-			boolean hasData = false;
-			for (Column<String> column : row.getColumns()) {
-				hasData = true;
-				if (checkNull(columnValue.toString())) {
-					columnValue.append("," + column.getStringValue());
-				} else {
-					columnValue.append(column.getStringValue());
-				}
-
-			}
-			if (hasData) {
-				map.put("key", row.getKey());
-				map.put("value", columnValue.toString());
-				data.add(map);
-			}
-		}
-		return data;
-	}
-
-	public List<Map<String, Object>> getRowsKeyLongValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
-
-		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
-		if (checkNull(columnNames)) {
-			for (Row<String, String> row : result.getResult()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				for (Column<String> column : row.getColumns()) {
-					for (String columnName : columnNames) {
-						if (columnName.equalsIgnoreCase(column.getName()))
-							map.put(column.getName(), column.getLongValue());
-						break;
-					}
-				}
-				map.put("key", row.getKey());
-				resultList.add(map);
-			}
-		} else {
-			for (Row<String, String> row : result.getResult()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				for (Column<String> column : row.getColumns()) {
-					map.put(column.getName(), column.getLongValue());
-				}
-				map.put("key", row.getKey());
-				resultList.add(map);
-			}
-		}
-		return resultList;
-	}
-
-	public List<Map<String, Object>> getRowsKeyStringValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
-
-		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
-		if (checkNull(columnNames)) {
-			for (Row<String, String> row : result.getResult()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				for (Column<String> column : row.getColumns()) {
-					for (String columnName : columnNames) {
-						if (columnName.equalsIgnoreCase(column.getName()))
-							map.put(column.getName(), column.getStringValue());
-						break;
-					}
-				}
-				map.put("key", row.getKey());
-				resultList.add(map);
-			}
-		} else {
-			for (Row<String, String> row : result.getResult()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				for (Column<String> column : row.getColumns()) {
-					map.put(column.getName(), column.getStringValue());
-				}
-				map.put("key", row.getKey());
-				resultList.add(map);
-			}
-
-		}
-		return resultList;
-	}
-
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 * @param columName is the specific column name needs to be filtered
+	 */
 	public List<String> listRowsColumnStringValue(OperationResult<Rows<String, String>> result, String columName) {
 
 		List<String> resultList = new ArrayList<String>();
@@ -563,6 +599,117 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultList;
 	}
 
+	/*
+	 * @param result is the result of Cassandra Row query with list of columns
+	 */
+	public Map<String, String> getRowStringValue(OperationResult<ColumnList<String>> result) {
+
+		Map<String, String> resultList = new HashMap<String, String>();
+		for (Column<String> column : result.getResult()) {
+			resultList.put(column.getName(), column.getStringValue());
+		}
+		return resultList;
+	}
+
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 */
+	public List<Map<String, String>> getRowsKeyColumnStringValue(OperationResult<Rows<String, String>> result) {
+
+		List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+		for (Row<String, String> row : result.getResult()) {
+			Map<String, String> map = new HashMap<String, String>();
+			StringBuffer columnValue = new StringBuffer();
+			boolean hasData = false;
+			for (Column<String> column : row.getColumns()) {
+				hasData = true;
+				if (checkNull(columnValue.toString())) {
+					columnValue.append(COMMA + column.getStringValue());
+				} else {
+					columnValue.append(column.getStringValue());
+				}
+
+			}
+			if (hasData) {
+				map.put(mapKey.KEY.mapKey(), row.getKey());
+				map.put(mapKey.VALUE.mapKey(), columnValue.toString());
+				data.add(map);
+			}
+		}
+		return data;
+	}
+
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 * @param columNames is the list of columns needs to be filtered
+	 */
+	public List<Map<String, Object>> getRowsKeyLongValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
+
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+		if (checkNull(columnNames)) {
+			for (Row<String, String> row : result.getResult()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				for (Column<String> column : row.getColumns()) {
+					for (String columnName : columnNames) {
+						if (columnName.equalsIgnoreCase(column.getName()))
+							map.put(column.getName(), column.getLongValue());
+						break;
+					}
+				}
+				map.put(mapKey.KEY.mapKey(), row.getKey());
+				resultList.add(map);
+			}
+		} else {
+			for (Row<String, String> row : result.getResult()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				for (Column<String> column : row.getColumns()) {
+					map.put(column.getName(), column.getLongValue());
+				}
+				map.put(mapKey.KEY.mapKey(), row.getKey());
+				resultList.add(map);
+			}
+		}
+		return resultList;
+	}
+
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 * @param columName is the list of columns needs to be filtered
+	 */
+	public List<Map<String, Object>> getRowsKeyStringValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
+
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+		if (checkNull(columnNames)) {
+			for (Row<String, String> row : result.getResult()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				for (Column<String> column : row.getColumns()) {
+					for (String columnName : columnNames) {
+						if (columnName.equalsIgnoreCase(column.getName()))
+							map.put(column.getName(), column.getStringValue());
+						break;
+					}
+				}
+				map.put(mapKey.KEY.mapKey(), row.getKey());
+				resultList.add(map);
+			}
+		} else {
+			for (Row<String, String> row : result.getResult()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				for (Column<String> column : row.getColumns()) {
+					map.put(column.getName(), column.getStringValue());
+				}
+				map.put(mapKey.KEY.mapKey(), row.getKey());
+				resultList.add(map);
+			}
+
+		}
+		return resultList;
+	}
+
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 * @param columName is the list of columns needs to be filtered
+	 */
 	public List<Map<String, String>> getRowsColumnStringValue(OperationResult<Rows<String, String>> result, List<String> columNames) {
 
 		List<Map<String, String>> resultList = new ArrayList<Map<String, String>>();
@@ -592,6 +739,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultList;
 	}
 
+	/*
+	 * @param result is the result of Cassandra Rows query with list of rows
+	 */
 	public List<Map<String, Object>> getStringValue(OperationResult<Rows<String, String>> result) {
 
 		List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
@@ -605,6 +755,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return dataList;
 	}
 
+	/*
+	 * @param result is the result of Cassandra Row query with list of columns
+	 */
 	public Map<String, Object> getLongValue(OperationResult<ColumnList<String>> result) {
 
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -614,61 +767,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultMap;
 	}
 
-	public OperationResult<Rows<String, String>> readAllRows(String columnFamilyName, List<String> column) {
-
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		OperationResult<Rows<String, String>> result = null;
-		AllRowsQuery<String, String> rowsResult = null;
-		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getAllRows().setExceptionCallback(new ExceptionCallback() {
-
-				@Override
-				public boolean onException(ConnectionException arg0) {
-
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-
-					}
-					return true;
-				}
-			});
-
-			if (checkNull(column)) {
-				rowsResult.withColumnSlice(column);
-			}
-
-			result = rowsResult.execute();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
-
-	public OperationResult<Rows<String, String>> readWithIndex(String columnFamilyName, Map<String, Object> whereColumns, List<String> column) {
-
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		OperationResult<Rows<String, String>> result = null;
-		IndexQuery<String, String> rowsResult = null;
-		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).searchWithIndex();
-
-			if (checkNull(whereColumns)) {
-				for (Map.Entry<String, Object> whereColumn : whereColumns.entrySet())
-					rowsResult.addExpression().whereColumn(whereColumn.getKey()).equals().value(String.valueOf(whereColumn.getValue()));
-			}
-			rowsResult.autoPaginateRows(true);
-			if (checkNull(column)) {
-				rowsResult.withColumnSlice(column);
-			}
-
-			result = rowsResult.execute();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
-
+	/*
+	 * @param result is the result of Cassandra Row query with list of columns
+	 * @param columnType is the pre declaration of column Type for the column
+	 */
 	public Map<String, Object> getObjectvalue(OperationResult<ColumnList<String>> result, Map<String, Object> columnType) {
 
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -691,19 +793,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultMap;
 	}
 
-	public Set<String> combineTwoKey(Set<String> firstKey, Set<String> secondKey) {
-
-		Set<String> combinedKey = new HashSet<String>();
-		for (String entry1 : firstKey) {
-			combinedKey.add(entry1);
-			for (String entry2 : secondKey) {
-				combinedKey.add(entry2);
-				combinedKey.add(entry1 + separator + entry2);
-			}
-		}
-		return combinedKey;
-	}
-
+	/*
+	 * @param data is to check for empty
+	 */
 	public static boolean checkNull(String data) {
 
 		if (data != null && !data.isEmpty()) {
@@ -712,6 +804,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return false;
 	}
 
+	/*
+	 * @param data is to check for empty
+	 */
+	public static boolean checkNull(OperationResult<?> data) {
+		if (data != null) {
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	 * @param data is to check for empty
+	 */
 	public boolean checkNull(Map<?, ?> data) {
 
 		if (data != null && !data.isEmpty()) {
@@ -720,6 +825,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return false;
 	}
 
+	/*
+	 * @param data is to check for empty
+	 */
 	public boolean checkNull(Collection<?> data) {
 
 		if (data != null && !data.isEmpty()) {
@@ -727,7 +835,105 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 		return false;
 	}
+	/*
+	 * @param data is to convert Array to List
+	 */
+	public List<String> convertArraytoList(String[] data) {
+		List<String> responseData = new ArrayList<String>();
+		for (String entry : data) {
+			if (checkNull(entry))
+				responseData.add(entry);
+		}
+		return responseData;
+	}
 
+	/*
+	 * @param data is to convert Set to String
+	 */
+	public String convertSettoString(Set<String> data) {
+
+		StringBuffer stringBuffer = new StringBuffer();
+		for (String entry : data) {
+			if (!checkNull(entry)) {
+				stringBuffer.append(COMMA);
+			}
+			stringBuffer.append(entry);
+		}
+		return stringBuffer.toString();
+	}
+
+	/*
+	 * @param data is to convert String to List
+	 */
+	public List<String> convertStringtoList(String data) {
+
+		List<String> result = new ArrayList<String>();
+		for (String entry : data.split(COMMA)) {
+			result.add(entry);
+		}
+		return result;
+	}
+
+	/*
+	 * @param data is to convert List to String
+	 */
+	public String convertListtoString(List<String> data) {
+
+		StringBuffer stringBuffer = new StringBuffer();
+		for (String entry : data) {
+			if (checkNull(stringBuffer.toString())) {
+				stringBuffer.append(COMMA);
+			}
+			stringBuffer.append(entry);
+		}
+		return stringBuffer.toString();
+	}
+
+	/*
+	 * @param data is to convert List to Set
+	 */
+	public Set<String> convertListtoSet(List<String> data) {
+
+		Set<String> result = new HashSet<String>();
+		for (String entry : data) {
+			result.add(entry);
+		}
+		return result;
+	}
+
+	/*
+	 * @param data is to convert String to Set
+	 */
+	public Set<String> convertStringtoSet(String data) {
+
+		Set<String> result = new HashSet<String>();
+		for (String entry : data.split(COMMA)) {
+			result.add(entry);
+		}
+		return result;
+	}
+
+	/*
+	 * @param request is the set of key name
+	 * @param comparator check for the given key exists
+	 */
+	public Set<String> validateFormula(Set<String> request, Set<String> comparator) {
+		Set<String> result = new HashSet<String>();
+		for (String entry1 : request) {
+			for (String entry2 : comparator) {
+				if (entry1.contains(entry2))
+					result.add(entry2);
+				break;
+			}
+		}
+		return result;
+	}
+
+	/*
+	 * @param rowKey is the given Key
+	 * @param data is the given data map
+	 * @param keyList this the map key Name to be replaced
+	 */
 	public String replaceKey(String rowKey, Map<String, String> data, Set<String> keyList) {
 		try {
 			if (checkNull(keyList)) {
@@ -741,78 +947,47 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return rowKey;
 	}
 
-	public List<String> convertArraytoList(String[] data) {
-		List<String> responseData = new ArrayList<String>();
-		for (String entry : data) {
-			if (checkNull(entry))
-				responseData.add(entry);
-		}
-		return responseData;
-	}
+	/*
+	 * @param firstKey is the prefix
+	 * @param secondKey is the suffix
+	 */
+	public Set<String> combineTwoKey(Set<String> firstKey, Set<String> secondKey) {
 
-	public String convertSettoString(Set<String> data) {
-
-		StringBuffer stringBuffer = new StringBuffer();
-		for (String entry : data) {
-			if (!checkNull(entry)) {
-				stringBuffer.append(",");
-			}
-			stringBuffer.append(entry);
-		}
-		return stringBuffer.toString();
-	}
-
-	public List<String> convertStringtoList(String data) {
-
-		List<String> result = new ArrayList<String>();
-		for (String entry : data.split(",")) {
-			result.add(entry);
-		}
-		return result;
-	}
-
-	public String convertListtoString(List<String> data) {
-
-		StringBuffer stringBuffer = new StringBuffer();
-		for (String entry : data) {
-			if (checkNull(stringBuffer.toString())) {
-				stringBuffer.append(",");
-			}
-			stringBuffer.append(entry);
-		}
-		return stringBuffer.toString();
-	}
-
-	public Set<String> convertListtoSet(List<String> data) {
-
-		Set<String> result = new HashSet<String>();
-		for (String entry : data) {
-			result.add(entry);
-		}
-		return result;
-	}
-
-	public Set<String> validateFormula(Set<String> request, Set<String> comparator) {
-		Set<String> result = new HashSet<String>();
-		for (String entry1 : request) {
-			for (String entry2 : comparator) {
-				if (entry1.contains(entry2))
-					result.add(entry2);
-				break;
+		Set<String> combinedKey = new HashSet<String>();
+		for (String entry1 : firstKey) {
+			combinedKey.add(entry1);
+			for (String entry2 : secondKey) {
+				combinedKey.add(entry2);
+				combinedKey.add(entry1 + SEPERATOR + entry2);
 			}
 		}
-		return result;
+		return combinedKey;
 	}
 
-	public Set<String> convertStringtoSet(String data) {
-
-		Set<String> result = new HashSet<String>();
-		for (String entry : data.split(",")) {
-			result.add(entry);
+	/*
+	 * @param currentDate is the given date
+	 * @param format is the current format
+	 * @param firstKey has the list of target format
+	 */
+	public Set<String> convertDateFormat(String currentDate, SimpleDateFormat format, List<String> firstKey) throws ParseException {
+		Set<String> dateSet = new HashSet<String>();
+		Date date = format.parse(currentDate);
+		for (String key : firstKey) {
+			try {
+				SimpleDateFormat keyFormat = new SimpleDateFormat(key);
+				String resultKey = keyFormat.format(date);
+				dateSet.add(resultKey);
+			} catch (Exception e) {
+				dateSet.add(key);
+			}
 		}
-		return result;
+		return dateSet;
 	}
 
+	/*
+	 * @param entry is the given data
+	 * @param jsonMap is the formula Json
+	 */
 	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
@@ -820,15 +995,15 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue());
 			JsonObject json = new JsonObject();
 			json = jsonElement.getAsJsonObject();
-			String name = json.get("name") != null ? json.get("name").toString().replaceAll("\"", "") : jsonEntry.getKey();
+			String name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "") : jsonEntry.getKey();
 			try {
 				Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
-				if (json.has("formula")) {
-					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get("formula").toString().replaceAll("\"", ""));
-					if (json.has("requestValues")) {
-						for (String request : json.get("requestValues").toString().replaceAll("\"", "").split(",")) {
+				if (json.has(formulaDetail.FORMULA.formulaDetail())) {
+					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get(formulaDetail.FORMULA.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY));
+					if (json.has(formulaDetail.REQUEST_VALUES.formulaDetail())) {
+						for (String request : json.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA)) {
 
-							String variableName = request.replaceAll("[^a-zA-Z0-9]", "");
+							String variableName = request.replaceAll(AVOID_SPECIAL_CHARACTER, EMPTY);
 							expressionBuilder.withVariable(variableName, (entry.get(request) != null ? Double.parseDouble(entry.get(request).toString()) : 0L));
 						}
 						long calculatedData = Math.round(expressionBuilder.build().calculate());

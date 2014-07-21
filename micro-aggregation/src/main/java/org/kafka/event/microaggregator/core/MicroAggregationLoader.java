@@ -385,6 +385,7 @@ public class MicroAggregationLoader implements Constants{
      */
 	public void staticAggregation(String eventJson){
 		try{
+			logger.info("Event Json:"+eventJson);
 		JSONObject jsonObject = new JSONObject(eventJson);
 		String startTime = null;
 		String endTime = null;
