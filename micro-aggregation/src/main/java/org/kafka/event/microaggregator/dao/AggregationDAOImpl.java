@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,68 +61,33 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		handleAggregation(startTime, endTime);
 
 	}
-	
+
 	/*
 	 * @param startTime has the starting Date in the format of yyyyMMDDkkmm
+	 * 
 	 * @param endTime has the ending Date in the format of yyyyMMDDkkmm
 	 */
 	public void handleAggregation(String startTime, String endTime) {
-		SimpleDateFormat format = new SimpleDateFormat(EVENT_TIMELINE_KEY_FORMAT);
-		List<String> keys = new ArrayList<String>();
-		List<String> column = new ArrayList<String>();
-		column.add(CONSTANT_VALUE);
-		column.add(LAST_PROCESSED_TIME);
-		OperationResult<ColumnList<String>> configData = this.readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
-		column = new ArrayList<String>();
-		column.add(CONSTANT_VALUE);
-		List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
+		try {
 
-		if (checkNull(startTime) && checkNull(endTime)) {
-			try {
-				Date startDate = format.parse(startTime);
-				Calendar calender = Calendar.getInstance();
-				calender.setTime(startDate);
-				do {
-					keys.add(startTime);
-					calender.add(calender.MINUTE, 1);
-					Date d = calender.getTime();
-					startTime = format.format(d);
-				} while (!startTime.equalsIgnoreCase(endTime));
-				keys.add(endTime);
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-		} else if (checkNull(startTime) && !checkNull(endTime)) {
-			keys.add(startTime);
-		} else if (!checkNull(startTime) && checkNull(endTime)) {
-			try {
-				startTime = endTime;
-				Date startDate;
-				startDate = format.parse(endTime);
-				Calendar calender = Calendar.getInstance();
-				calender.setTime(startDate);
-				calender.add(calender.MINUTE, -1);
-				Date endDate = calender.getTime();
-				endTime = format.format(endDate);
-				keys.add(endTime);
-				keys.add(startTime);
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-		} else {
-			column = new ArrayList<String>();
+			SimpleDateFormat format = new SimpleDateFormat(EVENT_TIMELINE_KEY_FORMAT);
+			String lastProcessedKey = null;
+			List<String> keys = new ArrayList<String>();
+			List<String> column = new ArrayList<String>();
+			column.add(CONSTANT_VALUE);
 			column.add(LAST_PROCESSED_TIME);
-			List<String> processedTime = this.listRowColumnStringValue(configData, column);
-			if (checkNull(processedTime)) {
-				Date startDate;
-				Date endDate;
+			OperationResult<ColumnList<String>> configData = this.readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
+			column = new ArrayList<String>();
+			column.add(CONSTANT_VALUE);
+			List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
+
+			if (checkNull(startTime) && checkNull(endTime)) {
 				try {
-					startDate = format.parse(processedTime.get(0));
+					Date startDate = format.parse(startTime);
 					Calendar calender = Calendar.getInstance();
-					endDate = calender.getTime();
-					endTime = format.format(endDate);
 					calender.setTime(startDate);
 					do {
+						keys.add(startTime);
 						calender.add(calender.MINUTE, 1);
 						Date d = calender.getTime();
 						startTime = format.format(d);
@@ -129,97 +96,141 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
-			} else {
-				Calendar calender = Calendar.getInstance();
-				endTime = format.format(calender.getTime());
-				calender.add(calender.MINUTE, -1);
-				Date startDate = calender.getTime();
-				startTime = format.format(startDate);
+			} else if (checkNull(startTime) && !checkNull(endTime)) {
 				keys.add(startTime);
-				keys.add(endTime);
-			}
-		}
-
-		// get Event Ids for every minute
-		List<Map<String, String>> rowData = this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>()));
-
-		// iterate for every minute
-		for (Map<String, String> fetchedkey : rowData) {
-			column = new ArrayList<String>();
-			column.add(EVENT_NAME);
-			column.add(FIELDS);
-
-			// get raw data for processing
-			List<Map<String, String>> eventData = this.getRowsColumnStringValue(
-					this.readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column), new ArrayList<String>());
-
-			// get normal Formula
-			column = new ArrayList<String>();
-			column.add(FORMULA);
-			Map<String, Object> whereCondition = new HashMap<String, Object>();
-			whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
-			List<Map<String, Object>> normalFormulaDetails = this
-					.getRowsKeyStringValue(this.readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column), new ArrayList<String>());
-
-			// fetch how many key need this aggregation
-			for (String processKey : prcessingKey) {
-
-				column = new ArrayList<String>();
-				column.add(CONSTANT_VALUE);
-				column.add(ITEM_VALUE);
-				OperationResult<ColumnList<String>> processResult = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), processKey, column);
-				List<String> secondKeyList = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(1)));
-				String tempkey = convertListtoString(secondKeyList);
-				String lastProcessedKey = null;
-
-				// iterate for every raw data key
-				Set<String> secondKey = substituteKeyVariable(eventData, tempkey);
-				List<String> firstKey = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(0)));
-				firstKey = convertStringtoList(firstKey.get(0));
-				Set<String> rowKey = new HashSet<String>();
+			} else if (!checkNull(startTime) && checkNull(endTime)) {
 				try {
-					rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get(mapKey.KEY.mapKey()), format, firstKey), secondKey);
+					startTime = endTime;
+					Date startDate;
+					startDate = format.parse(endTime);
+					Calendar calender = Calendar.getInstance();
+					calender.setTime(startDate);
+					calender.add(calender.MINUTE, -1);
+					Date endDate = calender.getTime();
+					endTime = format.format(endDate);
+					keys.add(endTime);
+					keys.add(startTime);
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
-
-				// update live dashboard
-				List<Map<String, Object>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), rowKey, new ArrayList<String>()), new ArrayList<String>());
-
-				// insert data for normal aggregation
-				for (Map<String, Object> countMap : dashboardData) {
-					Map<String, Long> resultMap = new HashMap<String, Long>();
-					for (Map<String, Object> formulaMap : normalFormulaDetails) {
-						Map<String, String> formulaDetail = new HashMap<String, String>();
-						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
-						JsonObject jsonObject = jsonElement.getAsJsonObject();
-						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
-
-						resultMap = calculation(countMap, formulaDetail);
+			} else {
+				column = new ArrayList<String>();
+				column.add(LAST_PROCESSED_TIME);
+				List<String> processedTime = this.listRowColumnStringValue(configData, column);
+				if (checkNull(processedTime)) {
+					Date startDate;
+					Date endDate;
+					try {
+						startDate = format.parse(processedTime.get(0));
+						Calendar calender = Calendar.getInstance();
+						endDate = calender.getTime();
+						endTime = format.format(endDate);
+						calender.setTime(startDate);
+						do {
+							calender.add(calender.MINUTE, 1);
+							Date d = calender.getTime();
+							startTime = format.format(d);
+							keys.add(startTime);
+						} while (!startTime.equalsIgnoreCase(endTime));
+					} catch (ParseException e) {
+						e.printStackTrace();
 					}
-					if (!checkNull(resultMap)) {
-						continue;
-					}
-
-					// delete existing column since it was an dynamic column
-					Set<String> columnNames = resultMap.keySet();
-					deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
-
-					// Increment the counter column
-					incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
-					lastProcessedKey = countMap.get(mapKey.KEY.mapKey()).toString();
+				} else {
+					Calendar calender = Calendar.getInstance();
+					endTime = format.format(calender.getTime());
+					calender.add(calender.MINUTE, -1);
+					Date startDate = calender.getTime();
+					startTime = format.format(startDate);
+					keys.add(startTime);
+					keys.add(endTime);
 				}
-				logger.info("processed key " + lastProcessedKey);
+			}
+
+			// get Event Ids for every minute
+			List<Map<String, String>> rowData = this.sortList(this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())),
+					mapKey.KEY.mapKey(), sortType.ASC.sortType());
+			// iterate for every minute
+			for (Map<String, String> fetchedkey : rowData) {
+				column = new ArrayList<String>();
+				column.add(EVENT_NAME);
+				column.add(FIELDS);
+
+				// get raw data for processing
+				List<Map<String, String>> eventData = this.getRowsColumnStringValue(
+						this.readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column),
+						new ArrayList<String>());
+
+				// get normal Formula
+				column = new ArrayList<String>();
+				column.add(FORMULA);
+				Map<String, Object> whereCondition = new HashMap<String, Object>();
+				whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
+				List<Map<String, Object>> normalFormulaDetails = this.getRowsKeyStringValue(this.readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column),
+						new ArrayList<String>());
+
+				// fetch how many key need this aggregation
+				for (String processKey : prcessingKey) {
+
+					column = new ArrayList<String>();
+					column.add(CONSTANT_VALUE);
+					column.add(ITEM_VALUE);
+					OperationResult<ColumnList<String>> processResult = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), processKey, column);
+					List<String> secondKeyList = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(1)));
+					String tempkey = convertListtoString(secondKeyList);
+
+					// iterate for every raw data key
+					Set<String> secondKey = substituteKeyVariable(eventData, tempkey);
+					List<String> firstKey = this.listRowColumnStringValue(processResult, convertStringtoList(column.get(0)));
+					firstKey = convertStringtoList(firstKey.get(0));
+					Set<String> rowKey = new HashSet<String>();
+					try {
+						rowKey = this.combineTwoKey(convertDateFormat(fetchedkey.get(mapKey.KEY.mapKey()), format, firstKey), secondKey);
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}
+
+					// update live dashboard
+					List<Map<String, Object>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), rowKey, new ArrayList<String>()),
+							new ArrayList<String>());
+
+					// insert data for normal aggregation
+					for (Map<String, Object> countMap : dashboardData) {
+						Map<String, Long> resultMap = new HashMap<String, Long>();
+						for (Map<String, Object> formulaMap : normalFormulaDetails) {
+							Map<String, String> formulaDetail = new HashMap<String, String>();
+							JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
+							JsonObject jsonObject = jsonElement.getAsJsonObject();
+							formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
+
+							resultMap = calculation(countMap, formulaDetail);
+						}
+						if (!checkNull(resultMap)) {
+							continue;
+						}
+
+						// delete existing column since it was an dynamic column
+						Set<String> columnNames = resultMap.keySet();
+						deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
+
+						// Increment the counter column
+						incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
+						lastProcessedKey = countMap.get(mapKey.KEY.mapKey()).toString();
+					}
+					logger.info("processed key " + lastProcessedKey);
+				}
 			}
 			Map<String, String> data = new HashMap<String, String>();
-			data.put(LAST_PROCESSED_TIME, fetchedkey.get(mapKey.KEY.mapKey()).toString());
+			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
 			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
+			logger.info("Minute Aggregator Runned Successfully");
+		} catch (Exception e) {
+			logger.error("Minute Runner failed due to " + e);
 		}
-		logger.info("Minute Aggregator Runned Successfully");
 	}
 
 	/*
 	 * @param eventData the JSON data to substitute
+	 * 
 	 * @param tempKey the format of key where the value is got replaced
 	 */
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
@@ -291,8 +302,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is collection of keys
-	 * @param  columnList will list column needs to be fetched
+	 * 
+	 * @param columnList will list column needs to be fetched
 	 */
 	public OperationResult<Rows<String, String>> readRows(String columnFamilyName, Collection<String> rowKey, Collection<String> columnList) {
 
@@ -306,7 +319,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
-			logger.error("Exception while getting rows data of "+columnFamilyName);
+			logger.error("Exception while getting rows data of " + columnFamilyName);
 			e.printStackTrace();
 		}
 		return result;
@@ -314,8 +327,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  columnList will list column needs to be fetched
+	 * 
+	 * @param columnList will list column needs to be fetched
 	 */
 	public OperationResult<ColumnList<String>> readRow(String columnFamilyName, String rowKey, Collection<String> columnList) {
 
@@ -337,8 +352,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  request contains data needs to be incremented in counter
+	 * 
+	 * @param request contains data needs to be incremented in counter
 	 */
 	public void incrementCounterValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 
@@ -351,6 +368,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				mutationBatch.execute();
 			} catch (ConnectionException e) {
 				logger.error("Exception while increment the counter in " + columnFamilyName);
+				System.out.println(request + "" + e);
 				e.printStackTrace();
 			}
 		}
@@ -358,8 +376,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  request contains data need to be inserted
+	 * 
+	 * @param request contains data need to be inserted
 	 */
 	public void putLongValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 
@@ -380,8 +400,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  columnList has the list of columns
+	 * 
+	 * @param columnList has the list of columns
 	 */
 	public OperationResult<ColumnList<String>> readColumns(String columnFamilyName, String rowKey, Collection<String> columnList) {
 
@@ -402,8 +424,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  columns has the set of columns needs to be deleted
+	 * 
+	 * @param columns has the set of columns needs to be deleted
 	 */
 	public boolean deleteColumns(String columnFamilyName, String rowKey, Set<String> columns) {
 
@@ -423,8 +447,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  column has the columnName to check of its occurrences
+	 * 
+	 * @param column has the columnName to check of its occurrences
 	 */
 	public boolean isColumnExists(String columnFamilyName, String rowKey, String column) {
 
@@ -441,7 +467,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
-	 * @param  column has the list of columnName
+	 * 
+	 * @param column has the list of columnName
 	 */
 	public OperationResult<Rows<String, String>> readAllRows(String columnFamilyName, List<String> column) {
 
@@ -477,8 +504,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param whereColumns contains the column value to be filtered
-	 * @param  column has the list of columnName
+	 * 
+	 * @param column has the list of columnName
 	 */
 	public OperationResult<Rows<String, String>> readWithIndex(String columnFamilyName, Map<String, Object> whereColumns, List<String> column) {
 
@@ -507,6 +536,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param column is name of column name
+	 * 
 	 * @param counter is the value to be parsed in counter
 	 */
 	public Map<String, Long> defaultCounterValue(Collection<String> column, Long counter) {
@@ -519,8 +549,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param columnFamilyName is name of columnFamily
+	 * 
 	 * @param rowKey is value of key
-	 * @param  request contains column and its string value to be inserted
+	 * 
+	 * @param request contains column and its string value to be inserted
 	 */
 	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
@@ -539,6 +571,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Row query with list of columns
+	 * 
 	 * @param result is the list of columnNames needs to be filtered
 	 */
 	public List<String> listRowColumnStringValue(OperationResult<ColumnList<String>> result, List<String> columnNames) {
@@ -576,6 +609,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Rows query with list of rows
+	 * 
 	 * @param columName is the specific column name needs to be filtered
 	 */
 	public List<String> listRowsColumnStringValue(OperationResult<Rows<String, String>> result, String columName) {
@@ -641,6 +675,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Rows query with list of rows
+	 * 
 	 * @param columNames is the list of columns needs to be filtered
 	 */
 	public List<Map<String, Object>> getRowsKeyLongValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
@@ -674,6 +709,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Rows query with list of rows
+	 * 
 	 * @param columName is the list of columns needs to be filtered
 	 */
 	public List<Map<String, Object>> getRowsKeyStringValue(OperationResult<Rows<String, String>> result, List<String> columnNames) {
@@ -708,6 +744,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Rows query with list of rows
+	 * 
 	 * @param columName is the list of columns needs to be filtered
 	 */
 	public List<Map<String, String>> getRowsColumnStringValue(OperationResult<Rows<String, String>> result, List<String> columNames) {
@@ -769,6 +806,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param result is the result of Cassandra Row query with list of columns
+	 * 
 	 * @param columnType is the pre declaration of column Type for the column
 	 */
 	public Map<String, Object> getObjectvalue(OperationResult<ColumnList<String>> result, Map<String, Object> columnType) {
@@ -835,6 +873,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 		return false;
 	}
+
 	/*
 	 * @param data is to convert Array to List
 	 */
@@ -915,6 +954,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param request is the set of key name
+	 * 
 	 * @param comparator check for the given key exists
 	 */
 	public Set<String> validateFormula(Set<String> request, Set<String> comparator) {
@@ -931,7 +971,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param rowKey is the given Key
+	 * 
 	 * @param data is the given data map
+	 * 
 	 * @param keyList this the map key Name to be replaced
 	 */
 	public String replaceKey(String rowKey, Map<String, String> data, Set<String> keyList) {
@@ -949,6 +991,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param firstKey is the prefix
+	 * 
 	 * @param secondKey is the suffix
 	 */
 	public Set<String> combineTwoKey(Set<String> firstKey, Set<String> secondKey) {
@@ -966,7 +1009,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 	/*
 	 * @param currentDate is the given date
+	 * 
 	 * @param format is the current format
+	 * 
 	 * @param firstKey has the list of target format
 	 */
 	public Set<String> convertDateFormat(String currentDate, SimpleDateFormat format, List<String> firstKey) throws ParseException {
@@ -985,7 +1030,65 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	}
 
 	/*
+	 * @param data is the given date
+	 * 
+	 * @param sortBy has which field needs to sort
+	 * 
+	 * @param sortOrder has the sort order of ASC or DESC
+	 */
+	public List<Map<String, String>> sortList(List<Map<String, String>> data, String sortBy, String sortOrder) {
+		if (checkNull(sortBy)) {
+			final String name = sortBy;
+			boolean ascending = false;
+			boolean descending = false;
+			if (checkNull(sortOrder)) {
+				if (sortOrder.equalsIgnoreCase(sortType.ASC.sortType())) {
+					ascending = true;
+				} else if (sortOrder.equalsIgnoreCase(sortType.DESC.sortType())) {
+					descending = true;
+				} else {
+					ascending = true;
+				}
+			} else {
+				ascending = true;
+			}
+			if (ascending) {
+				Collections.sort(data, new Comparator<Map<String, String>>() {
+					public int compare(final Map<String, String> m1, final Map<String, String> m2) {
+						if (m1.containsKey(name) && m2.containsKey(name)) {
+							if (m2.containsKey(name))
+								return ((String) m1.get(name).toString().toLowerCase()).compareTo((String) m2.get(name).toString().toLowerCase());
+						}
+						return 1;
+					}
+				});
+			}
+			if (descending) {
+				Collections.sort(data, new Comparator<Map<String, String>>() {
+					public int compare(final Map<String, String> m1, final Map<String, String> m2) {
+
+						if (m2.containsKey(name)) {
+							if (m1.containsKey(name)) {
+								if (m2.containsKey(name))
+									return ((String) m2.get(name).toString().toLowerCase()).compareTo((String) m1.get(name).toString().toLowerCase());
+							} else {
+								return 1;
+							}
+						} else {
+							return -1;
+						}
+						return 0;
+					}
+				});
+
+			}
+		}
+		return data;
+	}
+
+	/*
 	 * @param entry is the given data
+	 * 
 	 * @param jsonMap is the formula Json
 	 */
 	public static Map<String, Long> calculation(Map<String, Object> entry, Map<String, String> jsonMap) {
