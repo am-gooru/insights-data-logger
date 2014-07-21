@@ -234,6 +234,21 @@ public interface Constants {
 	
 	public String AVOID_SPECIAL_CHARACTER ="[^a-zA-Z0-9]";
 	
+	
+	public enum sortType{
+		
+		ASC("ASC"),DESC("DESC");
+		
+		private String sortOrder;
+		
+		private sortType(String name){
+			sortOrder = name;
+		}
+		
+		public String sortType(){
+			return sortOrder;
+		}
+	}
 	public enum eventJSON{
 		
 		SESSION("session"),CONTEXT("context"),PAYLOADOBJECT("payLoadObject"),USER("user");
