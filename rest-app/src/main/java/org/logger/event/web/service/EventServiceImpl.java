@@ -150,7 +150,11 @@ public class EventServiceImpl implements EventService {
 
 	@Override
 	public void updateProdViews() {
-		dataLoaderService.callAPIViewCount();
+		try {
+			dataLoaderService.callAPIViewCount();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
