@@ -1121,6 +1121,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		if(checkNull(validEventData)){
 		for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
+			if(jsonEntry.getKey().equalsIgnoreCase("events")){
+				continue;
+			}
 			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
 			JsonObject json = new JsonObject();
 			json = jsonElement.getAsJsonObject();
