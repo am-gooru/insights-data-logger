@@ -1035,9 +1035,12 @@ public class CassandraDataLoader implements Constants {
 			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+					System.out.print("URL : "+url+"\n");
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
-			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataMap).toString());
-			        System.out.print("Input : "+ input);
+					System.out.print("dataMap: "+dataMap+"\n");
+			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataMap));
+			        
+			        System.out.print("Input : "+ new JSONSerializer().serialize(dataMap));
 			 		HttpPost  postRequest = new HttpPost(url);
 			 		postRequest.addHeader("accept", "application/json");
 			 		postRequest.setEntity(input);
