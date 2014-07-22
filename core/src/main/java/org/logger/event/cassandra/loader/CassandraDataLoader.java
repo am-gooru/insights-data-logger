@@ -1038,9 +1038,9 @@ public class CassandraDataLoader implements Constants {
 					System.out.print("URL : "+url+"\n");
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
 					System.out.print("dataMap: "+dataMap+"\n");
-			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataMap));
+			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList));
 			        
-			        System.out.print("Input : "+ new JSONSerializer().serialize(dataMap));
+			        System.out.print("Input : "+ new JSONSerializer().serialize(dataJSONList));
 			 		HttpPost  postRequest = new HttpPost(url);
 			 		postRequest.addHeader("accept", "application/json");
 			 		postRequest.setEntity(input);
