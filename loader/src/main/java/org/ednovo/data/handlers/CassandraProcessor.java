@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
+import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,7 +204,11 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	} 
 	
 	public void callAPIViewCount(){
-		dataLoader.callAPIViewCount();
+		try {
+			dataLoader.callAPIViewCount();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }
