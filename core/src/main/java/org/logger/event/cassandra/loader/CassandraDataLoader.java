@@ -49,6 +49,7 @@ import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
 import org.json.JSONObject;
@@ -996,10 +997,11 @@ public class CassandraDataLoader implements Constants {
     }
     /**
      *  Update bulk view count
+     * @throws JSONException 
      */
-    public void callAPIViewCount() {
+    public void callAPIViewCount() throws JSONException {
     	JSONObject staticsObj = new JSONObject();
-    	
+    	JSONArray resourceList = new JSONArray();
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
 
@@ -1016,32 +1018,29 @@ public class CassandraDataLoader implements Constants {
 		}		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
-		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
-			Map<String, Object> map = new HashMap<String, Object>();
+			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
-				map.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				map.put("views", detail.getLongValue());
-				map.put("resourceType", "resource");
+				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+				resourceObj.put("views", detail.getLongValue());
+				resourceObj.put("resourceType", "resource");
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
-			dataJSONList.add(map);
+			resourceList.put(resourceObj);
 		}
 		
-		if(!dataJSONList.isEmpty()){
+		if((resourceList.length() != 0)){
 			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
 					System.out.print("URL : "+url+"\n");
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
-					System.out.print("dataJSONList: "+dataJSONList+"\n");
-					staticsObj.put("statisticsData", new JSONSerializer().serialize(dataJSONList));
+					System.out.print("dataJSONList: "+resourceList+"\n");
+					staticsObj.put("statisticsData", resourceList);
 					System.out.print("staticsobj: "+staticsObj+"\n");
-					StringEntity input = new StringEntity(staticsObj.toString());
-			        
-			        System.out.print("Input : "+ new JSONSerializer().serialize(dataJSONList));
+					StringEntity input = new StringEntity(staticsObj.toString());			        
 			 		HttpPost  postRequest = new HttpPost(url);
 			 		postRequest.addHeader("accept", "application/json");
 			 		postRequest.setEntity(input);
