@@ -491,7 +491,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			mainObj.put("fields", fields);
 	
 	    	ClientResource clientResource = null;
-	    	clientResource = new ClientResource(atmosphereEndPoint+"/classpage/"+eventMap.get(PARENTGOORUOID)+"/users/usage");
+	    	clientResource = new ClientResource(atmosphereEndPoint+"/classpage/users/usage");
 	    	Form forms = new Form();
 			forms.add("data", mainObj.toString());
 			forms.add("collectionId", eventMap.get(PARENTGOORUOID));

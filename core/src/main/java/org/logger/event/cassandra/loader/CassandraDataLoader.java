@@ -1004,21 +1004,22 @@ public class CassandraDataLoader implements Constants {
     	JSONArray resourceList = new JSONArray();
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
-
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		logger.info("lastUpadatedTime : {} - currentTime : {}",lastUpadatedTime , currentTime);
 		Date lastDate = null;
 		Date currDate = null;
+		
 		try {
 			lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 			currDate = minuteDateFormatter.parse(currentTime);
 		} catch (ParseException e1) {
 			e1.printStackTrace();
 		}		
+		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
+		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
 			JSONObject resourceObj = new JSONObject();
@@ -1035,11 +1036,8 @@ public class CassandraDataLoader implements Constants {
 			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 			try{
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-					System.out.print("URL : "+url+"\n");
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
-					System.out.print("dataJSONList: "+resourceList+"\n");
 					staticsObj.put("statisticsData", resourceList);
-					System.out.print("staticsobj: "+staticsObj+"\n");
 					StringEntity input = new StringEntity(staticsObj.toString());			        
 			 		HttpPost  postRequest = new HttpPost(url);
 			 		postRequest.addHeader("accept", "application/json");
