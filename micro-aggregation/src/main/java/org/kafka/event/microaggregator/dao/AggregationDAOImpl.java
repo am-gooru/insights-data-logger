@@ -186,7 +186,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				for (Map<String, String> countMap : dashboardData) {
 					Map<String, Long> resultMap = new HashMap<String, Long>();
 					for (Map<String, Object> formulaMap : normalFormulaDetails) {
-						Map<String, String> formulaDetail = new HashMap<String, String>();
+						Map<String, Object> formulaDetail = new HashMap<String, Object>();
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
@@ -204,8 +204,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					// Increment the counter column
 					incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
 				}
-				logger.info("processed key " + lastProcessedKey);
 				lastProcessedKey = fetchedkey.get(mapKey.KEY.mapKey());
+				logger.info("processed key " + lastProcessedKey);
 			}
 			Map<String, String> data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
@@ -1109,7 +1109,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * 
 	 * @param jsonMap is the formula Json
 	 */
-	public  Map<String, Long> calculation(Map<String, String> entry, Map<String, String> jsonMap,String currentDate,List<Map<String,String>> eventData) {
+	public  Map<String, Long> calculation(Map<String, String> entry, Map<String, Object> jsonMap,String currentDate,List<Map<String,String>> eventData) {
 		
 		String eventName =jsonMap.get("events").toString();
 		List<Map<String,String>> validEventData= new ArrayList<Map<String,String>>();
@@ -1118,10 +1118,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			validEventData.add(eventMap);
 		}
 		}
-		
 		Map<String, Long> resultMap = new HashMap<String, Long>();
-		for (Map.Entry<String, String> jsonEntry : jsonMap.entrySet()) {
-			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue());
+		if(checkNull(validEventData)){
+		for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
+			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
 			JsonObject json = new JsonObject();
 			json = jsonElement.getAsJsonObject();
 			String[] formulas = json.get("formulas").toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA);
@@ -1154,6 +1154,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				
 			} catch (Exception e) {
 				resultMap.put(name, 0L);
+		}
 		}
 		}
 		return resultMap;
