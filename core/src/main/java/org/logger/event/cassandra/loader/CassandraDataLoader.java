@@ -998,7 +998,8 @@ public class CassandraDataLoader implements Constants {
      *  Update bulk view count
      */
     public void callAPIViewCount() {
-
+    	JSONObject staticsObj = new JSONObject();
+    	
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
 
@@ -1016,7 +1017,6 @@ public class CassandraDataLoader implements Constants {
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
-		Map<String, Object> dataMap = new HashMap<String, Object>();
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
@@ -1028,7 +1028,6 @@ public class CassandraDataLoader implements Constants {
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
 			dataJSONList.add(map);
-			dataMap.put("statisticsData", dataJSONList);
 		}
 		
 		if(!dataJSONList.isEmpty()){
@@ -1037,8 +1036,10 @@ public class CassandraDataLoader implements Constants {
 					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
 					System.out.print("URL : "+url+"\n");
 					DefaultHttpClient httpClient = new DefaultHttpClient();   
-					System.out.print("dataMap: "+dataMap+"\n");
-			        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList));
+					System.out.print("dataJSONList: "+dataJSONList+"\n");
+					staticsObj.put("statisticsData", new JSONSerializer().serialize(dataJSONList));
+					System.out.print("staticsobj: "+staticsObj+"\n");
+					StringEntity input = new StringEntity(staticsObj.toString());
 			        
 			        System.out.print("Input : "+ new JSONSerializer().serialize(dataJSONList));
 			 		HttpPost  postRequest = new HttpPost(url);
