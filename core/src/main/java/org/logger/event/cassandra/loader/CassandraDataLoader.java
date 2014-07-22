@@ -1004,6 +1004,7 @@ public class CassandraDataLoader implements Constants {
     	JSONArray resourceList = new JSONArray();
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
+    	columnList.add("count~ratings");
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1025,7 +1026,12 @@ public class CassandraDataLoader implements Constants {
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				resourceObj.put("views", detail.getLongValue());
+				if(detail.getName().contains("views")){
+					resourceObj.put("views", detail.getLongValue());
+				}
+				if(detail.getName().contains("ratings")){
+					resourceObj.put("ratings", detail.getLongValue());
+				}
 				resourceObj.put("resourceType", "resource");
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
