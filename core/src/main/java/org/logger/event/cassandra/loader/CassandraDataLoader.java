@@ -776,7 +776,7 @@ public class CassandraDataLoader implements Constants {
     		Rows<String, String> resource = dimResource.getRowsByIndexedColumn(i, "content_id");
     		if(resource != null && resource.size() > 0){
     			logger.info("jobId : {} "+jobId);
-    			logger.info("contentId : {} = Views : {} "+i,resource.getRowByIndex(1).getColumns().getColumnByName("views_count").getLongValue());
+    			logger.info("contentId : {} = Views : {} "+i,resource.getRowByIndex(0).getColumns().getColumnByName("views_count").getLongValue());
     		}
     		
     		System.out.print("index : " + i);
