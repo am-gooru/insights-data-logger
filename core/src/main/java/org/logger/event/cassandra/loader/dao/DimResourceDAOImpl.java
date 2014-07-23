@@ -26,7 +26,7 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
         
 	}
 
-	public Rows<String, String> getRowsByIndexedColumn(String value,String whereColumn){
+	public Rows<String, String> getRowsByIndexedColumn(long value,String whereColumn){
 		Rows<String, String> resources = null;
 		try {
 			resources = getKeyspace().prepareQuery(dimResourceCF)
