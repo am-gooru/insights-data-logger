@@ -41,6 +41,7 @@ import com.netflix.astyanax.query.RowQuery;
 import com.netflix.astyanax.query.RowSliceQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 
+import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
 
 public class AggregationDAOImpl extends BaseDAOCassandraImpl implements AggregationDAO, Constants {
@@ -301,7 +302,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * @param rowKey is collection of keys
 	 * 
 	 * @param columnList will list column needs to be fetched
-	 */
+	 */ 
 	public OperationResult<Rows<String, String>> readRows(String columnFamilyName, Collection<String> rowKey, Collection<String> columnList) {
 
 		OperationResult<Rows<String, String>> result = null;
@@ -1119,46 +1120,93 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 		}
 		Map<String, Long> resultMap = new HashMap<String, Long>();
+		
 		if(checkNull(validEventData)){
+			
 		for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
+			
 			if(jsonEntry.getKey().equalsIgnoreCase("events")){
 				continue;
 			}
+
 			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
-			JsonObject json = new JsonObject();
-			json = jsonElement.getAsJsonObject();
-			String[] formulas = json.get("formulas").toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA);
-			String name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "") : jsonEntry.getKey();
+			JsonObject json  = jsonElement.getAsJsonObject();
+			Map<String, String> rawMap = new HashMap<String, String>();
 			try {
-				Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
-				for(String formula :formulas){
-					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get(formulaDetail.FORMULA.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY));
-					Map<String,String> keyMap = new HashMap<String,String>();
-					if(json.has(formula)){
-						jsonElement = new JsonParser().parse(json.get(formula).toString());
-						json = jsonElement.getAsJsonObject();
-						name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "") : jsonEntry.getKey();
-						name = formOrginalKey(name, validEventData, format, currentDate).toString();
-						String[] columnNames = json.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA);
-						Map<String,String> formulaMap = new HashMap();
-						for (String columnName : columnNames) {
-							String keyName = json.get(columnName).toString().replaceAll(DOUBLE_QUOTES, EMPTY);
-							String keyValue = json.get(keyName).toString();
-							Set<String> column = formOrginalKey(keyValue, validEventData, format, currentDate);
-							keyMap.put(keyName, column.toString());
-						}
-						for(Map.Entry<String, String> map : keyMap.entrySet()){
+				rawMap = gson.fromJson(json, rawMap.getClass());
+			} catch (Exception e) {
+				logger.debug("formula detail is not an json Element");
+				continue;
+			}
+			if(rawMap.containsKey("formulas")){
+			String[] formulas = rawMap.get("formulas").split(SEPERATOR);
+			
+			for(String formula : formulas){
+				jsonElement = new JsonParser().parse(rawMap.get(formula));
+				json  = jsonElement.getAsJsonObject();
+				try {
+					rawMap = gson.fromJson(json, rawMap.getClass());
+				} catch (Exception e) {
+					logger.debug(" individual formula detail is not an json Element");
+					continue;
+				}
+			
+				Map<String,String> variableMap = new HashMap<String, String>();
+				if(rawMap.containsKey("formula")){
+					try{
+					String[] values = rawMap.get("requestValues").split(SEPERATOR);
+					
+					for(String value : values){
+						Set<String> columnSet = formOrginalKey(rawMap.get(value), validEventData, format, currentDate);
+						if(checkNull(columnSet))
+						variableMap.put(value,convertSettoString(columnSet));
+					}
+					ExpressionBuilder expressionBuilder = new ExpressionBuilder(rawMap.get(formulaDetail.FORMULA.formulaDetail()));
+					for(Map.Entry<String, String> map : variableMap.entrySet()){
 						expressionBuilder.withVariable(map.getKey(),entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
-						}
-						long calculatedData = Math.round(expressionBuilder.build().calculate());
-						resultMap.put(name, calculatedData);
+					}
+					resultMap.put(rawMap.get("name") != null ? rawMap.get("name") : jsonEntry.getKey() , Math.round(expressionBuilder.build().calculate()));
+					}catch(Exception e){
+						resultMap.put(rawMap.get("name") != null ? rawMap.get("name") : jsonEntry.getKey() , 0L);
+						logger.error("mathametical error"+e);
+					}
 					}
 				}
-				
-			} catch (Exception e) {
-				resultMap.put(name, 0L);
-		}
-		}
+			}
+			}
+			
+//			String[] formulas = json.get("formulas").toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA);
+//			String name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "").replaceAll("\\\\", "") : jsonEntry.getKey();
+//			try {
+//				for(String formula :formulas){
+//					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get(formulaDetail.FORMULA.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY));
+//					Map<String,String> keyMap = new HashMap<String,String>();
+//					if(json.has(formula)){
+//						jsonElement = new JsonParser().parse(json.get(formula).toString().replaceAll("}\"", "}").replaceAll("\"{", "{").replaceAll("\\\\", ""));
+//						json = jsonElement.getAsJsonObject();
+//						Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
+//						name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "").replaceAll("\\\\", "") : jsonEntry.getKey();
+//						name = convertSettoString(formOrginalKey(name, validEventData, format, currentDate));
+//						String[] columnNames = json.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY).replaceAll("\\\\", "").split(COMMA);
+//						Map<String,String> formulaMap = new HashMap();
+//						for (String columnName : columnNames) {
+//							String keyName = json.get(columnName).toString().replaceAll(DOUBLE_QUOTES, EMPTY).replaceAll("\\\\", "");
+//							String keyValue = json.get(keyName).toString();
+//							Set<String> column = formOrginalKey(keyValue, validEventData, format, currentDate);
+//							keyMap.put(keyName, column.toString());
+//						}
+//						for(Map.Entry<String, String> map : keyMap.entrySet()){
+//						expressionBuilder.withVariable(map.getKey(),entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
+//						}
+//						long calculatedData = Math.round(expressionBuilder.build().calculate());
+//						resultMap.put(name, calculatedData);
+//					}
+//				}
+//				
+//			} catch (Exception e) {
+//				resultMap.put(name, 0L);
+//		}
+//		}
 		}
 		return resultMap;
 	}
