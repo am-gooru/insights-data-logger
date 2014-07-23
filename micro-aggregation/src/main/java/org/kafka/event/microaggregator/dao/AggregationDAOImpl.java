@@ -193,12 +193,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					Map<String, Long> resultMap = new HashMap<String, Long>();
 					for (Map<String, Object> formulaMap : normalFormulaDetails) {
 						try{
-						Map<String, Object> formulaDetail = new HashMap<String, Object>();
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
-						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
-
-						resultMap = calculation(countMap, formulaDetail, fetchedkey.get(mapKey.KEY.mapKey()), eventData);
+						resultMap = calculation(countMap, jsonObject, fetchedkey.get(mapKey.KEY.mapKey()), eventData);
 						}catch(Exception e){
 							logger.error("unable to get formula"+e);
 							System.out.println("exception while getting data"+e);
@@ -1125,7 +1122,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * 
 	 * @param eventData is the event detail
 	 */
-	public Map<String, Long> calculation(Map<String, String> entry, Map<String, Object> jsonMap, String currentDate, List<Map<String, String>> eventData) {
+	public Map<String, Long> calculation(Map<String, String> entry, JsonObject jsonMap, String currentDate, List<Map<String, String>> eventData) {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
@@ -1137,17 +1134,12 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 		
 		if (checkNull(validEventData)) {
-		for(Map.Entry<String, Object> formulasMap : jsonMap.entrySet()){
-			
-			if(formulasMap.getKey().equalsIgnoreCase(formulaDetail.EVENTS.formulaDetail())){
-				continue;
-			}
-			
-			JsonElement jsonElement = new JsonParser().parse(formulasMap.getValue().toString());
+			JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).getAsString());
 			JsonArray formulaArray = jsonElement.getAsJsonArray();
 			for(int i =0;i< formulaArray.size();i++){
 				try {
-				JsonElement obj = formulaArray.get(0);
+				JsonElement obj = formulaArray.get(i);
+				
 				JsonObject columnFormula = obj.getAsJsonObject();
 
 					if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail()) && formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).toString())) {
@@ -1182,7 +1174,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				continue;
 			}
 				}
-			}
 		}
 		return resultMap;
 	}
