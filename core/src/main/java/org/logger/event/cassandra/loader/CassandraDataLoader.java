@@ -786,7 +786,7 @@ public class CassandraDataLoader implements Constants {
     		
     		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount++);
     		configSettings.AddOrUpdateLong("views_job_settings", "indexed_count", endVal);
-    		configSettings.updateOrAddRow("views_job_settings", "job_names", ","+jobId);
+    		configSettings.updateOrAddRow("views_job_settings", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;

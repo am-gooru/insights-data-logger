@@ -189,7 +189,6 @@ public String getConstants(String KEY,String columnName){
 	return constantName;
 }
 
-@Caching
 public ColumnList<String> getColumnList(String KEY){
 
 		ColumnList<String> jobConstants = null;
