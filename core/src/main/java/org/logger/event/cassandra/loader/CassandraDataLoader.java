@@ -771,7 +771,7 @@ public class CassandraDataLoader implements Constants {
     	Rows<String, String> resource = null;
     	for(long i = startIndex ;i <= endIndex ; i++){
     		logger.info("contentId : "+ i);
-	    		try{
+	    		/*try{
 	    			resource = dimResource.getRowsByIndexedColumn(i, "content_id");
 	    			logger.info("Size : {} ",resource.size());
 	    			if(resource != null && resource.size() > 0){
@@ -780,8 +780,7 @@ public class CassandraDataLoader implements Constants {
 	    			}
 	    		}catch(Exception e){
 	    			logger.info("Exception: {}",e);
-    		}
-    		System.out.print("index : " + i);
+    		}*/
     	}
     	
     }
