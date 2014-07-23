@@ -770,6 +770,8 @@ public class CassandraDataLoader implements Constants {
     	
     	long jobCount = settings.getColumnByName("job_count").getLongValue();
     	
+    	String runningJobs = settings.getColumnByName("job_names").getStringValue();
+    		
     	if(jobCount < 3){
     		long start = System.currentTimeMillis();
     		
@@ -784,6 +786,7 @@ public class CassandraDataLoader implements Constants {
     		
     		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount++);
     		configSettings.AddOrUpdateLong("views_job_settings", "indexed_count", endVal);
+    		configSettings.updateOrAddRow("views_job_settings", "job_names", ","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
