@@ -80,6 +80,7 @@ import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -769,20 +770,33 @@ public class CassandraDataLoader implements Constants {
     	long endIndex = Long.valueOf(endTime);
     	String jobId = "job-"+UUID.randomUUID();
     	Rows<String, String> resource = null;
+		MutationBatch m = null;
+		try {
+			m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
     	for(long i = startIndex ; i <= endIndex ; i++){
     		logger.info("contentId : "+ i);
 	    		try{
 	    			resource = dimResource.getRowsByIndexedColumn(i, "content_id");
 	    			logger.info("Size : {} ",resource.size());
 	    			if(resource != null && resource.size() > 0){
+	    				ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
 	    				logger.info("jobId : {} "+jobId);
-	    				logger.info("contentId : {} = Views : {} "+i,resource.getRowByIndex(0).getColumns().getColumnByName("views_count").getLongValue());
+	    				logger.info("Gooru Id: {} = Views : {} "+columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
+	    				liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
 	    			}
 	    		}catch(Exception e){
 	    			logger.info("Exception: {}",e);
     		}
     	}
-    	
+    	try {
+			m.execute();
+			logger.info("Process Ends  : Inserted successfully");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
     //Creating staging Events
     public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
