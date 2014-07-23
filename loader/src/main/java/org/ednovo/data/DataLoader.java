@@ -178,6 +178,7 @@ public class DataLoader  {
     	    }else if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
     	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
     	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
+    	    	return;
     	    }else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
 	    	    	String EventName = null;
 	    	    	if(line.getOptionValue("eventName") != null || line.getOptionValue("eventName") == ""){

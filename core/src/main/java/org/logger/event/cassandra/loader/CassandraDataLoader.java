@@ -766,6 +766,8 @@ public class CassandraDataLoader implements Constants {
 
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
+    	long start = System.currentTimeMillis();
+    	
     	long startIndex = Long.valueOf(startTime);
     	long endIndex = Long.valueOf(endTime);
     	String jobId = "job-"+UUID.randomUUID();
@@ -784,7 +786,7 @@ public class CassandraDataLoader implements Constants {
 	    			if(resource != null && resource.size() > 0){
 	    				ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
 	    				logger.info("jobId : {} "+jobId);
-	    				logger.info("Gooru Id: {} = Views : {} "+columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
+	    				logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
 	    				liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
 	    			}
 	    		}catch(Exception e){
@@ -793,10 +795,15 @@ public class CassandraDataLoader implements Constants {
     	}
     	try {
 			m.execute();
+			long stop = System.currentTimeMillis();
+			logger.info("Process takes time time upadate in ms : {} " ,(stop-start));
 			logger.info("Process Ends  : Inserted successfully");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		
+		
     }
     //Creating staging Events
     public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
