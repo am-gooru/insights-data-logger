@@ -766,43 +766,59 @@ public class CassandraDataLoader implements Constants {
 
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
-    	long start = System.currentTimeMillis();
+    	ColumnList<String> settings = configSettings.getColumnList("views_job_settings");
     	
-    	long startIndex = Long.valueOf(startTime);
-    	long endIndex = Long.valueOf(endTime);
-    	String jobId = "job-"+UUID.randomUUID();
-    	Rows<String, String> resource = null;
-		MutationBatch m = null;
-		try {
-			m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-    	for(long i = startIndex ; i <= endIndex ; i++){
-    		logger.info("contentId : "+ i);
-	    		try{
-	    			resource = dimResource.getRowsByIndexedColumn(i, "content_id");
-	    			logger.info("Size : {} ",resource.size());
-	    			if(resource != null && resource.size() > 0){
-	    				ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
-	    				logger.info("jobId : {} "+jobId);
-	    				logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
-	    				liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
-	    			}
-	    		}catch(Exception e){
-	    			logger.info("Exception: {}",e);
+    	long jobCount = settings.getColumnByName("job_count").getLongValue();
+    	
+    	String runningJobs = settings.getColumnByName("job_names").getStringValue();
+    		
+    	if(jobCount < 3){
+    		long start = System.currentTimeMillis();
+    		
+    		long startVal = settings.getColumnByName("indexed_count").getLongValue();
+    		long endVal = (settings.getColumnByName("max_count").getLongValue() + startVal);
+
+    		String jobId = "job-"+UUID.randomUUID();
+    		
+    		configSettings.AddOrUpdateLong(jobId, "start_count", startVal);
+    		configSettings.AddOrUpdateLong(jobId, "end_count", endVal);
+    		configSettings.updateOrAddRow(jobId, "job_status", "Inprogress");
+    		
+    		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount++);
+    		configSettings.AddOrUpdateLong("views_job_settings", "indexed_count", endVal);
+    		configSettings.updateOrAddRow("views_job_settings", "job_names", runningJobs+","+jobId);
+    		
+    		Rows<String, String> resource = null;
+    		MutationBatch m = null;
+    		try {
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+    		for(long i = startVal ; i <= endVal ; i++){
+    			logger.info("contentId : "+ i);
+    				resource = dimResource.getRowsByIndexedColumn(i, "content_id");
+    				logger.info("Size : {} ",resource.size());
+    				if(resource != null && resource.size() > 0){
+    					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+    					logger.info("jobId : {} "+jobId);
+    					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
+    					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
+    				}
+    			
     		}
+    			m.execute();
+    			long stop = System.currentTimeMillis();
+    			logger.info("Process takes time time upadate in ms : {} " ,(stop-start));
+    			configSettings.updateOrAddRow(jobId, "job_status", "Completed");
+    			configSettings.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
+    			configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount--);
+    			logger.info("Process Ends  : Inserted successfully");
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}else{
+    		
+    		logger.info("Job queue is full! we are not start any job");
     	}
-    	try {
-			m.execute();
-			long stop = System.currentTimeMillis();
-			logger.info("Process takes time time upadate in ms : {} " ,(stop-start));
-			logger.info("Process Ends  : Inserted successfully");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		
 		
     }
     //Creating staging Events
