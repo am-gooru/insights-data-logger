@@ -69,6 +69,17 @@
            <property name="startDelay" value="1000" />
        </bean>
        
+       	<bean id="migrationJobDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="eventController" />
+           <property name="targetMethod" value="postMigration" />
+       </bean>
+
+       <bean id="migrationJobTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="migrationJobDetails" />
+           <property name="repeatInterval" value="5000" />
+           <property name="startDelay" value="1000" />
+       </bean>
+       
        <bean id="minuteRunner" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="executeForEveryMinute" />
@@ -86,6 +97,7 @@
                  <ref bean="firstTaskJobDetail" />
                  <ref bean="minuteRunner" />
                  <ref bean="watchSessionDetails" />
+                 <ref bean="migrationJobDetails" />
               </list>
            </property>
            <property name="triggers">
@@ -93,6 +105,7 @@
                  <ref bean="secondSimpleTrigger" />
                  <ref bean="thirdSimpleTrigger" />
                  <ref bean="watchSessionTrigger" />
+                 <ref bean="migrationJobTrigger" />
               </list>
            </property>
        </bean>

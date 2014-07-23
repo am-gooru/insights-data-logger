@@ -24,6 +24,7 @@
 package org.logger.event.web.service;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -244,5 +245,9 @@ public class EventServiceImpl implements EventService {
 	
 	public Map<String,String> createEvent(String eventName){
 		return dataLoaderService.createEvent(eventName);
+	}
+	
+	public void postMigration(String start,String end,String param){
+			dataLoaderService.postMigration(start, end, param);
 	}
 }

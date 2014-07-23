@@ -64,4 +64,5 @@ public interface EventService {
 	
 	Map<String,String> createEvent(String eventName);
 
+	void postMigration(String start,String Stop,String param);
 }

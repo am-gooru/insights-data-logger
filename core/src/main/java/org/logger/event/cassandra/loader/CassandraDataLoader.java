@@ -763,22 +763,15 @@ public class CassandraDataLoader implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
-    public void postMigration(String startTime , String endTime,String customEventName) throws ParseException{
+    public void postMigration(String startTime , String endTime,String customEventName){
     	
     	long startIndex = Long.valueOf(startTime);
-    	long endIndexIndex = Long.valueOf(startTime);
+    	long endIndex = Long.valueOf(startTime);
     	String jobId = "job-"+UUID.randomUUID();
     	Rows<String, String> resource = null;
-    	for(long i = startIndex ;i <= endIndexIndex ; i++){
+    	for(long i = startIndex ; i <= endIndex ;){
     		logger.info("contentId : "+ i);
-    		resource = dimResource.getRowsByIndexedColumn(i, "content_id");
-    		logger.info("Size : {} ",resource.size());
-    		if(resource != null && resource.size() > 0){
-    			logger.info("jobId : {} "+jobId);
-    			logger.info("contentId : {} = Views : {} "+i,resource.getRowByIndex(0).getColumns().getColumnByName("views_count").getLongValue());
-    		}
-    		
-    		System.out.print("index : " + i);
+	    	i++;	
     	}
     	
     }
