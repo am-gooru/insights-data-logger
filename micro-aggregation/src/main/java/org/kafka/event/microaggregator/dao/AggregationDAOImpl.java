@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -191,13 +192,18 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				for (Map<String, String> countMap : dashboardData) {
 					Map<String, Long> resultMap = new HashMap<String, Long>();
 					for (Map<String, Object> formulaMap : normalFormulaDetails) {
+						try{
 						Map<String, Object> formulaDetail = new HashMap<String, Object>();
 						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
 
 						resultMap = calculation(countMap, formulaDetail, fetchedkey.get(mapKey.KEY.mapKey()), eventData);
-					}
+						}catch(Exception e){
+							logger.error("unable to get formula"+e);
+							System.out.println("exception while getting data"+e);
+						}
+						}
 					if (!checkNull(resultMap)) {
 						continue;
 					}
@@ -360,12 +366,12 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void incrementCounterValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 
 		if (checkNull(rowKey) && checkNull(request)) {
+			try {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
 				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
-			}
-			try {
 				mutationBatch.execute();
+			}
 			} catch (ConnectionException e) {
 				logger.error("Exception while increment the counter in " + columnFamilyName);
 				System.out.println(request + "" + e);
@@ -384,12 +390,12 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void putLongValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 
 		if (checkNull(rowKey) && checkNull(request)) {
+			try {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
 				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
-			}
-			try {
 				mutationBatch.execute();
+			}
 
 			} catch (ConnectionException e) {
 				logger.error("Exception while inserting the Long value in " + columnFamilyName);
@@ -435,8 +441,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		try {
 			for (String columnName : columns) {
 				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).deleteColumn(columnName);
+				mutationBatch.execute();
 			}
-			mutationBatch.execute();
 			return true;
 		} catch (ConnectionException e) {
 			logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
@@ -557,11 +563,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			try {
 			for (Map.Entry<String, String> entry : request.entrySet()) {
 				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
-			}
-			try {
 				mutationBatch.execute();
+			}
 			} catch (ConnectionException e) {
 				logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
 				e.printStackTrace();
@@ -1121,78 +1127,60 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 */
 	public Map<String, Long> calculation(Map<String, String> entry, Map<String, Object> jsonMap, String currentDate, List<Map<String, String>> eventData) {
 
-		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).toString();
+		Map<String, Long> resultMap = new HashMap<String, Long>();
 		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
+		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).toString();
 		for (Map<String, String> eventMap : eventData) {
 			if (eventMap.get(EVENT_NAME).contains(eventName)) {
 				validEventData.add(eventMap);
 			}
 		}
-
-		Map<String, Long> resultMap = new HashMap<String, Long>();
-
+		
 		if (checkNull(validEventData)) {
-
-			for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
-
-				if (jsonEntry.getKey().equalsIgnoreCase(formulaDetail.EVENTS.formulaDetail())) {
-					continue;
-				}
-
-				JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
-				JsonObject json = jsonElement.getAsJsonObject();
-				Map<String, String> rawMap = new HashMap<String, String>();
+		for(Map.Entry<String, Object> formulasMap : jsonMap.entrySet()){
+			
+			if(formulasMap.getKey().equalsIgnoreCase(formulaDetail.EVENTS.formulaDetail())){
+				continue;
+			}
+			
+			JsonElement jsonElement = new JsonParser().parse(formulasMap.getValue().toString());
+			JsonArray formulaArray = jsonElement.getAsJsonArray();
+			for(int i =0;i< formulaArray.size();i++){
 				try {
-					rawMap = gson.fromJson(json, rawMap.getClass());
-				} catch (Exception e) {
-					logger.debug("formula detail is not an json Element");
-					continue;
-				}
+				JsonElement obj = formulaArray.get(0);
+				JsonObject columnFormula = obj.getAsJsonObject();
 
-				if (rawMap.containsKey(formulaDetail.FORMULAS.formulaDetail())) {
-					String[] formulas = rawMap.get(formulaDetail.FORMULAS.formulaDetail()).split(COMMA);
-
-					for (String formula : formulas) {
-						Map<String, String> formulaMap = new HashMap<String, String>();
-						jsonElement = new JsonParser().parse(rawMap.get(formula));
-						json = jsonElement.getAsJsonObject();
-						try {
-							formulaMap = gson.fromJson(json, rawMap.getClass());
-						} catch (Exception e) {
-							logger.debug(" individual formula detail is not an json Element");
-							continue;
-						}
-
+					if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail()) && formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).toString())) {
+						
 						Map<String, String> variableMap = new HashMap<String, String>();
-						if (formulaMap.containsKey(formulaDetail.FORMULA.formulaDetail())) {
-							Set<String> name = formOrginalKey(formulaMap.get(formulaDetail.NAME.formulaDetail()), validEventData, format, currentDate);
-							String columnName = jsonEntry.getKey();
-							if (checkNull(name)) {
-								columnName = convertSettoString(name);
-							}
+						Set<String> name = formOrginalKey(columnFormula.get(formulaDetail.NAME.formulaDetail()).toString(), validEventData, format, currentDate);
+						String columnName = convertSettoString(name);
 
 							try {
-								String[] values = formulaMap.get(formulaDetail.REQUEST_VALUES.formulaDetail()).split(COMMA);
+								String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().split(COMMA);
 
 								for (String value : values) {
-									Set<String> columnSet = formOrginalKey(formulaMap.get(value), validEventData, format, currentDate);
+									Set<String> columnSet = formOrginalKey(columnFormula.get(value).toString(), validEventData, format, currentDate);
 									if (checkNull(columnSet))
 										variableMap.put(value, convertSettoString(columnSet));
 								}
 
-								ExpressionBuilder expressionBuilder = new ExpressionBuilder(formulaMap.get(formulaDetail.FORMULA.formulaDetail()));
+								ExpressionBuilder expressionBuilder = new ExpressionBuilder(variableMap.get(formulaDetail.FORMULA.formulaDetail()));
 								for (Map.Entry<String, String> map : variableMap.entrySet()) {
 									expressionBuilder.withVariable(map.getKey(), entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
 								}
-
 								resultMap.put(columnName, Math.round(expressionBuilder.build().calculate()));
 							} catch (Exception e) {
 								resultMap.put(columnName, 0L);
 								logger.error("mathametical error" + e);
+								continue;
 							}
 
 						}
-					}
+			} catch (Exception e) {
+				logger.debug("formula detail is not an json Element");
+				continue;
+			}
 				}
 			}
 		}
@@ -1235,7 +1223,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		String formedKey = rowKeys.replaceAll(columnKey.C.columnKey(), EMPTY);
 		formedKey = formedKey.replaceAll(columnKey.E.columnKey(), EMPTY);
-		if (formedKey.contains(columnKey.D.columnKey())) {
+		if (columnKey.D.columnKey().contains(formedKey)) {
 			Date currentDateTime;
 			try {
 				currentDateTime = currentFormat.parse(currentDate);

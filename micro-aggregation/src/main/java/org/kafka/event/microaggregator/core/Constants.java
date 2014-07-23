@@ -267,7 +267,7 @@ public interface Constants {
 	
 	public enum formulaDetail{
 		
-		NAME("name"),FORMULA("formula"),FORMULAS("formulas"),EVENTS("events"),REQUEST_VALUES("requestValues");
+		NAME("name"),FORMULA("formula"),FORMULAS("formulas"),ACTIVE("active"),EVENTS("events"),STATUS("status"),REQUEST_VALUES("requestValues");
 		
 		private String formulaKey;
 		
