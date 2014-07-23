@@ -772,23 +772,23 @@ public class CassandraDataLoader implements Constants {
     	
     	logger.info("column : {} ",settings.getColumnByName("job_count").getName());
     	
-    	long jobCount = Long.valueOf(settings.getColumnByName("job_count").getStringValue());
+    	long jobCount = settings.getColumnByName("job_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("job_count").getStringValue());
     	
     	String runningJobs = settings.getColumnByName("job_names").getStringValue();
     		
     	if(jobCount < 3){
     		long start = System.currentTimeMillis();
-    		
-    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
-    		long endVal = (Long.valueOf(settings.getColumnByName("max_count").getStringValue()) + startVal);
-
+    		long endIndex = settings.getColumnByName("max_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = settings.getColumnByName("indexed_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
     		configSettings.AddOrUpdateLong(jobId, "start_count", startVal);
     		configSettings.AddOrUpdateLong(jobId, "end_count", endVal);
     		configSettings.updateOrAddRow(jobId, "job_status", "Inprogress");
     		
-    		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount++);
+    		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount);
     		configSettings.AddOrUpdateLong("views_job_settings", "indexed_count", endVal);
     		configSettings.updateOrAddRow("views_job_settings", "job_names", runningJobs+","+jobId);
     		
@@ -814,7 +814,7 @@ public class CassandraDataLoader implements Constants {
     			logger.info("Process takes time time upadate in ms : {} " ,(stop-start));
     			configSettings.updateOrAddRow(jobId, "job_status", "Completed");
     			configSettings.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
-    			configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount--);
+    			configSettings.AddOrUpdateLong("views_job_settings", "job_count", (jobCount - 1));
     			logger.info("Process Ends  : Inserted successfully");
     		} catch (Exception e) {
     			e.printStackTrace();
