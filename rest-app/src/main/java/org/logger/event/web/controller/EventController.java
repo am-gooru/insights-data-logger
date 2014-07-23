@@ -500,6 +500,10 @@ public class EventController {
 		eventService.watchSession();
 	}
 
+	public void postMigration(){
+		logger.info("post migration............");
+	}
+	
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
 	public void getUserActivity(@RequestParam String userUid,
