@@ -778,7 +778,6 @@ public class CassandraDataLoader implements Constants {
     			logger.info("contentId : {} = Views : {} "+i,resource.getRowByIndex(0).getColumns().getColumnByName("views_count").getLongValue());
     		}
     		
-    		
     		System.out.print("index : " + i);
     	}
     	
