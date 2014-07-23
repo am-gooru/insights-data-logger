@@ -37,7 +37,6 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
 				.equals()
 				.value(value).execute().getResult();
 		} catch (ConnectionException e) {
-			
 			logger.info("Error while retieveing data : {}" ,e);
 		}		
 		return resources;
