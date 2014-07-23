@@ -248,10 +248,6 @@ public class EventServiceImpl implements EventService {
 	}
 	
 	public void postMigration(String start,String end,String param){
-		try {
 			dataLoaderService.postMigration(start, end, param);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
 	}
 }
