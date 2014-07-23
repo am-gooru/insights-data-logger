@@ -772,14 +772,14 @@ public class CassandraDataLoader implements Constants {
     	
     	logger.info("column : {} ",settings.getColumnByName("job_count").getName());
     	
-    	long jobCount = settings.getColumnByName("job_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("job_count").getStringValue());
+    	long jobCount = Long.valueOf(settings.getColumnByName("job_count").getStringValue());
     	
     	String runningJobs = settings.getColumnByName("job_names").getStringValue();
     		
     	if(jobCount < 3){
     		long start = System.currentTimeMillis();
-    		long endIndex = settings.getColumnByName("max_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("max_count").getStringValue());
-    		long startVal = settings.getColumnByName("indexed_count").getStringValue() == "0L" ? 0L : Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     		long endVal = (endIndex + startVal);
     		jobCount = (jobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
