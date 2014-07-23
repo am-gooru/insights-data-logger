@@ -26,6 +26,23 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
         
 	}
 
+	public Rows<String, String> getRowsByIndexedColumn(long value,String whereColumn){
+		Rows<String, String> resources = null;
+		try {
+			resources = getKeyspace().prepareQuery(dimResourceCF)
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			 	.searchWithIndex().setRowLimit(1)
+				.addExpression()
+				.whereColumn(whereColumn)
+				.equals()
+				.value(value).execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data : {}" ,e);
+		}		
+		return resources;
+	}
+	
+
 	public String resourceType(String gooruOid){
 		Rows<String, String> resources = null;
 		String type = null;
@@ -47,6 +64,6 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
 			 }
 		}
 		
-		return gooruOid;
+		return type;
 	}
 }

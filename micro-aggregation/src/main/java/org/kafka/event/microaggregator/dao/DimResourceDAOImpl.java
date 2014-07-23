@@ -1,8 +1,5 @@
 package org.kafka.event.microaggregator.dao;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

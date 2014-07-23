@@ -175,7 +175,10 @@ public class DataLoader  {
     	    	LOG.info("processing staging data for geo-location-update");
     	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
     	    	cassandraProcessor.geoLocationUpdate(line.getOptionValue("startTime"), line.getOptionValue("endTime"));
-    	    } else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
+    	    }else if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
+    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
+    	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
+    	    }else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
 	    	    	String EventName = null;
 	    	    	if(line.getOptionValue("eventName") != null || line.getOptionValue("eventName") == ""){
 	    	    		EventName = line.getOptionValue("eventName");
@@ -189,9 +192,6 @@ public class DataLoader  {
 	    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
 	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName);
 	    	    
-    	    }else if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
     	    }
     	}
     	catch( ParseException exp ) {
