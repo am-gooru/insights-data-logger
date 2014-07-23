@@ -135,6 +135,7 @@ public class MicroAggregationLoader implements Constants{
     	
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
+        this.aggregationDAO  = new AggregationDAOImpl(getConnectionProvider());
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
         this.liveDashboardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
@@ -402,7 +403,7 @@ public class MicroAggregationLoader implements Constants{
 		}
 
     /**
-     * @return the connectionProvider
+     * @return the connectionProvider 
      */
     public CassandraConnectionProvider getConnectionProvider() {
     	return connectionProvider;
