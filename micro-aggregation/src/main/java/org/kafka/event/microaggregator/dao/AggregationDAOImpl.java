@@ -1127,9 +1127,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
 		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).getAsString();
-		for (Map<String, String> eventMap : eventData) {
-			System.out.println("event name "+eventName+" and json"+eventMap.get(EVENT_NAME));
 
+		for (Map<String, String> eventMap : eventData) {
 			if (eventMap.get(EVENT_NAME).contains(eventName)) {
 				validEventData.add(eventMap);
 			}
