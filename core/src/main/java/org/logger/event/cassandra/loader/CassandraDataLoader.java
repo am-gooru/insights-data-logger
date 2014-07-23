@@ -775,6 +775,7 @@ public class CassandraDataLoader implements Constants {
     	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
     	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
     	
     	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
@@ -816,6 +817,7 @@ public class CassandraDataLoader implements Constants {
     			long stop = System.currentTimeMillis();
     			configSettings.updateOrAddRow(jobId, "job_status", "Completed");
     			configSettings.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
+    			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
     			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
     			e.printStackTrace();
