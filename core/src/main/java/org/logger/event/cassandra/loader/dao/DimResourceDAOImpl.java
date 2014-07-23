@@ -26,27 +26,20 @@ public class DimResourceDAOImpl extends BaseDAOCassandraImpl implements  DimReso
         
 	}
 
-	public String resourceType(String gooruOid){
+	public Rows<String, String> getRowsByIndexedColumn(String value,String whereColumn){
 		Rows<String, String> resources = null;
-		String type = null;
 		try {
 			resources = getKeyspace().prepareQuery(dimResourceCF)
 				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 			 	.searchWithIndex().setRowLimit(1)
 				.addExpression()
-				.whereColumn("gooru_oid")
+				.whereColumn(whereColumn)
 				.equals()
-				.value(gooruOid).execute().getResult();
+				.value(value).execute().getResult();
 		} catch (ConnectionException e) {
 			
 			logger.info("Error while retieveing data : {}" ,e);
-		}
-		if(resources != null){
-			for(Row<String, String> resource : resources){
-				type =  resource.getColumns().getColumnByName("type_name") != null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
-			 }
-		}
-		
-		return gooruOid;
+		}		
+		return resources;
 	}
 }
