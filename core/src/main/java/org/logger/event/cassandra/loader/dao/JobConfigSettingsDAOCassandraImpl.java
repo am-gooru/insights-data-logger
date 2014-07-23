@@ -96,7 +96,22 @@ public class JobConfigSettingsDAOCassandraImpl extends BaseDAOCassandraImpl impl
 	         	logger.info("Error while adding session - ", e);
 	         }
 	}
-public String checkJobStatus(){
+
+	public void AddOrUpdateLong(String rowKey,String columnName,long value){
+
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		m.withRow(jobConfigCF, rowKey)
+		.putColumnIfNotNull(columnName, value)
+		;
+		 try{
+	         	m.execute();
+	         } catch (ConnectionException e) {
+	         	logger.info("Error while adding session - ", e);
+	         }
+	}
+	
+	public String checkJobStatus(){
 
 	ColumnList<String> jobStatus = null;
 	String KEY = "job~status";
