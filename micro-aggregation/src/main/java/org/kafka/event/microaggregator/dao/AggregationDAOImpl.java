@@ -1126,15 +1126,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
 		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
-		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).toString();
+		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).getAsString();
 		for (Map<String, String> eventMap : eventData) {
+			System.out.println("event name "+eventName+" and json"+eventMap.get(EVENT_NAME));
+
 			if (eventMap.get(EVENT_NAME).contains(eventName)) {
 				validEventData.add(eventMap);
 			}
 		}
 		
 		if (checkNull(validEventData)) {
-			JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).getAsString());
+			JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).toString());
 			JsonArray formulaArray = jsonElement.getAsJsonArray();
 			for(int i =0;i< formulaArray.size();i++){
 				try {
@@ -1142,26 +1144,27 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				
 				JsonObject columnFormula = obj.getAsJsonObject();
 
-					if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail()) && formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).toString())) {
+					if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail()) && formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).getAsString())) {
 						
 						Map<String, String> variableMap = new HashMap<String, String>();
-						Set<String> name = formOrginalKey(columnFormula.get(formulaDetail.NAME.formulaDetail()).toString(), validEventData, format, currentDate);
+						Set<String> name = formOrginalKey(columnFormula.get(formulaDetail.NAME.formulaDetail()).getAsString(), validEventData, format, currentDate);
 						String columnName = convertSettoString(name);
 
 							try {
-								String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().split(COMMA);
+								String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).getAsString().split(COMMA);
 
 								for (String value : values) {
-									Set<String> columnSet = formOrginalKey(columnFormula.get(value).toString(), validEventData, format, currentDate);
+									Set<String> columnSet = formOrginalKey(columnFormula.get(value).getAsString(), validEventData, format, currentDate);
 									if (checkNull(columnSet))
 										variableMap.put(value, convertSettoString(columnSet));
 								}
 
-								ExpressionBuilder expressionBuilder = new ExpressionBuilder(variableMap.get(formulaDetail.FORMULA.formulaDetail()));
+								ExpressionBuilder expressionBuilder = new ExpressionBuilder(columnFormula.get(formulaDetail.FORMULA.formulaDetail()).getAsString());
 								for (Map.Entry<String, String> map : variableMap.entrySet()) {
 									expressionBuilder.withVariable(map.getKey(), entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
 								}
-								resultMap.put(columnName, Math.round(expressionBuilder.build().calculate()));
+								long calculated = Math.round(expressionBuilder.build().calculate());
+								resultMap.put(columnName, calculated);
 							} catch (Exception e) {
 								resultMap.put(columnName, 0L);
 								logger.error("mathametical error" + e);
