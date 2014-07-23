@@ -267,7 +267,7 @@ public interface Constants {
 	
 	public enum formulaDetail{
 		
-		NAME("name"),FORMULA("formula"),REQUEST_VALUES("requestValues");
+		NAME("name"),FORMULA("formula"),FORMULAS("formulas"),EVENTS("events"),REQUEST_VALUES("requestValues");
 		
 		private String formulaKey;
 		
@@ -279,6 +279,20 @@ public interface Constants {
 			return formulaKey;
 		}
 	}
+	
+	public enum columnKey{
+		C("C:"),D("D:"),E("E:");
+		
+		private String column;
+		
+		private columnKey(String name){
+			column = name;
+		}
+		public String columnKey(){
+			return column;
+		}
+	}
+	
 	public enum mapKey{
 		
 		KEY("key"),VALUE("value");

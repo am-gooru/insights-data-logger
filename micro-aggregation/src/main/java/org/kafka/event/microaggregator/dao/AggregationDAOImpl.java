@@ -1,6 +1,5 @@
 package org.kafka.event.microaggregator.dao;
 
-import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.collections.TreeBag;
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.kafka.event.microaggregator.core.Constants;
 import org.slf4j.Logger;
@@ -41,7 +39,6 @@ import com.netflix.astyanax.query.RowQuery;
 import com.netflix.astyanax.query.RowSliceQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 
-import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
 
 public class AggregationDAOImpl extends BaseDAOCassandraImpl implements AggregationDAO, Constants {
@@ -78,9 +75,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			String lastProcessedKey = null;
 			List<String> keys = new ArrayList<String>();
 			List<String> column = new ArrayList<String>();
+			
 			column.add(ITEM_VALUE);
 			column.add(LAST_PROCESSED_TIME);
 			OperationResult<ColumnList<String>> configData = this.readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
+			
 			column = new ArrayList<String>();
 			column.add(ITEM_VALUE);
 			List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
@@ -118,9 +117,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					e.printStackTrace();
 				}
 			} else {
+			
 				column = new ArrayList<String>();
 				column.add(LAST_PROCESSED_TIME);
 				List<String> processedTime = this.listRowColumnStringValue(configData, column);
+				
 				if (checkNull(processedTime)) {
 					Date startDate;
 					Date endDate;
@@ -131,6 +132,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						endTime = format.format(endDate);
 						calender.setTime(startDate);
 						do {
+							keys.add(format.format(calender.getTime()));
 							calender.add(calender.MINUTE, 1);
 							Date d = calender.getTime();
 							startTime = format.format(d);
@@ -149,18 +151,20 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					keys.add(endTime);
 				}
 			}
-			List<Map<String, String>> rowData = new ArrayList<Map<String,String>>();
-			// get Event Ids for every minute
-			rowData = this.sortList(this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())),
-					mapKey.KEY.mapKey(), sortType.ASC.sortType());
+			
+			List<Map<String, String>> rowData = new ArrayList<Map<String, String>>();
+		
+			// get Event Ids for every minute and sort it
+			rowData = this.sortList(this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())), mapKey.KEY.mapKey(),
+					sortType.ASC.sortType());
 
 			// iterate for every minute
 			for (Map<String, String> fetchedkey : rowData) {
+				
+				// get raw data for processing
 				column = new ArrayList<String>();
 				column.add(EVENT_NAME);
 				column.add(FIELDS);
-
-				// get raw data for processing
 				List<Map<String, String>> eventData = this.getRowsColumnStringValue(
 						this.readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column),
 						new ArrayList<String>());
@@ -173,14 +177,14 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				List<Map<String, Object>> normalFormulaDetails = this.getRowsKeyStringValue(this.readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column),
 						new ArrayList<String>());
 
-				Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(),convertStringtoList(convertListtoString(prcessingKey)), new ArrayList<String>()));
+				Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)), new ArrayList<String>()));
 
 				dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, fetchedkey.get(mapKey.KEY.mapKey()));
-				if(!checkNull(dashboardKeys)){
+				if (!checkNull(dashboardKeys)) {
 					break;
 				}
 				// update live dashboard
-				List<Map<String, String>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(),dashboardKeys, new ArrayList<String>()),
+				List<Map<String, String>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()),
 						new ArrayList<String>());
 
 				// insert data for normal aggregation
@@ -192,7 +196,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						JsonObject jsonObject = jsonElement.getAsJsonObject();
 						formulaDetail = gson.fromJson(jsonObject, formulaDetail.getClass());
 
-						resultMap = calculation(countMap, formulaDetail,fetchedkey.get(mapKey.KEY.mapKey()),eventData);
+						resultMap = calculation(countMap, formulaDetail, fetchedkey.get(mapKey.KEY.mapKey()), eventData);
 					}
 					if (!checkNull(resultMap)) {
 						continue;
@@ -208,6 +212,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				lastProcessedKey = fetchedkey.get(mapKey.KEY.mapKey());
 				logger.info("processed key " + lastProcessedKey);
 			}
+			
 			Map<String, String> data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
 			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
@@ -224,7 +229,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 */
 	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
 
-		Set<String> formedKeys= new TreeSet();
+		Set<String> formedKeys = new TreeSet();
 		for (Map<String, String> map : eventData) {
 			String key = null;
 
@@ -292,7 +297,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			keyData = payLoadMap.keySet();
 			key = replaceKey(key, payLoadMap, keyData);
 			formedKeys.addAll(convertStringtoSet(key));
-			}
+		}
 		return formedKeys;
 	}
 
@@ -302,7 +307,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * @param rowKey is collection of keys
 	 * 
 	 * @param columnList will list column needs to be fetched
-	 */ 
+	 */
 	public OperationResult<Rows<String, String>> readRows(String columnFamilyName, Collection<String> rowKey, Collection<String> columnList) {
 
 		OperationResult<Rows<String, String>> result = null;
@@ -609,7 +614,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		Set<String> resultList = new TreeSet<String>();
 		for (Row<String, String> row : result.getResult()) {
-			for(Column<String> column : row.getColumns()){
+			for (Column<String> column : row.getColumns()) {
 				resultList.add(column.getName());
 			}
 		}
@@ -909,7 +914,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		}
 		return stringBuffer.toString();
 	}
-	
+
 	/*
 	 * @param data is to convert Set to String
 	 */
@@ -1090,7 +1095,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 						if (m2.containsKey(name)) {
 							if (m1.containsKey(name)) {
-									return ((String) m2.get(name).toString().toLowerCase()).compareTo((String) m1.get(name).toString().toLowerCase());
+								return ((String) m2.get(name).toString().toLowerCase()).compareTo((String) m1.get(name).toString().toLowerCase());
 							} else {
 								return 1;
 							}
@@ -1109,153 +1114,138 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * @param entry is the given data
 	 * 
 	 * @param jsonMap is the formula Json
+	 * 
+	 * @param currentDate is the current date
+	 * 
+	 * @param eventData is the event detail
 	 */
-	public  Map<String, Long> calculation(Map<String, String> entry, Map<String, Object> jsonMap,String currentDate,List<Map<String,String>> eventData) {
-		
-		String eventName =jsonMap.get("events").toString();
-		List<Map<String,String>> validEventData= new ArrayList<Map<String,String>>();
-		for(Map<String,String> eventMap : eventData){
-			if(eventMap.get(EVENT_NAME).contains(eventName)){
-			validEventData.add(eventMap);
-		}
-		}
-		Map<String, Long> resultMap = new HashMap<String, Long>();
-		
-		if(checkNull(validEventData)){
-			
-		for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
-			
-			if(jsonEntry.getKey().equalsIgnoreCase("events")){
-				continue;
-			}
+	public Map<String, Long> calculation(Map<String, String> entry, Map<String, Object> jsonMap, String currentDate, List<Map<String, String>> eventData) {
 
-			JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
-			JsonObject json  = jsonElement.getAsJsonObject();
-			Map<String, String> rawMap = new HashMap<String, String>();
-			try {
-				rawMap = gson.fromJson(json, rawMap.getClass());
-			} catch (Exception e) {
-				logger.debug("formula detail is not an json Element");
-				continue;
+		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).toString();
+		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
+		for (Map<String, String> eventMap : eventData) {
+			if (eventMap.get(EVENT_NAME).contains(eventName)) {
+				validEventData.add(eventMap);
 			}
-			if(rawMap.containsKey("formulas")){
-			String[] formulas = rawMap.get("formulas").split(SEPERATOR);
-			
-			for(String formula : formulas){
-				jsonElement = new JsonParser().parse(rawMap.get(formula));
-				json  = jsonElement.getAsJsonObject();
+		}
+
+		Map<String, Long> resultMap = new HashMap<String, Long>();
+
+		if (checkNull(validEventData)) {
+
+			for (Map.Entry<String, Object> jsonEntry : jsonMap.entrySet()) {
+
+				if (jsonEntry.getKey().equalsIgnoreCase(formulaDetail.EVENTS.formulaDetail())) {
+					continue;
+				}
+
+				JsonElement jsonElement = new JsonParser().parse(jsonEntry.getValue().toString());
+				JsonObject json = jsonElement.getAsJsonObject();
+				Map<String, String> rawMap = new HashMap<String, String>();
 				try {
 					rawMap = gson.fromJson(json, rawMap.getClass());
 				} catch (Exception e) {
-					logger.debug(" individual formula detail is not an json Element");
+					logger.debug("formula detail is not an json Element");
 					continue;
 				}
-			
-				Map<String,String> variableMap = new HashMap<String, String>();
-				if(rawMap.containsKey("formula")){
-					try{
-					String[] values = rawMap.get("requestValues").split(SEPERATOR);
-					
-					for(String value : values){
-						Set<String> columnSet = formOrginalKey(rawMap.get(value), validEventData, format, currentDate);
-						if(checkNull(columnSet))
-						variableMap.put(value,convertSettoString(columnSet));
-					}
-					ExpressionBuilder expressionBuilder = new ExpressionBuilder(rawMap.get(formulaDetail.FORMULA.formulaDetail()));
-					for(Map.Entry<String, String> map : variableMap.entrySet()){
-						expressionBuilder.withVariable(map.getKey(),entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
-					}
-					resultMap.put(rawMap.get("name") != null ? rawMap.get("name") : jsonEntry.getKey() , Math.round(expressionBuilder.build().calculate()));
-					}catch(Exception e){
-						resultMap.put(rawMap.get("name") != null ? rawMap.get("name") : jsonEntry.getKey() , 0L);
-						logger.error("mathametical error"+e);
-					}
+
+				if (rawMap.containsKey(formulaDetail.FORMULAS.formulaDetail())) {
+					String[] formulas = rawMap.get(formulaDetail.FORMULAS.formulaDetail()).split(COMMA);
+
+					for (String formula : formulas) {
+						Map<String, String> formulaMap = new HashMap<String, String>();
+						jsonElement = new JsonParser().parse(rawMap.get(formula));
+						json = jsonElement.getAsJsonObject();
+						try {
+							formulaMap = gson.fromJson(json, rawMap.getClass());
+						} catch (Exception e) {
+							logger.debug(" individual formula detail is not an json Element");
+							continue;
+						}
+
+						Map<String, String> variableMap = new HashMap<String, String>();
+						if (formulaMap.containsKey(formulaDetail.FORMULA.formulaDetail())) {
+							Set<String> name = formOrginalKey(formulaMap.get(formulaDetail.NAME.formulaDetail()), validEventData, format, currentDate);
+							String columnName = jsonEntry.getKey();
+							if (checkNull(name)) {
+								columnName = convertSettoString(name);
+							}
+
+							try {
+								String[] values = formulaMap.get(formulaDetail.REQUEST_VALUES.formulaDetail()).split(COMMA);
+
+								for (String value : values) {
+									Set<String> columnSet = formOrginalKey(formulaMap.get(value), validEventData, format, currentDate);
+									if (checkNull(columnSet))
+										variableMap.put(value, convertSettoString(columnSet));
+								}
+
+								ExpressionBuilder expressionBuilder = new ExpressionBuilder(formulaMap.get(formulaDetail.FORMULA.formulaDetail()));
+								for (Map.Entry<String, String> map : variableMap.entrySet()) {
+									expressionBuilder.withVariable(map.getKey(), entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
+								}
+
+								resultMap.put(columnName, Math.round(expressionBuilder.build().calculate()));
+							} catch (Exception e) {
+								resultMap.put(columnName, 0L);
+								logger.error("mathametical error" + e);
+							}
+
+						}
 					}
 				}
 			}
-			}
-			
-//			String[] formulas = json.get("formulas").toString().replaceAll(DOUBLE_QUOTES, EMPTY).split(COMMA);
-//			String name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "").replaceAll("\\\\", "") : jsonEntry.getKey();
-//			try {
-//				for(String formula :formulas){
-//					ExpressionBuilder expressionBuilder = new ExpressionBuilder(json.get(formulaDetail.FORMULA.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY));
-//					Map<String,String> keyMap = new HashMap<String,String>();
-//					if(json.has(formula)){
-//						jsonElement = new JsonParser().parse(json.get(formula).toString().replaceAll("}\"", "}").replaceAll("\"{", "{").replaceAll("\\\\", ""));
-//						json = jsonElement.getAsJsonObject();
-//						Map<String, ExpressionBuilder> aggregatedMap = new HashMap<String, ExpressionBuilder>();
-//						name = json.get(formulaDetail.NAME.formulaDetail()) != null ? json.get(formulaDetail.NAME.formulaDetail()).toString().replaceAll("\"", "").replaceAll("\\\\", "") : jsonEntry.getKey();
-//						name = convertSettoString(formOrginalKey(name, validEventData, format, currentDate));
-//						String[] columnNames = json.get(formulaDetail.REQUEST_VALUES.formulaDetail()).toString().replaceAll(DOUBLE_QUOTES, EMPTY).replaceAll("\\\\", "").split(COMMA);
-//						Map<String,String> formulaMap = new HashMap();
-//						for (String columnName : columnNames) {
-//							String keyName = json.get(columnName).toString().replaceAll(DOUBLE_QUOTES, EMPTY).replaceAll("\\\\", "");
-//							String keyValue = json.get(keyName).toString();
-//							Set<String> column = formOrginalKey(keyValue, validEventData, format, currentDate);
-//							keyMap.put(keyName, column.toString());
-//						}
-//						for(Map.Entry<String, String> map : keyMap.entrySet()){
-//						expressionBuilder.withVariable(map.getKey(),entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
-//						}
-//						long calculatedData = Math.round(expressionBuilder.build().calculate());
-//						resultMap.put(name, calculatedData);
-//					}
-//				}
-//				
-//			} catch (Exception e) {
-//				resultMap.put(name, 0L);
-//		}
-//		}
 		}
 		return resultMap;
 	}
-	
-	/*	C: defines => Constant
-	D: defines => Date format lookup
-	E: defines => eventMap param lookup*/
-	public Set<String> formOrginalKey(Set<String> rowKeys,List<Map<String,String>> eventData,SimpleDateFormat currentFormat,String currentDate){
-		
+
+	/*
+	 * C: defines => Constant D: defines => Date format lookup E: defines =>
+	 * eventMap param lookup
+	 */
+	public Set<String> formOrginalKey(Set<String> rowKeys, List<Map<String, String>> eventData, SimpleDateFormat currentFormat, String currentDate) {
+
 		Set<String> formedKeys = new TreeSet<String>();
-		for(String keys : rowKeys){
-			String formedKey = keys.replaceAll("C:", "");
-			formedKey = formedKey.replaceAll("E:","");
-			if(formedKey.contains("D:")){
+		for (String keys : rowKeys) {
+			String formedKey = keys.replaceAll(columnKey.C.columnKey(),EMPTY);
+			formedKey = formedKey.replaceAll(columnKey.E.columnKey(),EMPTY);
+			if (formedKey.contains(columnKey.D.columnKey())) {
 				Date currentDateTime;
 				try {
 					currentDateTime = currentFormat.parse(currentDate);
-								String[] dateFormat = formedKey.split("D:");
-				dateFormat = dateFormat[1].split("~");
-				SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
-				formedKey = formedKey.replaceAll("D:"+dateFormat[0], customDateFormatter.format(currentDateTime));
+					String[] dateFormat = formedKey.split(columnKey.D.columnKey());
+					dateFormat = dateFormat[1].split(SEPERATOR);
+					SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
+					formedKey = formedKey.replaceAll(columnKey.D.columnKey() + dateFormat[0], customDateFormatter.format(currentDateTime));
 				} catch (ParseException e) {
 					e.printStackTrace();
 					continue;
 				}
-				}
+			}
 			formedKeys.add(formedKey);
 		}
-		   return substituteKeyVariable(eventData,convertSettoString(formedKeys));
-    }
+		return substituteKeyVariable(eventData, convertSettoString(formedKeys));
+	}
 
-		
-		/*	C: defines => Constant
-		D: defines => Date format lookup
-		E: defines => eventMap param lookup*/
-		public Set<String> formOrginalKey(String rowKeys,List<Map<String,String>> eventData,SimpleDateFormat currentFormat,String currentDate){
-			
-				String formedKey = rowKeys.replaceAll("C:", "");
-				formedKey = formedKey.replaceAll("E:","");
-				if(formedKey.contains("D:")){
-					Date currentDateTime;
-					try {
-						currentDateTime = currentFormat.parse(currentDate);
-									String[] dateFormat = formedKey.split("D:");
-					dateFormat = dateFormat[1].split("~");
-					SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
-					formedKey = formedKey.replaceAll("D:"+dateFormat[0], customDateFormatter.format(currentDateTime));
-					} catch (ParseException e) {}
-					}
-		return substituteKeyVariable(eventData,formedKey);
+	/*
+	 * C: defines => Constant D: defines => Date format lookup E: defines =>
+	 * eventMap param lookup
+	 */
+	public Set<String> formOrginalKey(String rowKeys, List<Map<String, String>> eventData, SimpleDateFormat currentFormat, String currentDate) {
+
+		String formedKey = rowKeys.replaceAll(columnKey.C.columnKey(), EMPTY);
+		formedKey = formedKey.replaceAll(columnKey.E.columnKey(), EMPTY);
+		if (formedKey.contains(columnKey.D.columnKey())) {
+			Date currentDateTime;
+			try {
+				currentDateTime = currentFormat.parse(currentDate);
+				String[] dateFormat = formedKey.split(columnKey.D.columnKey());
+				dateFormat = dateFormat[1].split(SEPERATOR);
+				SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
+				formedKey = formedKey.replaceAll(columnKey.D.columnKey() + dateFormat[0], customDateFormatter.format(currentDateTime));
+			} catch (ParseException e) {
+			}
+		}
+		return substituteKeyVariable(eventData, formedKey);
 	}
 }
