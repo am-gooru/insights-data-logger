@@ -250,4 +250,7 @@ public class EventServiceImpl implements EventService {
 	public void postMigration(String start,String end,String param){
 			dataLoaderService.postMigration(start, end, param);
 	}
+	public void postStatMigration(String start,String end,String param){
+		dataLoaderService.postStatMigration(start, end, param);
+	}
 }

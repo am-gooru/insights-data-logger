@@ -808,7 +808,7 @@ public class CassandraDataLoader implements Constants {
     		try {
     		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-    		for(long i = startVal ; i <= endVal ; i++){
+    		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
     				resource = dimResource.getRowsByIndexedColumn(i, "content_id");
     				logger.info("Size : {} ",resource.size());
@@ -876,7 +876,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     		String gooruOid = null;
     		MutationBatch m = null;
     		try {
-	    		for(long i = startVal ; i <= endVal ; i++){
+	    		for(long i = startVal ; i < endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    				gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
 	    				if(gooruOid != null){

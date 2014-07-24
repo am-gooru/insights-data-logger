@@ -502,7 +502,8 @@ public class EventController {
 
 	public void postMigration(){
 		logger.info("post migration............");
-	//	eventService.postMigration("9990", "10000", null);
+		//eventService.postMigration(null, null, null);
+		//eventService.postStatMigration(null, null, null);
 	}
 	
 	@SuppressWarnings("unchecked")
