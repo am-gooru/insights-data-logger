@@ -93,7 +93,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		CF_MICRO_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
-
+        this.recentResource = new RecentViewedResourcesDAOImpl(this.connectionProvider);
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -435,6 +435,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         			String isMigrated = null;
         			logger.info("migrated 1: {} ",isMigrated);
         			try{
+        				logger.info("contentGooruIs : {} ",eventMap.get("contentGooruId"));
         			 isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
         			}catch(Exception e){
         				logger.info("Exception : {} ",e);
