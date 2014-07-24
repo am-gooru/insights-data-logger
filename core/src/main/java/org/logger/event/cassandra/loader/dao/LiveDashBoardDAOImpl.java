@@ -429,7 +429,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
             	for(String value : columnValue.split(",")){
-            		logger.info("columnName : {} ",value );
+            		logger.info("columnName : {} ",columnName );
             		String orginalColumn = this.formOrginalKey(value, eventMap);
             		//to be revoked once migration completed
             		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
