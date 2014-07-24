@@ -774,7 +774,7 @@ public class CassandraDataLoader implements Constants {
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = configSettings.getColumnList("views_job_settings");
-    	ColumnList<String> jobIds = configSettings.getColumnList("job_ids");
+    	ColumnList<String> jobIds = recentViewedResources.getColumnList("job_ids");
     	
     	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
@@ -795,13 +795,13 @@ public class CassandraDataLoader implements Constants {
     		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-    		configSettings.updateOrAddRow(jobId, "start_count", ""+startVal);
-    		configSettings.updateOrAddRow(jobId, "end_count", ""+endVal);
-    		configSettings.updateOrAddRow(jobId, "job_status", "Inprogress");
+    		recentViewedResources.updateOrAddRow(jobId, "start_count", ""+startVal);
+    		recentViewedResources.updateOrAddRow(jobId, "end_count", ""+endVal);
+    		recentViewedResources.updateOrAddRow(jobId, "job_status", "Inprogress");
     		configSettings.updateOrAddRow("views_job_settings", "total_job_count", ""+totalJobCount);
     		configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+jobCount);
     		configSettings.updateOrAddRow("views_job_settings", "indexed_count", ""+endVal);
-    		configSettings.updateOrAddRow("job_ids", "job_names", runningJobs+","+jobId);
+    		recentViewedResources.updateOrAddRow("job_ids", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
@@ -818,13 +818,14 @@ public class CassandraDataLoader implements Constants {
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
+    					recentViewedResources.generateRow("views~"+i, "gooruOid", columns.getColumnByName("gooru_oid").getStringValue(), m);
     				}
     			
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
-    			configSettings.updateOrAddRow(jobId, "job_status", "Completed");
-    			configSettings.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
+    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
+    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
     			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
     			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
@@ -835,6 +836,81 @@ public class CassandraDataLoader implements Constants {
     	}
 		
     }
+    
+public void postStatMigration(String startTime , String endTime,String customEventName) {
+    	
+    	ColumnList<String> settings = configSettings.getColumnList("stat_job_settings");
+    	ColumnList<String> jobIds = recentViewedResources.getColumnList("stat_job_ids");
+    	
+    	JSONArray resourceList = new JSONArray();
+    	Collection<String> columnList = new ArrayList<String>();
+    	columnList.add("count~views");
+    	columnList.add("count~ratings");
+    	
+    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
+    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
+    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
+    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
+    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
+    	
+    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
+    		
+    	if((jobCount <= maxJobCount) && (indexedCount <= allowedCount) ){
+    		long start = System.currentTimeMillis();
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
+    		totalJobCount = (totalJobCount + 1);
+    		String jobId = "job-"+UUID.randomUUID();
+    		
+    		recentViewedResources.updateOrAddRow(jobId, "start_count", ""+startVal);
+    		recentViewedResources.updateOrAddRow(jobId, "end_count", ""+endVal);
+    		recentViewedResources.updateOrAddRow(jobId, "job_status", "Inprogress");
+    		configSettings.updateOrAddRow("stat_job_settings", "total_job_count", ""+totalJobCount);
+    		configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+jobCount);
+    		configSettings.updateOrAddRow("stat_job_settings", "indexed_count", ""+endVal);
+    		recentViewedResources.updateOrAddRow("stat_job_ids", "job_names", runningJobs+","+jobId);
+    		
+    		String gooruOid = null;
+    		MutationBatch m = null;
+    		try {
+	    		for(long i = startVal ; i <= endVal ; i++){
+	    			logger.info("contentId : "+ i);
+	    				gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    				if(gooruOid != null){
+	    					OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+gooruOid, columnList);
+	    					JSONObject resourceObj = new JSONObject();
+	    					for(Column<String> detail : vluesList.getResult()) {
+	    						resourceObj.put("gooruOid", gooruOid);
+	    						if(detail.getName().contains("views")){
+	    							resourceObj.put("views", detail.getLongValue());
+	    						}
+	    						if(detail.getName().contains("ratings")){
+	    							resourceObj.put("ratings", detail.getLongValue());
+	    						}
+	    						resourceObj.put("resourceType", "resource");
+	    						logger.info("gooruOid : {}" , gooruOid);
+	    					}
+	    					resourceList.put(resourceObj);
+	    				}
+	    		}
+	    		this.callStatAPI(resourceList, null);
+    			long stop = System.currentTimeMillis();
+    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
+    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
+    			configSettings.updateOrAddRow("stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+(jobCount - 1));
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}else{    		
+    		logger.info("Job queue is full! we are not start any job");
+    	}
+		
+    }
+    
     //Creating staging Events
     public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
     	HashMap<String, String> stagingEvents = new HashMap<String, String>();
@@ -961,11 +1037,11 @@ public class CassandraDataLoader implements Constants {
      * @throws JSONException 
      */
     public void callAPIViewCount() throws JSONException {
-    	JSONObject staticsObj = new JSONObject();
     	JSONArray resourceList = new JSONArray();
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
     	columnList.add("count~ratings");
+    	
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1000,28 +1076,7 @@ public class CassandraDataLoader implements Constants {
 		}
 		
 		if((resourceList.length() != 0)){
-			String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
-			try{
-					String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-					DefaultHttpClient httpClient = new DefaultHttpClient();   
-					staticsObj.put("statisticsData", resourceList);
-					StringEntity input = new StringEntity(staticsObj.toString());			        
-			 		HttpPost  postRequest = new HttpPost(url);
-			 		postRequest.addHeader("accept", "application/json");
-			 		postRequest.setEntity(input);
-			 		HttpResponse response = httpClient.execute(postRequest);
-			 		
-			 		if (response.getStatusLine().getStatusCode() != 200) {
-			 	 		logger.info("View count api call failed...");
-			 	 		throw new AccessDeniedException("Something went wrong! Api fails");
-			 		} else {			 			
-			 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-			 	 		logger.info("View count api call Success...");
-			 		}
-			 			
-			} catch(Exception e){
-				e.printStackTrace();
-			}		
+			this.callStatAPI(resourceList, rowValues);
 		}else{
 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
  	 		logger.info("No content viewed");
@@ -1029,6 +1084,34 @@ public class CassandraDataLoader implements Constants {
 	 }
    }
   
+    private void callStatAPI(JSONArray resourceList,Date rowValues){
+    	JSONObject staticsObj = new JSONObject();
+		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
+		try{
+				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+				DefaultHttpClient httpClient = new DefaultHttpClient();   
+				staticsObj.put("statisticsData", resourceList);
+				StringEntity input = new StringEntity(staticsObj.toString());			        
+		 		HttpPost  postRequest = new HttpPost(url);
+		 		postRequest.addHeader("accept", "application/json");
+		 		postRequest.setEntity(input);
+		 		HttpResponse response = httpClient.execute(postRequest);
+		 		
+		 		if (response.getStatusLine().getStatusCode() != 200) {
+		 	 		logger.info("View count api call failed...");
+		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
+		 		} else {
+		 			if(rowValues != null){
+		 				configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+		 			}
+		 	 		logger.info("View count api call Success...");
+		 		}
+		 			
+		} catch(Exception e){
+			e.printStackTrace();
+		}		
+	
+    }
     /**
      * 
      * @param eventName
