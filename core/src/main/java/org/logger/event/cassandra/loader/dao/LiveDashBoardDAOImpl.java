@@ -676,7 +676,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
-			this.generateCounter(visitor, visitorType, 1, m);
+			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, 1, m);
 		}	
 		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
@@ -721,7 +721,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					visitorType = "anonymousUser";
 				}
 		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(currentHour, column)){
-		 			this.generateCounter(visitor, visitorType, -1, m);
+		 			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
 		 		}else{
 		 			this.generateAggregator(currentHour, column,value, m);
 		 		}
@@ -751,7 +751,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
 	 			if(diffInMinutes > 30){
 	 				this.generateAggregator(visitor, visitorType, "expired", m);
-	 				this.generateCounter(visitor, visitorType, -1, m);
+	 				this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
 	 			}
 	 		}
 	 	}
