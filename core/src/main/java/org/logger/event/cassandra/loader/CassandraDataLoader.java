@@ -446,11 +446,12 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 		
-		this.saveGeoLocations(eventMap);		
 		
 		liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
 		liveDashBoardDAOImpl.addApplicationSession(eventMap);
+
+		this.saveGeoLocations(eventMap);		
 
 		if(pushingEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);

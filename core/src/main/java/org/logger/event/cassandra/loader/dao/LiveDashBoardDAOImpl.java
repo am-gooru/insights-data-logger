@@ -419,6 +419,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     @Async
     public void callCountersV2(Map<String,String> eventMap) {
+    	logger.info("calling counters...................");
     	boolean flag = true;
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
@@ -428,9 +429,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
             	for(String value : columnValue.split(",")){
+            		logger.info("value : {} ",value );
             		String orginalColumn = this.formOrginalKey(value, eventMap);
             		if(value.equalsIgnoreCase("C:all~E:contentGooruId")){
-            			logger.info("migrated : {} "+recentResource.read("all~"+eventMap.get("contentGooruId"), "status"));
+            			logger.info("migrated : {} ",recentResource.read("all~"+eventMap.get("contentGooruId"), "status"));
             		}
             		if(flag){
 	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
