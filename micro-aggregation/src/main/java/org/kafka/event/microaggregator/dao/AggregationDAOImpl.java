@@ -74,13 +74,13 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		try {
 
 			String lastProcessedKey = null;
-			List<String> keys = new ArrayList<String>();
+			Set<String> keys = new TreeSet<String>();
 			List<String> column = new ArrayList<String>();
-			
+
 			column.add(ITEM_VALUE);
 			column.add(LAST_PROCESSED_TIME);
 			OperationResult<ColumnList<String>> configData = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
-			
+
 			column = new ArrayList<String>();
 			column.add(ITEM_VALUE);
 			List<String> prcessingKey = listRowColumnStringValue(configData, column);
@@ -118,11 +118,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					e.printStackTrace();
 				}
 			} else {
-			
+
 				column = new ArrayList<String>();
 				column.add(LAST_PROCESSED_TIME);
 				List<String> processedTime = listRowColumnStringValue(configData, column);
-				
+
 				if (checkNull(processedTime)) {
 					Date startDate;
 					Date endDate;
@@ -152,70 +152,72 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					keys.add(endTime);
 				}
 			}
-			
-			List<Map<String, String>> rowData = new ArrayList<Map<String, String>>();
-		
-			// get Event Ids for every minute and sort it
-			rowData = sortList(getRowsKeyColumnStringValue(readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())), mapKey.KEY.mapKey(),
-					sortType.ASC.sortType());
+			// for every minute
+			for (String key : keys) {
+				List<String> rowData = new ArrayList<String>();
 
-			// iterate for every minute
-			for (Map<String, String> fetchedkey : rowData) {
-				
-				// get raw data for processing
-				column = new ArrayList<String>();
-				column.add(EVENT_NAME);
-				column.add(FIELDS);
-				List<Map<String, String>> eventData = getRowsColumnStringValue(
-						readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column),
-						new ArrayList<String>());
+				// get Event Ids for every minute and sort it
+				rowData = listRowColumnStringValue(readRow(columnFamily.EVENT_TIMELINE.columnFamily(), key, new ArrayList<String>()), new ArrayList<String>());
 
-				// get normal Formula
-				column = new ArrayList<String>();
-				column.add(FORMULA);
-				Map<String, Object> whereCondition = new HashMap<String, Object>();
-				whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
-				List<Map<String, Object>> normalFormulaDetails = getRowsKeyStringValue(readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column),
-						new ArrayList<String>());
+				// iterate for every event id
+				for (String fetchedkey : rowData) {
 
-				Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)), new ArrayList<String>()));
+					// get raw data for processisng
+					column = new ArrayList<String>();
+					column.add(EVENT_NAME);
+					column.add(FIELDS);
+					Map<String, String> eventData = getRowStringValue(readRow(columnFamily.EVENT_DETAIL.columnFamily(), fetchedkey, column));
 
-				dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, fetchedkey.get(mapKey.KEY.mapKey()));
-				if (!checkNull(dashboardKeys)) {
-					break;
-				}
-				// update live dashboard
-				List<Map<String, String>> dashboardData = getRowsKeyLongValue(readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()),
-						new ArrayList<String>());
-
-				// insert data for normal aggregation
-				for (Map<String, String> countMap : dashboardData) {
-					Map<String, Long> resultMap = new HashMap<String, Long>();
-					for (Map<String, Object> formulaMap : normalFormulaDetails) {
-						try{
-						JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
-						JsonObject jsonObject = jsonElement.getAsJsonObject();
-						resultMap = calculation(countMap, jsonObject, fetchedkey.get(mapKey.KEY.mapKey()), eventData);
-						}catch(Exception e){
-							logger.error("unable to get formula"+e);
-							System.out.println("exception while getting data"+e);
-						}
-						}
-					if (!checkNull(resultMap)) {
+					// Avoid empty data
+					if (!checkNull(eventData.get(EVENT_NAME)) || !checkNull(eventData.get(FIELDS))) {
 						continue;
 					}
 
-					// delete existing column since it was an dynamic column
-					Set<String> columnNames = resultMap.keySet();
-					deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
+					// get normal Formula
+					column = new ArrayList<String>();
+					column.add(FORMULA);
+					Map<String, Object> whereCondition = new HashMap<String, Object>();
+					whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
+					List<Map<String, Object>> normalFormulaDetails = getRowsKeyStringValue(readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column), new ArrayList<String>());
 
-					// Increment the counter column
-					incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
+					Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)),
+							new ArrayList<String>()));
+
+					dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, fetchedkey);
+					if (!checkNull(dashboardKeys)) {
+						break;
+					}
+					// update live dashboard
+					List<Map<String, String>> dashboardData = getRowsKeyLongValue(readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()), new ArrayList<String>());
+
+					// insert data for normal aggregation
+					for (Map<String, String> countMap : dashboardData) {
+						Map<String, Long> resultMap = new HashMap<String, Long>();
+						for (Map<String, Object> formulaMap : normalFormulaDetails) {
+							try {
+								JsonElement jsonElement = new JsonParser().parse(formulaMap.get(FORMULA).toString());
+								JsonObject jsonObject = jsonElement.getAsJsonObject();
+								resultMap = calculation(countMap, jsonObject, key, eventData);
+							} catch (Exception e) {
+								logger.error("unable to get formula" + e);
+								System.out.println("exception while getting data" + e);
+							}
+						}
+						if (!checkNull(resultMap)) {
+							continue;
+						}
+
+						// delete existing column since it was an dynamic column
+						Set<String> columnNames = resultMap.keySet();
+						deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
+
+						// Increment the counter column
+						incrementCounterValue(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), resultMap);
+					}
+					lastProcessedKey = key;
+					logger.info("processed key " + lastProcessedKey);
 				}
-				lastProcessedKey = fetchedkey.get(mapKey.KEY.mapKey());
-				logger.info("processed key " + lastProcessedKey);
 			}
-			
 			Map<String, String> data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
 			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
@@ -231,77 +233,65 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * 
 	 * @param tempKey the format of key where the value is got replaced
 	 */
-	public Set<String> substituteKeyVariable(List<Map<String, String>> eventData, String tempKey) {
+	public Set<String> substituteKeyVariable(Map<String, String> eventData, String tempKey) {
 
 		Set<String> formedKeys = new TreeSet();
-		for (Map<String, String> map : eventData) {
-			String key = null;
+		String key = null;
 
-			// Avoid empty data
-			if (!checkNull(map.get(EVENT_NAME)) || !checkNull(map.get(FIELDS))) {
-				continue;
-			}
-
-			Map<String, JsonElement> rawData = new HashMap<String, JsonElement>();
-			String eventName = map.get(EVENT_NAME);
-			JsonElement jsonElement = new JsonParser().parse(map.get(FIELDS));
-			JsonObject jsonObject = jsonElement.getAsJsonObject();
-			Map<String, String> rawMap = new HashMap<String, String>();
-			try {
-				rawMap = gson.fromJson(jsonObject, rawMap.getClass());
-			} catch (Exception e) {
-				logger.debug("fields is not an json Element");
-				continue;
-			}
-			Set<String> keyData = rawMap.keySet();
-			key = replaceKey(tempKey, rawMap, keyData);
-			Map<String, String> contextMap = new HashMap<String, String>();
-			try {
-				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.CONTEXT.eventJSON()));
-				jsonObject = jsonElement.getAsJsonObject();
-				contextMap = gson.fromJson(jsonObject, contextMap.getClass());
-				contextMap.put(ORGANIZATIONUID, contextMap.get(ORGANIZATIONUID) != null && contextMap.get(ORGANIZATIONUID) != "" ? contextMap.get(ORGANIZATIONUID) : DEFAULT_ORGANIZATION_UID);
-			} catch (Exception e) {
-				logger.debug("Context is not an json Element");
-				continue;
-			}
-			keyData = contextMap.keySet();
-			key = replaceKey(key, contextMap, keyData);
-			Map<String, String> sessionMap = new HashMap<String, String>();
-			try {
-				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.SESSION.eventJSON()));
-				jsonObject = jsonElement.getAsJsonObject();
-				sessionMap = gson.fromJson(jsonObject, sessionMap.getClass());
-			} catch (Exception e) {
-				logger.debug("session is not an json Element");
-				continue;
-			}
-			keyData = sessionMap.keySet();
-			key = replaceKey(key, sessionMap, keyData);
-			Map<String, String> userMap = new HashMap<String, String>();
-			try {
-				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.USER.eventJSON()));
-				jsonObject = jsonElement.getAsJsonObject();
-				userMap = gson.fromJson(jsonObject, userMap.getClass());
-			} catch (Exception e) {
-				logger.debug("user is not an json Element");
-				continue;
-			}
-			keyData = userMap.keySet();
-			key = replaceKey(key, userMap, keyData);
-			Map<String, String> payLoadMap = new HashMap<String, String>();
-			try {
-				jsonElement = new JsonParser().parse(rawMap.get(eventJSON.PAYLOADOBJECT.eventJSON()));
-				jsonObject = jsonElement.getAsJsonObject();
-				payLoadMap = gson.fromJson(jsonObject, payLoadMap.getClass());
-			} catch (Exception e) {
-				logger.debug("payLoadObject is not an json Element");
-				continue;
-			}
-			keyData = payLoadMap.keySet();
-			key = replaceKey(key, payLoadMap, keyData);
-			formedKeys.addAll(convertStringtoSet(key));
+		Map<String, JsonElement> rawData = new HashMap<String, JsonElement>();
+		String eventName = eventData.get(EVENT_NAME);
+		JsonElement jsonElement = new JsonParser().parse(eventData.get(FIELDS));
+		JsonObject jsonObject = jsonElement.getAsJsonObject();
+		Map<String, String> rawMap = new HashMap<String, String>();
+		try {
+			rawMap = gson.fromJson(jsonObject, rawMap.getClass());
+		} catch (Exception e) {
+			logger.debug("fields is not an json Element");
 		}
+		Set<String> keyData = rawMap.keySet();
+		key = replaceKey(tempKey, rawMap, keyData);
+		Map<String, String> contextMap = new HashMap<String, String>();
+		try {
+			jsonElement = new JsonParser().parse(rawMap.get(eventJSON.CONTEXT.eventJSON()));
+			jsonObject = jsonElement.getAsJsonObject();
+			contextMap = gson.fromJson(jsonObject, contextMap.getClass());
+			contextMap.put(ORGANIZATIONUID, contextMap.get(ORGANIZATIONUID) != null && contextMap.get(ORGANIZATIONUID) != "" ? contextMap.get(ORGANIZATIONUID) : DEFAULT_ORGANIZATION_UID);
+		} catch (Exception e) {
+			logger.debug("Context is not an json Element");
+		}
+		keyData = contextMap.keySet();
+		key = replaceKey(key, contextMap, keyData);
+		Map<String, String> sessionMap = new HashMap<String, String>();
+		try {
+			jsonElement = new JsonParser().parse(rawMap.get(eventJSON.SESSION.eventJSON()));
+			jsonObject = jsonElement.getAsJsonObject();
+			sessionMap = gson.fromJson(jsonObject, sessionMap.getClass());
+		} catch (Exception e) {
+			logger.debug("session is not an json Element");
+		}
+		keyData = sessionMap.keySet();
+		key = replaceKey(key, sessionMap, keyData);
+		Map<String, String> userMap = new HashMap<String, String>();
+		try {
+			jsonElement = new JsonParser().parse(rawMap.get(eventJSON.USER.eventJSON()));
+			jsonObject = jsonElement.getAsJsonObject();
+			userMap = gson.fromJson(jsonObject, userMap.getClass());
+		} catch (Exception e) {
+			logger.debug("user is not an json Element");
+		}
+		keyData = userMap.keySet();
+		key = replaceKey(key, userMap, keyData);
+		Map<String, String> payLoadMap = new HashMap<String, String>();
+		try {
+			jsonElement = new JsonParser().parse(rawMap.get(eventJSON.PAYLOADOBJECT.eventJSON()));
+			jsonObject = jsonElement.getAsJsonObject();
+			payLoadMap = gson.fromJson(jsonObject, payLoadMap.getClass());
+		} catch (Exception e) {
+			logger.debug("payLoadObject is not an json Element");
+		}
+		keyData = payLoadMap.keySet();
+		key = replaceKey(key, payLoadMap, keyData);
+		formedKeys.addAll(convertStringtoSet(key));
 		return formedKeys;
 	}
 
@@ -367,8 +357,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
 				try {
-				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
-				mutationBatch.execute();
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
+					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while increment the counter in " + columnFamilyName);
 					System.out.println(request + "" + e);
@@ -390,11 +380,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		if (checkNull(rowKey) && checkNull(request)) {
 			try {
-			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			for (Map.Entry<String, Long> entry : request.entrySet()) {
-				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
-				mutationBatch.execute();
-			}
+				MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+				for (Map.Entry<String, Long> entry : request.entrySet()) {
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+					mutationBatch.execute();
+				}
 
 			} catch (ConnectionException e) {
 				logger.error("Exception while inserting the Long value in " + columnFamilyName);
@@ -437,17 +427,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public boolean deleteColumns(String columnFamilyName, String rowKey, Set<String> columns) {
 
 		MutationBatch mutationBatch = getKeyspace().prepareMutationBatch();
-			for (String columnName : columns) {
-				try {
+		for (String columnName : columns) {
+			try {
 				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).deleteColumn(columnName);
 				mutationBatch.execute();
-				} catch (ConnectionException e) {
-					logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-					e.printStackTrace();
-					continue;
-				}
+			} catch (ConnectionException e) {
+				logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+				e.printStackTrace();
+				continue;
 			}
-			return true;
+		}
+		return true;
 	}
 
 	/*
@@ -564,8 +554,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, String> entry : request.entrySet()) {
 				try {
-				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumn(entry.getKey(), entry.getValue());
-				mutationBatch.execute();
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumn(entry.getKey(), entry.getValue());
+					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
 					e.printStackTrace();
@@ -1125,60 +1115,55 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * 
 	 * @param eventData is the event detail
 	 */
-	public Map<String, Long> calculation(Map<String, String> entry, JsonObject jsonMap, String currentDate, List<Map<String, String>> eventData) {
+	public Map<String, Long> calculation(Map<String, String> entry, JsonObject jsonMap, String currentDate, Map<String, String> eventData) {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
-		List<Map<String, String>> validEventData = new ArrayList<Map<String, String>>();
 		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).getAsString();
 
-		for (Map<String, String> eventMap : eventData) {
-			if (eventMap.get(EVENT_NAME).contains(eventName)) {
-				validEventData.add(eventMap);
-			}
+		if (!eventData.get(EVENT_NAME).contains(eventName)) {
+			return resultMap;
 		}
-		
-		if (checkNull(validEventData)) {
-			JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).toString());
-			JsonArray formulaArray = jsonElement.getAsJsonArray();
-			for(int i =0;i< formulaArray.size();i++){
-				try {
+		JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).toString());
+		JsonArray formulaArray = jsonElement.getAsJsonArray();
+		for (int i = 0; i < formulaArray.size(); i++) {
+			try {
 				JsonElement obj = formulaArray.get(i);
-				
+
 				JsonObject columnFormula = obj.getAsJsonObject();
 
-					if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail()) && formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).getAsString())) {
-						
-						Map<String, String> variableMap = new HashMap<String, String>();
-						Set<String> name = formOrginalKey(columnFormula.get(formulaDetail.NAME.formulaDetail()).getAsString(), validEventData, format, currentDate);
-						String columnName = convertSettoString(name);
+				if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail())
+						&& formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).getAsString())) {
 
-							try {
-								String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).getAsString().split(COMMA);
+					Map<String, String> variableMap = new HashMap<String, String>();
+					Set<String> name = formOrginalKey(columnFormula.get(formulaDetail.NAME.formulaDetail()).getAsString(), eventData, format, currentDate);
+					String columnName = convertSettoString(name);
 
-								for (String value : values) {
-									Set<String> columnSet = formOrginalKey(columnFormula.get(value).getAsString(), validEventData, format, currentDate);
-									if (checkNull(columnSet))
-										variableMap.put(value, convertSettoString(columnSet));
-								}
+					try {
+						String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).getAsString().split(COMMA);
 
-								ExpressionBuilder expressionBuilder = new ExpressionBuilder(columnFormula.get(formulaDetail.FORMULA.formulaDetail()).getAsString());
-								for (Map.Entry<String, String> map : variableMap.entrySet()) {
-									expressionBuilder.withVariable(map.getKey(), entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
-								}
-								long calculated = Math.round(expressionBuilder.build().calculate());
-								resultMap.put(columnName, calculated);
-							} catch (Exception e) {
-								resultMap.put(columnName, 0L);
-								logger.error("mathametical error" + e);
-								continue;
-							}
-
+						for (String value : values) {
+							Set<String> columnSet = formOrginalKey(columnFormula.get(value).getAsString(), eventData, format, currentDate);
+							if (checkNull(columnSet))
+								variableMap.put(value, convertSettoString(columnSet));
 						}
+
+						ExpressionBuilder expressionBuilder = new ExpressionBuilder(columnFormula.get(formulaDetail.FORMULA.formulaDetail()).getAsString());
+						for (Map.Entry<String, String> map : variableMap.entrySet()) {
+							expressionBuilder.withVariable(map.getKey(), entry.get(map.getValue()) != null ? Long.valueOf(entry.get(map.getValue()).toString()) : 0L);
+						}
+						long calculated = Math.round(expressionBuilder.build().calculate());
+						resultMap.put(columnName, calculated);
+					} catch (Exception e) {
+						resultMap.put(columnName, 0L);
+						logger.error("mathametical error" + e);
+						continue;
+					}
+
+				}
 			} catch (Exception e) {
 				logger.debug("formula detail is not an json Element");
 				continue;
 			}
-				}
 		}
 		return resultMap;
 	}
@@ -1187,12 +1172,12 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * C: defines => Constant D: defines => Date format lookup E: defines =>
 	 * eventMap param lookup
 	 */
-	public Set<String> formOrginalKey(Set<String> rowKeys, List<Map<String, String>> eventData, SimpleDateFormat currentFormat, String currentDate) {
+	public Set<String> formOrginalKey(Set<String> rowKeys, Map<String, String> eventData, SimpleDateFormat currentFormat, String currentDate) {
 
 		Set<String> formedKeys = new TreeSet<String>();
 		for (String keys : rowKeys) {
-			String formedKey = keys.replaceAll(columnKey.C.columnKey(),EMPTY);
-			formedKey = formedKey.replaceAll(columnKey.E.columnKey(),EMPTY);
+			String formedKey = keys.replaceAll(columnKey.C.columnKey(), EMPTY);
+			formedKey = formedKey.replaceAll(columnKey.E.columnKey(), EMPTY);
 			if (formedKey.contains(columnKey.D.columnKey())) {
 				Date currentDateTime;
 				try {
@@ -1215,7 +1200,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 * C: defines => Constant D: defines => Date format lookup E: defines =>
 	 * eventMap param lookup
 	 */
-	public Set<String> formOrginalKey(String rowKeys, List<Map<String, String>> eventData, SimpleDateFormat currentFormat, String currentDate) {
+	public Set<String> formOrginalKey(String rowKeys, Map<String, String> eventData, SimpleDateFormat currentFormat, String currentDate) {
 
 		String formedKey = rowKeys.replaceAll(columnKey.C.columnKey(), EMPTY);
 		formedKey = formedKey.replaceAll(columnKey.E.columnKey(), EMPTY);
