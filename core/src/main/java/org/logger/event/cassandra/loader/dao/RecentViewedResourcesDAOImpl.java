@@ -70,6 +70,30 @@ public class RecentViewedResourcesDAOImpl extends BaseDAOCassandraImpl implement
 
 	}
 	
+	public ColumnList<String> getColumnList(String KEY){
+
+		ColumnList<String> jobConstants = null;
+		try {
+			jobConstants = getKeyspace().prepareQuery(recentViewedResourceCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		return jobConstants;
+	}
+	public void updateOrAddRow(String rowKey,String columnName,String value){
+
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		
+		m.withRow(recentViewedResourceCF, rowKey)
+		.putColumnIfNotNull(columnName, value)
+		;
+		 try{
+	         	m.execute();
+	         } catch (ConnectionException e) {
+	         	logger.info("Error while adding session - ", e);
+	         }
+	}
 	public void generateRow(String key,String columnName, String value ,MutationBatch m) {
         m.withRow(recentViewedResourceCF, key)
         .putColumnIfNotNull(columnName, value);
