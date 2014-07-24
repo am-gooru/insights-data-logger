@@ -79,8 +79,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 			column.add(ITEM_VALUE);
 			column.add(LAST_PROCESSED_TIME);
+			column.add(formulaDetail.STATUS.formulaDetail());
 			OperationResult<ColumnList<String>> configData = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
 
+			column = new ArrayList<String>();
+			column.add(formulaDetail.STATUS.formulaDetail());
+			List<String> status = listRowColumnStringValue(configData, column);
+			if(checkNull(status)){
+				if(status.get(0).equalsIgnoreCase(formulaDetail.INPROGRESS.formulaDetail()))
+					return;
+			}
+			Map<String, String> data = new HashMap<String, String>();
+			data.put(formulaDetail.STATUS.formulaDetail(), formulaDetail.INPROGRESS.formulaDetail());
+			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
 			column = new ArrayList<String>();
 			column.add(ITEM_VALUE);
 			List<String> prcessingKey = listRowColumnStringValue(configData, column);
@@ -183,7 +194,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)),
 							new ArrayList<String>()));
 
-					dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, fetchedkey);
+					dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, key);
 					if (!checkNull(dashboardKeys)) {
 						break;
 					}
@@ -218,8 +229,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					logger.info("processed key " + lastProcessedKey);
 				}
 			}
-			Map<String, String> data = new HashMap<String, String>();
+			data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
+			data.put( formulaDetail.STATUS.formulaDetail(), formulaDetail.COMPLETED.formulaDetail());
 			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
 			logger.info("Minute Aggregator Runned Successfully");
 			System.out.println("Minute Aggregator completed");
