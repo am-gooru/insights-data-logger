@@ -86,7 +86,8 @@ public class RecentViewedResourcesDAOImpl extends BaseDAOCassandraImpl implement
 			.execute()
 			.getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.info("Error while Reading data");
+			
 		}
 		return rowColumn != null ? rowColumn.getStringValue() : null;
 		
