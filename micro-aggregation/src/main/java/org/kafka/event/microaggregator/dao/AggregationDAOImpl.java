@@ -364,16 +364,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void incrementCounterValue(String columnFamilyName, String rowKey, Map<String, Long> request) {
 
 		if (checkNull(rowKey) && checkNull(request)) {
-			try {
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
+				try {
 				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
 				mutationBatch.execute();
-			}
-			} catch (ConnectionException e) {
-				logger.error("Exception while increment the counter in " + columnFamilyName);
-				System.out.println(request + "" + e);
-				e.printStackTrace();
+				} catch (ConnectionException e) {
+					logger.error("Exception while increment the counter in " + columnFamilyName);
+					System.out.println(request + "" + e);
+					e.printStackTrace();
+					continue;
+				}
 			}
 		}
 	}
@@ -436,17 +437,17 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public boolean deleteColumns(String columnFamilyName, String rowKey, Set<String> columns) {
 
 		MutationBatch mutationBatch = getKeyspace().prepareMutationBatch();
-		try {
 			for (String columnName : columns) {
+				try {
 				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).deleteColumn(columnName);
 				mutationBatch.execute();
+				} catch (ConnectionException e) {
+					logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+					e.printStackTrace();
+					continue;
+				}
 			}
 			return true;
-		} catch (ConnectionException e) {
-			logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-			e.printStackTrace();
-			return false;
-		}
 	}
 
 	/*
@@ -561,14 +562,15 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			try {
 			for (Map.Entry<String, String> entry : request.entrySet()) {
-				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+				try {
+				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumn(entry.getKey(), entry.getValue());
 				mutationBatch.execute();
-			}
-			} catch (ConnectionException e) {
-				logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-				e.printStackTrace();
+				} catch (ConnectionException e) {
+					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
+					e.printStackTrace();
+					continue;
+				}
 			}
 		}
 	}
