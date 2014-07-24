@@ -79,11 +79,11 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			
 			column.add(ITEM_VALUE);
 			column.add(LAST_PROCESSED_TIME);
-			OperationResult<ColumnList<String>> configData = this.readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
+			OperationResult<ColumnList<String>> configData = readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, column);
 			
 			column = new ArrayList<String>();
 			column.add(ITEM_VALUE);
-			List<String> prcessingKey = this.listRowColumnStringValue(configData, column);
+			List<String> prcessingKey = listRowColumnStringValue(configData, column);
 
 			if (checkNull(startTime) && checkNull(endTime)) {
 				try {
@@ -121,7 +121,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			
 				column = new ArrayList<String>();
 				column.add(LAST_PROCESSED_TIME);
-				List<String> processedTime = this.listRowColumnStringValue(configData, column);
+				List<String> processedTime = listRowColumnStringValue(configData, column);
 				
 				if (checkNull(processedTime)) {
 					Date startDate;
@@ -156,7 +156,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			List<Map<String, String>> rowData = new ArrayList<Map<String, String>>();
 		
 			// get Event Ids for every minute and sort it
-			rowData = this.sortList(this.getRowsKeyColumnStringValue(this.readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())), mapKey.KEY.mapKey(),
+			rowData = sortList(getRowsKeyColumnStringValue(readRows(columnFamily.EVENT_TIMELINE.columnFamily(), keys, new ArrayList<String>())), mapKey.KEY.mapKey(),
 					sortType.ASC.sortType());
 
 			// iterate for every minute
@@ -166,8 +166,8 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				column = new ArrayList<String>();
 				column.add(EVENT_NAME);
 				column.add(FIELDS);
-				List<Map<String, String>> eventData = this.getRowsColumnStringValue(
-						this.readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column),
+				List<Map<String, String>> eventData = getRowsColumnStringValue(
+						readRows(columnFamily.EVENT_DETAIL.columnFamily(), convertArraytoList(String.valueOf(fetchedkey.get(mapKey.VALUE.mapKey())).split(COMMA)), column),
 						new ArrayList<String>());
 
 				// get normal Formula
@@ -175,7 +175,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				column.add(FORMULA);
 				Map<String, Object> whereCondition = new HashMap<String, Object>();
 				whereCondition.put(aggregateType.KEY.aggregateType(), aggregateType.NORMAL.aggregateType());
-				List<Map<String, Object>> normalFormulaDetails = this.getRowsKeyStringValue(this.readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column),
+				List<Map<String, Object>> normalFormulaDetails = getRowsKeyStringValue(readWithIndex(columnFamily.FORMULA_DETAIL.columnFamily(), whereCondition, column),
 						new ArrayList<String>());
 
 				Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)), new ArrayList<String>()));
@@ -185,7 +185,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					break;
 				}
 				// update live dashboard
-				List<Map<String, String>> dashboardData = this.getRowsKeyLongValue(this.readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()),
+				List<Map<String, String>> dashboardData = getRowsKeyLongValue(readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()),
 						new ArrayList<String>());
 
 				// insert data for normal aggregation
@@ -220,6 +220,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
 			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
 			logger.info("Minute Aggregator Runned Successfully");
+			System.out.println("Minute Aggregator completed");
 		} catch (Exception e) {
 			logger.error("Minute Runner failed due to " + e);
 		}
@@ -316,7 +317,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		OperationResult<Rows<String, String>> result = null;
 		RowSliceQuery<String, String> rowsResult = null;
 		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getKeySlice(rowKey);
+			rowsResult = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).getKeySlice(rowKey);
 			if (checkNull(columnList)) {
 				rowsResult.withColumnSlice(columnList);
 			}
@@ -340,7 +341,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		OperationResult<ColumnList<String>> result = null;
 		RowQuery<String, String> rowsResult = null;
 		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getKey(rowKey);
+			rowsResult = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).getKey(rowKey);
 
 			if (checkNull(columnList)) {
 				rowsResult.withColumnSlice(columnList);
@@ -364,9 +365,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		if (checkNull(rowKey) && checkNull(request)) {
 			try {
-			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
-				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).incrementCounterColumn(entry.getKey(), entry.getValue());
 				mutationBatch.execute();
 			}
 			} catch (ConnectionException e) {
@@ -388,9 +389,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		if (checkNull(rowKey) && checkNull(request)) {
 			try {
-			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			for (Map.Entry<String, Long> entry : request.entrySet()) {
-				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
 				mutationBatch.execute();
 			}
 
@@ -413,7 +414,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		OperationResult<ColumnList<String>> result = null;
 		RowQuery<String, String> rowsResult = null;
 		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getKey(rowKey);
+			rowsResult = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).getKey(rowKey);
 			if (checkNull(columnList)) {
 				rowsResult.withColumnSlice(columnList);
 			}
@@ -458,7 +459,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public boolean isColumnExists(String columnFamilyName, String rowKey, String column) {
 
 		try {
-			OperationResult<Column<String>> result = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getKey(rowKey).getColumn(column).execute();
+			OperationResult<Column<String>> result = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).getKey(rowKey).getColumn(column).execute();
 			return checkNull(result);
 
 		} catch (ConnectionException e) {
@@ -479,7 +480,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		OperationResult<Rows<String, String>> result = null;
 		AllRowsQuery<String, String> rowsResult = null;
 		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).getAllRows().setExceptionCallback(new ExceptionCallback() {
+			rowsResult = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).getAllRows().setExceptionCallback(new ExceptionCallback() {
 
 				@Override
 				public boolean onException(ConnectionException arg0) {
@@ -518,7 +519,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		OperationResult<Rows<String, String>> result = null;
 		IndexQuery<String, String> rowsResult = null;
 		try {
-			rowsResult = getKeyspace().prepareQuery(this.getColumnFamily(columnFamilyName)).searchWithIndex();
+			rowsResult = getKeyspace().prepareQuery(getColumnFamily(columnFamilyName)).searchWithIndex();
 
 			if (checkNull(whereColumns)) {
 				for (Map.Entry<String, Object> whereColumn : whereColumns.entrySet())
@@ -559,10 +560,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	 */
 	public void putStringValue(String columnFamilyName, String rowKey, Map<String, String> request) {
 		if (checkNull(rowKey) && checkNull(request)) {
-			MutationBatch mutationBatch = this.getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			try {
 			for (Map.Entry<String, String> entry : request.entrySet()) {
-				mutationBatch.withRow(this.getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
+				mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(entry.getKey(), entry.getValue());
 				mutationBatch.execute();
 			}
 			} catch (ConnectionException e) {
