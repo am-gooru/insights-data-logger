@@ -431,7 +431,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	for(String value : columnValue.split(",")){
             		logger.info("value : {} ",value );
             		String orginalColumn = this.formOrginalKey(value, eventMap);
-            		if(value.equalsIgnoreCase("C:all~E:contentGooruId")){
+            		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
             			logger.info("migrated : {} ",recentResource.read("all~"+eventMap.get("contentGooruId"), "status"));
             		}
             		if(flag){
