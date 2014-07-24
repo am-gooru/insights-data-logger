@@ -446,11 +446,18 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 		
-		this.saveGeoLocations(eventMap);		
+		
+		try {
+			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
+		} catch (ParseException e) {
+			logger.info("Exception while finding difference : {} ",e);
+		}
 		
 		liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
 		liveDashBoardDAOImpl.addApplicationSession(eventMap);
+
+		this.saveGeoLocations(eventMap);		
 
 		if(pushingEvents.contains(eventMap.get("eventName"))){
 			liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
@@ -767,26 +774,34 @@ public class CassandraDataLoader implements Constants {
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = configSettings.getColumnList("views_job_settings");
+    	ColumnList<String> jobIds = configSettings.getColumnList("job_ids");
     	
-    	long jobCount = settings.getColumnByName("job_count").getLongValue();
     	
-    	String runningJobs = settings.getColumnByName("job_names").getStringValue();
+    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
+    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
+    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
+    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
+    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
+    	
+    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
-    	if(jobCount < 3){
+    	if((jobCount <= maxJobCount) && (indexedCount <= allowedCount) ){
     		long start = System.currentTimeMillis();
-    		
-    		long startVal = settings.getColumnByName("indexed_count").getLongValue();
-    		long endVal = (settings.getColumnByName("max_count").getLongValue() + startVal);
-
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
+    		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-    		configSettings.AddOrUpdateLong(jobId, "start_count", startVal);
-    		configSettings.AddOrUpdateLong(jobId, "end_count", endVal);
+    		configSettings.updateOrAddRow(jobId, "start_count", ""+startVal);
+    		configSettings.updateOrAddRow(jobId, "end_count", ""+endVal);
     		configSettings.updateOrAddRow(jobId, "job_status", "Inprogress");
-    		
-    		configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount++);
-    		configSettings.AddOrUpdateLong("views_job_settings", "indexed_count", endVal);
-    		configSettings.updateOrAddRow("views_job_settings", "job_names", runningJobs+","+jobId);
+    		configSettings.updateOrAddRow("views_job_settings", "total_job_count", ""+totalJobCount);
+    		configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+jobCount);
+    		configSettings.updateOrAddRow("views_job_settings", "indexed_count", ""+endVal);
+    		configSettings.updateOrAddRow("job_ids", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
@@ -802,21 +817,20 @@ public class CassandraDataLoader implements Constants {
     					logger.info("jobId : {} "+jobId);
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
+    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
     				}
     			
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
-    			logger.info("Process takes time time upadate in ms : {} " ,(stop-start));
     			configSettings.updateOrAddRow(jobId, "job_status", "Completed");
     			configSettings.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
-    			configSettings.AddOrUpdateLong("views_job_settings", "job_count", jobCount--);
-    			logger.info("Process Ends  : Inserted successfully");
+    			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
     			e.printStackTrace();
     		}
-    	}else{
-    		
+    	}else{    		
     		logger.info("Job queue is full! we are not start any job");
     	}
 		

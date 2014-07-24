@@ -59,6 +59,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
+    private RecentViewedResourcesDAOImpl recentResource;
+    
     private MicroAggregatorDAOmpl microAggregatorDAOmpl;
     
     private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
@@ -91,7 +93,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		CF_MICRO_AGGREGATOR, // Column Family Name
                 StringSerializer.get(), // Key Serializer
                 StringSerializer.get()); // Column Serializer
-
+        this.recentResource = new RecentViewedResourcesDAOImpl(this.connectionProvider);
         this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
         this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
         this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
@@ -102,318 +104,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
 
     }
-
-    @Async
-    public void callCounters(Map<String,String> eventMap) {
-		if(eventMap.containsKey(EVENTNAME) && eventMap.containsKey(GOORUID)) {
-			String gooruUId = eventMap.get(GOORUID);
-			String eventName = eventMap.get(EVENTNAME);
-			String createdOn = eventMap.get(STARTTIME);
-			//String userName = dimUser.getUserName(gooruUId);
-			String organizationUId = DEFAULT_ORGANIZATION_UID;
-			if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()) {
-					organizationUId = eventMap.get(ORGANIZATIONUID);
-			}
-			
-			/*boolean isRowAvailable =  this.isRowAvailable(METRICS, eventName);
-			
-			logger.info("Is row available : {} ", isRowAvailable);
-			
-			if(!isRowAvailable){*/
-				this.addRowColumn(METRICS, eventName, String.valueOf(TimeUUIDUtils.getUniqueTimeUUIDinMillis()));
-			//}
-			List<String> keys = this.generateYMWDKey(eventMap.get(STARTTIME));
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			
-			for(String key : keys) {
-				if(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equals(START)) {
-					// Increment the view using start events
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);						
-					}
-				}					
-				
-				if(!eventMap.containsKey(TYPE)) {
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-				}
-				
-				if(eventMap.containsKey(ITEMTYPE)){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-							generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-							generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-							generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						}
-				}
-				
-				if(eventMap.containsKey(ACTIONTYPE)){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ACTIONTYPE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					}
-				}
-				
-				if(eventMap.containsKey(USERAGENT) && eventMap.get(USERAGENT) != null && !eventMap.get(USERAGENT).isEmpty()) {
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(USERAGENT).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					}
-				}
-				
-				if(eventMap.containsKey(REGISTERTYPE) && eventMap.get(REGISTERTYPE) != null && !eventMap.get(REGISTERTYPE).isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase()+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase()+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase()+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(REGISTERTYPE).toLowerCase()+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-				}
-				
-				if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					}
-				}
-				
-				if(eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					}
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE),1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-							generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						}
-					}
-				}
-				
-				if(eventMap.containsKey(ITEMTYPE) && eventMap.containsKey(MODE) && eventMap.get(MODE) != null && !eventMap.get(MODE).isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-						generateCounter(key+SEPERATOR+eventMap.get(ITEMTYPE)+SEPERATOR+eventMap.get(MODE)+SEPERATOR+organizationUId+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					}
-				}
-				
-				if(eventMap.containsKey("country") && eventMap.get("country") != null && !eventMap.get("country").isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("country"),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get("country"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("country"),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("country"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("country")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get("country")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("country")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("country")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					}
-				}
-				
-				if(eventMap.containsKey("state") && eventMap.get("state") != null && !eventMap.get("state").isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("state"),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get("state"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("state"),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("state"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("state")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get("state")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("state")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("state")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					}
-				}
-				
-				if(eventMap.containsKey("city") && eventMap.get("city") != null && !eventMap.get("city").isEmpty()){
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("city"),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get("city"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("city"),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("city"),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					if(eventMap.containsKey(CLIENTSOURCE) && eventMap.get(CLIENTSOURCE) != null && !eventMap.get(CLIENTSOURCE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("city")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+eventMap.get("city")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get("city")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+eventMap.get("city")+SEPERATOR+eventMap.get(CLIENTSOURCE).toLowerCase(),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					}
-				}
-				
-				if(eventMap.containsKey(TEXT) && eventMap.get(TEXT) != null && !eventMap.get(TEXT).isEmpty()) {
-					generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
-					generateCounter(key+SEPERATOR+eventMap.get(TEXT),LoaderConstants.COUNT.getName()+SEPERATOR+eventName,1, m);
-					generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
-					generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
-					generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT),1, m);
-					if(eventMap.containsKey(ITEMTYPE) && eventMap.get(ITEMTYPE) != null && !eventMap.get(ITEMTYPE).isEmpty()){
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						
-						generateCounter(key,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-						generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.COUNT.getName()+SEPERATOR+eventName+SEPERATOR+eventMap.get(TEXT)+SEPERATOR+eventMap.get(ITEMTYPE),1, m);
-					}
-				}
-				
-				generateCounter(key,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-				generateCounter(key+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-				generateCounter(key+SEPERATOR+organizationUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-				generateCounter(key+SEPERATOR+organizationUId+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);						
-				
-				if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()) {
-					generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID),LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-					generateCounter(key+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+gooruUId,LoaderConstants.TS.getName()+SEPERATOR+eventName,eventMap.containsKey(TOTALTIMEINMS) ? Long.valueOf(eventMap.get(TOTALTIMEINMS)) : 0L, m);
-				}
-				
-				generateAggregator(key, eventName+SEPERATOR+LASTACCESSED, createdOn, m);
-				generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSERUID, gooruUId, m);
-				//generateAggregator(key, eventName+SEPERATOR+LASTACCESSEDUSER, userName, m);
-			}
-			try {
-	            m.execute();
-	        } catch (ConnectionException e) {
-	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-	        }
-		}
-		
-		try {
-			this.findDifferenceInCount(eventMap);
-		} catch (ParseException e) {
-			logger.info("Exception while finding difference : {} ",e);
-		}
-    }
     
     @Async
     public void callCountersV2(Map<String,String> eventMap) {
@@ -421,14 +111,31 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
             for(int i=0 ; i < eventKeys.size() ; i++ ){
+            	boolean flag = true;    	
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
-            	for(String value : columnValue.split(",")){
+
+        		//to be revoked once migration completed
+        		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
+        			String isMigrated = null;
+        			try{
+        			 isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
+        			}catch(Exception e){
+        				logger.info("Exception : {} ",e);
+        			}
+
+        			if(isMigrated == null){
+        				flag = false;	
+        			}
+        		}
+        		if(flag){
+        		for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
-            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
-            		} 
+	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+	            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+	            		} 
+            		}
                 	try {
                         m.execute();
                     } catch (ConnectionException e) {
@@ -666,7 +373,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
-			this.generateCounter(visitor, visitorType, 1, m);
+			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, 1, m);
 		}	
 		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
@@ -711,7 +418,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					visitorType = "anonymousUser";
 				}
 		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(currentHour, column)){
-		 			this.generateCounter(visitor, visitorType, -1, m);
+		 			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
 		 		}else{
 		 			this.generateAggregator(currentHour, column,value, m);
 		 		}
@@ -741,7 +448,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
 	 			if(diffInMinutes > 30){
 	 				this.generateAggregator(visitor, visitorType, "expired", m);
-	 				this.generateCounter(visitor, visitorType, -1, m);
+	 				this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
 	 			}
 	 		}
 	 	}

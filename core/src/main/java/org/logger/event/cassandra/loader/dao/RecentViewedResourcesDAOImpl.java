@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
@@ -69,7 +70,28 @@ public class RecentViewedResourcesDAOImpl extends BaseDAOCassandraImpl implement
 
 	}
 	
+	public void generateRow(String key,String columnName, String value ,MutationBatch m) {
+        m.withRow(recentViewedResourceCF, key)
+        .putColumnIfNotNull(columnName, value);
+    }
 	
+	public String read(String key,String column){
+		Column<String> rowColumn = null ;
+		
+		try {
+			rowColumn = getKeyspace().prepareQuery(recentViewedResourceCF)
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.getKey(key)
+			.getColumn(column)
+			.execute()
+			.getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while Reading data");
+			
+		}
+		return rowColumn != null ? rowColumn.getStringValue() : null;
+		
+	}
 	public ColumnList<String> readTimeLine(String timeLineKey) {
 
 
