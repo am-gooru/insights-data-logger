@@ -429,11 +429,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
             	for(String value : columnValue.split(",")){
-            		logger.info("value : {} ",value );
+            		logger.info("columnName : {} ",value );
             		String orginalColumn = this.formOrginalKey(value, eventMap);
+            		//to be revoked once migration completed
             		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
-            			logger.info("migrated : {} ",recentResource.read("all~"+eventMap.get("contentGooruId"), "status"));
+            			String isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
+            			logger.info("migrated : {} ",isMigrated);
+            			if(isMigrated == null){
+            				flag = false;	
+            			}
             		}
+            		
             		if(flag){
 	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
 	            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
