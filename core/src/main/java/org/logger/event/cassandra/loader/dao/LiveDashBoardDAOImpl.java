@@ -428,19 +428,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
-            	for(String value : columnValue.split(",")){
-            		logger.info("columnName : {} ",columnName );
+        		//to be revoked once migration completed
+        		logger.info("columnName : {} ",columnName );
+        		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
+        			String isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
+        			logger.info("migrated : {} ",isMigrated);
+        			if(isMigrated == null){
+        				flag = false;	
+        			}
+        		}
+        		if(flag){
+        		for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
-            		//to be revoked once migration completed
-            		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
-            			String isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
-            			logger.info("migrated : {} ",isMigrated);
-            			if(isMigrated == null){
-            				flag = false;	
-            			}
-            		}
-            		
-            		if(flag){
 	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
 	            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
 	            		} 
