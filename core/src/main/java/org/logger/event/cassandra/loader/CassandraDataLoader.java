@@ -447,6 +447,12 @@ public class CassandraDataLoader implements Constants {
 		}
 		
 		
+		try {
+			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
+		} catch (ParseException e) {
+			logger.info("Exception while finding difference : {} ",e);
+		}
+		
 		liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
 		liveDashBoardDAOImpl.addApplicationSession(eventMap);
