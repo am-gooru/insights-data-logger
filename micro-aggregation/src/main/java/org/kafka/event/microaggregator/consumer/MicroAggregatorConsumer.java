@@ -140,6 +140,8 @@ public class MicroAggregatorConsumer extends Thread {
 		LOG.info("static Aggregator Consumed");
 		System.out.println("static Aggregator Consumed");
 		String eventJson = (String) messageMap.get("aggregationDetail");
+		if (eventJson != null && !eventJson.isEmpty()) {
 			microAggregationLoader.staticAggregation(eventJson);
+		}
 	}
 }
