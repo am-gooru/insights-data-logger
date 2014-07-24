@@ -421,6 +421,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     public void callCountersV2(Map<String,String> eventMap) {
     	logger.info("calling counters...................");
     	boolean flag = true;
+    	
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
@@ -431,12 +432,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		//to be revoked once migration completed
         		logger.info("columnName : {} ",columnName );
         		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
-        			String isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
-        			logger.info("migrated : {} ",isMigrated);
+        			String isMigrated = null;
+        			logger.info("migrated 1: {} ",isMigrated);
+        			try{
+        			 isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
+        			}catch(Exception e){
+        				logger.info("Exception : {} ",e);
+        			}
+        			logger.info("migrated 2: {} ",isMigrated);
+
         			if(isMigrated == null){
         				flag = false;	
         			}
         		}
+        		logger.info("Endsss");
         		if(flag){
         		for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
