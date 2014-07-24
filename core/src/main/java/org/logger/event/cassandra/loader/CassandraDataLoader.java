@@ -810,6 +810,7 @@ public class CassandraDataLoader implements Constants {
     					logger.info("jobId : {} "+jobId);
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
+    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
     				}
     			
     		}

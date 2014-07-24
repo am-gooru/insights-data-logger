@@ -59,6 +59,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     private CollectionDAOImpl collection;
     
+    private RecentViewedResourcesDAOImpl recentResource;
+    
     private MicroAggregatorDAOmpl microAggregatorDAOmpl;
     
     private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
@@ -417,6 +419,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     @Async
     public void callCountersV2(Map<String,String> eventMap) {
+    	boolean flag = true;
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
@@ -426,9 +429,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		String key = this.formOrginalKey(columnName, eventMap);
             	for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
-            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
-            		} 
+            		if(value.equalsIgnoreCase("C:all~E:contentGooruId")){
+            			logger.info("migrated : {} "+recentResource.read("all~"+eventMap.get("contentGooruId"), "status"));
+            		}
+            		if(flag){
+	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+	            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+	            		} 
+            		}
                 	try {
                         m.execute();
                     } catch (ConnectionException e) {
