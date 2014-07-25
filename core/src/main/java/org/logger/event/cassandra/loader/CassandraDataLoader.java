@@ -144,6 +144,10 @@ public class CassandraDataLoader implements Constants {
     
     public Collection<String> pushingEvents ;
     
+    public Collection<String> statKeys ;
+    
+    public ColumnList<String> statMetrics ;
+    
     public String viewEvents ;
     
     private Gson gson = new Gson();
@@ -228,6 +232,8 @@ public class CassandraDataLoader implements Constants {
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
         viewEvents = configSettings.getConstants("views~events", DEFAULTCOLUMN);
+        statMetrics = configSettings.getColumnList("stat~metrics");
+        statKeys = statMetrics.getColumnNames();
         atmosphereEndPoint = configSettings.getConstants("atmosphere.end.point", DEFAULTCOLUMN);
         VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),DEFAULTCOLUMN);
         
@@ -808,7 +814,7 @@ public class CassandraDataLoader implements Constants {
     		try {
     		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-    		for(long i = startVal ; i <= endVal ; i++){
+    		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
     				resource = dimResource.getRowsByIndexedColumn(i, "content_id");
     				logger.info("Size : {} ",resource.size());
@@ -876,7 +882,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     		String gooruOid = null;
     		MutationBatch m = null;
     		try {
-	    		for(long i = startVal ; i <= endVal ; i++){
+	    		for(long i = startVal ; i < endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    				gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
 	    				if(gooruOid != null){
@@ -1038,10 +1044,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
      */
     public void callAPIViewCount() throws JSONException {
     	JSONArray resourceList = new JSONArray();
-    	Collection<String> columnList = new ArrayList<String>();
-    	columnList.add("count~views");
-    	columnList.add("count~ratings");
-    	
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1057,21 +1059,21 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
-		
+		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		for(int i = 0 ; i < contents.size() ; i++) {
-			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
+			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				if(detail.getName().contains("views")){
-					resourceObj.put("views", detail.getLongValue());
+				for(String column : statKeys){
+					if(detail.getName().equals(column)){
+						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
+						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+						resourceObj.put("resourceType", "resource");
+					}
 				}
-				if(detail.getName().contains("ratings")){
-					resourceObj.put("ratings", detail.getLongValue());
-				}
-				resourceObj.put("resourceType", "resource");
-				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
+			logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			resourceList.put(resourceObj);
 		}
 		

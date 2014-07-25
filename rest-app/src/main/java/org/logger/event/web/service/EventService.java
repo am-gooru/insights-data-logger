@@ -53,7 +53,7 @@ public interface EventService {
 	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead);
 
 	public void updateProdViews();
-
+	
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 
 	void addAggregators(String eventName, String json, String updateBy);
@@ -67,4 +67,6 @@ public interface EventService {
 	boolean validateSchedular(String ipAddress);
 
 	void postMigration(String start,String Stop,String param);
+	
+	void postStatMigration(String start,String Stop,String param);
 }
