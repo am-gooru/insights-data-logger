@@ -144,6 +144,10 @@ public class CassandraDataLoader implements Constants {
     
     public Collection<String> pushingEvents ;
     
+    public Collection<String> statKeys ;
+    
+    public ColumnList<String> statMetrics ;
+    
     public String viewEvents ;
     
     private Gson gson = new Gson();
@@ -228,6 +232,8 @@ public class CassandraDataLoader implements Constants {
         geo = new GeoLocation();
         pushingEvents = configSettings.getColumnList("default~key").getColumnNames();
         viewEvents = configSettings.getConstants("views~events", DEFAULTCOLUMN);
+        statMetrics = configSettings.getColumnList("stat~metrics");
+        statKeys = statMetrics.getColumnNames();
         atmosphereEndPoint = configSettings.getConstants("atmosphere.end.point", DEFAULTCOLUMN);
         VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(),DEFAULTCOLUMN);
         
@@ -1038,10 +1044,10 @@ public void postStatMigration(String startTime , String endTime,String customEve
      */
     public void callAPIViewCount() throws JSONException {
     	JSONArray resourceList = new JSONArray();
-    	Collection<String> columnList = new ArrayList<String>();
+/*    	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
     	columnList.add("count~ratings");
-    	
+*/    	
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1059,15 +1065,14 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		
 		for(int i = 0 ; i < contents.size() ; i++) {
-			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), columnList);
+			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				if(detail.getName().contains("views")){
-					resourceObj.put("views", detail.getLongValue());
-				}
-				if(detail.getName().contains("ratings")){
-					resourceObj.put("ratings", detail.getLongValue());
+				for(String column :statKeys){
+					if(detail.getName().equals(column)){
+						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+					}
 				}
 				resourceObj.put("resourceType", "resource");
 				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());

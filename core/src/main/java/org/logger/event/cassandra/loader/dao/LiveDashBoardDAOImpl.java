@@ -81,6 +81,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	String visitorType = "loggedInUser";
 	
+	boolean isMigrationRunning = true;
+	
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -102,7 +104,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
         this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
         dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
-
+        isMigrationRunning = Boolean.valueOf(configSettings.getConstants("migration~stat","constant_value"));
     }
     
     @Async
@@ -117,7 +119,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		String key = this.formOrginalKey(columnName, eventMap);
 
         		//to be revoked once migration completed
-        		if(columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
+        		
+        		if(isMigrationRunning && columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
         			String isMigrated = null;
         			try{
         			 isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
