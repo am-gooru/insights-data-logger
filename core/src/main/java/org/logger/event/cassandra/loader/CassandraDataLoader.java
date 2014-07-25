@@ -1063,6 +1063,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		logger.info("contents size : {}",contents.size());
 		for(int i = 0 ; i < contents.size() ; i++) {
+			logger.info("loop : {}",i);
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
@@ -1071,11 +1072,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 					if(detail.getName().equals(column)){
 						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+						resourceObj.put("resourceType", "resource");
 					}
 				}
-				resourceObj.put("resourceType", "resource");
-				logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			}
+			logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
 			resourceList.put(resourceObj);
 		}
 		
