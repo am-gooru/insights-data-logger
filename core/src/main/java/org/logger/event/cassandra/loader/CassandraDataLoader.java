@@ -1044,7 +1044,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
      */
     public void callAPIViewCount() throws JSONException {
     	JSONArray resourceList = new JSONArray();
-    	logger.info("statKeys : {}",statKeys);   	
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1061,9 +1060,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
-		logger.info("contents size : {}",contents.size());
 		for(int i = 0 ; i < contents.size() ; i++) {
-			logger.info("loop : {}",i);
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
@@ -1081,8 +1078,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}
 		
 		if((resourceList.length() != 0)){
-			logger.info("Calling api ......");
-			//this.callStatAPI(resourceList, rowValues);
+			this.callStatAPI(resourceList, rowValues);
 		}else{
 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
  	 		logger.info("No content viewed");
