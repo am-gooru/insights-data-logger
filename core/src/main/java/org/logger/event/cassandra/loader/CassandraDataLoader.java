@@ -1425,6 +1425,22 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	return status;
     }
     
+	public boolean validateSchedular(String ipAddress) {
+
+		try {
+			ColumnList<String> columnList = configSettings.getColumnList("schedular~ip");
+			String configuredIp = columnList.getColumnByName("ip_address").getStringValue();
+			if (configuredIp != null) {
+				if (configuredIp.equalsIgnoreCase(ipAddress))
+					return true;
+			}
+		} catch (Exception e) {
+			logger.error(" unable to get the scedular IP " + e);
+			return false;
+		}
+		return false;
+	}
+    
     private Map<String,String> formatEventMap(EventObject eventObject,Map<String,String> eventMap){
     	
     	String userUid = null;

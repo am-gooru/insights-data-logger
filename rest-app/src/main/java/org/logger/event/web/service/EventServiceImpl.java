@@ -247,6 +247,10 @@ public class EventServiceImpl implements EventService {
 		return dataLoaderService.createEvent(eventName);
 	}
 	
+	public boolean validateSchedular(String ipAddress){
+		
+		return dataLoaderService.validateSchedular(ipAddress);
+	}
 	public void postMigration(String start,String end,String param){
 			dataLoaderService.postMigration(start, end, param);
 	}

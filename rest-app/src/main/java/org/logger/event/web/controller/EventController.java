@@ -24,6 +24,8 @@
 package org.logger.event.web.controller;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -479,9 +481,11 @@ public class EventController {
 		eventService.updateProdViews();
 	}
 	
-	//scheduled for every 1 minute
-	public void executeForEveryMinute(){
-		
+	// scheduled for every 1 minute
+	public void executeForEveryMinute() {
+		if (!validateSchedular()) {
+			return;
+		}
 		eventService.executeForEveryMinute(null, null);
 	}
 	
@@ -495,12 +499,18 @@ public class EventController {
 		
 	}
 	
-	public void watchSession(){
+	public void watchSession() {
+		if (!validateSchedular()) {
+			return;
+		}
 		logger.info("watching session");
 		eventService.watchSession();
 	}
 
 	public void postMigration(){
+		if(!validateSchedular()){
+			return;
+			}
 		logger.info("post migration............");
 	//	eventService.postMigration("9990", "10000", null);
 	}
@@ -559,5 +569,17 @@ public class EventController {
 		status.put("eventName", eventName);
 		
 		response.getWriter().write(new JSONObject(status).toString());
+	}
+	
+	public boolean validateSchedular(){
+		
+		try {
+            InetAddress ip = InetAddress.getByName("DO-LOGAPI");
+            String ipAddress = ip.getHostAddress();
+            return eventService.validateSchedular(ipAddress);
+    } catch (UnknownHostException e) {
+            e.printStackTrace();
+    }
+		return false;
 	}
 }

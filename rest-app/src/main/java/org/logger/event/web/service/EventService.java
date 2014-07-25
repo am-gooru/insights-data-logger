@@ -63,6 +63,8 @@ public interface EventService {
 	void executeForEveryMinute(String startTime, String endTime);
 	
 	Map<String,String> createEvent(String eventName);
+	
+	boolean validateSchedular(String ipAddress);
 
 	void postMigration(String start,String Stop,String param);
 }
