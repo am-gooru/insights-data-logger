@@ -1044,10 +1044,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
      */
     public void callAPIViewCount() throws JSONException {
     	JSONArray resourceList = new JSONArray();
-/*    	Collection<String> columnList = new ArrayList<String>();
-    	columnList.add("count~views");
-    	columnList.add("count~ratings");
-*/    	
+    	logger.info("statKeys : {}",statKeys);   	
     	String lastUpadatedTime = configSettings.getConstants("views~last~updated", DEFAULTCOLUMN);
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
@@ -1063,14 +1060,16 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
 		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
-		
+		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		logger.info("contents size : {}",contents.size());
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList.getResult()) {
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				for(String column :statKeys){
+				for(String column : statKeys){
 					if(detail.getName().equals(column)){
+						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
 					}
 				}
@@ -1081,7 +1080,8 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}
 		
 		if((resourceList.length() != 0)){
-			this.callStatAPI(resourceList, rowValues);
+			logger.info("Calling api ......");
+			//this.callStatAPI(resourceList, rowValues);
 		}else{
 			configSettings.updateOrAddRow("views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
  	 		logger.info("No content viewed");
