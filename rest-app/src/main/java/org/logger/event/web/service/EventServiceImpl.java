@@ -39,7 +39,7 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -71,13 +71,13 @@ public class EventServiceImpl implements EventService {
     private ActivityStreamDaoCassandraImpl activityStreamDao;
     private EventObjectValidator eventObjectValidator;
 
-    private BaseCassandraRepo baseDao ;
+    private BaseCassandraRepoImpl baseDao ;
     
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         
         this.connectionProvider = dataLoaderService.getConnectionProvider();
-
+        baseDao = new BaseCassandraRepoImpl(connectionProvider);
         apiDao = new APIDAOCassandraImpl(connectionProvider);
         eventDetailDao = new EventDetailDAOCassandraImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
