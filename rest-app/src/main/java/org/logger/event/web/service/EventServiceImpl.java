@@ -24,7 +24,6 @@
 package org.logger.event.web.service;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +36,10 @@ import org.ednovo.data.model.EventObjectValidator;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -70,6 +71,8 @@ public class EventServiceImpl implements EventService {
     private ActivityStreamDaoCassandraImpl activityStreamDao;
     private EventObjectValidator eventObjectValidator;
 
+    private BaseCassandraRepo baseDao ;
+    
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         
@@ -99,7 +102,7 @@ public class EventServiceImpl implements EventService {
     }
     @Override
     public AppDO verifyApiKey(String apiKey) {
-        ColumnList<String> apiKeyValues = apiDao.readApiData(apiKey); 
+        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey);
         AppDO appDO = new AppDO();
         appDO.setApiKey(apiKey);
         appDO.setAppName(apiKeyValues.getStringValue("appName", null));
@@ -138,6 +141,7 @@ public class EventServiceImpl implements EventService {
     }
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
+		//ColumnList<String> eventColumnList = eventDetailDao.readEventDetail(eventKey);
 		ColumnList<String> eventColumnList = eventDetailDao.readEventDetail(eventKey);
 		return eventColumnList;
 	}
