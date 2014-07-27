@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -49,7 +50,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKeyColumn", e);
+            logger.info("Error while fetching data from method : readWithKeyColumn {} ", e);
         }
     	
     	return result;
@@ -68,7 +69,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKeyColumnList", e);
+            logger.info("Error while fetching data from method : readWithKeyColumnList {} ", e);
         }
     	
     	return result;
@@ -87,7 +88,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKeyListColumnList", e);
+            logger.info("Error while fetching data from method : readWithKeyListColumnList {} ", e);
         }
     	
     	return result;
@@ -104,7 +105,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKey", e);
+            logger.info("Error while fetching data from method : readWithKey {} ", e);
         }
     	
     	return result;
@@ -122,7 +123,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKey", e);
+            logger.info("Error while fetching data from method : readWithKey {}", e);
         }
     	
     	return result;
@@ -140,7 +141,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKey", e);
+            logger.info("Error while fetching data from method : readWithKey {}", e);
         }
     	
     	return result;
@@ -158,7 +159,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKey", e);
+            logger.info("Error while fetching data from method : readWithKey {} ", e);
         }
     	
     	return result;
@@ -180,8 +181,41 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 			;
 	    	
     	} catch(Exception e){
-    		logger.info("Error while fetching data from method : readIndexedColumn", e);    		
+    		logger.info("Error while fetching data from method : readIndexedColumn {} ", e);    		
     	}
+    	return result;
+    }
+    
+    public Rows<String, String> readIndexedColumnLastNrows(String cfName ,String columnName,String value, Integer rowsToRead) {
+    	
+		Rows<String, String> result = null;
+    	try {
+    		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+			 			   .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					 	   .searchWithIndex().autoPaginateRows(true)
+					 	   .setRowLimit(rowsToRead.intValue())
+					 	   .addExpression().whereColumn(columnName)
+					 	   .equals().value(value).execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while fetching data from method : readIndexedColumnLastNrows {} ", e);
+		}
+    	
+    	return result;
+	}
+
+    public ColumnList<String> readKeyLastNColumns(String cfName,String key, Integer columnsToRead) {
+    	
+    	ColumnList<String> result = null;
+    	try {
+    		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		.getKey(key)
+    		.withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build())
+    		.execute().getResult();
+    	} catch (ConnectionException e) {
+    		logger.info("Error while fetching data from method : readKeyLastNColumns {} ", e);
+    	}
+    	
     	return result;
     }
     
@@ -203,12 +237,33 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     		result = query.execute().getResult()
 			;
     	} catch(Exception e){
-    		logger.info("Error while fetching data from method : readIndexedColumnList", e);    		
+    		logger.info("Error while fetching data from method : readIndexedColumnList {} ", e);    		
     	}
 
     	return result;
     }
     
+	public ColumnList<String> readColumnsWithPrefix(String cfName,String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead){
+		ColumnList<String> result = null;
+		String startColumnPrefix = null;
+		String endColumnPrefix = null;
+		startColumnPrefix = startColumnNamePrefix+"~\u0000";
+		endColumnPrefix = endColumnNamePrefix+"~\uFFFF";
+	
+		try {
+			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.getKey(rowKey) .withColumnRange(new RangeBuilder().setLimit(rowsToRead)
+			.setStart(startColumnPrefix)
+			.setEnd(endColumnPrefix)
+			.build()).execute().getResult();
+		} catch (Exception e) {
+			logger.info("Error while fetching data from method : readColumnsWithPrefix {} ", e);
+		} 
+		
+		return result;
+	}
+	
     public Rows<String, String> readAllRows(String cfName){
     	
     	Rows<String, String> result = null;
@@ -228,7 +283,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 			             }})
 			        .execute().getResult();
 		} catch (Exception e) {
-			logger.info("Error while fetching data from method : readAllRows", e);
+			logger.info("Error while fetching data from method : readAllRows {} ", e);
 		}
 		
 		return result;

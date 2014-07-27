@@ -37,10 +37,8 @@ import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
-import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
-import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -62,26 +60,19 @@ import com.netflix.astyanax.model.Rows;
 
 @Service
 public class EventServiceImpl implements EventService {
+	
+	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
     protected CassandraDataLoader dataLoaderService;
-    protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
     private final CassandraConnectionProvider connectionProvider;
-    private APIDAOCassandraImpl apiDao;
-    private EventDetailDAOCassandraImpl eventDetailDao;
-    private ActivityStreamDaoCassandraImpl activityStreamDao;
     private EventObjectValidator eventObjectValidator;
-
     private BaseCassandraRepoImpl baseDao ;
     
     public EventServiceImpl() {
+    	this.connectionProvider = dataLoaderService.getConnectionProvider();
         dataLoaderService = new CassandraDataLoader();
-        
-        this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
-        apiDao = new APIDAOCassandraImpl(connectionProvider);
-        eventDetailDao = new EventDetailDAOCassandraImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
-        activityStreamDao = new ActivityStreamDaoCassandraImpl(this.connectionProvider);
     }
 
     @Override
@@ -141,15 +132,14 @@ public class EventServiceImpl implements EventService {
     }
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
-		//ColumnList<String> eventColumnList = eventDetailDao.readEventDetail(eventKey);
-		ColumnList<String> eventColumnList = eventDetailDao.readEventDetail(eventKey);
+		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey);
 		return eventColumnList;
 	}
 
 	@Override
 	public Rows<String, String> readLastNevents(String apiKey,
 			Integer rowsToRead) {
-		Rows<String, String> eventRowList = eventDetailDao.readLastNrows(apiKey, rowsToRead);
+		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
 		return eventRowList;
 	}
 
@@ -165,14 +155,25 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public List<Map<String, Object>> readUserLastNEventsResourceIds(String userUid, String startTime, String endTime, String eventName, Integer eventsToRead){
 		String activity = null;
+		String startColumnPrefix = null;
+		String endColumnPrefix = null;
+		
 		List<Map<String, Object>>  resultList = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>>  valueList = new ArrayList<Map<String, Object>>();
 		JsonElement jsonElement = null;
 		ColumnList<String> activityJsons;
-
-		activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
+		
+		if(eventName != null){
+			startColumnPrefix = startTime+"~"+eventName;
+			endColumnPrefix = endTime+"~"+eventName;
+		} else {
+			startColumnPrefix = endTime;
+			endColumnPrefix = endTime;
+		}
+		
+		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
 		if((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = activityStreamDao.readLastNcolumns(userUid, eventsToRead);
+			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead);
 		}	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();

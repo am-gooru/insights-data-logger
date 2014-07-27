@@ -4,7 +4,9 @@ public enum ColumnFamily {
 
 	APIKEY("app_api_key"),
 	
-	EVENTDETAIL("event_detail");
+	EVENTDETAIL("event_detail"),
+	
+	ACTIVITYSTREAM("activity_stream"),
 	
 	;
 	
