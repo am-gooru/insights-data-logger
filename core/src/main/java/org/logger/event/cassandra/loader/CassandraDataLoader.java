@@ -878,7 +878,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings");
     	ColumnList<String> jobIds = recentViewedResources.getColumnList("stat_job_ids");
     	
-    	JSONArray resourceList = new JSONArray();
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
     	columnList.add("count~ratings");
@@ -909,12 +908,12 @@ public void postStatMigration(String startTime , String endTime,String customEve
     		configSettings.updateOrAddRow("stat_job_settings", "indexed_count", ""+endVal);
     		recentViewedResources.updateOrAddRow("stat_job_ids", "job_names", runningJobs+","+jobId);
     		
-    		String gooruOid = null;
-    		MutationBatch m = null;
+    		JSONArray resourceList = new JSONArray();
     		try {
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
-	    				gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    			String gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    				logger.info("gooruOid : {}",gooruOid);
 	    				if(gooruOid != null){
 	    					OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+gooruOid, columnList);
 	    					JSONObject resourceObj = new JSONObject();
@@ -947,7 +946,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     			logger.info("Something went wrong : {}",e);
     		}
     	}else{    		
-    		logger.info("Job queue is full! we are not start any job");
+    		logger.info("Job queue is full!Or Reached maximum count!!");
     	}
 		
     }
