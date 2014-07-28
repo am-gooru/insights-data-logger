@@ -892,7 +892,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	
     	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
-    	if((jobCount <= maxJobCount) && (indexedCount <= allowedCount) ){
+    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
     		long start = System.currentTimeMillis();
     		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
     		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
@@ -932,7 +932,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    					resourceList.put(resourceObj);
 	    				}
 	    		}
-	    		this.callStatAPI(resourceList, null);
+	    		try{
+	    			this.callStatAPI(resourceList, null);
+	    		}catch(Exception e){
+	    			logger.info("Error in search API : {}",e);
+	    		}
     			long stop = System.currentTimeMillis();
     			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
     			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
@@ -1133,7 +1137,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		 		postRequest.addHeader("accept", "application/json");
 		 		postRequest.setEntity(input);
 		 		HttpResponse response = httpClient.execute(postRequest);
-		 		
+		 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 		 		if (response.getStatusLine().getStatusCode() != 200) {
 		 	 		logger.info("View count api call failed...");
 		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
