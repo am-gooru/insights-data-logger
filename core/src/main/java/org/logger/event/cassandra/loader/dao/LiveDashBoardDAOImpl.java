@@ -113,26 +113,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	if((eventMap.containsKey(EVENTNAME))) {
             eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
             for(int i=0 ; i < eventKeys.size() ; i++ ){
-            	boolean flag = true;    	
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
         		String key = this.formOrginalKey(columnName, eventMap);
-
-        		//to be revoked once migration completed
         		
-        		if(isMigrationRunning && columnName.equalsIgnoreCase("C:all~E:contentGooruId")){
-        			String isMigrated = null;
-        			try{
-        			 isMigrated = recentResource.read("all~"+eventMap.get("contentGooruId"), "status");
-        			}catch(Exception e){
-        				logger.info("Exception : {} ",e);
-        			}
-
-        			if(isMigrated == null){
-        				flag = false;	
-        			}
-        		}
-        		if(flag){
         		for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
 	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
@@ -144,7 +128,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
                     } catch (ConnectionException e) {
                         logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
                     }
-            	}
+            	
             }
     	}
     }
