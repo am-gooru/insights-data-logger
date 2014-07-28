@@ -847,9 +847,7 @@ public class CassandraDataLoader implements Constants {
     			logger.info("contentId : "+ i);
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
     				if(resource != null && resource.size() > 0){
-    					logger.info("reosurce size -  {}" ,resource.size());
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
-    					logger.info("jobId : {} "+jobId);
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
