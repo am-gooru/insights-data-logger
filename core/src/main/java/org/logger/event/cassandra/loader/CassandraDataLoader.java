@@ -912,7 +912,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     		String gooruOid = null;
     		MutationBatch m = null;
     		try {
-	    		for(long i = startVal ; i < endVal ; i++){
+	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    				gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
 	    				if(gooruOid != null){
@@ -934,16 +934,17 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    		}
 	    		try{
 	    			this.callStatAPI(resourceList, null);
+	    			long stop = System.currentTimeMillis();
+	    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
+	    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
+	    			configSettings.updateOrAddRow("stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
+	    			configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+(jobCount - 1));
 	    		}catch(Exception e){
 	    			logger.info("Error in search API : {}",e);
 	    		}
-    			long stop = System.currentTimeMillis();
-    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
-    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
-    			configSettings.updateOrAddRow("stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
-    			configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+(jobCount - 1));
+	    		
     		} catch (Exception e) {
-    			e.printStackTrace();
+    			logger.info("Something went wrong : {}",e);
     		}
     	}else{    		
     		logger.info("Job queue is full! we are not start any job");
