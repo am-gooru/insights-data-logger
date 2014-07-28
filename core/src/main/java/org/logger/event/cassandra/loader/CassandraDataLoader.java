@@ -101,6 +101,7 @@ public class CassandraDataLoader implements Constants {
     private Keyspace cassandraKeyspace;
     private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
     private SimpleDateFormat minuteDateFormatter;
+    private SimpleDateFormat dateFormatter;
     static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
     private CassandraConnectionProvider connectionProvider;
     
@@ -211,7 +212,8 @@ public class CassandraDataLoader implements Constants {
     private void init(Map<String, String> configOptionsMap) {
     	
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-
+        this.dateFormatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+        
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
 
@@ -851,7 +853,7 @@ public class CassandraDataLoader implements Constants {
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
-    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_migrated", (new Date()).toString(), m);
+    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_migrated", dateFormatter.format((new Date())).toString(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_updated", columns.getColumnByName("last_modified").getStringValue(), m);
     					recentViewedResources.generateRow("views~"+i, "gooruOid", columns.getColumnByName("gooru_oid").getStringValue(), m);
     				}
