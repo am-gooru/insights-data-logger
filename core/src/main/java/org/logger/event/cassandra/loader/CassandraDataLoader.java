@@ -844,8 +844,8 @@ public class CassandraDataLoader implements Constants {
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
-    				logger.info("Resource : {}" , resource);
     				if(resource != null && resource.size() > 0){
+    					logger.info("reosurce size -  {}" ,resource.size());
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					logger.info("jobId : {} "+jobId);
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
