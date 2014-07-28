@@ -170,7 +170,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	
     	Rows<String, String> result = null;
     	try{
-	    	getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
 			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 		 	.searchWithIndex()
 			.addExpression()
@@ -191,7 +191,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	
     	Rows<String, String> result = null;
     	try{
-	    	getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
 			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
 		 	.searchWithIndex().setRowLimit(1)
 			.addExpression()
