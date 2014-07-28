@@ -818,9 +818,11 @@ public class CassandraDataLoader implements Constants {
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
     	
+    	logger.info("totalTime :{}",totalTime);
+    	
     	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
-    	if((jobCount <= maxJobCount) && (indexedCount <= allowedCount) ){
+    	if((jobCount < maxJobCount) && (indexedCount <= allowedCount) ){
     		long start = System.currentTimeMillis();
     		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
     		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
@@ -845,7 +847,6 @@ public class CassandraDataLoader implements Constants {
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
-    				logger.info("Size : {} ",resource.size());
     				if(resource != null && resource.size() > 0){
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					logger.info("jobId : {} "+jobId);
@@ -861,6 +862,7 @@ public class CassandraDataLoader implements Constants {
     			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
     			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
     			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			logger.info("totall_timee : {}",(totalTime + (stop-start)));
     			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
     			e.printStackTrace();
