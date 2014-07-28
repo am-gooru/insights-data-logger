@@ -817,9 +817,6 @@ public class CassandraDataLoader implements Constants {
     	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
-    	
-    	logger.info("totalTime :{}",totalTime);
-    	
     	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
     	if((jobCount < maxJobCount) && (indexedCount <= allowedCount) ){
@@ -853,6 +850,8 @@ public class CassandraDataLoader implements Constants {
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					liveDashBoardDAOImpl.generateCounter("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
+    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_migrated", (new Date()).toString(), m);
+    					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_updated", columns.getColumnByName("last_modified").getStringValue(), m);
     					recentViewedResources.generateRow("views~"+i, "gooruOid", columns.getColumnByName("gooru_oid").getStringValue(), m);
     				}
     			
@@ -862,13 +861,12 @@ public class CassandraDataLoader implements Constants {
     			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
     			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
     			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
-    			logger.info("totall_timee : {}",(totalTime + (stop-start)));
     			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
     			e.printStackTrace();
     		}
     	}else{    		
-    		logger.info("Job queue is full! we are not start any job");
+    		logger.info("Job queue is full! Or Job Reached its allowed end");
     	}
 		
     }
