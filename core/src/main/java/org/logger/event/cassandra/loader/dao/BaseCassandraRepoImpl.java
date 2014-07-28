@@ -193,7 +193,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	try{
 	    	getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
 			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-		 	.searchWithIndex()
+		 	.searchWithIndex().setRowLimit(1)
 			.addExpression()
 			.whereColumn(columnName)
 			.equals()
