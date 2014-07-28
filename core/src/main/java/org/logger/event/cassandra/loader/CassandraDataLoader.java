@@ -819,7 +819,7 @@ public class CassandraDataLoader implements Constants {
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
     	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
-    	if((jobCount < maxJobCount) && (indexedCount <= allowedCount) ){
+    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
     		long start = System.currentTimeMillis();
     		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
     		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
