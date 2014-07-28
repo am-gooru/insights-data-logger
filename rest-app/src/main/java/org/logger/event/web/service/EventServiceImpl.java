@@ -69,8 +69,8 @@ public class EventServiceImpl implements EventService {
     private BaseCassandraRepoImpl baseDao ;
     
     public EventServiceImpl() {
-    	this.connectionProvider = dataLoaderService.getConnectionProvider();
         dataLoaderService = new CassandraDataLoader();
+        this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
     }
