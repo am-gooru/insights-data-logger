@@ -13,6 +13,7 @@ import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
+import com.netflix.astyanax.connectionpool.exceptions.OperationException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -165,7 +166,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	return result;
     }
     
-    public Rows<String, String> readIndexedColumn(String cfName,String key,String columnName,String value){
+    public Rows<String, String> readIndexedColumn(String cfName,String columnName,String value){
     	
     	Rows<String, String> result = null;
     	try{
@@ -186,6 +187,27 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	return result;
     }
     
+    public Rows<String, String> readIndexedColumn(String cfName,String columnName,long value){
+    	
+    	Rows<String, String> result = null;
+    	try{
+	    	getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+		 	.searchWithIndex()
+			.addExpression()
+			.whereColumn(columnName)
+			.equals()
+			.value(value)
+			.execute()
+			.getResult()
+			;
+	    	
+    	} catch(Exception e){
+    		logger.info("Error while fetching data from method : readIndexedColumn {} ", e);    		
+    	}
+    	return result;
+    }
+
     public Rows<String, String> readIndexedColumnLastNrows(String cfName ,String columnName,String value, Integer rowsToRead) {
     	
 		Rows<String, String> result = null;
@@ -219,7 +241,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	return result;
     }
     
-    public Rows<String, String> readIndexedColumnList(String cfName,String key,Map<String,String> columnList){
+    public Rows<String, String> readIndexedColumnList(String cfName,Map<String,String> columnList){
     	
     	Rows<String, String> result = null;
     	IndexQuery<String, String> query = null;
@@ -242,6 +264,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 
     	return result;
     }
+    
+    public boolean isRowKeyExists(String cfName,String key) {
+
+		try {
+			return getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+				.getKey(key).execute()
+				.getResult()
+				.isEmpty();
+		} catch (Exception e) {
+			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
+		}
+		return false;
+	}
     
 	public ColumnList<String> readColumnsWithPrefix(String cfName,String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead){
 		ColumnList<String> result = null;
@@ -363,7 +399,15 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
         .putColumnIfNotNull(columnName, value);
     }
     
-    
+
+    public void  deleteAll(String cfName){
+		try {
+			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
+		} 
+	
+}
     public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
 
 		ColumnFamily<String, String> aggregateColumnFamily;
