@@ -233,6 +233,7 @@ public class CassandraDataLoader implements Constants {
         baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
         //realTimeOperators = realTimeOperation.getOperators();
         Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+        realTimeOperators = new LinkedHashMap<String, String>();
         for (Row<String, String> row : operators) {
         	realTimeOperators.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
 		}
