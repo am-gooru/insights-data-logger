@@ -188,13 +188,19 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					column = new ArrayList<String>();
 					column.add(FORMULA);
 					Map<String, String> normalFormulaDetails = getRowStringValue(readRow(columnFamily.FORMULA_DETAIL.columnFamily(),eventData.get(EVENT_NAME), column));
-
-					Set<String> dashboardKeys = listRowColumnName(readRows(columnFamily.JOB_CONFIG_SETTING.columnFamily(), convertStringtoList(convertListtoString(prcessingKey)),
-							new ArrayList<String>()));
+					
+					String configKey = getValue(prcessingKey,eventData.get(EVENT_NAME));
+					
+					if(!checkNull(configKey)){
+						continue;
+					}
+					
+					Set<String> dashboardKeys = getRowStringValue(readRow(columnFamily.JOB_CONFIG_SETTING.columnFamily(),configKey,
+							new ArrayList<String>())).keySet();
 
 					dashboardKeys = formOrginalKey(dashboardKeys, eventData, format, key);
 					if (!checkNull(dashboardKeys)) {
-						break;
+						continue;
 					}
 					// update live dashboard
 					List<Map<String, String>> dashboardData = getRowsKeyLongValue(readRows(columnFamily.LIVE_DASHBOARD.columnFamily(), dashboardKeys, new ArrayList<String>()), new ArrayList<String>());
@@ -1056,6 +1062,14 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return dateSet;
 	}
 
+	public String getValue(List<String> data,String comparable){
+		
+		for(String name : data){
+			if(name.contains(comparable))
+				return name;
+		}
+		return null;
+	}
 	/*
 	 * @param data is the given date
 	 * 
