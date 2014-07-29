@@ -29,6 +29,9 @@ public enum ColumnFamily {
 	RECENTVIEWEDRESOURCES("recent_viewed_resources"),
 	
 	LIVEDASHBOARD("live_dashboard"),
+	
+	MICROAGGREGATION("micro_aggregation"),
+	
 	;
 	
 	String name;

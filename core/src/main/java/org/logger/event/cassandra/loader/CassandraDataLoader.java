@@ -961,7 +961,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
 		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
 			logger.info("Start Date : {} ",String.valueOf(startDate));
-			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
+			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
 			Collection<String> gooruOids =  recentReources.getColumnNames();
 			
 			for(String id : gooruOids){
@@ -1143,7 +1143,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
-		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
+		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
