@@ -932,9 +932,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    				}
 	    		}
 	    		try{
-	    			
-	    			logger.info("resourceList : {}",resourceList);
-	    			
 	    			if((resourceList.length() != 0)){
 	    				this.callStatAPI(resourceList, null);
 	    			}
