@@ -955,11 +955,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
     
 	public void balanceStatDataUpdate(){
 		Calendar cal = Calendar.getInstance();
-		JSONArray resourceList = new JSONArray();
 		try{
 		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
 		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
+			JSONArray resourceList = new JSONArray();
 			logger.info("Start Date : {} ",String.valueOf(startDate));
 			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
 			Collection<String> gooruOids =  recentReources.getColumnNames();
@@ -989,7 +989,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				resourceList.put(resourceObj);
 			}
 				m.execute();
-				
+				logger.info("resourceList : {} ",resourceList);
 				if(resourceList.length() != 0){
 					this.callStatAPI(resourceList, null);
 				}
