@@ -2,12 +2,15 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 
+import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.service.BaseService;
 import org.logger.event.cassandra.loader.service.BaseServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
@@ -21,6 +24,7 @@ import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
+import com.netflix.astyanax.util.TimeUUIDUtils;
 
 public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	
@@ -371,7 +375,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
         }
     }
 
-    public void saveLongValue(String cfName, String key,String columnName,String value) {
+    public void saveLongValue(String cfName, String key,String columnName,long value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
@@ -400,6 +404,68 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     }
     
 
+    @Async
+    public String  saveEventObject(String cfName ,String key,EventObject eventObject){
+    
+    	if(eventObject.getEventId() == null){
+    		UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+    		key = eventKeyUUID.toString();
+    	}else{
+    		key	= eventObject.getEventId(); 
+    	}
+    	
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	
+        m.withRow(this.accessColumnFamily(cfName), key)
+                .putColumnIfNotNull("start_time", eventObject.getStartTime(), null)
+                .putColumnIfNotNull("end_time", eventObject.getEndTime(),null)
+                .putColumnIfNotNull("fields", eventObject.getFields(),null)
+                .putColumnIfNotNull("time_spent_in_millis",eventObject.getTimeInMillSec(),null)
+                .putColumnIfNotNull("content_gooru_oid",eventObject.getContentGooruId(),null)
+                .putColumnIfNotNull("parent_gooru_oid",eventObject.getParentGooruId(),null)
+                .putColumnIfNotNull("event_name", eventObject.getEventName(),null)
+                .putColumnIfNotNull("session",eventObject.getSession(),null)
+                .putColumnIfNotNull("metrics",eventObject.getMetrics(),null)
+                .putColumnIfNotNull("pay_load_object",eventObject.getPayLoadObject(),null)
+                .putColumnIfNotNull("user",eventObject.getUser(),null)
+                .putColumnIfNotNull("context",eventObject.getContext(),null)
+        		.putColumnIfNotNull("event_type",eventObject.getEventType(),null)
+        		.putColumnIfNotNull("organization_uid",eventObject.getOrganizationUid(),null)
+        		.putColumnIfNotNull("parent_event_id",eventObject.getParentEventId(), null);
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting Event Object to cassandra - JSON - ", e);
+            return null;
+        }
+		return key;
+                
+                
+    }
+    
+    @Async
+    public void updateTimelineObject(String cfName,String rowKey,String CoulmnValue,EventObject eventObject) {
+
+        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey+"~"+eventObject.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+        
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8)+"~"+eventObject.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), CoulmnValue, null);
+        
+        try {
+            eventTimelineMutation.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting event data to cassandra", e);
+        }
+    }
+    
     public void  deleteAll(String cfName){
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
