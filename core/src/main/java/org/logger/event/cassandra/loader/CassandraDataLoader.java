@@ -245,7 +245,7 @@ public class CassandraDataLoader implements Constants {
         statMetrics =baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         atmosphereEndPoint = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue();
-        VIEW_COUNT_REST_API_END_POINT = atmosphereEndPoint = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue();
+        VIEW_COUNT_REST_API_END_POINT = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue();
         
     }
 
