@@ -69,4 +69,6 @@ public interface EventService {
 	void postMigration(String start,String Stop,String param);
 	
 	void postStatMigration(String start,String Stop,String param);
+	
+	void balanceStatDataUpdate();
 }
