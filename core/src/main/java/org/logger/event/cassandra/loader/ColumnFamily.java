@@ -27,6 +27,8 @@ public enum ColumnFamily {
 	REALTIMECONFIG("real_time_operation_config"),
 	
 	RECENTVIEWEDRESOURCES("recent_viewed_resources"),
+	
+	LIVEDASHBOARD("live_dashboard"),
 	;
 	
 	String name;

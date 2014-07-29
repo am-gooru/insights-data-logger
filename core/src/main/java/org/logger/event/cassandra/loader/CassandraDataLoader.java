@@ -932,7 +932,9 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    				}
 	    		}
 	    		try{
-	    			this.callStatAPI(resourceList, null);
+	    			if((resourceList.length() != 0)){
+	    				this.callStatAPI(resourceList, null);
+	    			}
 	    			long stop = System.currentTimeMillis();
 	    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
 	    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
@@ -951,6 +953,51 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		
     }
     
+	public void balanceStatDataUpdate(){
+		Calendar cal = Calendar.getInstance();
+		JSONArray resourceList = new JSONArray();
+		try{
+		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
+		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
+			logger.info("Start Date : {} ",String.valueOf(startDate));
+			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
+			Collection<String> gooruOids =  recentReources.getColumnNames();
+			
+			for(String id : gooruOids){
+				logger.info("gooruOids : {} ",id);
+				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
+				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
+				String insightsView =  insightsData.getStringValue("count~views", null);
+				logger.info("insightsView : {} ",insightsView);
+				String gooruView =  gooruData.getStringValue("views_count", null);
+				logger.info("gooruView : {} ",gooruView);
+				long balancedView = (Long.valueOf(gooruView) - Long.valueOf(insightsView));
+				logger.info("balancedView : {} ",balancedView);
+				logger.info("Insights update views : {} ", (insightsView + balancedView) );
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
+				JSONObject resourceObj = new JSONObject();
+				resourceObj.put("gooruOid", id);
+				resourceObj.put("views", (insightsView + balancedView));
+				resourceObj.put("resourceType", "resource");
+				resourceList.put(resourceObj);
+			}
+				m.execute();
+				
+				if(resourceList.length() != 0){
+					this.callStatAPI(resourceList, null);
+				}
+				
+				cal.setTime(minuteDateFormatter.parse(""+startDate));
+				cal.add(Calendar.MINUTE, 1);
+				Date incrementedTime =cal.getTime(); 
+				startDate = Long.parseLong(minuteDateFormatter.format(incrementedTime));
+			}
+    	}catch(Exception e){
+			logger.info("Error in balancing view counts : {}",e);
+		}
+	
+	}
     //Creating staging Events
     public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
     	HashMap<String, String> stagingEvents = new HashMap<String, String>();
@@ -1096,7 +1143,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
-		ColumnList<String> contents = liveDashBoardDAOImpl.getMicroColumnList(VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
+		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		for(int i = 0 ; i < contents.size() ; i++) {
 			OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+contents.getColumnByIndex(i).getName(), statKeys);
