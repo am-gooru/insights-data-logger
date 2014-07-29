@@ -179,7 +179,6 @@ public class MicroAggregationLoader implements Constants{
     /*	String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
     	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);*/
 		
-    	updateActivityStream(eventObject.getEventId());
     	try {
 			liveDashboardDAOImpl.findDifferenceInCount(eventMap);
 		} catch (ParseException e) {
@@ -188,8 +187,11 @@ public class MicroAggregationLoader implements Constants{
     }
     
     
- private void updateActivityStream(String eventId) throws JSONException {
+ public void updateActivityStream(String eventJSON) throws JSONException {
     	
+    	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
+    	EventObject rootEventObject = gson.fromJson(eventObj, EventObject.class);
+    	String eventId = rootEventObject.getEventId();
     	if (eventId != null){
 
 	    	Map<String,String> rawMap = new HashMap<String, String>();

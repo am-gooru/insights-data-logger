@@ -134,7 +134,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				column.add(LAST_PROCESSED_TIME);
 				List<String> processedTime = listRowColumnStringValue(configData, column);
 
-				if (checkNull(processedTime)) {
+				if (checkNull(processedTime.get(0))) {
 					Date startDate;
 					Date endDate;
 					try {
@@ -230,6 +230,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					lastProcessedKey = key;
 					logger.info("processed key " + lastProcessedKey);
 				}
+			}
+			if(!checkNull(lastProcessedKey)){
+				lastProcessedKey = startTime;
 			}
 			data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
