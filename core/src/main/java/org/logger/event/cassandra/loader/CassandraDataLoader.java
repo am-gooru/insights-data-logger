@@ -955,11 +955,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
     
 	public void balanceStatDataUpdate(){
 		Calendar cal = Calendar.getInstance();
-		JSONArray resourceList = new JSONArray();
 		try{
 		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
 		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
+			JSONArray resourceList = new JSONArray();
 			logger.info("Start Date : {} ",String.valueOf(startDate));
 			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
 			Collection<String> gooruOids =  recentReources.getColumnNames();
@@ -971,25 +971,28 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				long insightsView = 0L;
 				long gooruView = 0L;
 				if(insightsData != null){
-					insightsView =   insightsData.getLongValue("count~views", null);
+					insightsView =   insightsData.getLongValue("count~views", 0L);
 				}
 				logger.info("insightsView : {} ",insightsView);
 				if(gooruData != null){
-					gooruView =  gooruData.getLongValue("views_count", null);
+					gooruView =  gooruData.getLongValue("views_count", 0L);
 				}
 				logger.info("gooruView : {} ",gooruView);
 				long balancedView = (gooruView - insightsView);
 				logger.info("balancedView : {} ",balancedView);
 				logger.info("Insights update views : {} ", (insightsView + balancedView) );
 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-				JSONObject resourceObj = new JSONObject();
-				resourceObj.put("gooruOid", id);
-				resourceObj.put("views", (insightsView + balancedView));
-				resourceObj.put("resourceType", "resource");
-				resourceList.put(resourceObj);
+				if(balancedView != 0){
+					logger.info("Generating resource Object : {}",balancedView);
+					JSONObject resourceObj = new JSONObject();
+					resourceObj.put("gooruOid", id);
+					resourceObj.put("views", (insightsView + balancedView));
+					resourceObj.put("resourceType", "resource");
+					resourceList.put(resourceObj);
+				}
 			}
 				m.execute();
-				
+				logger.info("resourceList : {} ",resourceList);
 				if(resourceList.length() != 0){
 					this.callStatAPI(resourceList, null);
 				}
@@ -1184,7 +1187,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		//String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+				String url = VIEW_COUNT_REST_API_END_POINT + "?skipReindex=ture&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				StringEntity input = new StringEntity(staticsObj.toString());			        
