@@ -982,11 +982,14 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				logger.info("balancedView : {} ",balancedView);
 				logger.info("Insights update views : {} ", (insightsView + balancedView) );
 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-				JSONObject resourceObj = new JSONObject();
-				resourceObj.put("gooruOid", id);
-				resourceObj.put("views", (insightsView + balancedView));
-				resourceObj.put("resourceType", "resource");
-				resourceList.put(resourceObj);
+				if(balancedView != 0){
+					logger.info("Generating resource Object : {}",balancedView);
+					JSONObject resourceObj = new JSONObject();
+					resourceObj.put("gooruOid", id);
+					resourceObj.put("views", (insightsView + balancedView));
+					resourceObj.put("resourceType", "resource");
+					resourceList.put(resourceObj);
+				}
 			}
 				m.execute();
 				logger.info("resourceList : {} ",resourceList);
