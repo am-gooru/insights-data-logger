@@ -968,9 +968,15 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				logger.info("gooruOids : {} ",id);
 				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
 				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
-				long insightsView =  insightsData.getLongValue("count~views", null);
+				long insightsView = 0L;
+				long gooruView = 0L;
+				if(insightsData != null){
+					insightsView =   insightsData.getLongValue("count~views", null);
+				}
 				logger.info("insightsView : {} ",insightsView);
-				long gooruView =  gooruData.getLongValue("views_count", null);
+				if(gooruData != null){
+					gooruView =  gooruData.getLongValue("views_count", null);
+				}
 				logger.info("gooruView : {} ",gooruView);
 				long balancedView = (gooruView - insightsView);
 				logger.info("balancedView : {} ",balancedView);
@@ -988,7 +994,9 @@ public void postStatMigration(String startTime , String endTime,String customEve
 					this.callStatAPI(resourceList, null);
 				}
 				
-				cal.setTime(minuteDateFormatter.parse(""+startDate));
+				configSettings.updateOrAddRow("bal_stat_job_settings", "last_updated_time", String.valueOf(startDate));
+				
+				cal.setTime(minuteDateFormatter.parse(String.valueOf(startDate)));
 				cal.add(Calendar.MINUTE, 1);
 				Date incrementedTime =cal.getTime(); 
 				startDate = Long.parseLong(minuteDateFormatter.format(incrementedTime));
