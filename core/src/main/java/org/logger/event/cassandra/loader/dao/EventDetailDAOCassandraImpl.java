@@ -26,11 +26,13 @@ package org.logger.event.cassandra.loader.dao;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,6 +185,106 @@ logger.info("GooruUId : {}",GooruUId);
             return null;
         }
         return key;
+    }
+    
+    public Map<String,String> generateStringMap(EventData eventData,String appOid) {
+    	Map<String,String> eventDataMap = new LinkedHashMap<String, String>();
+
+    	
+    	if(appOid == null){
+    		appOid = "GLP";
+    	}
+    	String gooruOid = eventData.getContentGooruId();
+    	if(gooruOid == null){
+    		gooruOid = eventData.getGooruOId();
+    	}
+    	if(gooruOid == null){
+    		gooruOid = eventData.getGooruId();
+    	}
+    	if((gooruOid == null || gooruOid.isEmpty()) && eventData.getResourceId() != null){
+    		gooruOid = eventData.getResourceId();
+    	}
+    	String eventValue = eventData.getQuery();
+    	if(eventValue == null){
+    		eventValue = "NA";
+    	}
+    	String parentGooruOid = eventData.getParentGooruId();
+    	if((parentGooruOid == null || parentGooruOid.isEmpty()) && eventData.getCollectionId() != null){
+    		parentGooruOid = eventData.getCollectionId();
+    	}
+    	if(parentGooruOid == null || parentGooruOid.isEmpty()){
+    		parentGooruOid = "NA";
+    	}
+    	if(gooruOid == null || gooruOid.isEmpty()){
+    		gooruOid = "NA";
+    	}	
+    	String organizationUid  = eventData.getOrganizationUid();
+    	if(organizationUid == null){
+    		organizationUid = "NA";
+    	}
+    	String GooruUId = eventData.getGooruUId();
+    	String appUid = appOid+"~"+gooruOid;    	
+        Date dNow = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat("yyyyMMddkkmm");
+        String date = ft.format(dNow).toString();
+
+        String trySeq= null;
+        String attemptStatus= null;
+        String answereIds= null;
+        
+        if(eventData.getAttemptTrySequence() !=null){
+        	trySeq = eventData.getAttemptTrySequence().toString();
+        }
+        if( eventData.getAttemptStatus() != null){
+        	attemptStatus = eventData.getAttemptStatus().toString();
+        }
+        if(eventData.getAnswerId() != null){
+        	answereIds = eventData.getAnswerId().toString();
+        }
+  
+                eventDataMap.put("date_time", date);
+                
+                eventDataMap.put("user_ip", eventData.getUserIp());
+                eventDataMap.put("fields", eventData.getFields());
+                eventDataMap.put("user_agent", eventData.getUserAgent());
+                eventDataMap.put("session_token",eventData.getSessionToken());
+                eventDataMap.put("content_gooru_oid", gooruOid);
+                eventDataMap.put("parent_gooru_oid",parentGooruOid);
+                eventDataMap.put("event_name", eventData.getEventName());
+                eventDataMap.put("api_key", eventData.getApiKey());
+                eventDataMap.put("event_source", eventData.getEventSource());
+                eventDataMap.put("content_id", eventData.getContentId());
+                eventDataMap.put("event_value", eventValue);
+                eventDataMap.put("gooru_uid", GooruUId);
+                eventDataMap.put("event_type", eventData.getEventType());
+                eventDataMap.put("user_id", eventData.getUserId());
+                eventDataMap.put("organization_uid", organizationUid);
+                eventDataMap.put("app_oid", appOid);
+                eventDataMap.put("app_uid", appUid);
+		        eventDataMap.put("city", eventData.getCity());
+		        eventDataMap.put("state", eventData.getState());
+		        eventDataMap.put("attempt_first_status", eventData.getAttemptFirstStatus());
+		        eventDataMap.put("attempt_try_sequence", trySeq);
+		        eventDataMap.put("attempt_status", attemptStatus);
+		        eventDataMap.put("answer_ids", answereIds);
+		        eventDataMap.put("country",eventData.getCountry());
+		        eventDataMap.put("contextInfo",eventData.getContextInfo());
+		        eventDataMap.put("collaboratorIds",eventData.getCollaboratorIds());
+		        eventDataMap.put("mobileData",""+eventData.isMobileData());
+		        eventDataMap.put("hintId",""+eventData.getHintId());
+		        eventDataMap.put("open_ended_text",eventData.getOpenEndedText());
+		        eventDataMap.put("parent_event_id",eventData.getParentEventId());
+        
+       
+        return eventDataMap;
+    }
+    
+    public Map<String,Long> generateLongMap(EventData eventData,String appOid) {
+    	Map<String,Long> eventDataMap = new LinkedHashMap<String, Long>();
+    	eventDataMap.put("start_time", eventData.getStartTime());
+    	eventDataMap.put("end_time", eventData.getEndTime());
+    	eventDataMap.put("time_spent_in_millis", eventData.getTimeInMillSec());
+    	return eventDataMap;
     }
     @Async
     public String  saveEventObject(EventObject eventObject){
