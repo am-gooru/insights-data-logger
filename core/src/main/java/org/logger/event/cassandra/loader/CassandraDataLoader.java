@@ -968,11 +968,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				logger.info("gooruOids : {} ",id);
 				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
 				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
-				String insightsView =  insightsData.getStringValue("count~views", null);
+				long insightsView =  insightsData.getLongValue("count~views", null);
 				logger.info("insightsView : {} ",insightsView);
-				String gooruView =  gooruData.getStringValue("views_count", null);
+				long gooruView =  gooruData.getLongValue("views_count", null);
 				logger.info("gooruView : {} ",gooruView);
-				long balancedView = (Long.valueOf(gooruView) - Long.valueOf(insightsView));
+				long balancedView = (gooruView - insightsView);
 				logger.info("balancedView : {} ",balancedView);
 				logger.info("Insights update views : {} ", (insightsView + balancedView) );
 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
