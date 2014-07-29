@@ -1190,7 +1190,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		//String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
+				String url = VIEW_COUNT_REST_API_END_POINT + "?skipReindex=ture&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				StringEntity input = new StringEntity(staticsObj.toString());			        
