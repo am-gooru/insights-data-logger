@@ -971,11 +971,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				long insightsView = 0L;
 				long gooruView = 0L;
 				if(insightsData != null){
-					insightsView =   insightsData.getLongValue("count~views", null);
+					insightsView =   insightsData.getLongValue("count~views", 0L);
 				}
 				logger.info("insightsView : {} ",insightsView);
 				if(gooruData != null){
-					gooruView =  gooruData.getLongValue("views_count", null);
+					gooruView =  gooruData.getLongValue("views_count", 0L);
 				}
 				logger.info("gooruView : {} ",gooruView);
 				long balancedView = (gooruView - insightsView);
