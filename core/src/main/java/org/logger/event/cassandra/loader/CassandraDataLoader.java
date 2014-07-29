@@ -930,10 +930,12 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    			String gooruOid = null;
-	    			Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
+	    			/*Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
 	    			if(gooruOidColumnString != null){
 	    				gooruOid = gooruOidColumnString.getStringValue();
-	    			}
+	    			}*/
+	    			gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    			
 	    				logger.info("gooruOid : {}",gooruOid);
 	    				if(gooruOid != null){
 	    					OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+gooruOid, columnList);
