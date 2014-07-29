@@ -245,7 +245,7 @@ public class CassandraDataLoader implements Constants {
         statMetrics =baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         atmosphereEndPoint = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue();
-        VIEW_COUNT_REST_API_END_POINT = atmosphereEndPoint = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue();
+        VIEW_COUNT_REST_API_END_POINT = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue();
         
     }
 
@@ -854,15 +854,23 @@ public class CassandraDataLoader implements Constants {
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_migrated", dateFormatter.format((new Date())).toString(), m);
     					recentViewedResources.generateRow("all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_updated", columns.getColumnByName("last_modified").getStringValue(), m);
     					recentViewedResources.generateRow("views~"+i, "gooruOid", columns.getColumnByName("gooru_oid").getStringValue(), m);
+    					
+    					//baseDao.generateNonCounter(cfName, key, columnName, value, m);
     				}
     			
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
-    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
+    			/*recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
     			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
     			configSettings.updateOrAddRow("views_job_settings", "total_time", ""+(totalTime + (stop-start)));
-    			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));
+    			configSettings.updateOrAddRow("views_job_settings", "running_job_count", ""+(jobCount - 1));*/
+    			
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+(jobCount - 1));
+    			
     		} catch (Exception e) {
     			e.printStackTrace();
     		}
@@ -876,7 +884,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	
     	//ColumnList<String> settings = configSettings.getColumnList("stat_job_settings");
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings");
-    	ColumnList<String> jobIds = recentViewedResources.getColumnList("stat_job_ids");
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids");
     	
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
@@ -900,19 +908,34 @@ public void postStatMigration(String startTime , String endTime,String customEve
     		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-    		recentViewedResources.updateOrAddRow(jobId, "start_count", ""+startVal);
+    		/*recentViewedResources.updateOrAddRow(jobId, "start_count", ""+startVal);
     		recentViewedResources.updateOrAddRow(jobId, "end_count", ""+endVal);
     		recentViewedResources.updateOrAddRow(jobId, "job_status", "Inprogress");
     		configSettings.updateOrAddRow("stat_job_settings", "total_job_count", ""+totalJobCount);
     		configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+jobCount);
     		configSettings.updateOrAddRow("stat_job_settings", "indexed_count", ""+endVal);
-    		recentViewedResources.updateOrAddRow("stat_job_ids", "job_names", runningJobs+","+jobId);
+    		recentViewedResources.updateOrAddRow("stat_job_ids", "job_names", runningJobs+","+jobId);*/
+    		
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count",  ""+endVal);
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids", "job_names", runningJobs+","+jobId);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "total_job_count", ""+totalJobCount);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "running_job_count", ""+jobCount);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "indexed_count", ""+endVal);
+    		
     		
     		JSONArray resourceList = new JSONArray();
     		try {
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
-	    			String gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    			String gooruOid = null;
+	    			/*Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
+	    			if(gooruOidColumnString != null){
+	    				gooruOid = gooruOidColumnString.getStringValue();
+	    			}*/
+	    			gooruOid = recentViewedResources.read("views~"+i, "gooruOid");
+	    			
 	    				logger.info("gooruOid : {}",gooruOid);
 	    				if(gooruOid != null){
 	    					OperationResult<ColumnList<String>>  vluesList = liveDashBoardDAOImpl.readLiveDashBoard("all~"+gooruOid, columnList);
@@ -936,10 +959,16 @@ public void postStatMigration(String startTime , String endTime,String customEve
 	    				this.callStatAPI(resourceList, null);
 	    			}
 	    			long stop = System.currentTimeMillis();
-	    			recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
+	    			/*recentViewedResources.updateOrAddRow(jobId, "job_status", "Completed");
 	    			recentViewedResources.updateOrAddRow(jobId, "run_time", (stop-start)+" ms");
 	    			configSettings.updateOrAddRow("stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
-	    			configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+(jobCount - 1));
+	    			configSettings.updateOrAddRow("stat_job_settings", "running_job_count", ""+(jobCount - 1));*/
+	    			
+	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
+	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
+	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "running_job_count", ""+(jobCount - 1));
+	    			
 	    		}catch(Exception e){
 	    			logger.info("Error in search API : {}",e);
 	    		}
@@ -1187,7 +1216,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		//String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName(),DEFAULTCOLUMN);
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?skipReindex=ture&sessionToken=" + sessionToken;
+				String url = VIEW_COUNT_REST_API_END_POINT + "?skipReindex=true&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				StringEntity input = new StringEntity(staticsObj.toString());			        
