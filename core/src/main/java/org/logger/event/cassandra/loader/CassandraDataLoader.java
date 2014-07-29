@@ -289,8 +289,7 @@ public class CassandraDataLoader implements Constants {
 		}
     }
 
-    public void 
-(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
+    public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 	    try {
 	    	
 	    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
@@ -353,8 +352,9 @@ public class CassandraDataLoader implements Constants {
 				liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
 			}
 	
-			//to be re-enable
-			/*if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			/*
+			 * To be Re-enable 
+			 * if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 			}*/
 	
