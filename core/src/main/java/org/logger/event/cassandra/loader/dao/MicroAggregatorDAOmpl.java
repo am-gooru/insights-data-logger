@@ -438,7 +438,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
         					updatePostAggregator(localKey,key+SEPERATOR+option);
 	    				}
         				
-        				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+        				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
         					generateCounter(localKey ,key+SEPERATOR+answerStatus,1L,m);
         				}
 					}
