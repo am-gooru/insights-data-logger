@@ -134,7 +134,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				column.add(LAST_PROCESSED_TIME);
 				List<String> processedTime = listRowColumnStringValue(configData, column);
 
-				if (checkNull(processedTime.get(0))) {
+				if (checkNull(processedTime) && checkNull(processedTime.get(0))) {
 					Date startDate;
 					Date endDate;
 					try {
@@ -189,7 +189,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					column.add(FORMULA);
 					Map<String, String> normalFormulaDetails = getRowStringValue(readRow(columnFamily.FORMULA_DETAIL.columnFamily(),eventData.get(EVENT_NAME), column));
 					
-					String configKey = getValue(prcessingKey,eventData.get(EVENT_NAME));
+					if(!checkNull(normalFormulaDetails)){
+						continue;
+					}
+					String configKey = getValue(convertListtoString(prcessingKey),eventData.get(EVENT_NAME));
 					
 					if(!checkNull(configKey)){
 						continue;
@@ -212,6 +215,10 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 								JsonElement jsonElement = new JsonParser().parse(normalFormulaDetails.get(FORMULA).toString());
 								JsonObject jsonObject = jsonElement.getAsJsonObject();
 								resultMap = calculation(countMap, jsonObject, key, eventData);
+								Map<String,Long> subEventMap = processSubEvents(countMap, jsonObject, eventData.get(EVENT_NAME));
+							if(checkNull(subEventMap)){
+								resultMap.putAll(subEventMap);
+							}
 							} catch (Exception e) {
 								logger.error("unable to get formula" + e);
 								System.out.println("exception while getting data" + e);
@@ -219,7 +226,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						if (!checkNull(resultMap)) {
 							continue;
 						}
-
 						// delete existing column since it was an dynamic column
 						Set<String> columnNames = resultMap.keySet();
 						deleteColumns(columnFamily.LIVE_DASHBOARD.columnFamily(), countMap.get(mapKey.KEY.mapKey()).toString(), columnNames);
@@ -236,8 +242,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			}
 			data = new HashMap<String, String>();
 			data.put(LAST_PROCESSED_TIME, lastProcessedKey);
+			putStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data);
+			data = new HashMap<String, String>();
 			data.put( formulaDetail.STATUS.formulaDetail(), formulaDetail.COMPLETED.formulaDetail());
-			putExpireStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data,120);
 			logger.info("Minute Aggregator Runned Successfully");
 			System.out.println("Minute Aggregator completed");
 		} catch (Exception e) {
@@ -1065,9 +1072,9 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return dateSet;
 	}
 
-	public String getValue(List<String> data,String comparable){
+	public String getValue(String data,String comparable){
 		
-		for(String name : data){
+		for(String name : data.split(",")){
 			if(name.contains(comparable))
 				return name;
 		}
@@ -1128,6 +1135,16 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return data;
 	}
 
+	public Set<String> removeKey(String value,String comparable){
+		
+		Set<String> rowKey = new HashSet<String>();
+		for(String key : value.split(",")){
+			if(!comparable.equalsIgnoreCase(key)){
+				rowKey.add(key);
+			}
+		}
+		return rowKey;
+	}
 	/*
 	 * @param entry is the given data
 	 * 
@@ -1140,11 +1157,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 	public Map<String, Long> calculation(Map<String, String> entry, JsonObject jsonMap, String currentDate, Map<String, String> eventData) {
 
 		Map<String, Long> resultMap = new HashMap<String, Long>();
-		String eventName = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).getAsString();
-
-		if (!eventData.get(EVENT_NAME).contains(eventName)) {
-			return resultMap;
-		}
+		
 		JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).toString());
 		JsonArray formulaArray = jsonElement.getAsJsonArray();
 		for (int i = 0; i < formulaArray.size(); i++) {
@@ -1180,7 +1193,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 						logger.error("mathametical error" + e);
 						continue;
 					}
-
 				}
 			} catch (Exception e) {
 				logger.debug("formula detail is not an json Element");
@@ -1190,6 +1202,62 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultMap;
 	}
 
+	public Map<String, Long> SubEventcalculation(Map<String, String> entry, JsonObject jsonMap) {
+
+		Map<String, Long> resultMap = new HashMap<String, Long>();
+		
+		JsonElement jsonElement = new JsonParser().parse(jsonMap.get(formulaDetail.FORMULAS.formulaDetail()).toString());
+		JsonArray formulaArray = jsonElement.getAsJsonArray();
+		for (int i = 0; i < formulaArray.size(); i++) {
+			try {
+				JsonElement obj = formulaArray.get(i);
+
+				JsonObject columnFormula = obj.getAsJsonObject();
+
+				if (columnFormula.has(formulaDetail.FORMULA.formulaDetail()) && columnFormula.has(formulaDetail.STATUS.formulaDetail())
+						&& formulaDetail.ACTIVE.formulaDetail().equalsIgnoreCase(columnFormula.get(formulaDetail.STATUS.formulaDetail()).getAsString())) {
+
+					String columnName = columnFormula.get(formulaDetail.NAME.formulaDetail()).getAsString();
+
+					try {
+						String[] values = columnFormula.get(formulaDetail.REQUEST_VALUES.formulaDetail()).getAsString().split(COMMA);
+
+						ExpressionBuilder expressionBuilder = new ExpressionBuilder(columnFormula.get(formulaDetail.FORMULA.formulaDetail()).getAsString());
+						for (String value : values) {
+							expressionBuilder.withVariable(value, entry.get(value) != null ? Long.valueOf(entry.get(value).toString()) : 0L);
+						}
+						long calculated = Math.round(expressionBuilder.build().calculate());
+						resultMap.put(columnName, calculated);
+					} catch (Exception e) {
+						resultMap.put(columnName, 0L);
+						logger.error("mathametical error" + e);
+						continue;
+					}
+				}
+			} catch (Exception e) {
+				logger.debug("formula detail is not an json Element");
+				continue;
+			}
+		}
+		return resultMap;
+	}
+	public Map<String, Long> processSubEvents(Map<String, String> entry, JsonObject jsonMap,String eventName){
+		String eventNames = jsonMap.get(formulaDetail.EVENTS.formulaDetail()).getAsString();
+		Set<String> rowKey = removeKey(eventNames,eventName);
+		Map<String,Long> resultData = new HashMap<String, Long>();
+		if(checkNull(rowKey)){
+		List<Map<String,String>> formulaDetail = getRowsColumnStringValue(readRows(columnFamily.FORMULA_DETAIL.columnFamily(),rowKey, new ArrayList<String>()), new ArrayList<String>());
+		for(Map<String, String> map : formulaDetail){
+		JsonElement jsonElement = new JsonParser().parse(map.get(FORMULA).toString());
+		JsonObject jsonObject = jsonElement.getAsJsonObject();
+		Map<String,Long> tempMap = SubEventcalculation(entry, jsonObject);
+		if(checkNull(tempMap)){
+		resultData.putAll(tempMap);
+		}
+		}
+		}
+		return resultData;
+		}
 	/*
 	 * C: defines => Constant D: defines => Date format lookup E: defines =>
 	 * eventMap param lookup
