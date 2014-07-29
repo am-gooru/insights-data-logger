@@ -113,7 +113,7 @@ public class MicroAggregatorConsumer extends Thread {
 			// TODO We're only getting raw data now. We'll have to use the
 			// server IP as well for extra information.
 			if (messageMap != null) {
-			//	microRealTimeAggregation(messageMap);
+				updateActivityStream(messageMap);
 				staticAggregation(messageMap);
 			} else {
 				LOG.error("Message Consumer Error messageMap : No data found");
@@ -123,12 +123,12 @@ public class MicroAggregatorConsumer extends Thread {
 	}
 
 	@Async
-	public void microRealTimeAggregation(Map<String, String> messageMap) {
+	public void updateActivityStream(Map<String, String> messageMap) {
 		String eventJson = (String) messageMap.get("raw");
 		if (eventJson != null) {
 			try {
 				LOG.info("EventJson:{}", eventJson);
-				microAggregationLoader.microRealTimeAggregation(eventJson);
+				microAggregationLoader.updateActivityStream(eventJson);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
