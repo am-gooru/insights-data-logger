@@ -1262,7 +1262,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 						ExpressionBuilder expressionBuilder = new ExpressionBuilder(columnFormula.get(formulaDetail.FORMULA.formulaDetail()).getAsString());
 						for (String value : values) {
-							expressionBuilder.withVariable(value, entry.get(value) != null ? Long.valueOf(entry.get(value).toString()) : 0L);
+							expressionBuilder.withVariable(value, entry.get(columnFormula.get(value).getAsString()) != null ? Long.valueOf(entry.get(columnFormula.get(value).getAsString()).toString()) : 0L);
 						}
 						long calculated = Math.round(expressionBuilder.build().calculate());
 						resultMap.put(columnName, calculated);
