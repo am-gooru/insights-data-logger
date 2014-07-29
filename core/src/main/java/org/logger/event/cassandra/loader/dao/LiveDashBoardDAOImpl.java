@@ -102,7 +102,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.classpage = new ClasspageDAOImpl(this.connectionProvider);
         this.collection = new CollectionDAOImpl(this.connectionProvider);
         this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
-        this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);    
+        this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);
+        this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
+        
         dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
         isMigrationRunning = Boolean.valueOf(configSettings.getConstants("migration~stat","constant_value"));
     }
