@@ -74,11 +74,7 @@ public class EventServiceImpl implements EventService {
         dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
-        acceptedFileds = new LinkedHashMap<String, String>();
-        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
-        for(Row<String, String> row : rows){
-        	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
-        }
+        
     }
 
     @Override
@@ -235,7 +231,7 @@ public class EventServiceImpl implements EventService {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
-        		eventObjectValidator.validateEventObject(acceptedFileds,eventObject);
+        		eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
         return new ActionResponseDTO<EventObject>(eventObject, errors);
