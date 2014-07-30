@@ -56,7 +56,7 @@ public class EventObjectValidator  {
 	private void init(Map<String ,String> object) {
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(null);
-		baseDao = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
+		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){
