@@ -182,8 +182,8 @@ public class CassandraDataLoader implements Constants {
 
         geo = new GeoLocation();
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
-        statKeys = statMetrics.getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        statKeys = statMetrics.getColumnNames();
         
     }
 
@@ -198,8 +198,8 @@ public class CassandraDataLoader implements Constants {
         cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
         cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
-        statKeys = statMetrics.getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        statKeys = statMetrics.getColumnNames();
         liveDashBoardDAOImpl.clearCache();
     }
     
