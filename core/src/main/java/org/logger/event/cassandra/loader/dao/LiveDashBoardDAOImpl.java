@@ -49,6 +49,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     String dashboardKeys = null;
     
+    String browserDetails = null;
+    
     ColumnList<String> eventKeys = null;
     
 	String visitor = "visitor";
@@ -61,6 +63,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
+        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers","constant_value").getStringValue();
     }
     
     @Async
@@ -87,6 +90,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	
             }
     	}
+    }
+    
+    public String getBrowser(String userAgent) {
+    	String browser = "";
+    	if(!userAgent.isEmpty() && userAgent != null) {
+            	for(String browserList : browserDetails.split(",")) {
+            		if(userAgent.indexOf(browserList)!= -1) {
+            	         browser = browserList;
+            		}
+            	}
+    	}
+    	return browser;
     }
     
     @Async
@@ -368,7 +383,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 			if(splittedKey.startsWith("E:") && eventMap != null){
 				subKey = splittedKey.split(":");
-				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+				if(eventMap.containsKey(USERAGENT) && eventMap.get(USERAGENT) != null) {
+					key += "~"+this.getBrowser(eventMap.get(USERAGENT));
+				} else {
+					key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+				}
 			}
 			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
 				try {
