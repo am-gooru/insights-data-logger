@@ -67,6 +67,7 @@ public class EventObjectValidator  {
 	public static <T> T validateEventObject(EventObject eventObject) throws JSONException  {
 			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 			for (String fieldName : eventMap.keySet()){
+				logger.info("fieldName:{} - acceptedFileds : {} ",fieldName,acceptedFileds);
 				if(!acceptedFileds.containsKey(fieldName)){
 					throw new NoSuchElementException("Please make sure this attribute:"+fieldName+". Or contact Adminstrator to add this attribute in event JSON list. ");
 				}
