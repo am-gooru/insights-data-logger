@@ -45,24 +45,9 @@ public class EventObjectValidator  {
 	private static final Logger logger = LoggerFactory.getLogger(EventObjectValidator.class);
 	private  static BaseCassandraRepoImpl baseDao;
 	private  CassandraConnectionProvider connectionProvider;
-	private static Map<String,String> acceptedFileds;
-	public EventObjectValidator() {
-		this(null);
-    }
-	public EventObjectValidator(Map<String ,String> object) {
-		init(object);
-	}
-	private void init(Map<String ,String> object) {
-		this.setConnectionProvider(new CassandraConnectionProvider());
-        this.getConnectionProvider().init(null);
-        baseDao = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
-        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
-        for(Row<String, String> row : rows){
-        	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
-        }
-	}
 
-	public static <T> T validateEventObject(EventObject eventObject) throws JSONException  {
+
+	public static <T> T validateEventObject(Map<String,String> acceptedFileds ,EventObject eventObject) throws JSONException  {
 			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 			for (String fieldName : eventMap.keySet()){
 				if(!acceptedFileds.containsKey(fieldName)){
