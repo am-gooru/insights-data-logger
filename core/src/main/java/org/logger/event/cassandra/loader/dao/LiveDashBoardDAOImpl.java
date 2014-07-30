@@ -55,15 +55,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	String visitorType = "loggedInUser";
 	
-	boolean isMigrationRunning = true;
-	
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
-        isMigrationRunning = Boolean.valueOf(baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migration~stat","constant_value").getStringValue());
     }
     
     @Async
