@@ -64,7 +64,7 @@ public class EventObjectValidator  {
         }
 	}
 
-	public static <T> T validateEventObject(Map<String,String> acceptedFileds ,EventObject eventObject) throws JSONException  {
+	public static <T> T validateEventObject(EventObject eventObject) throws JSONException  {
 			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
 			for (String fieldName : eventMap.keySet()){
 				if(!acceptedFileds.containsKey(fieldName)){
