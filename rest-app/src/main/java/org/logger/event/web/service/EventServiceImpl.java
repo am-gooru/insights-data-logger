@@ -266,4 +266,7 @@ public class EventServiceImpl implements EventService {
 	public void balanceStatDataUpdate() {
 		dataLoaderService.balanceStatDataUpdate();
 	}
+	public void clearCacher(){
+		dataLoaderService.clearCache();
+	}
 }

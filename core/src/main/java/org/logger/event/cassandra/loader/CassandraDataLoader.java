@@ -96,8 +96,8 @@ public class CassandraDataLoader implements Constants {
     private MicroAggregatorDAOmpl liveAggregator;
     
     private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
-
-    public static  Map<String,String> realTimeOperators;
+    
+    public static  Map<String,String> cache;
     
     private MicroAggregatorProducer microAggregator;
     
@@ -108,13 +108,7 @@ public class CassandraDataLoader implements Constants {
     public Collection<String> statKeys ;
     
     public ColumnList<String> statMetrics ;
-    
-    public String viewEvents ;
-    
-    private String atmosphereEndPoint;
-    
-    private String VIEW_COUNT_REST_API_END_POINT;
-    
+        
     private BaseCassandraRepoImpl baseDao ;
     
     /**
@@ -178,20 +172,37 @@ public class CassandraDataLoader implements Constants {
         baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 
         Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
-        realTimeOperators = new LinkedHashMap<String, String>();
+        cache = new LinkedHashMap<String, String>();
         for (Row<String, String> row : operators) {
-        	realTimeOperators.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+        	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
 		}
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
+
         geo = new GeoLocation();
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
-        viewEvents = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue();
-        statMetrics =baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
-        atmosphereEndPoint = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue();
-        VIEW_COUNT_REST_API_END_POINT = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         
     }
 
+    public void clearCache(){
+    	cache.clear();
+    	Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+        cache = new LinkedHashMap<String, String>();
+        for (Row<String, String> row : operators) {
+        	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+		}
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
+        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
+        statKeys = statMetrics.getColumnNames();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        liveDashBoardDAOImpl.clearCache();
+    }
+    
     /**
      * 
      * @param fields
@@ -377,7 +388,9 @@ public class CassandraDataLoader implements Constants {
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
 			
-			String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
+			String aggregatorJson = cache.get(eventMap.get("eventName"));
+			
+			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 	
@@ -400,7 +413,7 @@ public class CassandraDataLoader implements Constants {
 			this.saveGeoLocations(eventMap);		
 	
 			if(pushingEvents.contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.pushEventForAtmosphere(atmosphereEndPoint,eventMap);
+				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
 	
 			/*
@@ -409,7 +422,7 @@ public class CassandraDataLoader implements Constants {
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 			}*/
 	
-			if(viewEvents.contains(eventMap.get("eventName"))){
+			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 			}
 			
@@ -953,7 +966,7 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	JSONObject staticsObj = new JSONObject();
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?skipReindex=true&sessionToken=" + sessionToken;
+				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=true&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				StringEntity input = new StringEntity(staticsObj.toString());			        

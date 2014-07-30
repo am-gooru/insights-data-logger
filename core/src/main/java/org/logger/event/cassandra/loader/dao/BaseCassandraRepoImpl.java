@@ -448,7 +448,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
 
     
-    // Customized methods
+    /*
+     *These are custom methods which is supporting in out application
+     * 
+     */
     
     public String saveEvent(String cfName , EventData eventData) {
     	String key = null;

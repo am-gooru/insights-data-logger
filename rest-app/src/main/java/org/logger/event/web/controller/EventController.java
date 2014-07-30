@@ -382,7 +382,15 @@ public class EventController {
 		return;
 
 	}
-	
+	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
+	public void clearCache(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			eventService.clearCacher();
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
 	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,

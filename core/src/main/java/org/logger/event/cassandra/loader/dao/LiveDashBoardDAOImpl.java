@@ -63,6 +63,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
     }
     
+    public void clearCache(){
+    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
+    }
+    
     @Async
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -177,6 +181,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
 		Map<String,String> returnDate = new LinkedHashMap<String, String>();
 		if(dashboardKeys != null){
+			logger.info("dashboardKeys : {} ",dashboardKeys);
 			for(String key : dashboardKeys.split(",")){
 				String rowKey = null;
 				if(!key.equalsIgnoreCase("all")) {
@@ -323,28 +328,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         }
 	}
 	
-	public List<String> generateYMWDKey(String eventTime){
-		List<String> returnDate = new ArrayList<String>();	
-		if(dashboardKeys != null){
-			for(String key : dashboardKeys.split(",")){
-				String rowKey = null;
-				if(!key.equalsIgnoreCase("all")) {
-					customDateFormatter = new SimpleDateFormat(key);
-					Date eventDateTime = new Date(Long.valueOf(eventTime));
-				try{					
-					rowKey = customDateFormatter.format(eventDateTime).toString();
-				}
-				catch(Exception e){
-					logger.info("Exception while key generation : {} ",e);
-				}
-				} else {
-					rowKey = key;
-				}
-		        returnDate.add(rowKey);
-			}
-		}
-		return returnDate; 
-	}
 
 /*	C: defines => Constant
 	D: defines => Date format lookup
@@ -380,41 +363,4 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return key != null ? key.substring(1).trim():null;
 	}
-	public String generateKeys(String eventTime,String columnName){
-		String finalKey = "";
-	    if(eventTime != null){
-					String[] key = columnName.split("~");
-	            	String rowKeys = "";
-					String newKey = key[0];
-	                 if(!newKey.equalsIgnoreCase("all") && !newKey.contains("all~")) {
-						customDateFormatter = new SimpleDateFormat(newKey);
-						Date eventDateTime = new Date(Long.valueOf(eventTime));
-	            	   	if(columnName.contains("~")){
-	            			String[] parts = columnName.split("~");
-		    				try{					
-		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
-		    				}
-		    				catch(Exception e){
-		    					logger.info("Exception while key generation : {} ",e);
-		    				}
-	            	        for(int i = 1 ; i < parts.length ; i++){
-	            	        	rowKeys += "~"+parts[i];
-	            	        }
-	            	        finalKey = rowKeys;
-	               	 	}else{
-		    				try{					
-		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
-		               	 		finalKey = rowKeys;
-		    				}
-		    				catch(Exception e){
-		    					logger.info("Exception while key generation : {} ",e);
-		    				}
-	               	 	}
-            	   	} else {
-            	   			finalKey = columnName;
-                    }
-	    }
-	    return finalKey;
-	}
-
 }
