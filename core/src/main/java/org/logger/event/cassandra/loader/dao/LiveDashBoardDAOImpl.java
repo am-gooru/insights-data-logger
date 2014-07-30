@@ -178,7 +178,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
     		
     	    long thisCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)).getLongValue();
-    	    long lastCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME).getBytes()).getLongValue();
+    	    long lastCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)).getLongValue();
     	    
     	    if(lastCount != 0L){
     	    	long difference = (thisCount*100)/lastCount;
