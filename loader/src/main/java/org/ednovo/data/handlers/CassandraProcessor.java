@@ -187,23 +187,4 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 			 }
 	}
 	
-	public void updateViewCount(String gooruoid, long viewcount){
-		dataLoader.updateViewCount(gooruoid, viewcount);
-	}
-	
-	public void addAggregators(String eventName, String json,String updateBy){
-		dataLoader.addAggregators(eventName, json,updateBy);
-	}
-	public void  runPig(String eventName) {
-		dataLoader.runPig(eventName);
-	} 
-	
-	public void callAPIViewCount(){
-		try {
-			dataLoader.callAPIViewCount();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-	}
-	
 }

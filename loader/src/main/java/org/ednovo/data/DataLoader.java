@@ -140,42 +140,7 @@ public class DataLoader  {
     		    return;
     	    }
     	    
-    	    //for update resource view count
-    	    if( line.hasOption( "updateViewCount" ) ) {
-    	    	LOG.info("Updating view count");
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	long viewcount;
-    	    	viewcount = Long.parseLong(line.getOptionValue("viewCount"));
-    	    	cassandraProcessor.updateViewCount(line.getOptionValue("gooruOid"), viewcount);
-    	    }
-    	    
-    	    if( line.hasOption( "aggregators" ) ) {
-    	    	LOG.info("Updating aggregators");
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	cassandraProcessor.addAggregators(line.getOptionValue("eventName"), line.getOptionValue("aggregators"),line.getOptionValue("updateBy"));
-    	    }
-    	    
-    	    //for pig aggregation
-    	    if(line.hasOption("runAggregation")) {
-    	    	LOG.info("Aggregation Starts");
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	String eventName;
-    	    	eventName = line.getOptionValue("eventName");
-    	    	cassandraProcessor.runPig(eventName);
-    	    }
-    	    
-    	    //call gooru-appi update resource view count
-    	    if( line.hasOption( "callAPIViewCount" ) ) {
-    	    	LOG.info("call API view count");
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	cassandraProcessor.callAPIViewCount();
-    	    }
-    	    
-    	    if (line.hasOption("geoLocationUpdate") && line.hasOption("startTime") && line.hasOption("endTime")) {
-    	    	LOG.info("processing staging data for geo-location-update");
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	cassandraProcessor.geoLocationUpdate(line.getOptionValue("startTime"), line.getOptionValue("endTime"));
-    	    }else if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
+    	    if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
     	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
     	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
     	    	return;

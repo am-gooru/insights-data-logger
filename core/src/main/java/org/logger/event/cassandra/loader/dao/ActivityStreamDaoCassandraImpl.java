@@ -80,10 +80,8 @@ public class ActivityStreamDaoCassandraImpl extends BaseDAOCassandraImpl impleme
 			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);	
 			 m.withRow(activityStreamCF, rowKey)
 			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
-			 /*.putColumnIfNotNull("organization_uid", activities.get("organizationUid") != null ? activities.get("organizationUid").toString():null, null)
-			 .putColumnIfNotNull("api_key", activities.get("apiKey") != null ? activities.get("apiKey").toString():null, null)
-			 .putColumnIfNotNull("username", activities.get("userName") != null ? activities.get("userName").toString():null, null)
-			 .putColumnIfNotNull("user_uid", activities.get("userUid") != null ? activities.get("userUid").toString():null, null)*/;
+			 
+			 ;
 	            m.execute();
         } catch (ConnectionException e) {
             logger.info("Error while inserting to cassandra ", e);       

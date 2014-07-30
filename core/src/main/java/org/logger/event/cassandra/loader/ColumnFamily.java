@@ -32,6 +32,8 @@ public enum ColumnFamily {
 	
 	MICROAGGREGATION("micro_aggregation"),
 	
+	ACITIVITYSTREAM("activity_stream"),
+	
 	;
 	
 	String name;

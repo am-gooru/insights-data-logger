@@ -1,9 +1,19 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.service.BaseService;
@@ -14,6 +24,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
 import com.netflix.astyanax.connectionpool.exceptions.OperationException;
@@ -403,6 +414,136 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
         .putColumnIfNotNull(columnName, value);
     }
     
+    
+    public void  deleteAll(String cfName){
+		try {
+			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
+		} 
+	
+}
+    public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
+
+		ColumnFamily<String, String> aggregateColumnFamily;
+
+		aggregateColumnFamily = new ColumnFamily<String, String>(columnFamilyName, StringSerializer.get(), StringSerializer.get());
+
+		return aggregateColumnFamily;
+	}
+
+    
+    // Customized methods
+    
+    public String saveEvent(String cfName , EventData eventData) {
+    	String key = null;
+    	if(eventData.getEventId() == null){
+    		UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+    		key = eventKeyUUID.toString();
+    	}else{
+    		key	= eventData.getEventId(); 
+    	}
+    	String	appOid = "GLP";
+
+    	String gooruOid = eventData.getContentGooruId();
+    	
+    	if(gooruOid == null){
+    		gooruOid = eventData.getGooruOId();
+    	}
+    	if(gooruOid == null){
+    		gooruOid = eventData.getGooruId();
+    	}
+    	if((gooruOid == null || gooruOid.isEmpty()) && eventData.getResourceId() != null){
+    		gooruOid = eventData.getResourceId();
+    	}
+    	String eventValue = eventData.getQuery();
+    	if(eventValue == null){
+    		eventValue = "NA";
+    	}
+    	String parentGooruOid = eventData.getParentGooruId();
+    	if((parentGooruOid == null || parentGooruOid.isEmpty()) && eventData.getCollectionId() != null){
+    		parentGooruOid = eventData.getCollectionId();
+    	}
+    	if(parentGooruOid == null || parentGooruOid.isEmpty()){
+    		parentGooruOid = "NA";
+    	}
+    	if(gooruOid == null || gooruOid.isEmpty()){
+    		gooruOid = "NA";
+    	}	
+    	String organizationUid  = eventData.getOrganizationUid();
+    	if(organizationUid == null){
+    		organizationUid = "NA";
+    	}
+    	String GooruUId = eventData.getGooruUId();
+
+    	String appUid = appOid+"~"+gooruOid;    	
+        Date dNow = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat("yyyyMMddkkmm");
+        String date = ft.format(dNow).toString();
+
+        String trySeq= null;
+        String attemptStatus= null;
+        String answereIds= null;
+        
+        if(eventData.getAttemptTrySequence() !=null){
+        	trySeq = eventData.getAttemptTrySequence().toString();
+        }
+        if( eventData.getAttemptStatus() != null){
+        	attemptStatus = eventData.getAttemptStatus().toString();
+        }
+        if(eventData.getAnswerId() != null){
+        	answereIds = eventData.getAnswerId().toString();
+        }
+        // Inserting data
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+             
+        m.withRow(this.accessColumnFamily(cfName), key)
+                .putColumn("date_time", date, null)
+                .putColumnIfNotNull("start_time", eventData.getStartTime(), null)
+                .putColumnIfNotNull("user_ip", eventData.getUserIp(), null)
+                .putColumnIfNotNull("fields", eventData.getFields(), null)
+                .putColumnIfNotNull("user_agent", eventData.getUserAgent(), null)
+                .putColumnIfNotNull("session_token",eventData.getSessionToken(), null)
+                .putColumnIfNotNull("end_time", eventData.getEndTime(), null)
+                .putColumnIfNotNull("content_gooru_oid", gooruOid, null)
+                .putColumnIfNotNull("parent_gooru_oid",parentGooruOid, null)
+                .putColumnIfNotNull("event_name", eventData.getEventName(), null)
+                .putColumnIfNotNull("api_key", eventData.getApiKey(), null)
+                .putColumnIfNotNull("time_spent_in_millis", eventData.getTimeInMillSec())
+                .putColumnIfNotNull("event_source", eventData.getEventSource())
+                .putColumnIfNotNull("content_id", eventData.getContentId(), null)
+                .putColumnIfNotNull("event_value", eventValue, null)
+                .putColumnIfNotNull("gooru_uid", GooruUId,null)
+                .putColumnIfNotNull("event_type", eventData.getEventType(),null)
+                .putColumnIfNotNull("user_id", eventData.getUserId(),null)
+                .putColumnIfNotNull("organization_uid", organizationUid)
+                .putColumnIfNotNull("app_oid", appOid, null)
+                .putColumnIfNotNull("app_uid", appUid, null)
+		        .putColumnIfNotNull("city", eventData.getCity(), null)
+		        .putColumnIfNotNull("state", eventData.getState(), null)
+		        .putColumnIfNotNull("attempt_number_of_try_sequence", eventData.getAttemptNumberOfTrySequence(), null)
+		        .putColumnIfNotNull("attempt_first_status", eventData.getAttemptFirstStatus(), null)
+		        .putColumnIfNotNull("answer_first_id", eventData.getAnswerFirstId(), null)
+		        .putColumnIfNotNull("attempt_try_sequence", trySeq, null)
+		        .putColumnIfNotNull("attempt_status", attemptStatus, null)
+		        .putColumnIfNotNull("answer_ids", answereIds, null)
+		        .putColumnIfNotNull("country",eventData.getCountry(), null)
+		        .putColumnIfNotNull("contextInfo",eventData.getContextInfo(), null)
+		        .putColumnIfNotNull("collaboratorIds",eventData.getCollaboratorIds(), null)
+		        .putColumnIfNotNull("mobileData",eventData.isMobileData(), null)
+		        .putColumnIfNotNull("hintId",eventData.getHintId(), null)
+		        .putColumnIfNotNull("open_ended_text",eventData.getOpenEndedText(), null)
+		        .putColumnIfNotNull("parent_event_id",eventData.getParentEventId(), null);
+        
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting to cassandra - JSON - ", e);
+            return null;
+        }
+        return key;
+    }
+
 
     @Async
     public String  saveEventObject(String cfName ,String key,EventObject eventObject){
@@ -465,23 +606,109 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
             logger.info("Error while inserting event data to cassandra", e);
         }
     }
+
+    @Async
+    public void updateTimeline(String cfName,EventData eventData, String rowKey) {
+
+        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
+                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey+"~"+eventData.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+
+        eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8)+"~"+eventData.getEventName())).putColumn(
+                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+        
+        try {
+            eventTimelineMutation.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while inserting event data to cassandra", e);
+        }
+    }
     
-    public void  deleteAll(String cfName){
-		try {
-			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
-		} catch (Exception e) {
-			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
-		} 
-	
-}
-    public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
-
-		ColumnFamily<String, String> aggregateColumnFamily;
-
-		aggregateColumnFamily = new ColumnFamily<String, String>(columnFamilyName, StringSerializer.get(), StringSerializer.get());
-
-		return aggregateColumnFamily;
+    public void saveActivity(String cfName,HashMap<String, Object> activities){
+		 String rowKey = null;
+		 String dateId = "0";
+		 String columnName = null;
+		 String eventName = null;
+		 rowKey = activities.get("userUid") != null ?  activities.get("userUid").toString() : null;
+		 dateId = activities.get("dateId") != null ?  activities.get("dateId").toString() : null; 
+		 eventName = activities.get("eventName") != null ?  activities.get("eventName").toString() : null;
+		 if(activities.get("existingColumnName") == null){
+			 columnName = ((dateId.toString() == null ? "0L" : dateId.toString()) + "~" + (eventName == null ? "NA" : activities.get("eventName").toString()) + "~" + activities.get("eventId").toString());
+		 } else{
+			 columnName = activities.get("existingColumnName").toString();
+		 }
+	 
+	     try {        	
+			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);	
+			 m.withRow(this.accessColumnFamily(cfName), rowKey)
+			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
+			 
+			 ;
+	            m.execute();
+       } catch (ConnectionException e) {
+           logger.info("Error while inserting to cassandra ", e);       
+       }
 	}
     
+	public Map<String, Object> isEventIdExists(String cfName,String userUid, String eventId){
+		OperationResult<ColumnList<String>> eventColumns = null;
+		Map<String,Object> resultMap = new HashMap<String, Object>();
+		List<Map<String,Object>> resultList = new ArrayList<Map<String,Object>>();
+		Boolean isExists = false;
+		try {
+			eventColumns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.getKey(userUid).execute();
+			if (eventColumns != null)
+				for(Column<String> eventColumn : eventColumns.getResult()){
+					String columnName = eventColumn.getName();
+					if (columnName != null) {						
+					if(columnName.contains(eventId)){
+						isExists = true;
+						resultMap.put("isExists", isExists);
+						resultMap.put("jsonString",eventColumn.getStringValue());
+						resultMap.put("existingColumnName", columnName);
+						resultList.add(resultMap);
+						return resultMap;
+					}
+				}
+			}
+		} catch (ConnectionException e) {
+			logger.info("Cassandra Connection Exception thrown!!");
+			e.printStackTrace();
+		}
+		if(!isExists){
+			resultMap.put("isExists", isExists);
+			resultMap.put("jsonString",null);
+			resultList.add(resultMap);
+		}
+		return resultMap;
+	}
+	
+    protected static String convertStreamToString(InputStream is) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+
+        String line = null;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
+    }
 
 }

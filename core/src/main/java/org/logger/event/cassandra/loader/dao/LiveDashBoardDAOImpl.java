@@ -14,6 +14,7 @@ import org.ednovo.data.model.GeoData;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
@@ -37,29 +37,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
 	private static final Logger logger = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 
-    private final ColumnFamily<String, String> microAggregator;
-    
-    private static final String CF_MICRO_AGGREGATOR = "micro_aggregation";
-
-    private final ColumnFamily<String, String> liveDashboard;
-    
-    private static final String CF_LIVE_DASHBOARD = "live_dashboard";
-
     private CassandraConnectionProvider connectionProvider;
-    
-    private CollectionItemDAOImpl collectionItem;
-    
-    private EventDetailDAOCassandraImpl eventDetailDao; 
-    
-    private DimResourceDAOImpl dimResource;
-    
-    private DimUserDAOCassandraImpl dimUser;
-    
-    private ClasspageDAOImpl classpage;
-    
-    private CollectionDAOImpl collection;
-    
-    private RecentViewedResourcesDAOImpl recentResource;
     
     private MicroAggregatorDAOmpl microAggregatorDAOmpl;
     
@@ -67,11 +45,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     
+    private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
+
     private SimpleDateFormat customDateFormatter;
     
-    private JobConfigSettingsDAOCassandraImpl configSettings;
-    
-    private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
+    private BaseCassandraRepoImpl baseDao;
 
     String dashboardKeys = null;
     
@@ -86,34 +64,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
-        liveDashboard = new ColumnFamily<String, String>(
-        		CF_LIVE_DASHBOARD, // Column Family Name
-                StringSerializer.get(), // Key Serializer
-                StringSerializer.get()); // Column Serializer
-        
-        microAggregator = new ColumnFamily<String, String>(
-        		CF_MICRO_AGGREGATOR, // Column Family Name
-                StringSerializer.get(), // Key Serializer
-                StringSerializer.get()); // Column Serializer
-        this.recentResource = new RecentViewedResourcesDAOImpl(this.connectionProvider);
-        this.collectionItem = new CollectionItemDAOImpl(this.connectionProvider);
-        this.eventDetailDao = new EventDetailDAOCassandraImpl(this.connectionProvider);
-        this.dimResource = new DimResourceDAOImpl(this.connectionProvider);
-        this.classpage = new ClasspageDAOImpl(this.connectionProvider);
-        this.collection = new CollectionDAOImpl(this.connectionProvider);
-        this.dimUser = new DimUserDAOCassandraImpl(this.connectionProvider);
-        this.configSettings = new JobConfigSettingsDAOCassandraImpl(this.connectionProvider);
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-        
-        dashboardKeys = configSettings.getConstants("dashboard~keys","constant_value");
-        isMigrationRunning = Boolean.valueOf(configSettings.getConstants("migration~stat","constant_value"));
+        this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
+        isMigrationRunning = Boolean.valueOf(baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migration~stat","constant_value").getStringValue());
     }
     
     @Async
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
-            eventKeys = configSettings.getColumnList(eventMap.get("eventName")+SEPERATOR+"columnkey");
+            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName")+SEPERATOR+"columnkey");
             for(int i=0 ; i < eventKeys.size() ; i++ ){
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
@@ -122,7 +83,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         		for(String value : columnValue.split(",")){
             		String orginalColumn = this.formOrginalKey(value, eventMap);
 	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-	            			this.generateCounter(key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
+	            			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
 	            		} 
             		}
                 	try {
@@ -204,16 +165,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
     		
-    	    long thisCount = this.getLiveLongValue(entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-    	    long lastCount = this.getLiveLongValue(entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
+    	    long thisCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)).getLongValue();
+    	    long lastCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME).getBytes()).getLongValue();
+    	    
     	    if(lastCount != 0L){
     	    	long difference = (thisCount*100)/lastCount;
-    	    	this.generateAggregator(entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
+    	    	baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	    }
     	}    	
     	try {
             m.execute();
-        } catch (ConnectionException e) {
+        } catch (Exception e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
     }
@@ -258,97 +220,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			logger.info("Exception while converting Object as JSON : {}",e);
 		}
 		if(columnName != null){
-			this.addRowColumn(rowKey, columnName, json);
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
 		}
     }
-    
-    public void generateCounter(String key,String columnName, long count ,MutationBatch m) {
-        m.withRow(liveDashboard, key)
-        .incrementCounterColumn(columnName, count);
-    }
-    
-    public void generateAggregator(String key,String columnName, String value ,MutationBatch m) {
-        m.withRow(microAggregator, key)
-        .putColumnIfNotNull(columnName, value);
-    }
-    
-	private Long getLiveLongValue(String key,String  columnName){
+	
+	private boolean isRowAvailable(String cfName ,String key,String  columnName){
+		ColumnList<String>  result = baseDao.readWithKey(cfName, key);
 		
-		ColumnList<String>  result = null;
-		long value = 0L;
-    	try {
-    		 result = getKeyspace().prepareQuery(liveDashboard)
-    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-        		    .getKey(key)
-        		    .execute().getResult();
-		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data from readViewCount: {}" ,e);
-		}
-		if(result != null && result.getColumnByName(columnName) != null){
-			value = result.getLongValue(columnName,0L);
-		}
-		return value;
-	}
-	
-	private String getMicroStringValue(String key,String  columnName){
-		ColumnList<String>  result = null;
-		String value = null;
-    	try {
-    		 result = getKeyspace().prepareQuery(microAggregator)
-    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-        		    .getKey(key)
-        		    .execute().getResult();
-		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data from readViewCount: {}" ,e);
-		}
-		if(result != null && result.getColumnByName(columnName) != null){
-			value = result.getStringValue(columnName, null);
-		}
-		return value;
-	}
-	
-	public ColumnList<String> getMicroColumnList(String key){
-		ColumnList<String>  result = null;
-    	try {
-    		 result = getKeyspace().prepareQuery(microAggregator)
-    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-        		    .getKey(key)
-        		    .execute().getResult();
-		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data from readViewCount: {}" ,e);
-		}
-		return result;
-	}
-    
-	public void addRowColumn(String rowKey,String columnName,String value){
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		
-		m.withRow(microAggregator, rowKey)
-		.putColumnIfNotNull(columnName, value)
-		;
-		 try{
-	         	m.execute();
-	         } catch (ConnectionException e) {
-	         	logger.info("Error while adding session - ", e);
-	         }
-	}
-	
-	private boolean isRowAvailable(String key,String  columnName){
-		ColumnList<String>  result = null;
-    	try {
-    		 result = getKeyspace().prepareQuery(microAggregator)
-    		 .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-        		    .getKey(key)
-        		    .execute().getResult();
-		} catch (ConnectionException e) {
-			logger.info("Error while retieveing data from readViewCount: {}" ,e);
-		}
 		if (result != null && !result.isEmpty() && result.getColumnByName(columnName) != null) {
 				return true;
     	}		
 		return false;
-		
 	}
 
 	@Async
@@ -361,14 +243,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-		if(!this.isRowAvailable(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
-			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, 1, m);
+		if(!this.isRowAvailable(ColumnFamily.MICROAGGREGATION.getColumnFamily(),dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, 1, m);
 		}	
-		this.generateAggregator(dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+		baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
 		try {
             m.execute();
-        } catch (ConnectionException e) {
+        } catch (Exception e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
 	}
@@ -380,7 +262,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
 		
-		this.generateAggregator(VIEWS+SEPERATOR+dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
+		baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
 		
 		try {
             m.execute();
@@ -391,13 +273,13 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	public void watchApplicationSession() throws ParseException{
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		String lastUpdated = configSettings.getConstants("last~updated~session","constant_value");
+		String lastUpdated = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"last~updated~session","constant_value").getStringValue();
 		String currentHour = hourlyDateFormatter.format(new Date()).toString();
 
 		if(lastUpdated == null || lastUpdated.equals(currentHour)){
 			this.updateExpiredToken(currentHour);
 		}else{
-			ColumnList<String> tokenList= this.getMicroColumnList(lastUpdated);
+			ColumnList<String> tokenList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), lastUpdated);
 		 	for(int i = 0 ; i < tokenList.size() ; i++) {
 		 		String column = tokenList.getColumnByIndex(i).getName();
 		 		String value = tokenList.getColumnByIndex(i).getStringValue();
@@ -406,10 +288,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		 		if(parts[1].equalsIgnoreCase("ANONYMOUS")){
 					visitorType = "anonymousUser";
 				}
-		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(currentHour, column)){
-		 			this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
+		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(ColumnFamily.MICROAGGREGATION.getColumnFamily(),currentHour, column)){
+		 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, -1, m);
 		 		}else{
-		 			this.generateAggregator(currentHour, column,value, m);
+		 			baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),currentHour, column,value, m);
 		 		}
 		 	}
 		}
@@ -423,7 +305,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void updateExpiredToken(String timeLine) throws ParseException {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		ColumnList<String> tokenList= this.getMicroColumnList(timeLine);
+		ColumnList<String> tokenList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), timeLine);
 	 	for(int i = 0 ; i < tokenList.size() ; i++) {
 	 		String column = tokenList.getColumnByIndex(i).getName();
 	 		String value = tokenList.getColumnByIndex(i).getStringValue();
@@ -436,8 +318,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	 			Date valueInDate = secondDateFormatter.parse(value);
 	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
 	 			if(diffInMinutes > 30){
-	 				this.generateAggregator(visitor, visitorType, "expired", m);
-	 				this.generateCounter(visitor, COUNT+SEPERATOR+visitorType, -1, m);
+	 				baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),visitor, visitorType, "expired", m);
+	 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, -1, m);
 	 			}
 	 		}
 	 	}
@@ -542,16 +424,4 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	    return finalKey;
 	}
 
-	public OperationResult<ColumnList<String>> readLiveDashBoard(String key, Collection<String> columnList) {
-		OperationResult<ColumnList<String>> query = null;
-		
-		try {
-			query = getKeyspace().prepareQuery(liveDashboard).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(key)
-			.withColumnSlice(columnList).execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while read columnlist : {}",e);
-		}
-		return query;
-		
-	}
 }
