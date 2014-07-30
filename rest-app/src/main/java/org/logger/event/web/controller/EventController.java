@@ -437,44 +437,6 @@ public class EventController {
 
 	}
 
-	@RequestMapping(value = "/add/aggregators", method = RequestMethod.POST)
-	public void addAggregators(HttpServletRequest request,
-			@RequestBody String fields,
-			@RequestParam(value = "key",  required = true) String key,
-			@RequestParam(value = "eventName",  required = true) String eventName,
-			HttpServletResponse response) throws JSONException {
-
-		// add cross domain support
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers",
-				"Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
-		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-
-
-		if (key != null) {
-			AppDO appDO = eventService.verifyApiKey(key);
-			if (appDO.getAppName() != null) {
-					response.setContentType("application/json");
-					eventService.addAggregators(eventName, fields, appDO.getAppName());
-					JSONObject resultJson = new JSONObject();
-					resultJson.put("Status", "Done");
-					try {
-						response.getWriter().write(resultJson.toString());
-					} catch (IOException e) {
-						logger.error("OOPS! Something went wrong", e);
-					}
-				}else{
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-			"Invalid secret key");
-				return;
-				}
-			}else{
-				sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-				"Try with secret key");
-			}
-		return;
-	}
-
 	public void updateViews() throws Exception{
 		System.out.println("Executing every five mintues");
 		

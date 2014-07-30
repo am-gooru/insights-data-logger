@@ -117,17 +117,8 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         public void postAggregation(String statTime,String endTime,String eventName){
 				dataLoader.postMigration(statTime, endTime,eventName);
         }
-        
-        public void geoLocationUpdate(String statTime,String endTime){
-        	try {
-				dataLoader.updateGeoLocation(statTime, endTime);
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
-        
-	private void cleanseData(EventData eventData) {
+
+        private void cleanseData(EventData eventData) {
 		updateEventNameForConsistency(eventData);
 		updateEventNameIfEmpty(eventData);
 		cleansEventValue(eventData);

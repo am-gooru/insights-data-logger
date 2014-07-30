@@ -22,6 +22,8 @@ public enum ColumnFamily {
 	
 	STAGING("stging_event_resource_user"),
 	
+	EVENTFIELDS("event_fields"),
+	
 	CONFIGSETTINGS("job_config_settings"),
 	
 	REALTIMECONFIG("real_time_operation_config"),
@@ -34,6 +36,17 @@ public enum ColumnFamily {
 	
 	ACITIVITYSTREAM("activity_stream"),
 	
+	REALTIMECOUNTER("real_time_counter"),
+	
+	REALTIMEAGGREGATOR("real_time_aggregator"),
+	
+	QUESTIONCOUNT("question_count"),
+	
+	COLLECTIONITEM("collection_item"),
+	
+	COLLECTION("collection"),
+	
+	CLASSPAGE("classpage"),
 	;
 	
 	String name;

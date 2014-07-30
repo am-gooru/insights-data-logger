@@ -37,7 +37,6 @@ import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
-import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -87,10 +86,7 @@ public class EventServiceImpl implements EventService {
         return new ActionResponseDTO<EventData>(eventData, errors);
     }
     
-    @Override
-    public void addAggregators(String eventName, String json ,String updateBy){
-    	dataLoaderService.addAggregators(eventName, json, updateBy);
-    }
+
     @Override
     public AppDO verifyApiKey(String apiKey) {
         ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey);

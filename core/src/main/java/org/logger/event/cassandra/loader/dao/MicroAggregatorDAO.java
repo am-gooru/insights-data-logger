@@ -23,11 +23,9 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader.dao;
 
-import org.ednovo.data.model.EventData;
 
 
 public interface MicroAggregatorDAO {
 
-	void updateCounter(String key,String columnName, long viewcount);
 	
 }

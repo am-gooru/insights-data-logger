@@ -16,8 +16,7 @@ import java.util.UUID;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.service.BaseService;
-import org.logger.event.cassandra.loader.service.BaseServiceImpl;
+import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -26,18 +25,17 @@ import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
-import com.netflix.astyanax.connectionpool.exceptions.OperationException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
-public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
+public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Constants {
 	
 	private static CassandraConnectionProvider connectionProvider;
 	
@@ -66,7 +64,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
                     ;
 
         } catch (Exception e) {
-            logger.info("Error while fetching data from method : readWithKeyColumn {} ", e);
+        	return null;
         }
     	
     	return result;
@@ -255,6 +253,23 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
     	
     	return result;
     }
+    
+    public long getCount(String cfName,String key){
+
+    	Integer columns = null;
+		
+    	try {
+			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					.getKey(key)
+					.getCount()
+					.execute().getResult();
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		
+		return columns.longValue();
+	}
     
     public Rows<String, String> readIndexedColumnList(String cfName,Map<String,String> columnList){
     	
@@ -711,4 +726,113 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
         return sb.toString();
     }
 
+    public List<String> getParentId(String cfName,String Key){
+
+    	Rows<String, String> collectionItem = null;
+    	List<String> classPages = new ArrayList<String>();
+    	String parentId = null;
+    	try {
+    		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		 	.searchWithIndex()
+    			.addExpression()
+    			.whereColumn("resource_gooru_oid")
+    			.equals()
+    			.value(Key).execute().getResult();
+    	} catch (ConnectionException e) {
+    		
+    		logger.info("Error while retieveing data : {}" ,e);
+    	}
+    	if(collectionItem != null){
+    		for(Row<String, String> collectionItems : collectionItem){
+    			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+    			if(parentId != null){
+    				classPages.add(parentId);
+    			}
+    		 }
+    	}
+    	return classPages; 
+    	}
+    
+	public void updateCollectionItem(String cfName,Map<String ,String> eventMap){
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    
+		 m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTIONITEMID))
+	     .putColumnIfNotNull(CONTENT_ID,eventMap.get(CONTENTID))
+	     .putColumnIfNotNull(PARENT_CONTENT_ID,eventMap.get(PARENTCONTENTID))
+	     .putColumnIfNotNull(RESOURCE_GOORU_OID,eventMap.get(CONTENT_GOORU_OID))
+	     .putColumnIfNotNull(COLLECTION_GOORU_OID,eventMap.get(PARENT_GOORU_OID))
+	     .putColumnIfNotNull(ITEM_SEQUENCE,eventMap.get(ITEMSEQUENCE))
+	     .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
+	    ;
+	    
+	}
+	
+	public void updateClasspage(String cfName,Map<String ,String> eventMap){
+
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        
+		int isGroupOwner = 0;
+		int deleted = 0;
+         m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GROUPUID)+SEPERATOR+eventMap.get(GOORUID))
+        .putColumnIfNotNull(USER_GROUP_UID,eventMap.get(GROUPUID))
+        .putColumnIfNotNull(CLASSPAGE_GOORU_OID,eventMap.get(CONTENTGOORUOID))
+        .putColumnIfNotNull("is_group_owner",isGroupOwner)
+        .putColumnIfNotNull("deleted",deleted)
+        .putColumnIfNotNull(USERID,eventMap.get(GOORUID))
+        .putColumnIfNotNull(CLASSPAGE_CODE,eventMap.get(CLASSCODE))
+        .putColumnIfNotNull(USER_GROUP_CODE,eventMap.get(CONTENT_GOORU_OID))
+        .putColumnIfNotNull(ORGANIZATION_UID,eventMap.get(ORGANIZATIONUID))
+        
+        ;
+        
+         try{
+          	m.execute();
+          } catch (ConnectionException e) {
+          	logger.info("Error while inserting to cassandra - JSON - ", e);
+          }
+	}
+
+	public boolean getClassPageOwnerInfo(String cfName,String key ,String classPageGooruOid){
+
+		Rows<String, String>  result = null;
+    	try {
+			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex()
+					.addExpression().whereColumn("gooru_uid").equals().value(key)
+					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid)
+					.addExpression().whereColumn("is_group_owner").equals().value(1)
+					.execute().getResult();
+	} catch (ConnectionException e) {
+			logger.info("Error while retieveing data: {}" ,e);
+		}
+    	if (result != null && !result.isEmpty()) {
+    	return true;	
+    	}
+    	return false;
+	}
+	
+	public boolean isUserPartOfClass(String cfName,String key ,String classPageGooruOid){
+
+		Rows<String, String>  result = null;
+    	try {
+    		 result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		 	.searchWithIndex()
+				.addExpression()
+				.whereColumn("classpage_gooru_oid")
+				.equals().value(classPageGooruOid)
+				.addExpression()
+				.whereColumn("gooru_uid")
+				.equals().value(key)
+				.execute().getResult();
+		} catch (ConnectionException e) {
+			logger.info("Error while retieveing data: {}" ,e);
+		}
+		
+    	if (result != null && !result.isEmpty()) {
+    		return true;
+    	}
+    	return false;
+	
+	}
 }

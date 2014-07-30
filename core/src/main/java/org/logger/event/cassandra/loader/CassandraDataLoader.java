@@ -23,10 +23,7 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,8 +50,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
-import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
-import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
@@ -95,8 +90,6 @@ public class CassandraDataLoader implements Constants {
     static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
     
     private CassandraConnectionProvider connectionProvider;
-    
-    private AggregateDAOCassandraImpl stagingAgg;
     
     private KafkaLogProducer kafkaLogWriter;
   
@@ -180,7 +173,6 @@ public class CassandraDataLoader implements Constants {
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
 
- 	    this.stagingAgg = new AggregateDAOCassandraImpl(getConnectionProvider());
         this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
         this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
@@ -646,12 +638,13 @@ public class CassandraDataLoader implements Constants {
 	    		
 	    		//Save Staging records
     			HashMap<String, String> stagingEvents  = this.createStageEvents(minuteId,hourId,dateId, eventId, userUid, row.getColumns() , row.getKey());
-    			stagingAgg.saveAggregation(stagingEvents);
+    			baseDao.saveBulkStringList(ColumnFamily.STAGING.getColumnFamily(), stagingEvents.get("keys").toString(), stagingEvents);
+    			
 	    			String newEventName = DataUtils.makeCombinedEventName(searchType);
 	    			if(!newEventName.equalsIgnoreCase(searchType)) {
 	    				String newEventId = events.get(newEventName);
 	    				HashMap<String, String> customStagingEvents  = this.createStageEvents(minuteId,hourId, dateId, newEventId, userUid, row.getColumns(),TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
-	    				stagingAgg.saveAggregation(customStagingEvents);
+	    				baseDao.saveBulkStringList(ColumnFamily.STAGING.getColumnFamily(), customStagingEvents.get("keys").toString(), customStagingEvents);
 	    			}
 	    		}
 	    	//Incrementing time - one minute
