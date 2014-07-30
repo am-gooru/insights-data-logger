@@ -25,7 +25,7 @@ package org.ednovo.data.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -57,7 +57,7 @@ public class EventObjectValidator  {
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(null);
 		baseDao = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
-		acceptedFileds = new LinkedHashMap<String, String>();
+		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){
         	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
