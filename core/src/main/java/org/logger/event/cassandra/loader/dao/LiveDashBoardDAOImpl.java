@@ -198,7 +198,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
 		Map<String,String> returnDate = new LinkedHashMap<String, String>();
 		if(dashboardKeys != null){
-			logger.info("dashboardKeys : {} ",dashboardKeys);
 			for(String key : dashboardKeys.split(",")){
 				String rowKey = null;
 				if(!key.equalsIgnoreCase("all")) {
