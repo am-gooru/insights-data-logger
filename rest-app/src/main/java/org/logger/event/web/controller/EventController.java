@@ -173,6 +173,7 @@ public class EventController {
 				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
 				fieldsObj.put("user", useObj.toString());
 				eventObjects.setFields(fieldsObj.toString());
+				eventObjects.setApiKey(apiKey);
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -529,7 +530,7 @@ public class EventController {
 			return;
 		}
 		
-		Map<String,String>	status = eventService.createEvent(eventName);
+		Map<String,String>	status = eventService.createEvent(eventName,apiKey);
 		status.put("eventName", eventName);
 		
 		response.getWriter().write(new JSONObject(status).toString());

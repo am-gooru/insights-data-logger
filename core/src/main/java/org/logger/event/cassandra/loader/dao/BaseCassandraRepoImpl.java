@@ -400,6 +400,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
             logger.info("Error while save in method : saveStringValue {}", e);
         }
     }
+    
+    public void saveMultipleStringValue(String cfName, String key,Map<String,String> columns) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        for(Map.Entry<String, String> column : columns.entrySet()){
+        	m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(column.getKey(), column.getValue(), null);
+    	}
+        
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveMultipleStringValue {}", e);
+        }
+    }
 
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 

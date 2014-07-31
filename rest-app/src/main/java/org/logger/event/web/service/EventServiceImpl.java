@@ -247,8 +247,8 @@ public class EventServiceImpl implements EventService {
 		dataLoaderService.executeForEveryMinute(startTime, endTime);
 	}
 	
-	public Map<String,String> createEvent(String eventName){
-		return dataLoaderService.createEvent(eventName);
+	public Map<String,String> createEvent(String eventName,String apiKey){
+		return dataLoaderService.createEvent(eventName,apiKey);
 	}
 	
 	public boolean validateSchedular(String ipAddress){

@@ -352,8 +352,10 @@ public class CassandraDataLoader implements Constants {
 	    	String existingEventRecord = eventId.getStringValue();
 	
 	    	if(existingEventRecord == null || existingEventRecord.isEmpty()){
-				 UUID eventUid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-				 baseDao.saveStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventObject.getEventName(),"event_id",eventUid.toString());
+	    		Map<String,String> records = new HashMap<String, String>();
+	    		records.put("event_id", TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
+	    		records.put("api_key", eventObject.getApiKey());
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventObject.getEventName(),records);
 			 }		
 			
 	    	updateEventObjectCompletion(eventObject);
@@ -1052,13 +1054,15 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}
     }
     
-    public Map<String,String> createEvent(String eventName){
+    public Map<String,String> createEvent(String eventName,String apiKey){
     	Map<String,String> status = new HashMap<String, String>();
     	try {
 			if(baseDao.isRowKeyExists(ColumnFamily.DIMEVENTS.getColumnFamily(),eventName)){
 				 
-				UUID eventUid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-				 baseDao.saveStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventName,"event_id",eventUid.toString());
+				Map<String,String> records = new HashMap<String, String>();
+				records.put("event_id", TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
+				records.put("api_key", apiKey);
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventName,records);
 				 status.put("status", eventName+" is Created ");
 				 return status;				
 				
