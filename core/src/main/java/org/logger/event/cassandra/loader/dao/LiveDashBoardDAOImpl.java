@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 
 public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveDashBoardDAO,Constants{
@@ -49,6 +50,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
     String dashboardKeys = null;
     
+    String browserDetails = null;
+    
     ColumnList<String> eventKeys = null;
     
 	String visitor = "visitor";
@@ -61,6 +64,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
+        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers","constant_value").getStringValue();
+    }
+    
+    public void clearCache(){
+    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
     }
     
     @Async
@@ -87,6 +95,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
             	
             }
     	}
+    }
+    
+    public String getBrowser(String userAgent) {
+    	String browser = "";
+    	if(!userAgent.isEmpty() && userAgent != null) {
+            	for(String browserList : browserDetails.split(",")) {
+            		if(userAgent.indexOf(browserList)!= -1) {
+            	         browser = browserList;
+            		}
+            	}
+    	}
+    	return browser;
     }
     
     @Async
@@ -157,9 +177,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
-    		
-    	    long thisCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)).getLongValue();
-    	    long lastCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME).getBytes()).getLongValue();
+    		Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
+    		Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)); 
+    	    long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
+    	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
     	    
     	    if(lastCount != 0L){
     	    	long difference = (thisCount*100)/lastCount;
@@ -177,6 +198,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
 		Map<String,String> returnDate = new LinkedHashMap<String, String>();
 		if(dashboardKeys != null){
+			logger.info("dashboardKeys : {} ",dashboardKeys);
 			for(String key : dashboardKeys.split(",")){
 				String rowKey = null;
 				if(!key.equalsIgnoreCase("all")) {
@@ -323,28 +345,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         }
 	}
 	
-	public List<String> generateYMWDKey(String eventTime){
-		List<String> returnDate = new ArrayList<String>();	
-		if(dashboardKeys != null){
-			for(String key : dashboardKeys.split(",")){
-				String rowKey = null;
-				if(!key.equalsIgnoreCase("all")) {
-					customDateFormatter = new SimpleDateFormat(key);
-					Date eventDateTime = new Date(Long.valueOf(eventTime));
-				try{					
-					rowKey = customDateFormatter.format(eventDateTime).toString();
-				}
-				catch(Exception e){
-					logger.info("Exception while key generation : {} ",e);
-				}
-				} else {
-					rowKey = key;
-				}
-		        returnDate.add(rowKey);
-			}
-		}
-		return returnDate; 
-	}
 
 /*	C: defines => Constant
 	D: defines => Date format lookup
@@ -368,7 +368,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 			if(splittedKey.startsWith("E:") && eventMap != null){
 				subKey = splittedKey.split(":");
-				key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+				if(eventMap.containsKey(USERAGENT) && eventMap.get(USERAGENT) != null) {
+					key += "~"+this.getBrowser(eventMap.get(USERAGENT));
+				} else {
+					key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+				}
 			}
 			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
 				try {
@@ -380,41 +384,4 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return key != null ? key.substring(1).trim():null;
 	}
-	public String generateKeys(String eventTime,String columnName){
-		String finalKey = "";
-	    if(eventTime != null){
-					String[] key = columnName.split("~");
-	            	String rowKeys = "";
-					String newKey = key[0];
-	                 if(!newKey.equalsIgnoreCase("all") && !newKey.contains("all~")) {
-						customDateFormatter = new SimpleDateFormat(newKey);
-						Date eventDateTime = new Date(Long.valueOf(eventTime));
-	            	   	if(columnName.contains("~")){
-	            			String[] parts = columnName.split("~");
-		    				try{					
-		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
-		    				}
-		    				catch(Exception e){
-		    					logger.info("Exception while key generation : {} ",e);
-		    				}
-	            	        for(int i = 1 ; i < parts.length ; i++){
-	            	        	rowKeys += "~"+parts[i];
-	            	        }
-	            	        finalKey = rowKeys;
-	               	 	}else{
-		    				try{					
-		    					rowKeys = customDateFormatter.format(eventDateTime).toString();
-		               	 		finalKey = rowKeys;
-		    				}
-		    				catch(Exception e){
-		    					logger.info("Exception while key generation : {} ",e);
-		    				}
-	               	 	}
-            	   	} else {
-            	   			finalKey = columnName;
-                    }
-	    }
-	    return finalKey;
-	}
-
 }

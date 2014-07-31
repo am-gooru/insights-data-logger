@@ -26,7 +26,6 @@ package org.logger.event.web.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +55,6 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 @Service
@@ -68,12 +66,12 @@ public class EventServiceImpl implements EventService {
     private final CassandraConnectionProvider connectionProvider;
     private EventObjectValidator eventObjectValidator;
     private BaseCassandraRepoImpl baseDao ;
-	private static Map<String,String> acceptedFileds;
-	
+
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
+        eventObjectValidator = new EventObjectValidator(null);
         
     }
 
@@ -265,5 +263,8 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void balanceStatDataUpdate() {
 		dataLoaderService.balanceStatDataUpdate();
+	}
+	public void clearCacher(){
+		dataLoaderService.clearCache();
 	}
 }

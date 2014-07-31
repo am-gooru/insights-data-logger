@@ -122,6 +122,12 @@ public interface Constants {
 	
 	public String VIEWS = "views";
 	
+	public String VIEWEVENTS = "viewEvents";
+	
+	public String ATMOSPHERENDPOINT = "atmosphereEndPoint";
+	
+	public String VIEWUPDATEENDPOINT = "viewCountAPI";
+	
 	public String QUESTION = "question";
 
 	public String ATTMPTTRYSEQ = "attemptTrySequence";
