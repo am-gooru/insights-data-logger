@@ -47,6 +47,9 @@ public class EventObject implements Serializable {
 	
 	private Long endTime;
 	
+	// Added Specially for Creating the Event
+	private String apiKey;
+	
 	private String eventName;
 	
 	private String contentGooruId;
@@ -201,5 +204,13 @@ public class EventObject implements Serializable {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+
+	public String getApiKey() {
+		return apiKey;
+	}
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
 	}
 }
