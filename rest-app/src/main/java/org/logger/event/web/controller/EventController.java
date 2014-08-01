@@ -517,31 +517,35 @@ public class EventController {
 	}
 	
 	@RequestMapping(method = RequestMethod.PUT)
-	public void createEvent(HttpServletRequest request,
-			@RequestParam(value="apiKey",required = true) String apiKey,
-			@RequestParam(value="eventName",required = true)String eventName,HttpServletResponse response) throws IOException{
-	
-		//add cross domain support
+	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName,
+			HttpServletResponse response) throws IOException {
+
+		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "PUT");
-				
+
 		boolean isValid = ensureValidRequest(request, response);
-		if(!isValid) {
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
-		return;
+		if (!isValid) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+			return;
 		}
-		
+
 		response.setContentType("application/json");
-		if(!eventName.contains(".") || eventName.startsWith(".")){
+		if (!eventName.contains(".") || eventName.startsWith(".")) {
 			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
 			return;
 		}
-		
-		Map<String,String>	status = eventService.createEvent(eventName,apiKey);
-		status.put("eventName", eventName);
-		
-		response.getWriter().write(new JSONObject(status).toString());
+		Map<String, String> status = new HashMap<String, String>();
+		if (eventService.createEvent(eventName, apiKey)) {
+			status.put("eventName", eventName);
+			status.put("status", "Created");
+			response.getWriter().write(new JSONObject(status).toString());
+		} else {
+			sendErrorResponse(request, response, HttpServletResponse.SC_CONFLICT, " Event Already Exists : " + eventName);
+			return;
+		}
+
 	}
 	
 	public boolean validateSchedular(){

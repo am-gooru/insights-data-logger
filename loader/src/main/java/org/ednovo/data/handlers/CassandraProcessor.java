@@ -105,9 +105,9 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
          }
 	}
         
-        public void updateToStaging(String statTime,String endTime,String eventName){
+        public void updateToStaging(String statTime,String endTime,String eventName,String apiKey){
         	try {
-				dataLoader.updateStaging(statTime, endTime,eventName);
+				dataLoader.updateStaging(statTime, endTime,eventName,apiKey);
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

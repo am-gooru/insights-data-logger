@@ -71,6 +71,7 @@ public class DataLoader  {
         options.addOption( "tsStart", "tsStart", true, "time stamp Start. start of timestamp" );
         options.addOption( "tsStop", "tsStop", true, "time stamp Stop. End of timestamp" );
     	options.addOption( "cmd", "command", true, "Ad-hoc command to pass, primarily for ad-hoc testing" );
+    	options.addOption( "apiKey", "apiKey", false, "process for the given apikey" );
     	options.addOption( "geoLocationUpdate", "geoLocationUpdate", true, "geoLocationUpdate" );
     	options.addOption( "updateViewCount", "updateViewCount", true, "updateViewCount" );
     	options.addOption( "runAggregation", "runAggregation", true, "runAggregation" );
@@ -153,10 +154,14 @@ public class DataLoader  {
 	    	    			EventName = null;	
 	    	    		}
 	    	    	}
+	    	    	String apiKey =null;
+	    	    	if(line.hasOption("apiKey")){
+	    	    		apiKey = line.getOptionValue("apiKey");
+	    	    	}
 	    	    	LOG.info("processing staging data");
 	    	    	LOG.info("eventName : {} ",line.getOptionValue("eventName"));
 	    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName);
+	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName,apiKey);
 	    	    
     	    }
     	}

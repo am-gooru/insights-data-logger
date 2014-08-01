@@ -30,7 +30,9 @@ import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
+import com.netflix.astyanax.query.ColumnFamilyQuery;
 import com.netflix.astyanax.query.IndexQuery;
+import com.netflix.astyanax.query.RowQuery;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
@@ -309,6 +311,40 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return false;
 	}
     
+    public boolean isValueExists(String cfName,Map<String,Object> columns) {
+
+		try {
+			IndexQuery<String, String> cfQuery = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
+			
+			for(Map.Entry<String, Object> map : columns.entrySet()){
+				cfQuery.addExpression().whereColumn(map.getKey()).equals(map.getValue());
+			}
+			return cfQuery.execute().getResult().isEmpty();
+		} catch (Exception e) {
+			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
+		}
+		return false;
+	}
+    
+    public Collection<String> getKey(String cfName,Map<String,Object> columns) {
+
+		try {
+			
+			IndexQuery<String, String> cfQuery = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
+			
+			for(Map.Entry<String, Object> map : columns.entrySet()){
+				cfQuery.addExpression().whereColumn(map.getKey()).equals(map.getValue());
+			}
+			Rows<String, String> rows = cfQuery.execute().getResult();
+			return rows.getKeys();
+		} catch (Exception e) {
+			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
+		}
+		return new ArrayList();
+	}
+    
 	public ColumnList<String> readColumnsWithPrefix(String cfName,String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead){
 		ColumnList<String> result = null;
 		String startColumnPrefix = null;
@@ -401,12 +437,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
-    public void saveMultipleStringValue(String cfName, String key,Map<String,String> columns) {
+    public void saveMultipleStringValue(String cfName, String key,Map<String,Object> columns) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-        for(Map.Entry<String, String> column : columns.entrySet()){
-        	m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(column.getKey(), column.getValue(), null);
+        for(Map.Entry<String, Object> column : columns.entrySet()){
+        	m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(column.getKey(), column.getValue().toString(), null);
     	}
         
         try {

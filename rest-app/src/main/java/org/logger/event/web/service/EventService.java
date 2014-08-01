@@ -60,7 +60,7 @@ public interface EventService {
 
 	void executeForEveryMinute(String startTime, String endTime);
 	
-	Map<String,String> createEvent(String eventName,String apiKey);
+	boolean createEvent(String eventName,String apiKey);
 	
 	boolean validateSchedular(String ipAddress);
 

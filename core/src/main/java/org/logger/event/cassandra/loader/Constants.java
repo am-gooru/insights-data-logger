@@ -228,5 +228,7 @@ public interface Constants {
 	
 	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
 	
+	public String DEFAULT_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
+	
 	public String DEFAULTCOLUMN = "constant_value";
 }

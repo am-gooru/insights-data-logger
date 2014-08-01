@@ -308,8 +308,10 @@ public class CassandraDataLoader implements Constants {
 			         }
 			      }
 	         }
-         
-	         ColumnList<String> existingEventRecord = baseDao.readWithKey(ColumnFamily.DIMEVENTS.getColumnFamily(),eventData.getEventName());
+	         Map<String,Object> records = new HashMap<String, Object>();
+	         records.put("event_name", eventData.getEventName());
+	         records.put("api_key",eventData.getApiKey() != null ? eventData.getApiKey() : DEFAULT_API_KEY );
+	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
 	
 	         if(existingEventRecord == null && existingEventRecord.isEmpty()){
 	        	 logger.info("Please add new event in to events table ");
@@ -358,17 +360,19 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
 	    	
-	    	Column<String> eventId = baseDao.readWithKeyColumn(ColumnFamily.DIMEVENTS.getColumnFamily(), eventMap.get("eventName"), "event_id");
-	    	
-	    	String existingEventRecord = eventId.getStringValue();
-	
-	    	if(existingEventRecord == null || existingEventRecord.isEmpty()){
-	    		Map<String,String> records = new HashMap<String, String>();
-	    		records.put("event_id", TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
-	    		records.put("api_key", eventObject.getApiKey());
-				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventObject.getEventName(),records);
+	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
+	    	Map<String,Object> records = new HashMap<String, Object>();
+	    	records.put("event_name", eventMap.get("eventName"));
+	    	records.put("api_key",apiKey);
+	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
+
+	    	if(eventId == null || eventId.isEmpty()){
+	    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+	    		records.put("event_id", uuid.toString());
+	    		String key = apiKey +SEPERATOR+uuid.toString();
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
 			 }		
-			
+	    	
 	    	updateEventObjectCompletion(eventObject);
 	    	
 			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
@@ -506,7 +510,7 @@ public class CassandraDataLoader implements Constants {
      * @param customEventName
      * @throws ParseException
      */
-    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException {
+    public void updateStaging(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
@@ -539,9 +543,9 @@ public class CassandraDataLoader implements Constants {
     	
     	//Get all the event name and store for Caching
     	Map<String, String> events = new HashMap<String, String>();
-    	Rows<String, String> eventRows = 	baseDao.readAllRows(ColumnFamily.DIMEVENTS.getColumnFamily());
+    	Rows<String, String> eventRows = 	baseDao.readIndexedColumn(ColumnFamily.DIMEVENTS.getColumnFamily(),"api_key",apiKey != null ? apiKey : DEFAULT_API_KEY);
     	for (Row<String, String> eventRow : eventRows) {
-			events.put(eventRow.getKey(), eventRow.getColumns().getStringValue("event_id", null));
+			events.put(eventRow.getColumns().getStringValue("event_name", null),eventRow.getColumns().getStringValue("event_id", null));
 		}
     	//Process records for every minute
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
@@ -1067,27 +1071,21 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}
     }
     
-    public Map<String,String> createEvent(String eventName,String apiKey){
-    	Map<String,String> status = new HashMap<String, String>();
-    	try {
-			if(baseDao.isRowKeyExists(ColumnFamily.DIMEVENTS.getColumnFamily(),eventName)){
+    public boolean createEvent(String eventName,String apiKey){
+
+    	Map<String,Object> records = new HashMap<String, Object>();
+    	apiKey = apiKey != null ? apiKey : DEFAULT_API_KEY;
+		records.put("api_key", apiKey);
+		records.put("event_name", eventName);
+    	if(baseDao.isValueExists(ColumnFamily.DIMEVENTS.getColumnFamily(),records)){
 				 
-				Map<String,String> records = new HashMap<String, String>();
-				records.put("event_id", TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
-				records.put("api_key", apiKey);
-				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),eventName,records);
-				 status.put("status", eventName+" is Created ");
-				 return status;				
-				
-			}else{
-				status.put("status", "Event Name already Exists");
-				return status;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-    	status.put("status", "unable to a create this event "+eventName);
-    	return status;
+				UUID eventId = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+				records.put("event_id", eventId.toString());
+				String key = apiKey+SEPERATOR+eventId.toString();
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
+		return true;
+    	}
+    	return false;
     }
     
 	public boolean validateSchedular(String ipAddress) {

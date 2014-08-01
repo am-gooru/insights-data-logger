@@ -46,8 +46,7 @@ public enum ColumnFamily {
 	
 	COLLECTION("collection"),
 	
-	CLASSPAGE("classpage"),
-	;
+	CLASSPAGE("classpage");
 	
 	String name;
 
