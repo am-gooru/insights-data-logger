@@ -394,8 +394,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
         					updatePostAggregator(localKey,key+SEPERATOR+option);
 	    				}
         				
-        				if(!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+        				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
         					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+answerStatus,1L,m);
+        					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+        				}
+        				else if(answerStatus != null && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+        					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+answerStatus,1L,m);
+        					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
         				}
 					}
 	        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null){
