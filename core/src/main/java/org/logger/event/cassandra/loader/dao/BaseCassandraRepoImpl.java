@@ -318,7 +318,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
 			
 			for(Map.Entry<String, Object> map : columns.entrySet()){
-				cfQuery.addExpression().whereColumn(map.getKey()).equals(map.getValue());
+				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
 			}
 			return cfQuery.execute().getResult().isEmpty();
 		} catch (Exception e) {
@@ -335,7 +335,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
 			
 			for(Map.Entry<String, Object> map : columns.entrySet()){
-				cfQuery.addExpression().whereColumn(map.getKey()).equals(map.getValue());
+				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
 			}
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
