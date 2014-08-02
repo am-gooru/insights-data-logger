@@ -361,6 +361,10 @@ public class CassandraDataLoader implements Constants {
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
 	    	
 	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
+	    	
+	    	/*
+	    	 * Need to re-enable this
+	    	 * 	    	
 	    	Map<String,Object> records = new HashMap<String, Object>();
 	    	records.put("event_name", eventMap.get("eventName"));
 	    	records.put("api_key",apiKey);
@@ -371,7 +375,7 @@ public class CassandraDataLoader implements Constants {
 	    		records.put("event_id", uuid.toString());
 	    		String key = apiKey +SEPERATOR+uuid.toString();
 				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
-			 }		
+			 }*/		
 	    	
 	    	updateEventObjectCompletion(eventObject);
 	    	
