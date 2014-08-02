@@ -485,7 +485,7 @@ public class EventController {
 		logger.info("post migration............");
 		//eventService.postMigration(null, null, null);
 		//eventService.postStatMigration(null, null, null);
-		//eventService.balanceStatDataUpdate();
+		eventService.balanceStatDataUpdate();
 	}
 	
 	@SuppressWarnings("unchecked")

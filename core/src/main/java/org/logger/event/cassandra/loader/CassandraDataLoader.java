@@ -939,7 +939,9 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}		
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
-		if(!currentTime.equals(minuteDateFormatter.format(rowValues)) && (rowValues.getTime() < currDate.getTime())){
+		logger.info("Logging : runningMin: {} , - Current Min : {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
+		
+		if((rowValues.getTime() <= currDate.getTime())){
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		for(int i = 0 ; i < contents.size() ; i++) {
