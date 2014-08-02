@@ -882,7 +882,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				}
 			}
 				m.execute();
-				logger.info("resourceList : {} ",resourceList);
 				if(resourceList.length() != 0){
 					this.callStatAPI(resourceList, null);
 				}
@@ -947,8 +946,18 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		logger.info("Logging : runningMin: {} , - Current Min : {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
 		
 		if((rowValues.getTime() <= currDate.getTime())){
+			this.getRecordsToProcess(rowValues, resourceList);
+			this.getRecordsToProcess(lastDate, resourceList);
+			logger.info("processing mins : {} , {} ",rowValues,rowValues);
+		}else{
+			logger.info("processing min : {} ",currDate);
+			this.getRecordsToProcess(currDate, resourceList);
+		}
+   }
+  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
+	  
+
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
-		logger.info("stat-mig key : {} ",VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		for(int i = 0 ; i < contents.size() ; i++) {
 			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
 			JSONObject resourceObj = new JSONObject();
@@ -970,11 +979,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 			this.callStatAPI(resourceList, rowValues);
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
- 	 		logger.info("No content viewed");
+	 		logger.info("No content viewed");
 		}
-	 }
-   }
-  
+	 
+  }
+    
     private void callStatAPI(JSONArray resourceList,Date rowValues){
     	JSONObject staticsObj = new JSONObject();
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
