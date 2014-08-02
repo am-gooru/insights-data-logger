@@ -943,12 +943,11 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		}		
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
-		logger.info("Logging : runningMin: {} , - Current Min : {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
-		
+
 		if((rowValues.getTime() <= currDate.getTime())){
 			this.getRecordsToProcess(rowValues, resourceList);
 			this.getRecordsToProcess(lastDate, resourceList);
-			logger.info("processing mins : {} , {} ",rowValues,rowValues);
+			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(rowValues));
 		}else{
 			logger.info("processing min : {} ",currDate);
 			this.getRecordsToProcess(currDate, resourceList);
