@@ -1128,6 +1128,9 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	String organizationUid = DEFAULT_ORGANIZATION_UID;
     	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
     	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+    	if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
+    		eventObject.setParentEventId(eventMap.get("parentEventId"));
+    	}
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
     	
