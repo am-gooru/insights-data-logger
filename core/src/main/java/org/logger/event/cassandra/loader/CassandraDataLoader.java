@@ -379,8 +379,6 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	updateEventObjectCompletion(eventObject);
 	    	
-	    	logger.info("parent_event_id : {} ",eventObject.getParentEventId());
-	    	logger.info("parent_event_id - map : {} ",eventMap.get("parentEventId"));
 			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
 			 
 			if (eventKeyUUID == null) {
