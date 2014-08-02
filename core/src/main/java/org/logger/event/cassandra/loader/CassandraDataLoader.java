@@ -418,13 +418,14 @@ public class CassandraDataLoader implements Constants {
 	
 			this.saveGeoLocations(eventMap);		
 	
+			/*
+			 * To be Re-enable 
+			 * 
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
 	
-			/*
-			 * To be Re-enable 
-			 * if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			  if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 			}*/
 	
