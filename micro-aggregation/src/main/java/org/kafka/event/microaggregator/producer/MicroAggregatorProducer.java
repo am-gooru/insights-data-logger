@@ -25,12 +25,11 @@ package org.kafka.event.microaggregator.producer;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.json.JSONObject;
@@ -94,7 +93,7 @@ public class MicroAggregatorProducer
 	private void send(String message) {
 		LOG.info("message: {}",message);
 		LOG.info("topic: {}",topic);
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, message);
 		producer.send(data);
 	}
 
