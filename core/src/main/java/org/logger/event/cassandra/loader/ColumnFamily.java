@@ -10,7 +10,7 @@ public enum ColumnFamily {
 	
 	ACTIVITYSTREAM("activity_stream"),
 	
-	DIMEVENTS("dim_events"),
+	DIMEVENTS("dim_events_list"),
 	
 	DIMDATE("dim_date"),
 	
