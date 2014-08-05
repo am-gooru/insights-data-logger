@@ -56,8 +56,9 @@ public class KafkaEventHandler {
 	public void init(String ip, String port, String topic) {
 		this.topic = topic;
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", ip + ":" + port);
-
+		props.put("metadata.broker.list", ip + ":" + port);		
+//		props.put("producer.type", producerType);
+		props.put("request.required.acks", "1");
 		try {
 			producer = new Producer<String, String>(new ProducerConfig(props));
 		} catch (Exception e) {

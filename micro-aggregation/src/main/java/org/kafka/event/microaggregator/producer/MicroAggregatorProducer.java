@@ -59,9 +59,9 @@ public class MicroAggregatorProducer
 		this.topic = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");;
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", kafkaIp + ":" + port);		
-		props.put("producer.type", producerType);
-		props.put("compression.codec", "1");
+		props.put("metadata.broker.list", kafkaIp + ":" + port);		
+//		props.put("producer.type", producerType);
+		props.put("request.required.acks", "1");
 		
 		
 		try{
