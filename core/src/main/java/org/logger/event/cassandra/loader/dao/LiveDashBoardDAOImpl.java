@@ -181,11 +181,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     		Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)); 
     	    long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
     	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
-    	    
+    	    long difference = 100L;
     	    if(lastCount != 0L){
-    	    	long difference = (thisCount*100)/lastCount;
-    	    	baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
+    	    	 difference = (thisCount*100)/lastCount;
     	    }
+    	    baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	}    	
     	try {
             m.execute();
