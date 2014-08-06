@@ -208,6 +208,10 @@ public class CassandraDataLoader implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         liveDashBoardDAOImpl.clearCache();
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        for(int i = 0 ; i < schdulersStatus.size() ; i++) {
+        	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
+        }
     }
     
     /**
