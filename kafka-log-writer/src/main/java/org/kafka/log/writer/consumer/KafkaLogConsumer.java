@@ -30,9 +30,8 @@ import java.util.Properties;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaMessageStream;
+import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.Message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,13 +87,13 @@ public class KafkaLogConsumer extends Thread {
 	  public void run() {
 	    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 	    topicCountMap.put(topic, new Integer(1));
-	    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-	    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
-	    ConsumerIterator<Message> it = stream.iterator();
-	    while(it.hasNext())
+		Map<String, List<KafkaStream<byte[], byte[]>>> topicsMessage = consumer.createMessageStreams(topicCountMap);
+		KafkaStream<byte[], byte[]> topicMessage = topicsMessage.get(topic).get(0);
+		ConsumerIterator<byte[], byte[]> consumerIterator = topicMessage.iterator();
+	    while(consumerIterator.hasNext())
 	    {
-	    	String message = ExampleUtils.getMessage(it.next());
-	    	Gson gson = new Gson();
+	    	String message = new String(consumerIterator.next().message());
+			Gson gson = new Gson();
 	    	Map<String, String> messageMap = new HashMap<String, String>();
 	    	try {
 	    		messageMap = gson.fromJson(message, messageMap.getClass());

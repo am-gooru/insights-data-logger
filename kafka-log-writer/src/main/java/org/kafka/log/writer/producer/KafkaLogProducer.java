@@ -29,13 +29,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.json.JSONObject;
 import org.kafka.log.writer.consumer.KafkaLogConsumer;
@@ -67,6 +66,8 @@ public class KafkaLogProducer
 		props.put("metadata.broker.list", kafkaIp + ":" + port);		
 //		props.put("producer.type", producerType);
 		props.put("request.required.acks", "1");
+		
+		
 		try{
 		producer = new Producer<String, String>(
 				new ProducerConfig(props));
@@ -85,7 +86,7 @@ public class KafkaLogProducer
 	}
 	
 	private void send(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
 		producer.send(data);
 	}
 
