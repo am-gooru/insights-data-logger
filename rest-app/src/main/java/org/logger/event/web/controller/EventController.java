@@ -447,8 +447,10 @@ public class EventController {
 	}
 
 	public void updateViews() throws Exception{
+		if (!validateSchedular()) {
+			return;
+		}
 		System.out.println("Executing every five mintues");
-		
 		eventService.updateProdViews();
 	}
 	
@@ -462,7 +464,9 @@ public class EventController {
 	
 	//run micro aggregation for the given time range
 	public void executeForEveryMinute(String startTime,String endTime){
-			
+		if (!validateSchedular()) {
+			return;
+		}	
 		eventService.executeForEveryMinute(startTime, endTime);
 	}
 		

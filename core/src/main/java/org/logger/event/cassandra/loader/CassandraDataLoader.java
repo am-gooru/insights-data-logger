@@ -58,6 +58,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
+import scala.runtime.Boolean;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -181,6 +183,11 @@ public class CassandraDataLoader implements Constants {
         cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
 
         geo = new GeoLocation();
+        
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        for(int i = 0 ; i < schdulersStatus.size() ; i++) {
+        	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
+        }
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
@@ -201,6 +208,10 @@ public class CassandraDataLoader implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         liveDashBoardDAOImpl.clearCache();
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        for(int i = 0 ; i < schdulersStatus.size() ; i++) {
+        	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
+        }
     }
     
     /**
@@ -841,6 +852,9 @@ public void postStatMigration(String startTime , String endTime,String customEve
     }
     
 	public void balanceStatDataUpdate(){
+		if(cache.get("balance_view_job").equalsIgnoreCase("stop")){
+    		return;
+    	}
 		Calendar cal = Calendar.getInstance();
 		try{
 		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -852,7 +866,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
 			Collection<String> gooruOids =  recentReources.getColumnNames();
 			
 			for(String id : gooruOids){
-				logger.info("gooruOids : {} ",id);
 				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
 				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
 				long insightsView = 0L;
@@ -866,7 +879,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				}
 				logger.info("gooruView : {} ",gooruView);
 				long balancedView = (gooruView - insightsView);
-				logger.info("balancedView : {} ",balancedView);
 				logger.info("Insights update views : {} ", (insightsView + balancedView) );
 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
 				if(balancedView != 0){
@@ -926,6 +938,10 @@ public void postStatMigration(String startTime , String endTime,String customEve
     }
 
     public void callAPIViewCount() throws JSONException {
+    	if(cache.get("stat_job").equalsIgnoreCase("stop")){
+    		logger.info("job stopped");
+    		return;
+    	}
     	JSONArray resourceList = new JSONArray();
     	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
@@ -956,8 +972,8 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
-			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList) {
+				JSONObject resourceObj = new JSONObject();
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 				for(String column : statKeys){
 					if(detail.getName().equals(column)){
@@ -966,9 +982,10 @@ public void postStatMigration(String startTime , String endTime,String customEve
 						resourceObj.put("resourceType", "resource");
 					}
 				}
+				if(resourceObj.length() > 0 ){
+					resourceList.put(resourceObj);
+				}
 			}
-			logger.info("gooruOid : {}" , contents.getColumnByIndex(i).getStringValue());
-			resourceList.put(resourceObj);
 		}
 		
 		if((resourceList.length() != 0)){
@@ -987,12 +1004,15 @@ public void postStatMigration(String startTime , String endTime,String customEve
 				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=true&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
+				logger.info("staticsObj : {}",staticsObj);
 				StringEntity input = new StringEntity(staticsObj.toString());			        
 		 		HttpPost  postRequest = new HttpPost(url);
+		 		logger.info("staticsObj : {}",url);
 		 		postRequest.addHeader("accept", "application/json");
 		 		postRequest.setEntity(input);
 		 		HttpResponse response = httpClient.execute(postRequest);
 		 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
+		 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
 		 		if (response.getStatusLine().getStatusCode() != 200) {
 		 	 		logger.info("View count api call failed...");
 		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
