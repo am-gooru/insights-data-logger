@@ -972,8 +972,8 @@ public void postStatMigration(String startTime , String endTime,String customEve
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
 		for(int i = 0 ; i < contents.size() ; i++) {
 			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
-			JSONObject resourceObj = new JSONObject();
 			for(Column<String> detail : vluesList) {
+				JSONObject resourceObj = new JSONObject();
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 				for(String column : statKeys){
 					if(detail.getName().equals(column)){
@@ -982,8 +982,10 @@ public void postStatMigration(String startTime , String endTime,String customEve
 						resourceObj.put("resourceType", "resource");
 					}
 				}
+				if(resourceObj.length() > 0 ){
+					resourceList.put(resourceObj);
+				}
 			}
-			resourceList.put(resourceObj);
 		}
 		
 		if((resourceList.length() != 0)){
