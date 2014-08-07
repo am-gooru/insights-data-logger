@@ -495,8 +495,29 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (Exception e) {
 			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
 		} 
-	
-}
+    }
+    
+    public void  deleteRowKey(String cfName,String key){
+    	MutationBatch m = getKeyspace().prepareMutationBatch();
+		try {
+			m.withRow(this.accessColumnFamily(cfName), key)
+			.delete()
+			;
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteRowKey {} ",e);
+		} 
+    }
+    
+    public void  deleteColumn(String cfName,String key,String columnName){
+    	MutationBatch m = getKeyspace().prepareMutationBatch();
+		try {
+			m.withRow(this.accessColumnFamily(cfName), key)
+			.deleteColumn(columnName)
+			;
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteColumn {} ",e);
+		} 
+    }
     public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
 
 		ColumnFamily<String, String> aggregateColumnFamily;
