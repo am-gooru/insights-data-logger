@@ -480,13 +480,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         .putColumnIfNotNull(columnName, value);
     }
     
-    public void generateTTLColumns(String cfName,String key,String columnName, long value ,MutationBatch m) {
+    public void generateTTLColumns(String cfName,String key,String columnName, long value,int expireTime ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value).setDefaultTtl(60);
+        .putColumnIfNotNull(columnName, value,expireTime);
     }
-    public void generateTTLColumns(String cfName,String key,String columnName, String value ,MutationBatch m) {
+    public void generateTTLColumns(String cfName,String key,String columnName, String value,int expireTime ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value).setDefaultTtl(60);
+        .putColumn(columnName, value,expireTime);
     }
     
     public void  deleteAll(String cfName){
@@ -495,8 +495,32 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (Exception e) {
 			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
 		} 
-	
-}
+    }
+    
+    public void  deleteRowKey(String cfName,String key){
+    	MutationBatch m = getKeyspace().prepareMutationBatch();
+		try {
+			m.withRow(this.accessColumnFamily(cfName), key)
+			.delete()
+			;
+			
+			m.execute();
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteRowKey {} ",e);
+		} 
+    }
+    
+    public void  deleteColumn(String cfName,String key,String columnName){
+    	MutationBatch m = getKeyspace().prepareMutationBatch();
+		try {
+			m.withRow(this.accessColumnFamily(cfName), key)
+			.deleteColumn(columnName)
+			;
+			m.execute();
+		} catch (Exception e) {
+			 logger.info("Error while deleting rows in method :deleteColumn {} ",e);
+		} 
+    }
     public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
 
 		ColumnFamily<String, String> aggregateColumnFamily;
