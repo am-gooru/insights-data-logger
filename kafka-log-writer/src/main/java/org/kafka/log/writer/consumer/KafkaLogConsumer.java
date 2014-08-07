@@ -71,12 +71,12 @@ public class KafkaLogConsumer extends Thread {
 
 	  private static ConsumerConfig createConsumerConfig()
 	  {
-	    Properties props = new Properties();
-	    props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-	    props.put("groupid", KAFKA_FILE_GROUPID);
-	    props.put("zk.sessiontimeout.ms", "10000");
-	    props.put("zk.synctime.ms", "200");
-	    props.put("autocommit.interval.ms", "1000");
+		  Properties props = new Properties();
+			props.put("zookeeper.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
+			props.put("group.id", KAFKA_GROUPID);
+			props.put("zookeeper.session.timeout.ms", "400");
+			props.put("zookeeper.sync.time.ms", "200");
+			props.put("autocommit.interval.ms", "1000");
 	    
 	    LOG.info("Kafka File writer consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+ topic+"::"+KAFKA_FILE_GROUPID);
 
