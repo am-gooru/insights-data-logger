@@ -231,4 +231,12 @@ public interface Constants {
 	public String DEFAULT_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
 	
 	public String DEFAULTCOLUMN = "constant_value";
+	
+	public String USERSESSION = "user~session";
+	
+	public String ANONYMOUSSESSION = "anonymous~session";
+	
+	public String ALLUSERSESSION = "all~user~session";
+	
+	public String ACTIVESESSION = "active~session";
 }
