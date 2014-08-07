@@ -480,13 +480,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         .putColumnIfNotNull(columnName, value);
     }
     
-    public void generateTTLColumns(String cfName,String key,String columnName, long value ,MutationBatch m) {
+    public void generateTTLColumns(String cfName,String key,String columnName, long value,int expireTime ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value,60);
+        .putColumnIfNotNull(columnName, value,expireTime);
     }
-    public void generateTTLColumns(String cfName,String key,String columnName, String value ,MutationBatch m) {
+    public void generateTTLColumns(String cfName,String key,String columnName, String value,int expireTime ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumn(columnName, value,60);
+        .putColumn(columnName, value,expireTime);
     }
     
     public void  deleteAll(String cfName){

@@ -234,25 +234,22 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
 	
-	private boolean isRowAvailable(String cfName ,String key,String  columnName){
-		ColumnList<String>  result = baseDao.readWithKey(cfName, key);
-		
-		if (result != null && !result.isEmpty() && result.getColumnByName(columnName) != null) {
-				return true;
-    	}		
-		return false;
-	}
-
 	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
-		logger.info("Add Session");
+		
+		int expireTime = 3600;
+		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase("logOut")){
+			expireTime = 1;
+		}
+		
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 		}else{
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 		}
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 		
 		try {
             m.execute();
