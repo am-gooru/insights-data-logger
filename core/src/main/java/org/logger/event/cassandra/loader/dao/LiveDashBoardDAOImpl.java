@@ -53,11 +53,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     String browserDetails = null;
     
     ColumnList<String> eventKeys = null;
-    
-	String visitor = "visitor";
-	
-	String visitorType = "loggedInUser";
-	
+    	
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -249,18 +245,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
 	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
-		
-		String dateKey = hourlyDateFormatter.format(new Date()).toString();
-		
-		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
-			visitorType = "anonymousUser";
-		}
+		logger.info("Add Session");
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-
-		if(!this.isRowAvailable(ColumnFamily.MICROAGGREGATION.getColumnFamily(),dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID))){
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, 1, m);
-		}	
-		baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),dateKey, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+		}else{
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
+		}
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), m);
 		
 		try {
             m.execute();
@@ -286,29 +278,23 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	public void watchApplicationSession() throws ParseException{
+		logger.info("watch application session");
+	
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		String lastUpdated = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"last~updated~session","constant_value").getStringValue();
-		String currentHour = hourlyDateFormatter.format(new Date()).toString();
 
-		if(lastUpdated == null || lastUpdated.equals(currentHour)){
-			this.updateExpiredToken(currentHour);
-		}else{
-			ColumnList<String> tokenList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), lastUpdated);
-		 	for(int i = 0 ; i < tokenList.size() ; i++) {
-		 		String column = tokenList.getColumnByIndex(i).getName();
-		 		String value = tokenList.getColumnByIndex(i).getStringValue();
-		 		String[] parts = column.split("~");
-		 		
-		 		if(parts[1].equalsIgnoreCase("ANONYMOUS")){
-					visitorType = "anonymousUser";
-				}
-		 		if(!value.equalsIgnoreCase("expired") && this.isRowAvailable(ColumnFamily.MICROAGGREGATION.getColumnFamily(),currentHour, column)){
-		 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, -1, m);
-		 		}else{
-		 			baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),currentHour, column,value, m);
-		 		}
-		 	}
-		}
+		Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,ALLUSERSESSION);
+		Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,ANONYMOUSSESSION);
+		Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,USERSESSION);
+
+		ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION);
+		ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION);
+		ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION);
+		
+		
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ALLUSERSESSION, (allUserSession.size() - allUserSessionCount.getLongValue()), m);
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ANONYMOUSSESSION, (anonymousSession.size()  - anonymousSessionCount.getLongValue()), m);
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+USERSESSION, (loggedUserSession.size() - loggedUserSessionCount.getLongValue()), m);
+		
 		try {
             m.execute();
         } catch (ConnectionException e) {
@@ -316,34 +302,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         }
 	}
 
-	public void updateExpiredToken(String timeLine) throws ParseException {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		ColumnList<String> tokenList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), timeLine);
-	 	for(int i = 0 ; i < tokenList.size() ; i++) {
-	 		String column = tokenList.getColumnByIndex(i).getName();
-	 		String value = tokenList.getColumnByIndex(i).getStringValue();
-	 		String[] parts = column.split("~");
-	 		
-	 		if(parts[1].equalsIgnoreCase("ANONYMOUS")){
-				visitorType = "anonymousUser";
-			}
-	 		if(!value.equalsIgnoreCase("expired")){
-	 			Date valueInDate = secondDateFormatter.parse(value);
-	 			int diffInMinutes = (int)( (new Date().getTime() - valueInDate.getTime() ) / ((60 * 1000) % 60)) ;
-	 			if(diffInMinutes > 30){
-	 				baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),visitor, visitorType, "expired", m);
-	 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),visitor, COUNT+SEPERATOR+visitorType, -1, m);
-	 			}
-	 		}
-	 	}
-	 	try {
-            m.execute();
-        } catch (ConnectionException e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
-	}
-	
 
 /*	C: defines => Constant
 	D: defines => Date format lookup

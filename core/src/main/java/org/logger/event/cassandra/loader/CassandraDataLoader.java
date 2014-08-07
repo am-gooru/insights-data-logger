@@ -410,20 +410,19 @@ public class CassandraDataLoader implements Constants {
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 	
-			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 	
-			microAggregator.sendEventForAggregation(eventObject.getFields());
+				microAggregator.sendEventForAggregation(eventObject.getFields());
 			
 			}
 		  
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 				liveAggregator.updateRawData(eventMap);
 			}
-			
-			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
-			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
 			
+			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
+						
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 	
 			this.saveGeoLocations(eventMap);		
