@@ -25,11 +25,12 @@ package org.kafka.event.microaggregator.producer;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
+import kafka.javaapi.producer.ProducerData;
 import kafka.producer.ProducerConfig;
 
 import org.json.JSONObject;
@@ -59,9 +60,9 @@ public class MicroAggregatorProducer
 		this.topic = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");;
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("metadata.broker.list", kafkaIp + ":" + port);		
-//		props.put("producer.type", producerType);
-		props.put("request.required.acks", "1");
+		props.put("zk.connect", kafkaIp + ":" + port);		
+		props.put("producer.type", producerType);
+		props.put("compression.codec", "1");
 		
 		
 		try{
@@ -93,7 +94,7 @@ public class MicroAggregatorProducer
 	private void send(String message) {
 		LOG.info("message: {}",message);
 		LOG.info("topic: {}",topic);
-		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, message);
+		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);
 	}
 

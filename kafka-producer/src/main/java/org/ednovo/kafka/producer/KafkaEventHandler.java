@@ -29,17 +29,16 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
+import kafka.javaapi.producer.ProducerData;
 import kafka.producer.ProducerConfig;
 
-import java.io.Serializable;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 @Component
 public class KafkaEventHandler {
 
-//	private static final long serialVersionUID = 8483062836459978581L;
+	private static final long serialVersionUID = 8483062836459978581L;
 
 	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
 	private Producer<String, String> producer;
@@ -56,9 +55,8 @@ public class KafkaEventHandler {
 	public void init(String ip, String port, String topic) {
 		this.topic = topic;
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("metadata.broker.list", ip + ":" + port);		
-//		props.put("producer.type", producerType);
-		props.put("request.required.acks", "1");
+		props.put("zk.connect", ip + ":" + port);
+
 		try {
 			producer = new Producer<String, String>(new ProducerConfig(props));
 		} catch (Exception e) {
@@ -76,7 +74,7 @@ public class KafkaEventHandler {
 	}
 
 	private void send(String message) {
-		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
+		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);
 	}
 

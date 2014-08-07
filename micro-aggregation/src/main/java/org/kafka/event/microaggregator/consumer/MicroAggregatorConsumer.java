@@ -30,7 +30,7 @@ import java.util.Properties;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
+import kafka.consumer.KafkaMessageStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.Message;
 
@@ -80,10 +80,10 @@ public class MicroAggregatorConsumer extends Thread {
 
 	private static ConsumerConfig createConsumerConfig() {
 		Properties props = new Properties();
-		props.put("zookeeper.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-		props.put("group.id", KAFKA_AGGREGATOR_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "400");
-		props.put("zookeeper.sync.time.ms", "200");
+		props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
+		props.put("groupid", KAFKA_AGGREGATOR_GROUPID);
+		props.put("zk.sessiontimeout.ms", "10000");
+		props.put("zk.synctime.ms", "200");
 		props.put("autocommit.interval.ms", "1000");
 
 		LOG.info("Kafka File writer consumer config: " + KAFKA_IP + ":" + KAFKA_ZK_PORT + "::" + topic + "::" + KAFKA_AGGREGATOR_GROUPID);
@@ -95,12 +95,12 @@ public class MicroAggregatorConsumer extends Thread {
 	public void run() {
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		topicCountMap.put(topic, new Integer(1));
-		Map<String, List<KafkaStream<byte[], byte[]>>> topicsMessage = consumer.createMessageStreams(topicCountMap);
-		KafkaStream<byte[], byte[]> topicMessage = topicsMessage.get(topic).get(0);
-		ConsumerIterator<byte[], byte[]> consumerIterator = topicMessage.iterator();
-		while (consumerIterator.hasNext()) {
+		Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		KafkaMessageStream<Message> stream = consumerMap.get(topic).get(0);
+		ConsumerIterator<Message> it = stream.iterator();
+		while (it.hasNext()) {
 			// String message = ExampleUtils.getMessage(it.next());
-			String message = new String(consumerIterator.next().message());
+			String message = ExampleUtils.getMessage(it.next());
 			Gson gson = new Gson();
 			Map<String, String> messageMap = new HashMap<String, String>();
 			try {

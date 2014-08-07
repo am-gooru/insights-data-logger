@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.ednovo.kafka.consumer;
 
+
 /*
  * Copyright 2010 LinkedIn
  * 
@@ -45,85 +46,93 @@ import java.util.Properties;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
+import kafka.consumer.KafkaMessageStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.Message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
-public class MessageConsumer extends Thread {
-	private final ConsumerConnector consumer;
-	private static String topic;
-	private DataProcessor rowDataProcessor;
-	private static String KAFKA_IP;
-	private static String KAFKA_PORT;
-	private static String KAFKA_ZK_PORT;
-	private static String KAFKA_TOPIC;
-	private static String KAFKA_PRODUCER_TYPE;
-	private static String KAFKA_GROUPID;
-	private static String KAFKA_FILE_TOPIC;
-	private static String KAFKA_FILE_GROUPID;
-	static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
+public class MessageConsumer extends Thread
+{
+  private final ConsumerConnector consumer;
+  private static String topic;
+  private DataProcessor rowDataProcessor;
+  private static String KAFKA_IP;
+  private static String KAFKA_PORT;
+  private static String KAFKA_ZK_PORT;
+  private static String KAFKA_TOPIC;
+  private static String KAFKA_PRODUCER_TYPE;
+  private static String KAFKA_GROUPID;
+  private static String KAFKA_FILE_TOPIC;
+  private static String KAFKA_FILE_GROUPID;
+  static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
+  
+  public MessageConsumer(DataProcessor insertRowForLogDB)
+  {
+	KAFKA_IP = System.getenv("INSIGHTS_KAFKA_API_CONSUMER_IP");
+	KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
+	KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
+	KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
+	KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
+	KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
+	KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
+	KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
+	LOG.info("Mesage Consumer: "+ KAFKA_IP + ":" + KAFKA_ZK_PORT);
+	this.topic = KAFKA_TOPIC;    
+	this.rowDataProcessor = insertRowForLogDB;
+	   
+    consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+    
+    
+  }
 
-	public MessageConsumer(DataProcessor insertRowForLogDB) {
-		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_API_CONSUMER_IP");
-		KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
-		KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
-		KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
-		KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-		KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
-		KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-		KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-		LOG.info("Mesage Consumer: " + KAFKA_IP + ":" + KAFKA_ZK_PORT);
-		this.topic = KAFKA_TOPIC;
-		this.rowDataProcessor = insertRowForLogDB;
+  private static ConsumerConfig createConsumerConfig()
+  {
+    Properties props = new Properties();
+    props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
+    props.put("groupid", KAFKA_GROUPID);
+    props.put("zk.sessiontimeout.ms", "10000");
+    props.put("zk.synctime.ms", "200");
+    props.put("autocommit.interval.ms", "1000");
+    
+    LOG.info("Kafka consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+topic+"::"+KAFKA_GROUPID);
 
-		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+    return new ConsumerConfig(props);
 
-	}
-
-	private static ConsumerConfig createConsumerConfig() {
-		Properties props = new Properties();
-		props.put("zookeeper.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "400");
-		props.put("zookeeper.sync.time.ms", "200");
-		props.put("autocommit.interval.ms", "1000");
-
-		LOG.info("Kafka consumer config: " + KAFKA_IP + ":" + KAFKA_ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
-
-		return new ConsumerConfig(props);
-
-	}
-
-	public void run() {
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		topicCountMap.put(topic, new Integer(1));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumeredDetail = consumer.createMessageStreams(topicCountMap);
-		KafkaStream<byte[], byte[]> topicStream = consumeredDetail.get(topic).get(0);
-		ConsumerIterator<byte[], byte[]> consumeredItem = topicStream.iterator();
-		while (consumeredItem.hasNext()) {
-			String message = new String(consumeredItem.next().message());
-			Gson gson = new Gson();
-			Map<String, String> messageMap = new HashMap<String, String>();
-			try {
-				messageMap = gson.fromJson(message, messageMap.getClass());
-			} catch (Exception e) {
-				LOG.error("Message Consumer Error: " + e.getMessage());
-				continue;
-			}
-
-			// TODO We're only getting raw data now. We'll have to use the
-			// server IP as well for extra information.
-			if (messageMap != null) {
-				this.rowDataProcessor.processRow(messageMap.get("raw"));
-				LOG.error("Message Consumer messageMap :\n" + messageMap.get("raw"));
-			} else {
-				LOG.error("Message Consumer Error messageMap : No data found");
-				continue;
-			}
+  }
+ 
+  public void run() {
+    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+    topicCountMap.put(topic, new Integer(1));
+    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
+    ConsumerIterator<Message> it = stream.iterator();
+    while(it.hasNext())
+    {
+    	String message = ExampleUtils.getMessage(it.next());
+    	Gson gson = new Gson();
+    	Map<String, String> messageMap = new HashMap<String, String>();
+    	try {
+    		messageMap = gson.fromJson(message, messageMap.getClass());
+		} catch (Exception e) {
+			LOG.error("Message Consumer Error: "+ e.getMessage());
+			continue; 
 		}
-	}
+    	
+    	//TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+    	if(messageMap != null)
+    	{
+    		this.rowDataProcessor.processRow(messageMap.get("raw"));
+    		LOG.error("Message Consumer messageMap :\n" + messageMap.get("raw"));
+    	}
+    	else
+    	{
+    		LOG.error("Message Consumer Error messageMap : No data found");
+    		continue;
+    	}
+    }
+  }
 }

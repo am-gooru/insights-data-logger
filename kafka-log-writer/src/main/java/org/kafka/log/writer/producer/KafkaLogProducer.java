@@ -29,12 +29,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
+import kafka.javaapi.producer.ProducerData;
 import kafka.producer.ProducerConfig;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.json.JSONObject;
 import org.kafka.log.writer.consumer.KafkaLogConsumer;
@@ -63,9 +64,9 @@ public class KafkaLogProducer
 		this.topic = topic;
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("metadata.broker.list", kafkaIp + ":" + port);		
-//		props.put("producer.type", producerType);
-		props.put("request.required.acks", "1");
+		props.put("zk.connect", kafkaIp + ":" + port);		
+		props.put("producer.type", producerType);
+		props.put("compression.codec", "1");
 		
 		
 		try{
@@ -86,7 +87,7 @@ public class KafkaLogProducer
 	}
 	
 	private void send(String message) {
-		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
+		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);
 	}
 
