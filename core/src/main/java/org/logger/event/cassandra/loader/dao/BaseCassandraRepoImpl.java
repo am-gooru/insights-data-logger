@@ -503,6 +503,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			m.withRow(this.accessColumnFamily(cfName), key)
 			.delete()
 			;
+			
+			m.execute();
 		} catch (Exception e) {
 			 logger.info("Error while deleting rows in method :deleteRowKey {} ",e);
 		} 
@@ -514,6 +516,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			m.withRow(this.accessColumnFamily(cfName), key)
 			.deleteColumn(columnName)
 			;
+			m.execute();
 		} catch (Exception e) {
 			 logger.info("Error while deleting rows in method :deleteColumn {} ",e);
 		} 

@@ -1,5 +1,6 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +28,7 @@ import org.springframework.scheduling.annotation.Async;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -216,8 +219,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return returnDate; 
 	}
     
-    @Async
-    public void saveGeoLocation(GeoData geoData){
+    private void saveGeoLocation(GeoData geoData){
     	ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     	String json = null ;
     	String rowKey = "geo~locations";
@@ -413,4 +415,40 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return key != null ? key.substring(1).trim():null;
 	}
+	
+	@Async
+    public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
+    	
+		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
+			
+			GeoData geoData = new GeoData();
+			
+			GeoLocation geo = new GeoLocation();
+			
+			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
+
+			if(res != null && res.getCountry().getName() != null){
+				geoData.setCountry(res.getCountry().getName());
+				eventMap.put("country", res.getCountry().getName());
+			}
+			if(res != null && res.getCity().getName() != null){
+				geoData.setCity(res.getCity().getName());
+				eventMap.put("city", res.getCity().getName());
+			}
+			if(res != null && res.getLocation().getLatitude() != null){
+				geoData.setLatitude(res.getLocation().getLatitude());
+			}
+			if(res != null && res.getLocation().getLongitude() != null){
+				geoData.setLongitude(res.getLocation().getLongitude());
+			}
+			if(res != null && res.getMostSpecificSubdivision().getName() != null){
+				geoData.setState(res.getMostSpecificSubdivision().getName());
+				eventMap.put("state", res.getMostSpecificSubdivision().getName());
+			}
+			
+			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
+				this.saveGeoLocation(geoData);
+			}			
+		}
+    }
 }

@@ -420,12 +420,16 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.updateRawData(eventMap);
 			}
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
+	
+			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
+				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
+			}
 			
 			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
-						
+
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
-	
-			this.saveGeoLocations(eventMap);		
+
+			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
 	
 			/*
 			 * To be Re-enable 
@@ -438,9 +442,6 @@ public class CassandraDataLoader implements Constants {
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
 			}*/
 	
-			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
-			}
 			
     	}catch(Exception e){
     		logger.info("Exception in handleEventObjectHandler : {} ",e);
@@ -1170,39 +1171,6 @@ public void postStatMigration(String startTime , String endTime,String customEve
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
     	
     	return eventMap;
-    }
-
-    private void saveGeoLocations(Map<String,String> eventMap) throws IOException{
-    	
-		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
-			
-			GeoData geoData = new GeoData();
-			
-			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
-
-			if(res != null && res.getCountry().getName() != null){
-				geoData.setCountry(res.getCountry().getName());
-				eventMap.put("country", res.getCountry().getName());
-			}
-			if(res != null && res.getCity().getName() != null){
-				geoData.setCity(res.getCity().getName());
-				eventMap.put("city", res.getCity().getName());
-			}
-			if(res != null && res.getLocation().getLatitude() != null){
-				geoData.setLatitude(res.getLocation().getLatitude());
-			}
-			if(res != null && res.getLocation().getLongitude() != null){
-				geoData.setLongitude(res.getLocation().getLongitude());
-			}
-			if(res != null && res.getMostSpecificSubdivision().getName() != null){
-				geoData.setState(res.getMostSpecificSubdivision().getName());
-				eventMap.put("state", res.getMostSpecificSubdivision().getName());
-			}
-			
-			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
-				liveDashBoardDAOImpl.saveGeoLocation(geoData);
-			}			
-		}
     }
 
     private void getAndSetAnswerStatus(EventData eventData){
