@@ -482,11 +482,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void generateTTLColumns(String cfName,String key,String columnName, long value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value).setDefaultTtl(60);
+        .putColumnIfNotNull(columnName, value,60);
     }
     public void generateTTLColumns(String cfName,String key,String columnName, String value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value).setDefaultTtl(60);
+        .putColumn(columnName, value,60);
     }
     
     public void  deleteAll(String cfName){
