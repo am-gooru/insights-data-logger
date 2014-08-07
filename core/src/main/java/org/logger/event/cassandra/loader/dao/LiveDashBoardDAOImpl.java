@@ -297,31 +297,60 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		long anonymousSessionCounts = 0L;
 		long loggedUserSessionCounts = 0L;
 		
+		long allCollectionPlayCounts = 0L;
+		long allResourcePlayCounts = 0L;
+		long allCollectionResourcePlayCounts = 0L;
+		
 		try{
 			Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ALLUSERSESSION);
 			Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ANONYMOUSSESSION);
 			Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+USERSESSION);
-
+			
 			ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION);
 			ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION);
 			ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION);
 			
+			Column<String> allCollectionPlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS);
+			Column<String> allResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVERESOURCEPLAYS);
+			Column<String> allCollectionResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS);
+			
+			ColumnList<String> allCollectionPlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS);
+			ColumnList<String> allResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS);
+			ColumnList<String> allCollectionResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS);
+			
 			if(allUserSession != null)
 			allUserSessionCounts = allUserSession.size();
 			
-			if(allUserSession != null)
+			if(anonymousSession != null)
 			anonymousSessionCounts = anonymousSession.size();
 			
-			if(allUserSession != null)
+			if(loggedUserSession != null)
 			loggedUserSessionCounts = loggedUserSession.size();
 			
+			if(allResourcePlay != null)
+			allResourcePlayCounts = allResourcePlay.size();
+				
+			if(allCollectionPlay != null)
+			allCollectionPlayCounts = allCollectionPlay.size();
+				
+			if(allCollectionResourcePlay != null)
+			allCollectionResourcePlayCounts = allCollectionResourcePlay.size();
+				
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ALLUSERSESSION, (allUserSessionCounts - allUserSessionCount.getLongValue()), m);
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ANONYMOUSSESSION, (anonymousSessionCounts  - anonymousSessionCount.getLongValue()), m);
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+USERSESSION, (loggedUserSessionCounts - loggedUserSessionCount.getLongValue()), m);
+			
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS, (allCollectionPlayCounts - allCollectionPlayCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVERESOURCEPLAYS, (allResourcePlayCounts  - allResourcePlayCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS, (allCollectionResourcePlayCounts - allCollectionResourcePlayCount.getLongValue()), m);
+			
 		}catch(Exception e){
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ALLUSERSESSION, 0, m);
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ANONYMOUSSESSION,0, m);
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+USERSESSION, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVERESOURCEPLAYS,0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS, 0, m);
 			logger.info("Exception in watching session : {}",e);
 		}
 		
