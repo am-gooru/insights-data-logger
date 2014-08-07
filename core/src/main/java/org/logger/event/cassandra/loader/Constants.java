@@ -239,4 +239,10 @@ public interface Constants {
 	public String ALLUSERSESSION = "all~user~session";
 	
 	public String ACTIVESESSION = "active~session";
+	
+	public String ACTIVECOLLECTIONPLAYS = "active~collection~plays";
+	
+	public String ACTIVERESOURCEPLAYS = "active~resource~plays";
+	
+	public String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
 }

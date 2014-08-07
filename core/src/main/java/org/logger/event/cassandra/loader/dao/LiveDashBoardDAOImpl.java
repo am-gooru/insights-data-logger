@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
 import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
@@ -238,9 +239,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void addApplicationSession(Map<String,String> eventMap){
 		
 		int expireTime = 3600;
+		int contentExpireTime = 600;
 		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase("logOut")){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase("logOut") || eventMap.get(EVENTNAME).equalsIgnoreCase("user.logout")){
 			expireTime = 1;
+		}
+		
+		if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RP1.getName()) ||  eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) &&  eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+			contentExpireTime = 1;
 		}
 		
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -250,6 +256,16 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 		}
 			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
+		
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVECOLLECTIONPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		}
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RP1.getName())){
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVERESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		}
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVECOLLECTIONRESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		}
 		
 		try {
             m.execute();
