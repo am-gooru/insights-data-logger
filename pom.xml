@@ -524,7 +524,19 @@
 			<version>1.56.42</version>
 		</dependency>
 		<!-- cassandra dependency ends -->
-		
+	
+		<!-- Elastic Search -->	
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<version>1.2.2</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.searchbox</groupId>
+			<artifactId>jest</artifactId>
+			<version>0.1.2</version>
+		</dependency>		
 		<!-- Atmosphere -->
 		<dependency>
             <groupId>org.atmosphere</groupId>

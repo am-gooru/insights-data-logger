@@ -29,6 +29,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.io.IOException;
 
+import org.elasticsearch.client.Client;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,8 @@ public class BaseDAOCassandraImpl {
     private CassandraConnectionProvider connectionProvider;
     
     private Keyspace keyspace;
+    
+    private Client client;
     
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
     
@@ -66,5 +69,14 @@ public class BaseDAOCassandraImpl {
         return this.keyspace;
     }
     
-    
+    public Client getESClient() {
+        if(client == null && this.connectionProvider != null) {
+            try {
+                this.client = this.connectionProvider.getESClient();
+            } catch (IOException ex) {
+                logger.info("Error while initializing elastic search{}", ex);
+            }
+        }
+        return this.client;
+    }
 }

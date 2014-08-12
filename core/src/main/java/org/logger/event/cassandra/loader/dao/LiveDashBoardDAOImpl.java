@@ -417,6 +417,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	@Async
+	public void saveInESIndex(Map<String,String> eventMap) {
+		logger.info("Event : \n "+eventMap+"\n");
+			try {
+				getESClient().prepareIndex("testing", "test", eventMap.get("eventId")).setSource(eventMap)
+				.execute()
+				.actionGet()
+				;
+			} catch (Exception e) {
+				logger.info("Indexing failed",e);
+			}
+		
+	}
+	
+	@Async
     public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
     	
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){

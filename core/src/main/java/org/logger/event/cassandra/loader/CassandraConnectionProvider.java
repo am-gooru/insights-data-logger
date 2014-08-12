@@ -32,6 +32,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -55,7 +60,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-
+    private Client client;
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
@@ -63,6 +68,9 @@ public class CassandraConnectionProvider {
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
 
+        String esClusterName = "";
+        String esHost = "162.243.130.94";
+        int esPort = 9300;
         try {
 
             logger.info("Loading cassandra properties");
@@ -105,6 +113,13 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
+            
+
+           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+           TransportClient transportClient = new TransportClient(settings);
+           transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));
+           client = transportClient;
+           
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
@@ -115,5 +130,11 @@ public class CassandraConnectionProvider {
             throw new IOException("Keyspace not initialized.");
         }
         return cassandraKeyspace;
+    }
+    public Client getESClient() throws IOException{
+    	if (client == null) {
+            throw new IOException("Elastic Search is not initialized.");
+        }
+    	return client;
     }
 }

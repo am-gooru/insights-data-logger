@@ -431,6 +431,8 @@ public class CassandraDataLoader implements Constants {
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
 	
+			liveDashBoardDAOImpl.saveInESIndex(eventMap);
+			
 			/*
 			 * To be Re-enable 
 			 * 
