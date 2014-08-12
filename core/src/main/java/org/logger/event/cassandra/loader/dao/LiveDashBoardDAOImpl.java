@@ -21,6 +21,8 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.ESIndexices;
+import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
 import org.restlet.resource.ClientResource;
@@ -431,11 +433,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					contentBuilder.field(key, eventMap.get(key));
 				}
 			}
-		logger.info("Event : \n "+contentBuilder+"\n");
-		
-		logger.info("EventId : \n "+eventMap.get("eventId")+"\n");
-		
-				getESClient().prepareIndex("testing", "test", eventMap.get("eventId")).setSource(contentBuilder)
+				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getESIndex(), IndexType.EVENTDETAIL.getIndexType(), eventMap.get("eventId"))
+				.setSource(contentBuilder)
 				.execute()
 				.actionGet()
 				;
