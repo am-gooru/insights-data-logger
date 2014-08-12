@@ -227,7 +227,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return returnDate; 
 	}
     
-    private void saveGeoLocation(GeoData geoData){
+    private void saveGeoLocation(GeoData geoData,Map<String,String> eventMap){
     	ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     	String json = null ;
     	String rowKey = "geo~locations";
@@ -245,6 +245,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
     }
 	
+    private void saveEventsByGeoLocation(String  columnName ,Map<String,String> eventMap){
+		if(columnName != null){
+			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT+SEPERATOR+eventMap.get(EVENTNAME), 1);
+		}
+    }
+    
 	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
 		
@@ -475,7 +481,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 			
 			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
-				this.saveGeoLocation(geoData);
+				this.saveGeoLocation(geoData,eventMap);
 			}			
 		}
     }

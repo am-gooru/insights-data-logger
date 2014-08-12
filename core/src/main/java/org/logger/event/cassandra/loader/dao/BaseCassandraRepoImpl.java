@@ -465,6 +465,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
+    public void increamentCounter(String cfName, String key,String columnName,long value) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .incrementCounterColumn(columnName, value);
+
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveLongValue {}", e);
+        }
+    }
+    
     public void generateCounter(String cfName,String key,String columnName, long value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .incrementCounterColumn(columnName, value);
