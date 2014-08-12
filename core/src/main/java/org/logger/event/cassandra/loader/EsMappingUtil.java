@@ -26,7 +26,7 @@ public class EsMappingUtil {
 	public static String getConfig(String indexType,
 			String configFile) {
 		String content = null;
-		String settingsPath = "/config/index/" + indexType + "/_" + configFile + ".json";
+		String settingsPath = "/insights-data-logger/config/index/" + indexType + "/_" + configFile + ".json";
 		
 		Path currentRelativePath = Paths.get("");
 		String s = currentRelativePath.toAbsolutePath().toString();
