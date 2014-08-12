@@ -121,6 +121,7 @@ public class CassandraConnectionProvider {
            transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));
            client = transportClient;
            
+           this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
