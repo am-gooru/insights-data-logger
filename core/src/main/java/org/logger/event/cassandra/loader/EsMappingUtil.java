@@ -26,17 +26,14 @@ public class EsMappingUtil {
 		String settingsPath = "config/index/" + indexType + "/_" + configFile + ".json";
 		try {
 			Resource resource = new ClassPathResource(settingsPath);
-			System.out.print("File Location : " + resource.getURI());
 			System.out.print("File Locations : " + resource.getFile());
-			content = FileUtils.readFileToString(resource.getFile());
+			content = readFileAsString(resource.getInputStream());
 			
-		} catch (FileNotFoundException e) {
-			InputStream resourceStream = EsMappingUtil.class.getClassLoader().getResourceAsStream(settingsPath);
-			content = readFileAsString(resourceStream);
-		} catch (Exception exception) {
-			exception.printStackTrace();
-		}
-
+		} catch (Exception e) {
+			/*InputStream resourceStream = EsMappingUtil.class.getClassLoader().getResourceAsStream(settingsPath);
+			content = readFileAsString(resourceStream);*/
+			System.out.print("File Locations : " + e);
+		} 
 		return content;
 	}
 
