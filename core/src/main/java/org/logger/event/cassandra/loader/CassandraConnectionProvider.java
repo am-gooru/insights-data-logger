@@ -113,8 +113,8 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
-            
-
+            	
+           //Elastic search connection provider
            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
            TransportClient transportClient = new TransportClient(settings);
            transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));

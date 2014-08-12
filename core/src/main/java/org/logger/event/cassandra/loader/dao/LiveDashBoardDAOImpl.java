@@ -1,5 +1,7 @@
 package org.logger.event.cassandra.loader.dao;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
@@ -13,6 +15,7 @@ import java.util.Map;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -421,16 +424,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	@Async
 	public void saveInESIndex(Map<String,String> eventMap) {
-		JSONObject jsonObj = new JSONObject();
 		try {
+			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(String key : eventMap.keySet()){
-				jsonObj.put(key, eventMap.get(key));
+				if(eventMap.get(key) != null && !eventMap.get(key).isEmpty()){
+					contentBuilder.field(key, eventMap.get(key));
+				}
 			}
-		logger.info("Event : \n "+jsonObj+"\n");
+		logger.info("Event : \n "+contentBuilder+"\n");
 		
 		logger.info("EventId : \n "+eventMap.get("eventId")+"\n");
 		
-				getESClient().prepareIndex("testing", "test", eventMap.get("eventId")).setSource(jsonObj)
+				getESClient().prepareIndex("testing", "test", eventMap.get("eventId")).setSource(contentBuilder)
 				.execute()
 				.actionGet()
 				;
