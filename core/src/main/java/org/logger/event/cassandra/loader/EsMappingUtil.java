@@ -23,7 +23,7 @@ public class EsMappingUtil {
 	public static String getConfig(String indexType,
 			String configFile) {
 		String content = null;
-		String settingsPath = "config/index/" + indexType + "/_" + configFile + ".json";
+		String settingsPath = "resources/config/index/" + indexType + "/_" + configFile + ".json";
 		try {
 			Resource resource = new ClassPathResource(settingsPath);
 			System.out.print("File Location : " + resource.getURI());
