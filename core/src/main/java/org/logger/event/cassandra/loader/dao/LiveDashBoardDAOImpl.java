@@ -243,13 +243,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		if(columnName != null){
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
 		}
-    }
-	
-    private void saveEventsByGeoLocation(String  columnName ,Map<String,String> eventMap){
-		if(columnName != null){
-			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT+SEPERATOR+eventMap.get(EVENTNAME), 1);
-		}
-    }
+		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT+SEPERATOR+eventMap.get(EVENTNAME), 1);
+    }	
     
 	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
