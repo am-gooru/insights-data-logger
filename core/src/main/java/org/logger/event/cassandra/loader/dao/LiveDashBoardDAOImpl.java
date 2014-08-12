@@ -207,6 +207,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					Date lastDate = customDateFormatter.parse(rowKey);
 					Date rowValues = new Date(lastDate.getTime() - 2);
 					returnDate.put(customDateFormatter.format(lastDate), customDateFormatter.format(rowValues));
+					if(eventMap.containsKey(CLIENTSOURCE)) {
+						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(CLIENTSOURCE), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(CLIENTSOURCE));
+					}
 					if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()){
 						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(ORGANIZATIONUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(ORGANIZATIONUID));
 					}
