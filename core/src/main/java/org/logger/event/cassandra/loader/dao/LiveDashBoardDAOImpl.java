@@ -433,7 +433,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					contentBuilder.field(key, eventMap.get(key));
 				}
 			}
-				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getESIndex(), IndexType.EVENTDETAIL.getIndexType(), eventMap.get("eventId"))
+				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), eventMap.get("eventId"))
 				.setSource(contentBuilder)
 				.execute()
 				.actionGet()
