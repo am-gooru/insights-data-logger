@@ -27,7 +27,7 @@ public class EsMappingUtil {
 		try {
 			Resource resource = new ClassPathResource(settingsPath);
 			System.out.print("File Location : " + resource.getURI());
-			System.out.print("File Locations : " + resource.getURL());
+			System.out.print("File Locations : " + resource.getFile());
 			content = FileUtils.readFileToString(resource.getFile());
 			
 		} catch (FileNotFoundException e) {
