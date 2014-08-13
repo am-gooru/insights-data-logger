@@ -517,6 +517,17 @@ public class CassandraDataLoader implements Constants {
 
     }
     
+    public void migrateDataTES(EventObject eventObject) throws JSONException{
+    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
+    	
+    	eventMap = this.formatEventMap(eventObject, eventMap);
+    	
+    	long start = System.currentTimeMillis();
+		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		long stop = System.currentTimeMillis();
+		logger.info("Time Taken : {} ",(stop - start));
+    	
+    }
     /**
      * 
      * @param startTime
@@ -524,6 +535,7 @@ public class CassandraDataLoader implements Constants {
      * @param customEventName
      * @throws ParseException
      */
+    
     public void updateStaging(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
@@ -627,7 +639,7 @@ public class CassandraDataLoader implements Constants {
 	    		String fields = row.getColumns().getStringValue("fields", null);
 	    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
 	    		try {
-					this.handleEventObjectMessage(eventObjects);
+					this.migrateDataTES(eventObjects);
 				} catch (Exception e) {
 				logger.info("Error while Migration : {} ",e);
 				}
