@@ -684,15 +684,15 @@ public class CassandraDataLoader implements Constants {
 	    				String newEventId = events.get(newEventName);
 	    				HashMap<String, String> customStagingEvents  = this.createStageEvents(minuteId,hourId, dateId, newEventId, userUid, row.getColumns(),TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
 	    				baseDao.saveBulkStringList(ColumnFamily.STAGING.getColumnFamily(), customStagingEvents.get("keys").toString(), customStagingEvents);
-	    			}
+	    			}*/
 	    		}
-*/	    	//Incrementing time - one minute
+	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
 	    	Date incrementedTime =cal.getTime(); 
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    	     	}
-	    }
+	    	}
+	    
     	/*
    	jobsCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "running-jobs-count", "jobs_count").getLongValue();
     	jobsCount--;
