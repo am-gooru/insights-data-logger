@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
+import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,9 +79,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
         String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
         esEventFields = Arrays.asList(esFields);
-        logger.info("esEventFields : " + esEventFields);
         fieldDefinations =  new LinkedHashMap<String,String>();
-        Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esEventFields);
+        Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
         for(String key : fieldTypes.getKeys()){
         	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
         }
@@ -454,10 +454,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			JSONObject newJson = new JSONObject();
-			for(String key : eventMap.keySet()){
+			for(String key : fieldDefinations.keySet()){
 				if(eventMap.get(key) != null){
-					contentBuilder.field(key, eventMap.get(key));
-					newJson.put(key, eventMap.get(key));
+					contentBuilder.field(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
+					newJson.put(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
 				}
 			}
 			logger.info("contentBuilder : {} ",newJson);
