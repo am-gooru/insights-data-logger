@@ -430,13 +430,10 @@ public class CassandraDataLoader implements Constants {
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
-			
-			Map<String,Object> eventMap2 = JSONDeserializer.deserializeEventObjectv2(eventObject);
-			
-			logger.info("eventMap2 : {} ",eventMap2);
-			
-			liveDashBoardDAOImpl.saveInESIndex(eventMap2);
-			
+			long start = System.currentTimeMillis();
+			liveDashBoardDAOImpl.saveInESIndex(eventMap);
+			long stop = System.currentTimeMillis();
+			logger.info("Time Taken ",(stop - start));
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
