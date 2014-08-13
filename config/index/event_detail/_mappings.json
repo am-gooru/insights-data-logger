@@ -72,6 +72,9 @@
 },
 "rating":{
 "type":"double"
+},
+"startTime":{
+"type":"date"
 }
 }
 }

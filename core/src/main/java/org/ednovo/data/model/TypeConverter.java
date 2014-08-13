@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -61,8 +62,12 @@ public class TypeConverter {
 				}else if(type.equals("JSONObject")){
 					result = new JSONObject(value);
 				}else if(type.equals("Boolean")){
+					//accepting timestamp
+					result =  new Date(Long.valueOf(value));
+				}else if(type.equals("Date")){
 					result = Boolean.valueOf(value);
-				}else if(type.equals("String")){
+				}
+				else if(type.equals("String")){
 					result = value;
 				}else if(type.equals("IntegerArray")){
 
