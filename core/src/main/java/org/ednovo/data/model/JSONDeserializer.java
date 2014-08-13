@@ -65,5 +65,20 @@ public class JSONDeserializer {
 		}
 		return (T) map;
 	}
-
+	public static <T> T deserializeEventObjectv2(EventObject eventObject) throws JSONException {
+		
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String,Object> map = new HashMap<String,Object>();
+		try {
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getUser(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getMetrics(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getPayLoadObject(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getContext(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getSession(), new TypeReference<HashMap<String,String>>(){}));
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return (T) map;
+	}
 }

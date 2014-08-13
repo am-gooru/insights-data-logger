@@ -426,15 +426,16 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	@Async
-	public void saveInESIndex(Map<String,String> eventMap) {
+	public void saveInESIndex(Map<String,Object> eventMap) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(String key : eventMap.keySet()){
-				if(eventMap.get(key) != null && !eventMap.get(key).isEmpty()){
+				if(eventMap.get(key) != null){
 					contentBuilder.field(key, eventMap.get(key));
 				}
 			}
-				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), eventMap.get("eventId"))
+			logger.info("contentBuilder : {} ",contentBuilder);
+				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
 				.setSource(contentBuilder)
 				.execute()
 				.actionGet()
