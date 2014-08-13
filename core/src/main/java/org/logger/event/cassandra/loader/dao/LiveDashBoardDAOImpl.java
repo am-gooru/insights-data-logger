@@ -84,20 +84,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         for(String key : fieldTypes.getKeys()){
         	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
         }
-        logger.info("fieldDefinations : " + fieldDefinations);
     }
     
-    public void clearCache(){        
+    public void clearCache(){  
     	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
-    	browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
-    	String esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue();
-    	logger.info("esFields : " + esFields);
-    	fieldDefinations =  new LinkedHashMap<String,String>();
-    	Rows<String, String> fieldTypes = baseDao.readCommaKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esFields);
-    	for(String key : fieldTypes.getKeys()){
-    		fieldDefinations.put(key, String.valueOf(fieldTypes.getRow(key)));
-    	}
-    	logger.info("fieldDefinations : " + fieldDefinations);
+	    browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
+	    String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
+	    esEventFields = Arrays.asList(esFields);
+	    fieldDefinations =  new LinkedHashMap<String,String>();
+	    Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
+	    for(String key : fieldTypes.getKeys()){
+	    	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
+	    }
     }
     
     @Async
@@ -460,7 +458,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					newJson.put(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
 				}
 			}
-			logger.info("contentBuilder : {} ",newJson);
 				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
 				.setSource(contentBuilder)
 				.execute()
