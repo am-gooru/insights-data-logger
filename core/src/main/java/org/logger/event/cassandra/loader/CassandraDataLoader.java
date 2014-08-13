@@ -528,14 +528,14 @@ public class CassandraDataLoader implements Constants {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
-    	MutationBatch m = null;
+    	/*	MutationBatch m = null;
     	try {
 			 m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
     	
-    /*	String dateId = null;
+    	String dateId = null;
     	String minuteId = null;
     	String hourId = null;
     	String eventId = null;
