@@ -430,7 +430,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			}
 			if(splittedKey.startsWith("E:") && eventMap != null){
 				subKey = splittedKey.split(":");
-				if(eventMap.containsKey(USERAGENT) && eventMap.get(USERAGENT) != null) {
+				if(splittedKey.contains(USERAGENT)) {
 					key += "~"+this.getBrowser(eventMap.get(USERAGENT));
 				} else {
 					key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
