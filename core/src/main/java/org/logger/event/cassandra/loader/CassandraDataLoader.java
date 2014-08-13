@@ -437,13 +437,13 @@ public class CassandraDataLoader implements Constants {
 			
 			liveDashBoardDAOImpl.saveInESIndex(eventMap2);
 			
+			if(pushingEvents.contains(eventMap.get("eventName"))){
+				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
+			}
 			
 			/*
 			 * To be Re-enable 
 			 * 
-			if(pushingEvents.contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
-			}
 	
 			  if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
