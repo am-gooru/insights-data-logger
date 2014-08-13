@@ -67,6 +67,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     ColumnList<String> eventKeys = null;
     	
+    Collection<String> esEventFields = null;
+    
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
@@ -74,10 +76,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
         browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
-        String esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue();
-        logger.info("esFields : " + esFields);
+        String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
+        esEventFields = Arrays.asList(esFields);
+        logger.info("esEventFields : " + esEventFields);
         fieldDefinations =  new LinkedHashMap<String,String>();
-        Rows<String, String> fieldTypes = baseDao.readCommaKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esFields);
+        Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esEventFields);
         for(String key : fieldTypes.getKeys()){
         	fieldDefinations.put(key, String.valueOf(fieldTypes.getRow(key)));
         }
