@@ -43,7 +43,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,11 +57,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -433,7 +432,7 @@ public class CassandraDataLoader implements Constants {
 			long start = System.currentTimeMillis();
 			liveDashBoardDAOImpl.saveInESIndex(eventMap);
 			long stop = System.currentTimeMillis();
-			logger.info("Time Taken ",(stop - start));
+			logger.info("Time Taken : {} ",(stop - start));
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
@@ -536,7 +535,7 @@ public class CassandraDataLoader implements Constants {
 			e1.printStackTrace();
 		}
     	
-    	String dateId = null;
+    /*	String dateId = null;
     	String minuteId = null;
     	String hourId = null;
     	String eventId = null;
@@ -562,7 +561,7 @@ public class CassandraDataLoader implements Constants {
     	for (Row<String, String> eventRow : eventRows) {
 			events.put(eventRow.getColumns().getStringValue("event_name", null),eventRow.getColumns().getStringValue("event_id", null));
 		}
-    	//Process records for every minute
+*/    	//Process records for every minute
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
     		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
@@ -571,7 +570,7 @@ public class CassandraDataLoader implements Constants {
     		logger.info("Porcessing Date : {}" , startDate.toString());
     		
     		//Get Time ID and Hour ID
-    		Map<String,String> timeDetailMap = new LinkedHashMap<String, String>();
+/*    		Map<String,String> timeDetailMap = new LinkedHashMap<String, String>();
     		timeDetailMap.put("hour", String.valueOf(currentHour));
     		timeDetailMap.put("minute", String.valueOf(currentMinute));
     		Rows<String, String> timeDetails =  baseDao.readIndexedColumnList(ColumnFamily.DIMTIME.getColumnFamily(),timeDetailMap);
@@ -599,7 +598,8 @@ public class CassandraDataLoader implements Constants {
    		 		dateTrySeq++;
    		 	}
    		 	
-   		 	//Generate Key if loads custom Event Name
+   		 		Generate Key if loads custom Event Name
+   		 	 */
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
    		 		timeLineKey = startDate.toString();
@@ -623,10 +623,15 @@ public class CassandraDataLoader implements Constants {
 	    	//Read all records from Event Detail
 	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
 	    	for (Row<String, String> row : eventDetailsNew) {
-	    		row.getColumns().getStringValue("event_name", null);
-	    		String searchType = row.getColumns().getStringValue("event_name", null);
-	    		
-	    		//Skip Invalid Events
+
+	    		String fields = row.getColumns().getStringValue("fields", null);
+	    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+	    		try {
+					this.handleEventObjectMessage(eventObjects);
+				} catch (Exception e) {
+				logger.info("Error while Migration : {} ",e);
+				}
+	    		/*//Skip Invalid Events
 	    		if(searchType == null ) {
 	    			continue;
 	    		}
@@ -681,14 +686,15 @@ public class CassandraDataLoader implements Constants {
 	    				baseDao.saveBulkStringList(ColumnFamily.STAGING.getColumnFamily(), customStagingEvents.get("keys").toString(), customStagingEvents);
 	    			}
 	    		}
-	    	//Incrementing time - one minute
+*/	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
 	    	Date incrementedTime =cal.getTime(); 
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-    	}
-    	
-    	jobsCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "running-jobs-count", "jobs_count").getLongValue();
+	    	     	}
+	    }
+    	/*
+   	jobsCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "running-jobs-count", "jobs_count").getLongValue();
     	jobsCount--;
     	baseDao.generateNonCounter(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "running-jobs-count", "jobs-count", jobsCount, m);
     	try {
@@ -696,7 +702,7 @@ public class CassandraDataLoader implements Constants {
 			logger.info("Process Ends  : Inserted successfully");
 		} catch (ConnectionException e) {
 			e.printStackTrace();
-		}
+		}*/
     }
 
     public void postMigration(String startTime , String endTime,String customEventName) {
