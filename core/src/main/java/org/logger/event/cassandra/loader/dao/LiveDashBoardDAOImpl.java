@@ -7,6 +7,7 @@ import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -38,6 +39,7 @@ import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Rows;
 
 public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveDashBoardDAO,Constants{
 
@@ -61,6 +63,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     String browserDetails = null;
     
+    Map<String,String> fieldDefinations = null ;
+    
     ColumnList<String> eventKeys = null;
     	
     public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
@@ -68,12 +72,29 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.connectionProvider = connectionProvider;
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
-        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers","constant_value").getStringValue();
+        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
+        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
+        String esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue();
+        logger.info("esFields : " + esFields);
+        fieldDefinations =  new LinkedHashMap<String,String>();
+        Rows<String, String> fieldTypes = baseDao.readCommaKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esFields);
+        for(String key : fieldTypes.getKeys()){
+        	fieldDefinations.put(key, String.valueOf(fieldTypes.getRow(key)));
+        }
+        logger.info("fieldDefinations : " + fieldDefinations);
     }
     
-    public void clearCache(){
-    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys","constant_value").getStringValue();
+    public void clearCache(){        
+    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
+    	browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
+    	String esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue();
+    	logger.info("esFields : " + esFields);
+    	fieldDefinations =  new LinkedHashMap<String,String>();
+    	Rows<String, String> fieldTypes = baseDao.readCommaKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esFields);
+    	for(String key : fieldTypes.getKeys()){
+    		fieldDefinations.put(key, String.valueOf(fieldTypes.getRow(key)));
+    	}
+    	logger.info("fieldDefinations : " + fieldDefinations);
     }
     
     @Async
@@ -429,12 +450,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,Object> eventMap) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
+			JSONObject newJson = new JSONObject();
 			for(String key : eventMap.keySet()){
 				if(eventMap.get(key) != null){
 					contentBuilder.field(key, eventMap.get(key));
+					newJson.put(key, eventMap.get(key));
 				}
 			}
-			logger.info("contentBuilder : {} ",contentBuilder);
+			logger.info("contentBuilder : {} ",newJson);
 				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
 				.setSource(contentBuilder)
 				.execute()

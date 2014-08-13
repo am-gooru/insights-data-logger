@@ -41,7 +41,7 @@
 "type":"string"
 },
 "attemptCount":{
-"type":"string"
+"type":"long"
 },
 "itemType":{
 "type":"string"

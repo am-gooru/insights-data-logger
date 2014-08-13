@@ -25,6 +25,8 @@ package org.ednovo.data.model;
 
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import com.google.gson.Gson;
 
 public class TypeConverter {
@@ -42,6 +44,46 @@ public class TypeConverter {
 				} catch (NumberFormatException nfe) {};
 			}
 			return (T) results;
+		}
+		return null;
+	}
+	
+	public static <T> T stringToAny(String value , String type){
+		Object result = null;
+		try{
+			if(value != null && type != null){
+				if(type.equals("Long")){
+					result = Long.valueOf(value);
+				}else if(type.equals("Double")){
+					result = Double.valueOf(value);
+				}else if(type.equals("Integer")){
+					result = Integer.valueOf(value);
+				}else if(type.equals("JSONObject")){
+					result = new JSONObject(value);
+				}else if(type.equals("Boolean")){
+					result = Boolean.valueOf(value);
+				}else if(type.equals("String")){
+					result = value;
+				}else if(type.equals("IntegerArray")){
+
+					String[] items = value.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+
+					int[] results = new int[items.length];
+
+					for (int i = 0; i < items.length; i++) {
+						try {
+							results[i] = Integer.parseInt(items[i]);
+						} catch (NumberFormatException nfe) {};
+					}
+					result =  results;
+				}else{
+					throw new RuntimeException("Unsupported type " + type + ". Please Contact Admin!!");
+				}
+				
+				return (T) result;
+			}
+		}catch(Exception e){
+			return (T) e;
 		}
 		return null;
 	}
