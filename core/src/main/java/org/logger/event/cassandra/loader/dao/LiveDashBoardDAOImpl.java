@@ -82,7 +82,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         fieldDefinations =  new LinkedHashMap<String,String>();
         Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), esEventFields);
         for(String key : fieldTypes.getKeys()){
-        	fieldDefinations.put(key, String.valueOf(fieldTypes.getRow(key)));
+        	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
         }
         logger.info("fieldDefinations : " + fieldDefinations);
     }
