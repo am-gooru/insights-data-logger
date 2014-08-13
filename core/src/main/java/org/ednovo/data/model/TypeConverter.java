@@ -61,10 +61,10 @@ public class TypeConverter {
 					result = Integer.valueOf(value);
 				}else if(type.equals("JSONObject")){
 					result = new JSONObject(value);
-				}else if(type.equals("Boolean")){
+				}else if(type.equals("Date")){
 					//accepting timestamp
 					result =  new Date(Long.valueOf(value));
-				}else if(type.equals("Date")){
+				}else if(type.equals("Boolean")){
 					result = Boolean.valueOf(value);
 				}
 				else if(type.equals("String")){
