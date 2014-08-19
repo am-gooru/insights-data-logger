@@ -64,6 +64,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     String browserDetails = null;
     
+    String customEventsConfig = null;
+    
     Map<String,String> fieldDefinations = null ;
     
     ColumnList<String> eventKeys = null;
@@ -77,6 +79,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
         browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
+        customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"custom~events",DEFAULTCOLUMN).getStringValue();
         String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
         esEventFields = Arrays.asList(esFields);
         fieldDefinations =  new LinkedHashMap<String,String>();
@@ -139,7 +142,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
    		
     	JSONObject filtersObj = new JSONObject();
-    	filtersObj.put("eventName", eventMap.get("eventName"));
+    	filtersObj.put("eventName", eventMap.get("eventName")+","+customEventsConfig);
 
 		JSONObject mainObj = new JSONObject();
 		mainObj.put("filters", filtersObj);		
