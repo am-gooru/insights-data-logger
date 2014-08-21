@@ -212,7 +212,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
     	    long difference = 100L;
     	    if(lastCount != 0L){
-    	    	 difference = (thisCount*100)/lastCount;
+    	    	if(thisCount > lastCount) {
+    	    		difference = (thisCount*100)/lastCount;
+    	    	} else {
+    	    		difference = 0L;
+    	    	}
     	    }
     	    baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	}    	
