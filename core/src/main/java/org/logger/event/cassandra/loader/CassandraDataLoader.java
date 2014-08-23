@@ -569,13 +569,14 @@ public class CassandraDataLoader implements Constants {
 	    	    		if(user != null){
 	    	    			eventMap.put("user", user);
 	    	    		}*/
-	    	    		  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+	    	    		
+	    	    		 eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
 	    	    		
 	    	    		  logger.info("contentGooruOid : " + eventMap.get(CONTENTGOORUOID)  + "\n");
 	    	    		  
-	    	    		  this.getUserInfo(eventMap,eventMap.get(GOORUID));
+	    	    		  eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
 	    	    		  
-	    	    		  logger.info("contentGooruOid : " + eventMap.get(GOORUID) + "\n");
+	    	    		  logger.info("User Id : " + eventMap.get(GOORUID) + "\n");
 	    	    		  
 	    	    		  logger.info("eventMap : " + eventMap);
 	    	    		  
@@ -630,21 +631,26 @@ public class CassandraDataLoader implements Constants {
     	Collection<String> user = new ArrayList<String>();
     	user.add(gooruUId);
     	Map<String,String> whereColumn = new HashMap<String, String>();
-    	whereColumn.put("root_node_id", "20000");
     	whereColumn.put("gooru_oid", gooruUId);
     	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
     	JSONArray subjectArray = new JSONArray();
     	JSONArray courseArray = new JSONArray();
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
-    			String value = userInfo.getColumnByName("code_id").getStringValue();
-    			Long depth = userInfo.getColumnByName("depth").getLongValue();
-    			if(value != null && !value.isEmpty() && depth == 1L){    				
-    				subjectArray.put(value);
-    			}
-    			if(value != null && !value.isEmpty() && depth == 2L){
-    				courseArray.put(value);
-    			}
+    			Long root = userInfo.getColumnByName("root_node_id").getLongValue();
+    			logger.info("rooot : {}" ,root);
+    			if(root == 20000L){
+	    			String value = userInfo.getColumnByName("code_id").getStringValue();
+	    			Long depth = userInfo.getColumnByName("depth").getLongValue();
+	    			logger.info("value : {}" ,value);
+	    			logger.info("depth : {}" ,depth);
+	    			if(value != null && !value.isEmpty() && depth == 1L){    				
+	    				subjectArray.put(value);
+	    			}
+	    			if(value != null && !value.isEmpty() && depth == 2L){
+	    				courseArray.put(value);
+	    			}
+    		}
     	}
     	if(subjectArray.length() > 0){
     		eventMap.put("subject", subjectArray.toString());
