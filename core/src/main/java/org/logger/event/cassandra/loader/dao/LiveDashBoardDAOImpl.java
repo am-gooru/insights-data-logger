@@ -459,13 +459,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			JSONObject jsonOb =  new JSONObject();
 			for(String key : fieldDefinations.keySet()){
-				logger.info("key : " + key);
 				if(eventMap.get(key) != null){
 					contentBuilder.field(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
 					jsonOb.put(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
 				}
 			}
-			//logger.info(" jsonOb : " + jsonOb);
+			logger.info(" jsonOb : " + jsonOb);
 				getESClient().prepareIndex(ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
 				.setSource(contentBuilder)
 				.execute()
