@@ -31,6 +31,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -560,20 +561,40 @@ public class CassandraDataLoader implements Constants {
 	    	for (Row<String, String> row : eventDetailsNew) {
 
 	    		String fields = row.getColumns().getStringValue("fields", null);
-	    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
 	    		try {
-	    			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
-	    	    	
-	    	    		eventMap = this.formatEventMap(eventObjects, eventMap);
+	    			JSONObject jsonField = new JSONObject(fields);
+		    			if(jsonField.has("version")){
+		    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+		    	    	
+		    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    	    		  
+		    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    	    		  
+		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    			} 
+		    			else{
+		    				   Iterator<?> keys = jsonField.keys();
+		    				   Map<String,String> eventMap = new HashMap<String, String>();
+		    				   while( keys.hasNext() ){
+		    			            String key = (String)keys.next();
+		    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+		    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+		    			            }
 
-	    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
-	    	    		  
-	    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
-	    	    		  
-	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
-	    			
+		    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
+		    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+		    			            }
+		    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+		    			        }
+		    				   	
+		    				   	eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+			    	    		  
+			    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+			    	    		
+			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    		     }
 					} catch (Exception e) {
-						
 						logger.info("Error while Migration : {} ",e);
 					}
 	    		}
