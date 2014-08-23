@@ -640,14 +640,14 @@ public class CassandraDataLoader implements Constants {
     			Long root = userInfo.getColumnByName("root_node_id").getLongValue();
     			logger.info("rooot : {}" ,root);
     			if(root == 20000L){
-	    			String value = userInfo.getColumnByName("code_id").getStringValue();
+	    			Long value = userInfo.getColumnByName("code_id").getLongValue();
 	    			Long depth = userInfo.getColumnByName("depth").getLongValue();
 	    			logger.info("value : {}" ,value);
 	    			logger.info("depth : {}" ,depth);
-	    			if(value != null && !value.isEmpty() && depth == 1L){    				
+	    			if(value != null &&  depth == 1L){    				
 	    				subjectArray.put(value);
 	    			}
-	    			if(value != null && !value.isEmpty() && depth == 2L){
+	    			if(value != null && depth == 2L){
 	    				courseArray.put(value);
 	    			}
     		}
