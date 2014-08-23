@@ -4,6 +4,8 @@ public enum ESIndexices {
 	
 	EVENTLOGGERINSIGHTS("event_logger_insights" , new String[] {"event_detail" , "dim_events_list"}),
 	
+	EVENTLOGGER("event_logger" , new String[] {"event_detail" , "dim_events_list"}),
+	
 	;
 	
 	String name;

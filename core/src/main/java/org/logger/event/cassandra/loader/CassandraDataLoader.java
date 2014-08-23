@@ -565,12 +565,8 @@ public class CassandraDataLoader implements Constants {
 	    			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
 	    	    	
 	    	    		eventMap = this.formatEventMap(eventObjects, eventMap);
-	    	    		/*String user = getUserInfo(eventMap.get(GOORUID));
-	    	    		if(user != null){
-	    	    			eventMap.put("user", user);
-	    	    		}*/
-	    	    		
-	    	    		 eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+
+	    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
 	    	    		
 	    	    		  logger.info("contentGooruOid : " + eventMap.get(CONTENTGOORUOID)  + "\n");
 	    	    		  
@@ -580,7 +576,7 @@ public class CassandraDataLoader implements Constants {
 	    	    		  
 	    	    		  logger.info("eventMap : " + eventMap);
 	    	    		  
-	    	    		//liveDashBoardDAOImpl.saveInESIndex(eventMap);
+	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
 	    			
 					} catch (Exception e) {
 						
@@ -608,14 +604,14 @@ public class CassandraDataLoader implements Constants {
     			if(value != null && !value.equalsIgnoreCase("class") && !value.equalsIgnoreCase("teacher")){    				
     				eventMap.put(columnName, value);
     			}
-    			if(value != null && !value.equalsIgnoreCase("class")){
+    			if(value != null && value.equalsIgnoreCase("class")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
     					jArray.put(val);
     				}
     				eventMap.put(columnName, jArray.toString());
     			}
-    			if(value != null && !value.equalsIgnoreCase("teacher")){
+    			if(value != null && value.equalsIgnoreCase("teacher")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
     					jArray.put(val);
@@ -637,7 +633,7 @@ public class CassandraDataLoader implements Constants {
     	JSONArray courseArray = new JSONArray();
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
-    			Long root = userInfo.getColumnByName("root_node_id").getLongValue();
+    			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
     			logger.info("rooot : {}" ,root);
     			if(root == 20000L){
 	    			Long value = userInfo.getColumnByName("code_id").getLongValue();
