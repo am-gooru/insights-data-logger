@@ -18,6 +18,12 @@ public enum ColumnFamily {
 	
 	DIMUSER("dim_user"),
 	
+	EXTRACTEDUSER("extracted_user"),
+	
+	EXTRACTEDCODE("extracted_code"),
+	
+	DIMCONTENTCLASSIFICATION("dim_content_classification"),
+	
 	DIMRESOURCE("dim_resource"),
 	
 	STAGING("stging_event_resource_user"),
