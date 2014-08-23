@@ -561,6 +561,7 @@ public class CassandraDataLoader implements Constants {
 	    	for (Row<String, String> row : eventDetailsNew) {
 
 	    		String fields = row.getColumns().getStringValue("fields", null);
+	    		if(fields != null){
 	    		try {
 	    			JSONObject jsonField = new JSONObject(fields);
 		    			if(jsonField.has("version")){
@@ -570,12 +571,13 @@ public class CassandraDataLoader implements Constants {
 		    				eventMap.put("eventName", eventObjects.getEventName());
 		    		    	eventMap.put("eventId", eventObjects.getEventId());
 		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
-		    		    	
-		    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
-		    	    		  
-		    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
-		    	    		
-		    	    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    	if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){		    		    		
+		    		    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    	}
+		    		    	if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){  
+		    		    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    		    	}
 		    	    		
 		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
 		    			} 
@@ -593,18 +595,20 @@ public class CassandraDataLoader implements Constants {
 		    			            }
 		    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
 		    			        }
-		    				   	
-		    				   	eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
-			    	    		  
-			    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
-			    	    		
-			    	    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){
+		    				   		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   }
+		    				   if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
+		    					   eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    				   }
 			    	    		
 			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
 		    		     }
 					} catch (Exception e) {
 						logger.info("Error while Migration : {} ",e);
 					}
+	    			}
 	    		}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
