@@ -454,7 +454,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	@Async
-	public void saveInESIndex(Map<String,String> eventMap) {
+	public void saveInESIndex(JSONObject eventMap) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			JSONObject jsonOb =  new JSONObject();

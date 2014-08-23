@@ -393,6 +393,7 @@ public class CassandraDataLoader implements Constants {
 			if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				liveDashBoardDAOImpl.saveInESIndex(new JSONObject(eventObject.getFields().toString()));
 				
 			}
 	
@@ -429,10 +430,7 @@ public class CassandraDataLoader implements Constants {
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
-			long start = System.currentTimeMillis();
-			liveDashBoardDAOImpl.saveInESIndex(eventMap);
-			long stop = System.currentTimeMillis();
-			logger.info("Time Taken : {} ",(stop - start));
+
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
@@ -560,12 +558,9 @@ public class CassandraDataLoader implements Constants {
 	    	for (Row<String, String> row : eventDetailsNew) {
 
 	    		String fields = row.getColumns().getStringValue("fields", null);
-	    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
 	    		try {
-	    			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
-	    	    	
-	    	    		eventMap = this.formatEventMap(eventObjects, eventMap);
-
+	    			JSONObject eventMap = new JSONObject(fields);
+	    			
 	    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
 	    	    		  
 	    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
@@ -586,10 +581,11 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
-    public Map<String,String> getUserInfo(Map<String,String> eventMap , String gooruUId){
+    public JSONObject getUserInfo(JSONObject eventMap , Object gooruUId){
     	Collection<String> user = new ArrayList<String>();
-    	user.add(gooruUId);
+    	user.add(String.valueOf(gooruUId));
     	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user);
+    	try{
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
     		for(int i = 0 ; i < userInfo.size() ; i++) {
@@ -614,18 +610,22 @@ public class CassandraDataLoader implements Constants {
     			}
     		}
     	}
+    	}catch(Exception e){
+    		logger.info("Get User Info : {} ",e);
+    	}
 		return eventMap;
     }
     
-    public Map<String,String> getTaxonomyInfo(Map<String,String> eventMap,String gooruUId){
+    public JSONObject getTaxonomyInfo(JSONObject eventMap,Object gooruUId){
     	Collection<String> user = new ArrayList<String>();
-    	user.add(gooruUId);
+    	user.add(String.valueOf(gooruUId));
     	Map<String,String> whereColumn = new HashMap<String, String>();
-    	whereColumn.put("gooru_oid", gooruUId);
+    	whereColumn.put("gooru_oid", String.valueOf(gooruUId));
     	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
     	JSONArray subjectArray = new JSONArray();
     	JSONArray courseArray = new JSONArray();
     	JSONArray taxArray = new JSONArray();
+    	try{
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
     			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
@@ -650,6 +650,9 @@ public class CassandraDataLoader implements Constants {
     	if(courseArray.length() > 0){
     		eventMap.put("course", courseArray.toString());
     	}
+    }catch(Exception e){
+    	logger.info("Taxonomy Info : ",e);
+    }
     	return eventMap;
     }
     
