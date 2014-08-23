@@ -26,6 +26,7 @@ package org.ednovo.data.model;
 import java.util.Date;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.google.gson.Gson;
@@ -81,6 +82,8 @@ public class TypeConverter {
 						} catch (NumberFormatException nfe) {};
 					}
 					result =  results;
+				}else if(type.equals("JSONArray")){
+					result =  new JSONArray(value);
 				}else{
 					throw new RuntimeException("Unsupported type " + type + ". Please Contact Admin!!");
 				}
