@@ -635,10 +635,11 @@ public class CassandraDataLoader implements Constants {
 	    			if(value != null &&  depth == 1L){    				
 	    				subjectArray.put(value);
 	    			}
-	    			if(value != null && depth == 2L){
+	    			else if(value != null && depth == 2L){
 	    				courseArray.put(value);
 	    			}
-	    			else{
+	    			else if(value != null){
+	    				taxArray.put(value);
 	    				eventMap.put("taxonomy", taxArray.toString());
 	    			}
     		}
