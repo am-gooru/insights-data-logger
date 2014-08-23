@@ -645,11 +645,14 @@ public class CassandraDataLoader implements Constants {
     }
     public Map<String,String> getContentInfo(Map<String,String> eventMap,String gooruOId){
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
+    	logger.info("Key : {}" , "GLP~"+gooruOId);
+    		if(resource != null){
     			eventMap.put("title", resource.getStringValue("title", null));
     			eventMap.put("description",resource.getStringValue("description", null));
     			eventMap.put("sharing", resource.getStringValue("sharing", null));
     			eventMap.put("contentType", resource.getStringValue("category", null));
     			eventMap.put("license", resource.getStringValue("license_name", null));
+    		} 
     	
 		return eventMap;
     }
