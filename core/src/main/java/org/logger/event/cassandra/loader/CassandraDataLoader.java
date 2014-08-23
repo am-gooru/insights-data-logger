@@ -656,11 +656,11 @@ public class CassandraDataLoader implements Constants {
     			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
     			if(root == 20000L){
 	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
-	    			Integer depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getIntegerValue() : 0;
-	    			if(value != null &&  depth == 1){    				
+	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
+	    			if(value != null &&  depth == 1L){    				
 	    				subjectArray.put(value);
 	    			}
-	    			else if(value != null && depth == 2){
+	    			else if(value != null && depth == 2L){
 	    				courseArray.put(value);
 	    			}
 	    			else if(value != null){
