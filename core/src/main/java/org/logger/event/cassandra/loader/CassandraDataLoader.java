@@ -566,7 +566,11 @@ public class CassandraDataLoader implements Constants {
 		    			if(jsonField.has("version")){
 		    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
 		    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
-		    	    	
+		    				
+		    				eventMap.put("eventName", eventObjects.getEventName());
+		    		    	eventMap.put("eventId", eventObjects.getEventId());
+		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
+		    		    	
 		    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
 		    	    		  
 		    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
