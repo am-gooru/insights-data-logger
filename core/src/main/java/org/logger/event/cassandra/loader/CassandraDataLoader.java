@@ -567,14 +567,8 @@ public class CassandraDataLoader implements Constants {
 	    	    		eventMap = this.formatEventMap(eventObjects, eventMap);
 
 	    	    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
-	    	    		
-	    	    		  logger.info("contentGooruOid : " + eventMap.get(CONTENTGOORUOID)  + "\n");
 	    	    		  
-	    	    		  eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
-	    	    		  
-	    	    		  logger.info("User Id : " + eventMap.get(GOORUID) + "\n");
-	    	    		  
-	    	    		  logger.info("eventMap : " + eventMap);
+	    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
 	    	    		  
 	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
 	    			
@@ -635,12 +629,9 @@ public class CassandraDataLoader implements Constants {
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
     			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
-    			logger.info("rooot : {}" ,root);
     			if(root == 20000L){
 	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
 	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
-	    			logger.info("value : {}" ,value);
-	    			logger.info("depth : {}" ,depth);
 	    			if(value != null &&  depth == 1L){    				
 	    				subjectArray.put(value);
 	    			}
