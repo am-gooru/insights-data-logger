@@ -596,6 +596,8 @@ public class CassandraDataLoader implements Constants {
 			    	    		  
 			    	    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
 			    	    		
+			    	    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+			    	    		
 			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
 		    		     }
 					} catch (Exception e) {
@@ -641,12 +643,21 @@ public class CassandraDataLoader implements Constants {
     	}
 		return eventMap;
     }
-    
-    public Map<String,String> getTaxonomyInfo(Map<String,String> eventMap,String gooruUId){
+    public Map<String,String> getContentInfo(Map<String,String> eventMap,String gooruOId){
+    	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
+    			eventMap.put("title", resource.getStringValue("title", null));
+    			eventMap.put("description",resource.getStringValue("description", null));
+    			eventMap.put("sharing", resource.getStringValue("sharing", null));
+    			eventMap.put("contentType", resource.getStringValue("category", null));
+    			eventMap.put("license", resource.getStringValue("license_name", null));
+    	
+		return eventMap;
+    }
+    public Map<String,String> getTaxonomyInfo(Map<String,String> eventMap,String gooruOid){
     	Collection<String> user = new ArrayList<String>();
-    	user.add(gooruUId);
+    	user.add(gooruOid);
     	Map<String,String> whereColumn = new HashMap<String, String>();
-    	whereColumn.put("gooru_oid", gooruUId);
+    	whereColumn.put("gooru_oid", gooruOid);
     	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
     	JSONArray subjectArray = new JSONArray();
     	JSONArray courseArray = new JSONArray();
