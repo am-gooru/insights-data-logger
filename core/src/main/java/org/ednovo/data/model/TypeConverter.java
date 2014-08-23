@@ -85,7 +85,7 @@ public class TypeConverter {
 				}
 				else if(type.equals("StringArray")){
 
-					String[] items = value.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+					String[] items = value.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
 
 					String[] results = new String[items.length];
 
