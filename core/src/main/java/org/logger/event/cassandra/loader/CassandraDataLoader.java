@@ -601,17 +601,17 @@ public class CassandraDataLoader implements Constants {
     		for(int i = 0 ; i < userInfo.size() ; i++) {
     			String columnName = userInfo.getColumnByIndex(i).getName();
     			String value = userInfo.getColumnByIndex(i).getStringValue();
-    			if(value != null && !value.equalsIgnoreCase("class") && !value.equalsIgnoreCase("teacher")){    				
+    			if(value != null && !columnName.equalsIgnoreCase("class") && !columnName.equalsIgnoreCase("teacher")){    				
     				eventMap.put(columnName, value);
     			}
-    			if(value != null && value.equalsIgnoreCase("class")){
+    			if(value != null && columnName.equalsIgnoreCase("class")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
     					jArray.put(val);
     				}
     				eventMap.put(columnName, jArray.toString());
     			}
-    			if(value != null && value.equalsIgnoreCase("teacher")){
+    			if(value != null && columnName.equalsIgnoreCase("teacher")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
     					jArray.put(val);
@@ -631,6 +631,7 @@ public class CassandraDataLoader implements Constants {
     	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
     	JSONArray subjectArray = new JSONArray();
     	JSONArray courseArray = new JSONArray();
+    	JSONArray taxArray = new JSONArray();
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
     			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
@@ -645,6 +646,9 @@ public class CassandraDataLoader implements Constants {
 	    			}
 	    			if(value != null && depth == 2L){
 	    				courseArray.put(value);
+	    			}
+	    			else{
+	    				eventMap.put("taxonomy", taxArray.toString());
 	    			}
     		}
     	}
