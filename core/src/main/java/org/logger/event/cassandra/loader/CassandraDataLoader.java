@@ -656,16 +656,16 @@ public class CassandraDataLoader implements Constants {
     			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
     			if(root == 20000L){
 	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
-	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
-	    			if(value != null &&  depth == 1L){    				
+	    			Integer depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getIntegerValue() : 0;
+	    			if(value != null &&  depth == 1){    				
 	    				subjectArray.put(value);
 	    			}
-	    			else if(value != null && depth == 2L){
+	    			else if(value != null && depth == 2){
 	    				courseArray.put(value);
 	    			}
 	    			else if(value != null){
 	    				taxArray.put(value);
-	    				eventMap.put("taxonomy", taxArray.toString());
+	    				
 	    			}
     		}
     	}
@@ -675,6 +675,10 @@ public class CassandraDataLoader implements Constants {
     	if(courseArray.length() > 0){
     		eventMap.put("course", courseArray.toString());
     	}
+    	if(taxArray.length() > 0){
+    		eventMap.put("taxonomy", taxArray.toString());
+    	}
+    	
     	return eventMap;
     }
     
