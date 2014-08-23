@@ -571,9 +571,13 @@ public class CassandraDataLoader implements Constants {
 	    	    		}*/
 	    	    		  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
 	    	    		
-	    	    		  logger.info("eventMap : " + eventMap);
+	    	    		  logger.info("contentGooruOid : " + eventMap.get(CONTENTGOORUOID)  + "\n");
 	    	    		  
-	    	    		  logger.info("contentGooruOid : " + eventMap.get(CONTENTGOORUOID));
+	    	    		  this.getUserInfo(eventMap,eventMap.get(GOORUID));
+	    	    		  
+	    	    		  logger.info("contentGooruOid : " + eventMap.get(GOORUID) + "\n");
+	    	    		  
+	    	    		  logger.info("eventMap : " + eventMap);
 	    	    		  
 	    	    		//liveDashBoardDAOImpl.saveInESIndex(eventMap);
 	    			
@@ -591,22 +595,35 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
-    public String getUserInfo(String gooruUId){
+    public Map<String,String> getUserInfo(Map<String,String> eventMap , String gooruUId){
     	Collection<String> user = new ArrayList<String>();
     	user.add(gooruUId);
     	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user);
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
-    		JSONArray jArray = new JSONArray();
     		for(int i = 0 ; i < userInfo.size() ; i++) {
+    			String columnName = userInfo.getColumnByIndex(i).getName();
     			String value = userInfo.getColumnByIndex(i).getStringValue();
-    			if(value != null && !value.isEmpty()){    				
-    				jArray.put(value);
+    			if(value != null && !value.equalsIgnoreCase("class") && !value.equalsIgnoreCase("teacher")){    				
+    				eventMap.put(columnName, value);
+    			}
+    			if(value != null && !value.equalsIgnoreCase("class")){
+    				JSONArray jArray = new JSONArray();
+    				for(String val : value.split(",")){
+    					jArray.put(val);
+    				}
+    				eventMap.put(columnName, jArray.toString());
+    			}
+    			if(value != null && !value.equalsIgnoreCase("teacher")){
+    				JSONArray jArray = new JSONArray();
+    				for(String val : value.split(",")){
+    					jArray.put(val);
+    				}
+    				eventMap.put(columnName, jArray.toString());
     			}
     		}
-    		return jArray.toString();
     	}
-		return null;
+		return eventMap;
     }
     
     public Map<String,String> getTaxonomyInfo(Map<String,String> eventMap,String gooruUId){
