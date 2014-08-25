@@ -362,16 +362,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}	
 	        		
 	        		if(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-	        			long startTimems = System.currentTimeMillis();
+
 	        			ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey);
 	        			
-	        			long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.VIEWS.getName(), 0L) : 0L;
-	        			long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(), 0L) : 0L;
+	        			long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
+	        			//long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(), 0L) : 0L;
 	        			
-	        			if(views == 0L && timeSpent > 0L ){
+	        			if(views == 0L){
 	        				baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
 	        			}
-	        			long stopTime = System.currentTimeMillis();
 	        		}
 	        		
 	        		if(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
