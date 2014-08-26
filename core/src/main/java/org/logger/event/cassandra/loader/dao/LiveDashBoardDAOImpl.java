@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
@@ -457,10 +458,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,String> eventMap) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			for(String key : fieldDefinations.keySet()){
-				if(eventMap.get(key) != null){
-					contentBuilder.field(key, TypeConverter.stringToAny(String.valueOf(eventMap.get(key)),fieldDefinations.get(key)));
-				}
+			for(Map.Entry<String, String> entry : eventMap.entrySet()){
+	            contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
 			}
 				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
 				.setSource(contentBuilder)
@@ -473,6 +472,19 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 	}
 	
+	@Async
+	public void saveInStaging(Map<String,String> eventMap) {
+		try {
+			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
+			  for(Map.Entry<String, String> entry : eventMap.entrySet()){
+		            contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
+		      }
+			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), UUID.randomUUID().toString(), contentBuilder);		
+			
+		} catch (Exception e) {
+			logger.info("Indexing failed",e);
+		}
+	}
 	@Async
     public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
     	

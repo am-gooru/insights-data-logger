@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
@@ -424,6 +425,35 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
+    public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        for (Entry<String, Object> entry : columnValueList.entrySet()) {
+        	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
+        	}
+        	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Integer.valueOf(""+entry.getValue()), null);
+        	}
+        	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Long.valueOf(""+entry.getValue()), null);
+        	}
+        	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+        	}else{
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
+        	}
+        	
+    	    ;
+    	}
+
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveBulkLongList {}", e);
+        }
+    }
     public void saveStringValue(String cfName, String key,String columnName,String value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -437,21 +467,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
-    public void saveMultipleStringValue(String cfName, String key,Map<String,Object> columns) {
-
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-
-        for(Map.Entry<String, Object> column : columns.entrySet()){
-        	m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(column.getKey(), column.getValue().toString(), null);
-    	}
-        
-        try {
-            m.execute();
-        } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveMultipleStringValue {}", e);
-        }
-    }
-
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -465,6 +480,34 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
+    public void saveValue(String cfName, String key,String columnName,Object value) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    	}
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Integer.valueOf(""+value), null);
+    	}
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf(""+value), null);
+    	}
+    	
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf(""+value), null);
+    	}else{
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    	}
+    	
+	    ;
+	
+	    
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveLongValue {}", e);
+        }
+    }
     public void increamentCounter(String cfName, String key,String columnName,long value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
