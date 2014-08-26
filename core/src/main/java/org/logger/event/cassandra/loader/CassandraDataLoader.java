@@ -550,7 +550,8 @@ public class CassandraDataLoader implements Constants {
     	//Process records for every minute
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
     		
    		 	if(!currentDate.equalsIgnoreCase(processingDate)){
    		 			processingDate = currentDate;
