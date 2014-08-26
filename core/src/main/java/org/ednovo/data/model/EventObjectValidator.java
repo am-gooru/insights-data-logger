@@ -25,34 +25,43 @@ package org.ednovo.data.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.dao.FieldsDAOImpl;
+import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.model.Rows;
 
 
 
 public class EventObjectValidator  {
 
 	private static final Logger logger = LoggerFactory.getLogger(EventObjectValidator.class);
-	private  static FieldsDAOImpl fieldsDAOImpl;
+	private  static BaseCassandraRepoImpl baseDao;
 	private  CassandraConnectionProvider connectionProvider;
 	private static Map<String,String> acceptedFileds;
 	public EventObjectValidator() {
-		this(null);
-    }
+	this(null);
+	}
 	public EventObjectValidator(Map<String ,String> object) {
 		init(object);
 	}
 	private void init(Map<String ,String> object) {
 		this.setConnectionProvider(new CassandraConnectionProvider());
-        this.getConnectionProvider().init(null);
-        fieldsDAOImpl = new FieldsDAOImpl(getConnectionProvider());
-        acceptedFileds = fieldsDAOImpl.readAllFields();
+		this.getConnectionProvider().init(null);
+		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
+		acceptedFileds = new HashMap<String, String>();
+        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        for(Row<String, String> row : rows){
+        	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        }
 	}
 
 	public static <T> T validateEventObject(EventObject eventObject) throws JSONException  {

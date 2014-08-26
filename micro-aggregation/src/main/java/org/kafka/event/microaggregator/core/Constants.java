@@ -18,6 +18,12 @@ public interface Constants {
 	
 	public String METRICS = "metrics";
 	
+	public String LASTACCESSEDUSERUID = "last~accessed~useruid";
+	
+	public String LASTACCESSEDUSER = "last~accessed~user";
+	
+	public String LASTACCESSED = "last~accessed";
+	
 	public String EVENTNAME = "eventName";
 	
 	public String CONTENTGOORUOID = "contentGooruId";
@@ -26,13 +32,17 @@ public interface Constants {
 	
 	public String TIMEINMS = "timeInMillSec";
 	
+	public String TOTALTIMEINMS = "totalTimeSpentInMs";
+	
 	public String EVENTIS = "eventId";
 	
 	public String PARENTEVENTID = "parentEventId";
 	
 	public String PARENT_EVENT_ID = "parent_event_id";
 	
-	public String CLASSPAGEGOORUOID= "classPageGooruId";
+	//public String CLASSPAGEGOORUOID= "classPageGooruId";
+	
+	public String CLASSPAGEGOORUOID= "classpageGooruId";
 	
 	public String VERSION = "version";
 
@@ -60,6 +70,12 @@ public interface Constants {
 
 	public String CHOICE = "choice";
 	
+	public String STATUS = "question_status";
+	
+	public String ANSWER_OBECT = "answer_object";
+	
+	public String ANSWEROBECT = "answerObject";
+	
 	public String ATTEMPTS = "attempts";
 	
 	public String OPTIONS = "options";
@@ -74,6 +90,12 @@ public interface Constants {
 	
 	public String TYPE = "type";
 	
+	public String ITEMTYPE = "itemType";
+	
+	public String REGISTERTYPE = "registerType";
+	
+	public String CLIENTSOURCE = "clientSource";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";
@@ -83,6 +105,16 @@ public interface Constants {
 	public String ANS = "answers";
 	
 	public String TEXT = "text";
+	
+	public String FEEDBACK = "feed_back";
+	
+	public String FEEDBACKPROVIDER = "feed_back_provider";
+	
+	public String PROVIDER = "feedbackProviderUId";
+	
+	public String TIMESTAMP = "feed_back_timestamp";
+	
+	public String VIEWS = "views";
 	
 	public String QUESTION = "question";
 
@@ -167,12 +199,145 @@ public interface Constants {
 	public String COLLECTION_GOORU_OID = "collection_gooru_oid";
 	
 	public String RESOURCE_GOORU_OID = "resource_gooru_oid";
-	
+
 	public String SCORE = "score";
 	
-    public String SESSIONID = "sessionId";
-    
-    public String QUESTION_COUNT = "question_count";
-    
-    public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	public String QUESTION_COUNT = "question_count";
+	
+	public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	
+	public String ACTIVE = "active";
+	
+	public String COUNT = "count";
+	
+	public String DIFF = "diff";
+	
+	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
+	
+	public String CONSTANT_VALUE = "constant_value";
+	
+	public String LAST_PROCESSED_TIME = "last_processed_time";
+	
+	public String EVENT_TIMELINE_KEY_FORMAT ="yyyyMMddkkmm";
+	
+	public String MINUTE_AGGREGATOR_PROCESSOR_KEY="aggregation~events";
+	
+	public String FORMULA ="formula";
+	
+	public String COMMA =",";
+	
+	public String ITEM_VALUE = "item_value";
+	
+	public String EMPTY ="";
+	
+	public String DOUBLE_QUOTES ="\"";
+	
+	public String AVOID_SPECIAL_CHARACTER ="[^a-zA-Z0-9]";
+	
+	
+	public enum sortType{
+		
+		ASC("ASC"),DESC("DESC");
+		
+		private String sortOrder;
+		
+		private sortType(String name){
+			sortOrder = name;
+		}
+		
+		public String sortType(){
+			return sortOrder;
+		}
+	}
+	public enum eventJSON{
+		
+		SESSION("session"),CONTEXT("context"),PAYLOADOBJECT("payLoadObject"),USER("user");
+		
+		private String eventJSON;
+		
+		private eventJSON(String value){
+			eventJSON = value;
+		}
+		
+		public String eventJSON(){
+			return eventJSON;
+		}
+		
+	}
+	
+	public enum formulaDetail{
+		
+		NAME("name"),FORMULA("formula"),FORMULAS("formulas"),COMPLETED("completed"),INPROGRESS("inprogress"),ACTIVE("active"),EVENTS("events"),STATUS("status"),REQUEST_VALUES("requestValues");
+		
+		private String formulaKey;
+		
+		private formulaDetail(String value){
+			formulaKey = value;
+		}
+		
+		public String formulaDetail(){
+			return formulaKey;
+		}
+	}
+	
+	public enum columnKey{
+		C("C:"),D("D:"),E("E:");
+		
+		private String column;
+		
+		private columnKey(String name){
+			column = name;
+		}
+		public String columnKey(){
+			return column;
+		}
+	}
+	
+	public enum mapKey{
+		
+		KEY("key"),VALUE("value");
+		
+		private String map;
+		
+		private mapKey(String value){
+			map = value;
+		}
+		
+		public String mapKey(){
+			return map;
+		}
+		
+	}
+	
+	public enum aggregateType{
+	
+		KEY("aggregate_type"),NORMAL("normal"),AGGREGATE("aggregate");
+		
+		private String aggregateName;
+		
+		private aggregateType(String value){
+			aggregateName = value;
+		}
+		
+		public String aggregateType(){
+			return aggregateName;
+		}
+		
+	}
+	
+	public enum columnFamily{
+		
+		LIVE_DASHBOARD("live_dashboard"),AGGREGATION_DETAIL("aggregation_detail"),FORMULA_DETAIL("formula_detail"),EVENT_TIMELINE("event_timeline"),
+		EVENT_DETAIL("event_detail"),JOB_CONFIG_SETTING("job_config_settings");
+		
+		private String columnFamily;
+		
+		private columnFamily(String value){
+			columnFamily = value;
+		}
+		
+		public String columnFamily(){
+		return columnFamily;	
+		}
+	}
 }

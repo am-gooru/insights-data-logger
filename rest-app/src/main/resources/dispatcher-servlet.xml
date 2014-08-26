@@ -24,6 +24,7 @@
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
 	xmlns:mvc="http://www.springframework.org/schema/mvc"
 	xmlns:sec="http://www.springframework.org/schema/security"
 	xmlns:context="http://www.springframework.org/schema/context"
@@ -52,8 +53,14 @@
 
 
 	<!-- Configures the @Controller programming model -->
-	<mvc:annotation-driven />
+	<!-- <mvc:annotation-driven /> -->
 	
+	 <mvc:annotation-driven>
+        <mvc:argument-resolvers>
+            <beans:bean class="org.logger.event.web.controller.AtmosphereResolver" />
+        </mvc:argument-resolvers>
+    </mvc:annotation-driven>
+    
 <!-- 	<bean id="apiService" class="org.logger.event.web.service.ApiKeyServiceImpl"></bean>
  -->
 	<!-- Forwards requests to the "/" resource to the "welcome" view -->

@@ -28,7 +28,6 @@ import java.util.Map;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 
 public class EventObjectParser  {

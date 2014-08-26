@@ -41,7 +41,7 @@ public enum LoaderConstants {
     
     SESSIONTOKEN("session_token"),
     
-    VIEW_COUNT_REST_API_END_POINT("view_count_update_rest_api"),
+    VIEW_COUNT_REST_API_END_POINT("view.count.update.rest.api"),
     
     CROPD("collection-resource-oe-play-dots"),
     
@@ -107,6 +107,8 @@ public enum LoaderConstants {
     
     TS("time_spent"),
     
+    COUNT("count"),
+    
     AVGTS("avg_time_spent"),
     
     TOTALVIEWS("views"),
@@ -116,6 +118,8 @@ public enum LoaderConstants {
     CRPV1("collection.resource.play"),
     
     CPV1("collection.play"),
+    
+    RP1("resource.play"),
     
     CRAV1("reaction.create"),
     

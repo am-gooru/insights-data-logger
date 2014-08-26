@@ -27,18 +27,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-//import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.DatabaseReader;
 
 
 public class GeoLocation  {
-
-	private static String fileNameCity = "/home/gooruapp/event-logger-stable-1.1/loader/GeoLite2-City.mmdb";
+	File database;
+	DatabaseReader reader;
+	private static String fileNameCity = System.getenv("GEO_LOCATION_DB_FILE");
     private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
 
     /**
@@ -49,7 +49,6 @@ public class GeoLocation  {
     public String getFileNamemmdb(){
 		String currPath = "";
 		currPath = System.getenv("GEO_LOCATION_DB_FILE");
-		logger.info("GEO_LOCATION_DB_FILE = {}", currPath);
 		return (currPath);
     }
     
@@ -65,8 +64,8 @@ public class GeoLocation  {
 	public String getGeoCityByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String City = null;
-		File database = new File(getFileNamemmdb());
-		DatabaseReader reader = new DatabaseReader.Builder(database).build();
+		database = new File(getFileNamemmdb());
+		reader = new DatabaseReader.Builder(database).build();
 		
     	try {
 			CityResponse response = reader.city(InetAddress.getByName(ip));
@@ -95,8 +94,8 @@ public class GeoLocation  {
 	public String getGeoRegionByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String Region = null;
-		File database = new File(getFileNamemmdb());
-		DatabaseReader reader = new DatabaseReader.Builder(database).build();
+		database = new File(getFileNamemmdb());
+		reader = new DatabaseReader.Builder(database).build();
     	try {
 			CityResponse response = reader.city(InetAddress.getByName(ip));
 			Region = response.getMostSpecificSubdivision().getName();
@@ -123,8 +122,8 @@ public class GeoLocation  {
 	public String getGeoCountryByIP (String ip) throws IOException, GeoIp2Exception {
 		ip = ip.trim();
 		String Country = null;
-		File database = new File(getFileNamemmdb());
-		DatabaseReader reader = new DatabaseReader.Builder(database).build();
+		database = new File(getFileNamemmdb());
+		reader = new DatabaseReader.Builder(database).build();
     	try {
 			CityResponse response = reader.city(InetAddress.getByName(ip));
 			Country = response.getCountry().getName();
@@ -139,4 +138,18 @@ public class GeoLocation  {
 		return (Country);
 	}
 
+	public CityResponse getGeoResponse(String ip) throws IOException{
+		ip = ip.trim();
+		database = new File(getFileNamemmdb());
+		CityResponse response = null;
+		reader = new DatabaseReader.Builder(database).build();
+		try {
+			response = reader.city(InetAddress.getByName(ip));
+		} catch (Exception e) {
+			reader.close();
+			return null;
+		} 
+		reader.close();
+		return response;
+	}
 }

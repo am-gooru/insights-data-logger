@@ -27,6 +27,22 @@
  */
 package org.logger.event.cassandra.loader;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
@@ -37,15 +53,6 @@ import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
-
 @Repository
 public class CassandraConnectionProvider {
 
@@ -55,7 +62,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-
+    private Client client;
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
@@ -63,6 +70,9 @@ public class CassandraConnectionProvider {
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
 
+        String esClusterName = "";
+        String esHost = "162.243.130.94";
+        int esPort = 9300;
         try {
 
             logger.info("Loading cassandra properties");
@@ -105,6 +115,14 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
+            	
+           //Elastic search connection provider
+           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+           TransportClient transportClient = new TransportClient(settings);
+           transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));
+           client = transportClient;
+           
+           this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
@@ -116,4 +134,29 @@ public class CassandraConnectionProvider {
         }
         return cassandraKeyspace;
     }
+    public Client getESClient() throws IOException{
+    	if (client == null) {
+            throw new IOException("Elastic Search is not initialized.");
+        }
+    	return client;
+    }
+    public final void registerIndices() {
+		for (ESIndexices esIndex : ESIndexices.values()) {
+			String indexName = esIndex.getIndex();
+			for (String indexType : esIndex.getType()) {
+				//String setting = EsMappingUtil.getSettingConfig(indexType);
+				String mapping = EsMappingUtil.getMappingConfig(indexType);
+				try {
+					CreateIndexRequestBuilder prepareCreate = this.getESClient().admin().indices().prepareCreate(indexName);
+					//prepareCreate.setSettings(setting);
+					prepareCreate.addMapping(indexType, mapping);
+					prepareCreate.execute().actionGet();
+					logger.info("Index created : " + indexName + "\n");
+				} catch (Exception exception) {
+					logger.info("Already Index availble : " + indexName + "\n");
+					//this.getESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setSource(mapping).setIgnoreConflicts(true).execute().actionGet();
+				}
+			}
+		}
+	}
 }

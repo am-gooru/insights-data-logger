@@ -18,6 +18,12 @@ public interface Constants {
 	
 	public String METRICS = "metrics";
 	
+	public String LASTACCESSEDUSERUID = "last~accessed~useruid";
+	
+	public String LASTACCESSEDUSER = "last~accessed~user";
+	
+	public String LASTACCESSED = "last~accessed";
+	
 	public String EVENTNAME = "eventName";
 	
 	public String CONTENTGOORUOID = "contentGooruId";
@@ -25,6 +31,8 @@ public interface Constants {
 	public String PARENTGOORUOID = "parentGooruId";
 	
 	public String TIMEINMS = "timeInMillSec";
+	
+	public String TOTALTIMEINMS = "totalTimeSpentInMs";
 	
 	public String EVENTIS = "eventId";
 	
@@ -41,6 +49,8 @@ public interface Constants {
 	public String EVENTTYPE = "eventType";
 	
 	public String SESSION = "sessionId";
+	
+	public String SESSIONTOKEN = "sessionToken";
 	
 	public String GOORUID = "gooruUId" ;
 	
@@ -82,6 +92,16 @@ public interface Constants {
 	
 	public String TYPE = "type";
 	
+	public String ITEMTYPE = "itemType";
+	
+	public String ACTIONTYPE = "actionType";
+	
+	public String USERAGENT = "userAgent";
+	
+	public String REGISTERTYPE = "registerType";
+	
+	public String CLIENTSOURCE = "clientSource";
+	
 	public String AUTO = "auto";
 	
 	public String STOP = "stop";
@@ -101,6 +121,12 @@ public interface Constants {
 	public String TIMESTAMP = "feed_back_timestamp";
 	
 	public String VIEWS = "views";
+	
+	public String VIEWEVENTS = "viewEvents";
+	
+	public String ATMOSPHERENDPOINT = "atmosphereEndPoint";
+	
+	public String VIEWUPDATEENDPOINT = "viewCountAPI";
 	
 	public String QUESTION = "question";
 
@@ -193,4 +219,32 @@ public interface Constants {
 	public String SCORE_IN_PERCENTAGE = "grade_in_percentage";
 	
 	public String ACTIVE = "active";
+	
+	public String COUNT = "count";
+	
+	public String TIMESPENT = "time_spent";
+	
+	public String DIFF = "diff";
+	
+	public String DEFAULT_ORGANIZATION_UID = "4261739e-ccae-11e1-adfb-5404a609bd14";
+	
+	public String DEFAULT_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
+	
+	public String DEFAULTCOLUMN = "constant_value";
+	
+	public String USERSESSION = "user~session";
+	
+	public String ANONYMOUSSESSION = "anonymous~session";
+	
+	public String ALLUSERSESSION = "all~user~session";
+	
+	public String ACTIVESESSION = "active~session";
+	
+	public String ACTIVECOLLECTIONPLAYS = "active~collection~plays";
+	
+	public String ACTIVERESOURCEPLAYS = "active~resource~plays";
+	
+	public String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
+	
+	public String ACTIVEPLAYS = "active~content~plays";
 }

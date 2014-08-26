@@ -94,6 +94,19 @@ public class MicroAggregationDAOImpl extends BaseDAOCassandraImpl implements  Mi
 			logger.info("Error while inserting to cassandra  ");
 		}
 	}
+
+	public void updateEventMetricData(String key,String metricName,long metricValue){
+		
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		m.withRow(microAggregationCF, key)
+		.putColumn(metricName,metricValue)
+		;
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while inserting to cassandra  ");
+		}
+	}
 	
 	public ColumnList<String> getRawStagedRecords(String Key){
 		

@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
+import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,9 +105,9 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
          }
 	}
         
-        public void updateToStaging(String statTime,String endTime,String eventName){
+        public void updateToStaging(String statTime,String endTime,String eventName,String apiKey){
         	try {
-				dataLoader.updateStaging(statTime, endTime,eventName);
+				dataLoader.updateStaging(statTime, endTime,eventName,apiKey);
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -114,24 +115,10 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         }
 
         public void postAggregation(String statTime,String endTime,String eventName){
-        	try {
 				dataLoader.postMigration(statTime, endTime,eventName);
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
         }
-        
-        public void geoLocationUpdate(String statTime,String endTime){
-        	try {
-				dataLoader.updateGeoLocation(statTime, endTime);
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
-        
-	private void cleanseData(EventData eventData) {
+
+        private void cleanseData(EventData eventData) {
 		updateEventNameForConsistency(eventData);
 		updateEventNameIfEmpty(eventData);
 		cleansEventValue(eventData);
@@ -189,21 +176,6 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	     			}
 	     		}
 			 }
-	}
-	
-	public void updateViewCount(String gooruoid, long viewcount){
-		dataLoader.updateViewCount(gooruoid, viewcount);
-	}
-	
-	public void addAggregators(String eventName, String json,String updateBy){
-		dataLoader.addAggregators(eventName, json,updateBy);
-	}
-	public void  runPig(String eventName) {
-		dataLoader.runPig(eventName);
-	} 
-	
-	public void callAPIViewCount(){
-		dataLoader.callAPIViewCount();
 	}
 	
 }

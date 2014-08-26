@@ -24,6 +24,8 @@
 package org.logger.event.web.controller;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,7 +40,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.simple.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
@@ -162,7 +165,15 @@ public class EventController {
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				eventObjects.setFields(eventJson.getAsJsonObject().toString());
+				JsonObject jsonObj = eventJson.getAsJsonObject();
+				eventObjects.setFields(jsonObj.toString());
+				JSONObject useObj = new JSONObject(eventObjects.getUser());
+				useObj.put("userIp", userIp);
+				useObj.put("userAgent", userAgent);
+				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
+				fieldsObj.put("user", useObj.toString());
+				eventObjects.setFields(fieldsObj.toString());
+				eventObjects.setApiKey(apiKey);
 	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
 					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
 			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -272,15 +283,14 @@ public class EventController {
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
 		 response.setStatus(responseStatus);
 		 response.setContentType("application/json");
-		 JSONObject resultJson = new JSONObject();
 		 Map<String, Object> resultMap = new HashMap<String, Object>();
 		 
 		 resultMap.put("statusCode", responseStatus);
 		 resultMap.put("message", message);
-		 resultJson.putAll(resultMap);
+		 JSONObject resultJson = new JSONObject(resultMap);
 		 
 		 try {
-			response.getWriter().write(resultJson.toJSONString());
+			response.getWriter().write(resultJson.toString());
 		} catch (IOException e) {
 			logger.error("OOPS! Something went wrong", e);
 		}
@@ -307,15 +317,14 @@ public class EventController {
 			 if(appDO != null)
 			 {
 				 response.setContentType("application/json");
-				 JSONObject resultJson = new JSONObject();
 				 Map<String, Object> resultMap = new HashMap<String, Object>();
 				 
 				 resultMap.put("endPoint", appDO.getEndPoint());
 				 resultMap.put("pushIntervalMs", appDO.getDataPushingIntervalInMillsecs());
-				 resultJson.putAll(resultMap);
+				 JSONObject resultJson = new JSONObject(resultMap);
 				 
 				 try {
-					response.getWriter().write(resultJson.toJSONString());
+					response.getWriter().write(resultJson.toString());
 				} catch (IOException e) {
 					logger.error("OOPS! Something went wrong", e);
 				}
@@ -350,7 +359,6 @@ public class EventController {
 				if (eventDetail != null && !eventDetail.isEmpty()) {
 
 					response.setContentType("application/json");
-					JSONObject resultJson = new JSONObject();
 					Map<String, Object> resultMap = new HashMap<String, Object>();
 
 					resultMap.put("eventJSON", eventDetail.getStringValue("fields", null));
@@ -358,10 +366,10 @@ public class EventController {
 					resultMap.put("endTime", eventDetail.getLongValue("end_time", null));
 					resultMap.put("eventName", eventDetail.getStringValue("event_name", null));
 					resultMap.put("apiKey", eventDetail.getStringValue("api_key", null));
-					resultJson.putAll(resultMap);
+					JSONObject resultJson = new JSONObject(resultMap);
 
 					try {
-						response.getWriter().write(resultJson.toJSONString());
+						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
 						logger.error("OOPS! Something went wrong", e);
 					}
@@ -375,7 +383,15 @@ public class EventController {
 		return;
 
 	}
-	
+	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
+	public void clearCache(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			eventService.clearCacher();
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
 	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
@@ -401,7 +417,6 @@ public class EventController {
 					List<Map<String, Object>> eventJSONList = new ArrayList<Map<String, Object>>();
 					
 					response.setContentType("application/json");
-					JSONObject resultJson = new JSONObject();
 					
 					//Iterate through cassandra rows and get the event JSONS
 					for (Row<String, String> row : eventDetailRows) {
@@ -413,12 +428,10 @@ public class EventController {
 						resultMap.put("apiKey", row.getColumns().getStringValue("api_key", null));
 						eventJSONList.add(resultMap);
 					}
-					
-					resultJson.put("eventDetails", eventJSONList);
-					
+					JSONObject resultJson = new JSONObject(eventJSONList);
 					
 					try {
-						response.getWriter().write(resultJson.toJSONString());
+						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
 						logger.error("OOPS! Something went wrong", e);
 					}
@@ -433,53 +446,50 @@ public class EventController {
 
 	}
 
-	@RequestMapping(value = "/add/aggregators", method = RequestMethod.POST)
-	public void addAggregators(HttpServletRequest request,
-			@RequestBody String fields,
-			@RequestParam(value = "key",  required = true) String key,
-			@RequestParam(value = "eventName",  required = true) String eventName,
-			HttpServletResponse response) {
-
-		// add cross domain support
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers",
-				"Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
-		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-
-
-		if (key != null) {
-			AppDO appDO = eventService.verifyApiKey(key);
-			if (appDO.getAppName() != null) {
-					response.setContentType("application/json");
-					eventService.addAggregators(eventName, fields, appDO.getAppName());
-					JSONObject resultJson = new JSONObject();
-					resultJson.put("Status", "Done");
-					try {
-						response.getWriter().write(resultJson.toJSONString());
-					} catch (IOException e) {
-						logger.error("OOPS! Something went wrong", e);
-					}
-				}else{
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-			"Invalid secret key");
-				return;
-				}
-			}else{
-				sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-				"Try with secret key");
-			}
-		return;
-	}
-
 	public void updateViews() throws Exception{
+		if (!validateSchedular()) {
+			return;
+		}
 		System.out.println("Executing every five mintues");
-		
-		/*This is to be re-enbled
-		eventService.updateProdViews();*/
+		eventService.updateProdViews();
 	}
 	
+	// scheduled for every 1 minute
+	public void executeForEveryMinute() {
+		if (!validateSchedular()) {
+			return;
+		}
+		eventService.executeForEveryMinute(null, null);
+	}
+	
+	//run micro aggregation for the given time range
+	public void executeForEveryMinute(String startTime,String endTime){
+		if (!validateSchedular()) {
+			return;
+		}	
+		eventService.executeForEveryMinute(startTime, endTime);
+	}
+		
 	public void runAggregation(){
 		
+	}
+	
+	public void watchSession() {
+		if (!validateSchedular()) {
+			return;
+		}
+		logger.info("watching session");
+		eventService.watchSession();
+	}
+
+	public void postMigration(){
+		if(!validateSchedular()){
+			return;
+			}
+		logger.info("post migration............");
+		//eventService.postMigration(null, null, null);
+		//eventService.postStatMigration(null, null, null);
+		eventService.balanceStatDataUpdate();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -503,10 +513,54 @@ public class EventController {
 		JSONObject resultJson = new JSONObject();
 		resultJson.put("activity", resultMap);
 		try {
-			response.getWriter().write(resultJson.toJSONString());
+			response.getWriter().write(resultJson.toString());
 		} catch (IOException e) {
 			logger.error("OOPS! Something went wrong", e);
 		}
 		return;
+	}
+	
+	@RequestMapping(method = RequestMethod.PUT)
+	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName,
+			HttpServletResponse response) throws IOException {
+
+		// add cross domain support
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+		response.setHeader("Access-Control-Allow-Methods", "PUT");
+
+		boolean isValid = ensureValidRequest(request, response);
+		if (!isValid) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+			return;
+		}
+
+		response.setContentType("application/json");
+		if (!eventName.contains(".") || eventName.startsWith(".")) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
+			return;
+		}
+		Map<String, String> status = new HashMap<String, String>();
+		if (eventService.createEvent(eventName, apiKey)) {
+			status.put("eventName", eventName);
+			status.put("status", "Created");
+			response.getWriter().write(new JSONObject(status).toString());
+		} else {
+			sendErrorResponse(request, response, HttpServletResponse.SC_CONFLICT, " Event Already Exists : " + eventName);
+			return;
+		}
+
+	}
+	
+	public boolean validateSchedular(){
+		
+		try {
+            InetAddress ip = InetAddress.getByName("DO-LOGAPI");
+            String ipAddress = ip.getHostAddress();
+            return eventService.validateSchedular(ipAddress);
+    } catch (UnknownHostException e) {
+            e.printStackTrace();
+    }
+		return false;
 	}
 }

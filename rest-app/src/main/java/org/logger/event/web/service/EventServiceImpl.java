@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +36,8 @@ import org.ednovo.data.model.EventObjectValidator;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
-import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
+import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -51,30 +51,28 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.maxmind.geoip2.exception.GeoIp2Exception;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
 @Service
 public class EventServiceImpl implements EventService {
+	
+	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
     protected CassandraDataLoader dataLoaderService;
-    protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
     private final CassandraConnectionProvider connectionProvider;
-    private APIDAOCassandraImpl apiDao;
-    private EventDetailDAOCassandraImpl eventDetailDao;
-    private ActivityStreamDaoCassandraImpl activityStreamDao;
     private EventObjectValidator eventObjectValidator;
+    private BaseCassandraRepoImpl baseDao ;
 
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
-        
         this.connectionProvider = dataLoaderService.getConnectionProvider();
-
-        apiDao = new APIDAOCassandraImpl(connectionProvider);
-        eventDetailDao = new EventDetailDAOCassandraImpl(connectionProvider);
+        baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
-        activityStreamDao = new ActivityStreamDaoCassandraImpl(this.connectionProvider);
+        
     }
 
     @Override
@@ -89,13 +87,10 @@ public class EventServiceImpl implements EventService {
         return new ActionResponseDTO<EventData>(eventData, errors);
     }
     
-    @Override
-    public void addAggregators(String eventName, String json ,String updateBy){
-    	dataLoaderService.addAggregators(eventName, json, updateBy);
-    }
+
     @Override
     public AppDO verifyApiKey(String apiKey) {
-        ColumnList<String> apiKeyValues = apiDao.readApiData(apiKey); 
+        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey);
         AppDO appDO = new AppDO();
         appDO.setApiKey(apiKey);
         appDO.setAppName(apiKeyValues.getStringValue("appName", null));
@@ -134,33 +129,48 @@ public class EventServiceImpl implements EventService {
     }
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
-		ColumnList<String> eventColumnList = eventDetailDao.readEventDetail(eventKey);
+		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey);
 		return eventColumnList;
 	}
 
 	@Override
 	public Rows<String, String> readLastNevents(String apiKey,
 			Integer rowsToRead) {
-		Rows<String, String> eventRowList = eventDetailDao.readLastNrows(apiKey, rowsToRead);
+		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
 		return eventRowList;
 	}
 
 	@Override
 	public void updateProdViews() {
-		dataLoaderService.callAPIViewCount();
+		try {
+			dataLoaderService.callAPIViewCount();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
 	public List<Map<String, Object>> readUserLastNEventsResourceIds(String userUid, String startTime, String endTime, String eventName, Integer eventsToRead){
 		String activity = null;
+		String startColumnPrefix = null;
+		String endColumnPrefix = null;
+		
 		List<Map<String, Object>>  resultList = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>>  valueList = new ArrayList<Map<String, Object>>();
 		JsonElement jsonElement = null;
 		ColumnList<String> activityJsons;
-
-		activityJsons = activityStreamDao.readColumnsWithPrefix(userUid, startTime, endTime, eventName, eventsToRead);
+		
+		if(eventName != null){
+			startColumnPrefix = startTime+"~"+eventName;
+			endColumnPrefix = endTime+"~"+eventName;
+		} else {
+			startColumnPrefix = endTime;
+			endColumnPrefix = endTime;
+		}
+		
+		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
 		if((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = activityStreamDao.readLastNcolumns(userUid, eventsToRead);
+			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead);
 		}	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
@@ -215,18 +225,46 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Async
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(
-			EventObject eventObject) throws JSONException {
+			EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
         		eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
-        
-        
         return new ActionResponseDTO<EventObject>(eventObject, errors);
-    
-        
 	}
 	
+	@Async
+	public void watchSession(){
+		dataLoaderService.watchSession();
+	}
+	
+	@Async
+	public void executeForEveryMinute(String startTime,String endTime){
+		dataLoaderService.executeForEveryMinute(startTime, endTime);
+	}
+	
+	public boolean createEvent(String eventName,String apiKey){
+		return dataLoaderService.createEvent(eventName,apiKey);
+	}
+	
+	public boolean validateSchedular(String ipAddress){
+		
+		return dataLoaderService.validateSchedular(ipAddress);
+	}
+	public void postMigration(String start,String end,String param){
+			dataLoaderService.postMigration(start, end, param);
+	}
+	public void postStatMigration(String start,String end,String param){
+		dataLoaderService.postStatMigration(start, end, param);
+	}
+
+	@Override
+	public void balanceStatDataUpdate() {
+		dataLoaderService.balanceStatDataUpdate();
+	}
+	public void clearCacher(){
+		dataLoaderService.clearCache();
+	}
 }

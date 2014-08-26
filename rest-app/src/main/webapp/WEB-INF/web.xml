@@ -1,7 +1,12 @@
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+<!-- <web-app xmlns="http://java.sun.com/xml/ns/j2ee"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
-      
+  xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4"> -->
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+
     <display-name>Event Logger</display-name>
     <distributable/>
 
@@ -89,6 +94,31 @@
 		<servlet-name>dispatcher</servlet-name>
 		<url-pattern>/log/*</url-pattern>
 	</servlet-mapping> 
+	
+	
+	    <servlet>
+		<servlet-name>atmos-dispatcher</servlet-name>
+        <servlet-class>org.atmosphere.cpr.MeteorServlet</servlet-class>
+        <init-param>
+            <param-name>org.atmosphere.servlet</param-name>
+            <param-value>org.springframework.web.servlet.DispatcherServlet</param-value>
+        </init-param>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>/WEB-INF/classes/dispatcher-servlet.xml</param-value>
+        </init-param>
+        <init-param>
+            <param-name>org.atmosphere.useNative</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+        <async-supported>true</async-supported>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>atmos-dispatcher</servlet-name>
+		<url-pattern>/atmosphere/*</url-pattern>
+	</servlet-mapping>
 	
 	<filter>
 		<filter-name>CORSFilter</filter-name>

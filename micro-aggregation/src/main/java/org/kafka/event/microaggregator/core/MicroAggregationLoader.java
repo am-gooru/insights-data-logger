@@ -23,13 +23,19 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.core;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.kafka.event.microaggregator.dao.CounterDetailsDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.RealTimeOperationConfigDAOImpl;
 import org.kafka.event.microaggregator.model.EventObject;
@@ -37,10 +43,16 @@ import org.kafka.event.microaggregator.model.JSONDeserializer;
 import org.kafka.event.microaggregator.model.TypeConverter;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.event.microaggregator.dao.ActivityStreamDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.AggregationDAO;
+import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
 import org.kafka.event.microaggregator.dao.DimUserDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.EventDetailDAOCassandraImpl;
+import org.kafka.event.microaggregator.dao.LiveDashBoardDAOImpl;
+import org.kafka.event.microaggregator.dao.MicroAggregationDAO;
+import org.kafka.event.microaggregator.dao.MicroAggregationDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -48,9 +60,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.ColumnFamilyQuery;
 
 import flexjson.JSONSerializer;
@@ -68,6 +83,8 @@ public class MicroAggregationLoader implements Constants{
         
     private CounterDetailsDAOCassandraImpl counterDetailsDao;
     
+    private LiveDashBoardDAOImpl liveDashboardDAOImpl;
+    
     private EventDetailDAOCassandraImpl eventDetailDao;
 
     private DimUserDAOCassandraImpl dimUser;
@@ -76,9 +93,13 @@ public class MicroAggregationLoader implements Constants{
     
     private RealTimeOperationConfigDAOImpl realTimeOperation;
     
+    private AggregationDAOImpl aggregationDAO;
+    
     public static  Map<String,String> realTimeOperators;
     
     private MicroAggregatorProducer microAggregator;
+    
+    private MicroAggregationDAOImpl microAggregationDAOImpl;
     
     private Gson gson = new Gson();
     /**
@@ -114,16 +135,24 @@ public class MicroAggregationLoader implements Constants{
     	
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
+        this.aggregationDAO  = new AggregationDAOImpl(getConnectionProvider());
         this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
         this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
+        this.liveDashboardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         this.eventDetailDao = new EventDetailDAOCassandraImpl(getConnectionProvider());
         this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
+        this.aggregationDAO = new AggregationDAOImpl(getConnectionProvider()); 
         this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
 
     }
     
+    @Async
     public void microRealTimeAggregation(String eventJSON) throws JSONException{
+    	
+    	logger.info("Enterssssssssssssss");
+    	
+    	
     	String userUid = null;
     	String organizationUid = null;
     	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
@@ -150,11 +179,19 @@ public class MicroAggregationLoader implements Constants{
     /*	String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
     	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);*/
 		
-    	updateActivityStream(eventObject.getEventId());
+    	try {
+			liveDashboardDAOImpl.findDifferenceInCount(eventMap);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
     }
     
- private void updateActivityStream(String eventId) throws JSONException {
+    
+ public void updateActivityStream(String eventJSON) throws JSONException {
     	
+    	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
+    	EventObject rootEventObject = gson.fromJson(eventObj, EventObject.class);
+    	String eventId = rootEventObject.getEventId();
     	if (eventId != null){
 
 	    	Map<String,String> rawMap = new HashMap<String, String>();
@@ -238,10 +275,10 @@ public class MicroAggregationLoader implements Constants{
 		    	organizationUid = activityRow.getStringValue("organization_uid", null);
 		    }
 		    if(rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY) && rawMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)) {
-		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID) != null && rawMap.get(SESSIONID).toString() != null){
+		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null){
 			    	score = rawMap.get(SCORE).toString();
 			    	eventMap.put("score", score);
-			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+			    	eventMap.put("session_id", rawMap.get(SESSION).toString());
 					attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS)) ;
 					if(attempStatus.length > 0){
 						eventMap.put("first_attempt_status", attempStatus[0]);
@@ -259,10 +296,10 @@ public class MicroAggregationLoader implements Constants{
     				eventMap.put("answer_status", answerStatus);
 			    }
 		    } else if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)))) && rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
-		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSIONID) != null && rawMap.get(SESSIONID).toString() != null){
+		    	if(rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null){
 			    	score = rawMap.get(SCORE).toString();
 			    	eventMap.put("score", score);
-			    	eventMap.put("session_id", rawMap.get(SESSIONID).toString());
+			    	eventMap.put("session_id", rawMap.get(SESSION).toString());
 			    }
 		    }
 	    	activityMap.put("eventId", eventId);
@@ -345,9 +382,30 @@ public class MicroAggregationLoader implements Constants{
         timeMap.put("timeSpent", timeInMillisecs);    
         
     }
+    
+    /*
+     * This will run for every minute
+     */
+	public void staticAggregation(String eventJson){
+		try{
+			logger.info("Event Json:"+eventJson);
+		JSONObject jsonObject = new JSONObject(eventJson);
+		String startTime = null;
+		String endTime = null;
+		if(jsonObject.has("startTime")){
+			startTime = jsonObject.get("startTime") != null ? jsonObject.get("startTime").toString() : null;
+		}
+		if(jsonObject.has("endTime")){
+			endTime = jsonObject.get("endTime") != null ? jsonObject.get("endTime").toString() : null;
+		}
+		aggregationDAO.startStaticAggregation(startTime,endTime);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		}
 
     /**
-     * @return the connectionProvider
+     * @return the connectionProvider 
      */
     public CassandraConnectionProvider getConnectionProvider() {
     	return connectionProvider;

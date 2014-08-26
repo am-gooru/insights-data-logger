@@ -23,10 +23,7 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,7 +31,8 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,23 +45,14 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
-import org.ednovo.data.model.TypeConverter;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
-import org.logger.event.cassandra.loader.dao.APIDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.ActivityStreamDaoCassandraImpl;
-import org.logger.event.cassandra.loader.dao.AggregateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.CounterDetailsDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.DimDateDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.DimEventsDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.DimTimeDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.DimUserDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.EventDetailDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.JobConfigSettingsDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.RealTimeOperationConfigDAOImpl;
-import org.logger.event.cassandra.loader.dao.RecentViewedResourcesDAOImpl;
-import org.logger.event.cassandra.loader.dao.TimelineDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
+import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -75,61 +64,52 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
-import com.netflix.astyanax.query.ColumnFamilyQuery;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
 
 public class CassandraDataLoader implements Constants {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(CassandraDataLoader.class);
+    private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
+    
     private Keyspace cassandraKeyspace;
+    
     private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
+    
     private SimpleDateFormat minuteDateFormatter;
+    
+    private SimpleDateFormat dateFormatter;
+    
     static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+    
     private CassandraConnectionProvider connectionProvider;
-    
-    private EventDetailDAOCassandraImpl eventDetailDao;
-    
-    private TimelineDAOCassandraImpl timelineDao;
-    
-    private DimEventsDAOCassandraImpl eventNameDao;
-    
-    private DimDateDAOCassandraImpl dimDate;
-    
-    private DimTimeDAOCassandraImpl dimTime;
-    
-    private AggregateDAOCassandraImpl stagingAgg;
-    
-    private DimUserDAOCassandraImpl dimUser;
-    
-    private APIDAOCassandraImpl apiDao;
-    
-    private JobConfigSettingsDAOCassandraImpl configSettings;
-    
-    private RecentViewedResourcesDAOImpl recentViewedResources;
     
     private KafkaLogProducer kafkaLogWriter;
   
-    private CounterDetailsDAOCassandraImpl counterDetailsDao;
-        
-    private ActivityStreamDaoCassandraImpl activityStreamDao;
-
-    private RealTimeOperationConfigDAOImpl realTimeOperation;
+    private MicroAggregatorDAOmpl liveAggregator;
     
-    public static  Map<String,String> realTimeOperators;
+    private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
+    
+    public static  Map<String,String> cache;
     
     private MicroAggregatorProducer microAggregator;
     
+    private static GeoLocation geo;
     
-    private Gson gson = new Gson();
+    public Collection<String> pushingEvents ;
+    
+    public Collection<String> statKeys ;
+    
+    public ColumnList<String> statMetrics ;
+        
+    private BaseCassandraRepoImpl baseDao ;
     
     /**
      * Get Kafka properties from Environment
@@ -137,7 +117,10 @@ public class CassandraDataLoader implements Constants {
     public CassandraDataLoader() {
         this(null);
         
-        String KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
+        //micro Aggregator producer IP
+        String KAFKA_AGGREGATOR_PRODUCER_IP = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_PRODUCER_IP");
+        //Log Writter producer IP
+        String KAFKA_LOG_WRITTER_PRODUCER_IP = System.getenv("INSIGHTS_KAFKA_LOG_WRITTER_PRODUCER_IP");
         String KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
         String KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
         String KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
@@ -145,15 +128,16 @@ public class CassandraDataLoader implements Constants {
         String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         
-        kafkaLogWriter = new KafkaLogProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
-        microAggregator = new MicroAggregatorProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
+        kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
+        microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
     }
 
     public CassandraDataLoader(Map<String, String> configOptionsMap) {
         init(configOptionsMap);
-        this.gson = new Gson();
-
-        String KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
+        //micro Aggregator producer IP
+        String KAFKA_AGGREGATOR_PRODUCER_IP = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_PRODUCER_IP");
+        //Log Writter producer IP
+        String KAFKA_LOG_WRITTER_PRODUCER_IP = System.getenv("INSIGHTS_KAFKA_LOG_WRITTER_PRODUCER_IP");
         String KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
         String KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
         String KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
@@ -161,7 +145,8 @@ public class CassandraDataLoader implements Constants {
         String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
         
-        kafkaLogWriter = new KafkaLogProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
+        microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
+        kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
     }
 
     public static long getTimeFromUUID(UUID uuid) {
@@ -171,33 +156,62 @@ public class CassandraDataLoader implements Constants {
     /**
      * *
      * @param configOptionsMap
-     * Initialize Coulumn Family
+     * Initialize CoulumnFamily
      */
     
     private void init(Map<String, String> configOptionsMap) {
     	
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-
+        this.dateFormatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+        
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
 
-        this.eventDetailDao = new EventDetailDAOCassandraImpl(getConnectionProvider());
-        this.timelineDao = new TimelineDAOCassandraImpl(getConnectionProvider());
-        this.dimDate = new DimDateDAOCassandraImpl(getConnectionProvider());
- 	    this.dimTime = new DimTimeDAOCassandraImpl(getConnectionProvider());
- 	    this.eventNameDao = new DimEventsDAOCassandraImpl(getConnectionProvider());
- 	    this.stagingAgg = new AggregateDAOCassandraImpl(getConnectionProvider());
-        this.dimUser = new DimUserDAOCassandraImpl(getConnectionProvider());
-        this.apiDao = new APIDAOCassandraImpl(getConnectionProvider());
-        this.configSettings = new JobConfigSettingsDAOCassandraImpl(getConnectionProvider());    
-        this.counterDetailsDao = new CounterDetailsDAOCassandraImpl(getConnectionProvider());
-        this.recentViewedResources = new RecentViewedResourcesDAOImpl(getConnectionProvider());
-        this.activityStreamDao = new ActivityStreamDaoCassandraImpl(getConnectionProvider());
-        this.realTimeOperation = new RealTimeOperationConfigDAOImpl(getConnectionProvider());
-        realTimeOperators = realTimeOperation.getOperators();
+        this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
+        this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
+        baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 
+        Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+        cache = new LinkedHashMap<String, String>();
+        for (Row<String, String> row : operators) {
+        	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+		}
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
+
+        geo = new GeoLocation();
+        
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        for(int i = 0 ; i < schdulersStatus.size() ; i++) {
+        	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
+        }
+        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        statKeys = statMetrics.getColumnNames();
+        
     }
 
+    public void clearCache(){
+    	cache.clear();
+    	Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+        cache = new LinkedHashMap<String, String>();
+        for (Row<String, String> row : operators) {
+        	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+		}
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
+        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        statKeys = statMetrics.getColumnNames();
+        liveDashBoardDAOImpl.clearCache();
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        for(int i = 0 ; i < schdulersStatus.size() ; i++) {
+        	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
+        }
+    }
+    
     /**
      * 
      * @param fields
@@ -271,9 +285,7 @@ public class CassandraDataLoader implements Constants {
     	// Increment Resource view counts for real time
     	
     	this.getAndSetAnswerStatus(eventData);
-    	
-    	this.findGeoLocation(eventData);
-    	
+    	    	
     	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CR.getName())){
     		eventData.setQuery(eventData.getReactionType());    		
     	}
@@ -291,7 +303,7 @@ public class CassandraDataLoader implements Constants {
 	         Long endTimeVal = null;
 
 	         if (eventData.getEventId() != null) {
-	        	 existingRecord = eventDetailDao.readEventDetail(eventData.getEventId());
+	        	 existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId());
 	        	 if (existingRecord != null && !existingRecord.isEmpty()) {
 			         if ("start".equalsIgnoreCase(eventData.getEventType())) {
 			        	 startTimeVal = existingRecord.getLongValue("start_time", null);
@@ -305,8 +317,10 @@ public class CassandraDataLoader implements Constants {
 			         }
 			      }
 	         }
-         
-	         ColumnList<String> existingEventRecord = eventNameDao.readEventName(eventData);
+	         Map<String,Object> records = new HashMap<String, Object>();
+	         records.put("event_name", eventData.getEventName());
+	         records.put("api_key",eventData.getApiKey() != null ? eventData.getApiKey() : DEFAULT_API_KEY );
+	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
 	
 	         if(existingEventRecord == null && existingEventRecord.isEmpty()){
 	        	 logger.info("Please add new event in to events table ");
@@ -324,7 +338,7 @@ public class CassandraDataLoader implements Constants {
 			 * mode. This will store/write all data to activity log file in log/event_api_logs/activity.log
 			 */
 			if (eventData.getFields() != null) {
-				eventDetailDao.saveEvent(eventData, "GLP");
+				baseDao.saveEvent(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData);
 				kafkaLogWriter.sendEventLog(eventData.getFields());
 				logger.info("CORE: Writing to activity log - :"+ eventData.getFields().toString());
 			}
@@ -336,7 +350,7 @@ public class CassandraDataLoader implements Constants {
 	        if(eventData.getEventType() == null || !eventData.getEventType().equalsIgnoreCase("completed-event")){
 		        eventData.setEventKeyUUID(eventKeyUUID.toString());
 		        String duplicatekey = eventRowKey+"~"+eventRowKey;
-		        timelineDao.updateTimeline(eventData, eventRowKey);
+		        baseDao.updateTimeline(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventData, eventRowKey);
 	        }
 	        try {
 				updateActivityStream(eventData.getEventId());
@@ -348,84 +362,96 @@ public class CassandraDataLoader implements Constants {
        }
     }
 
-    public void handleEventObjectMessage(EventObject eventObject) throws JSONException{
-    
-    	String userUid = null;
-    	String organizationUid = null;
-    	
-    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
-    	
-    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
-    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
-    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
-    	eventObject.setEventType(eventMap.get("type"));
-    	
-    	if (eventMap != null && eventMap.get("gooruUId") != null) {
-				 try {
-					 userUid = eventMap.get("gooruUId");
-					 organizationUid = dimUser.getOrganizationUid(userUid);
-					 eventObject.setOrganizationUid(organizationUid);
-				 } catch (Exception e) {
-						logger.info("Error while fetching User uid ");
-				 }
-			 }
-    	eventMap.put("organizationUId",eventObject.getOrganizationUid());
-    	eventMap.put("eventName", eventObject.getEventName());
-    	eventMap.put("eventId", eventObject.getEventId());
-    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
-    	String existingEventRecord = eventNameDao.getEventId(eventMap.get("eventName"));
-		 if(existingEventRecord == null || existingEventRecord.isEmpty()){
-			 eventNameDao.saveEventNameByName(eventObject.getEventName());
-		 }
-		
-		 try {
-			updateEventObjectCompletion(eventObject);
-		} catch (ConnectionException e) {
-			e.printStackTrace();
-		}
-		 
-		 String eventKeyUUID = eventDetailDao.saveEventObject(eventObject);
-		 
-		if (eventKeyUUID == null) {
-		    return;
-		}
-      
-		if (eventObject.getFields() != null) {
-			logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-			kafkaLogWriter.sendEventLog(eventObject.getFields());
-		}
-   
-
-		// Insert into event_timeline column family
-		Date eventDateTime = new Date(eventObject.getStartTime());
-		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-
-		if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
-		    timelineDao.updateTimelineObject(eventObject, eventRowKey,eventKeyUUID.toString());
-		}
-		
-		//To be revoked		
-		EventData eventData= getAndSetEventData(eventMap);
-		this.updateEvent(eventData); 
-
-		String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
-		
-		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-			counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);
-	    	microAggregator.sendEventForAggregation(eventObject.getFields());
-	    	// To be enable 
-	    	/*try {
-				counterDetailsDao.callCounters(eventMap);
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}*/
+    public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
+	    try {
 	    	
-		}
+	    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
+	    	
+	    	eventMap = this.formatEventMap(eventObject, eventMap);
+	    	
+	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
+	    	
+	    	Map<String,Object> records = new HashMap<String, Object>();
+	    	records.put("event_name", eventMap.get("eventName"));
+	    	records.put("api_key",apiKey);
+	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
+
+	    	if(eventId == null || eventId.isEmpty()){
+	    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+	    		records.put("event_id", uuid.toString());
+	    		String key = apiKey +SEPERATOR+uuid.toString();
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
+			 }		
+	    	
+	    	updateEventObjectCompletion(eventObject);
+	    	
+			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
+			 
+			if (eventKeyUUID == null) {
+			    return;
+			}
+	      
+			if (eventObject.getFields() != null) {
+				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
+				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				
+			}
+	
+			Date eventDateTime = new Date(eventObject.getStartTime());
+			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
+	
+			if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
+			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
+			}
+			
+			String aggregatorJson = cache.get(eventMap.get("eventName"));
+			
+			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
+			
+			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+	
+				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+	
+				microAggregator.sendEventForAggregation(eventObject.getFields());
+			
+			}
+		  
+			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+				liveAggregator.updateRawData(eventMap);
+			}
+			liveDashBoardDAOImpl.callCountersV2(eventMap);
+	
+			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
+				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
+			}
+			
+			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
+
+			liveDashBoardDAOImpl.addApplicationSession(eventMap);
+
+			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
+			long start = System.currentTimeMillis();
+			liveDashBoardDAOImpl.saveInESIndex(eventMap);
+			long stop = System.currentTimeMillis();
+			logger.info("Time Taken : {} ",(stop - start));
+			if(pushingEvents.contains(eventMap.get("eventName"))){
+				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
+			}
+			
+			/*
+			 * To be Re-enable 
+			 * 
+	
+			  if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
+			}*/
+	
+			
+    	}catch(Exception e){
+    		logger.info("Exception in handleEventObjectHandler : {} ",e);
+    	}
 		
-		if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-			counterDetailsDao.updateRawData(eventMap);
-		}
-    }
+   }
     /**
      * 
      * @param eventData
@@ -433,6 +459,840 @@ public class CassandraDataLoader implements Constants {
      * @throws ConnectionException
      * 		If the host is unavailable
      */
+    
+    @Async
+    private void updateEventObjectCompletion(EventObject eventObject) throws ConnectionException {
+
+    	Long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();
+        long timeInMillisecs = 0L;
+        if (endTime != null && startTime != null) {
+            timeInMillisecs = endTime - startTime;
+        }
+        boolean eventComplete = false;
+
+        eventObject.setTimeInMillSec(timeInMillisecs);
+
+        if (StringUtils.isEmpty(eventObject.getEventId())) {
+            return;
+        }
+
+			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getEventId());
+			if (existingRecord != null && !existingRecord.isEmpty()) {
+			    if ("stop".equalsIgnoreCase(eventObject.getEventType())) {
+			        startTime = existingRecord.getLongValue("start_time", null);
+			        //Update startTime with existingRecord, IF existingRecord.startTime < startTime
+			    } else {
+			        endTime = existingRecord.getLongValue("end_time", null);
+			        // Update endTime with existing record IF existingRecord.endTime > endTime
+			    }
+			    eventComplete = true;
+			}
+			// Time taken for the event in milliseconds derived from the start / stop events.
+			if (endTime != null && startTime != null) {
+				timeInMillisecs = endTime - startTime;
+			}
+			if (timeInMillisecs > 1147483647) {
+			    // When time in Milliseconds is very very huge, set to min time to serve the call.
+			    timeInMillisecs = 30;
+			    // Since this is an error condition, log it.
+			}
+
+			eventObject.setStartTime(startTime);
+			eventObject.setEndTime(endTime);
+
+        if (eventComplete) {
+        	eventObject.setTimeInMillSec(timeInMillisecs);
+            eventObject.setEventType("completed-event");
+            eventObject.setEndTime(endTime);
+            eventObject.setStartTime(startTime);
+        }
+
+        if(!StringUtils.isEmpty(eventObject.getParentEventId())){
+        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getParentEventId());
+        	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
+        		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
+        		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventObject.getParentEventId(), "end_time", endTime);
+        		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventObject.getParentEventId(), "time_spent_in_millis", (endTime-parentStartTime));
+        	}
+        }
+
+    }
+    
+    /**
+     * 
+     * @param startTime
+     * @param endTime
+     * @param customEventName
+     * @throws ParseException
+     */
+    
+    public void updateStaging(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	Collection<String> eventDetailkeys = new ArrayList<String>();
+	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+	    		eventDetailkeys.add(eventDetailUUID);
+	    	}
+	    	
+	    	//Read all records from Event Detail
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	for (Row<String, String> row : eventDetailsNew) {
+
+	    		String fields = row.getColumns().getStringValue("fields", null);
+	    		if(fields != null){
+	    		try {
+	    			JSONObject jsonField = new JSONObject(fields);
+		    			if(jsonField.has("version")){
+		    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+		    				
+		    				eventMap.put("eventName", eventObjects.getEventName());
+		    		    	eventMap.put("eventId", eventObjects.getEventId());
+		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
+		    		    	if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){		    		    		
+		    		    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    	}
+		    		    	if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){  
+		    		    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    		    	}
+		    	    		
+		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    			} 
+		    			else{
+		    				   Iterator<?> keys = jsonField.keys();
+		    				   Map<String,String> eventMap = new HashMap<String, String>();
+		    				   while( keys.hasNext() ){
+		    			            String key = (String)keys.next();
+		    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+		    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+		    			            }
+
+		    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
+		    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+		    			            }
+		    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+		    			        }
+		    				   if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){
+		    				   		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   }
+		    				   if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
+		    					   eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    				   }
+			    	    		
+			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    		     }
+					} catch (Exception e) {
+						logger.info("Error while Migration : {} ",e);
+					}
+	    			}
+	    		}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	}
+	    
+    }
+    
+    public void updateStagingES(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	Collection<String> eventDetailkeys = new ArrayList<String>();
+	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+	    		eventDetailkeys.add(eventDetailUUID);
+	    	}
+	    	
+	    	//Read all records from Event Detail
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	for (Row<String, String> row : eventDetailsNew) {
+
+	    		String fields = row.getColumns().getStringValue("fields", null);
+	    		if(fields != null){
+	    		try {
+	    			JSONObject jsonField = new JSONObject(fields);
+		    			if(jsonField.has("version")){
+		    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+		    				
+		    				eventMap.put("eventName", eventObjects.getEventName());
+		    		    	eventMap.put("eventId", eventObjects.getEventId());
+		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
+		    		    	if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){		    		    		
+		    		    		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    		    	}
+		    		    	if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){  
+		    		    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    		    	}
+		    	    		
+		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    			} 
+		    			else{
+		    				   Iterator<?> keys = jsonField.keys();
+		    				   Map<String,String> eventMap = new HashMap<String, String>();
+		    				   while( keys.hasNext() ){
+		    			            String key = (String)keys.next();
+		    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+		    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+		    			            }
+
+		    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
+		    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+		    			            }
+		    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+		    			        }
+		    				   if(eventMap.get(CONTENTGOORUOID) != null && !eventMap.get(CONTENTGOORUOID).isEmpty()){
+		    				   		eventMap =  this.getTaxonomyInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   		eventMap =  this.getContentInfo(eventMap, eventMap.get(CONTENTGOORUOID));
+		    				   }
+		    				   if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
+		    					   eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
+		    				   }
+			    	    		
+			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap);
+		    		     }
+					} catch (Exception e) {
+						logger.info("Error while Migration : {} ",e);
+					}
+	    			}
+	    		}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	}
+	    
+    }
+    
+    public Map<String,String> getUserInfo(Map<String,String> eventMap , String gooruUId){
+    	Collection<String> user = new ArrayList<String>();
+    	user.add(gooruUId);
+    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user);
+    	for (Row<String, String> row : eventDetailsNew) {
+    		ColumnList<String> userInfo = row.getColumns();
+    		for(int i = 0 ; i < userInfo.size() ; i++) {
+    			String columnName = userInfo.getColumnByIndex(i).getName();
+    			String value = userInfo.getColumnByIndex(i).getStringValue();
+    			if(value != null && !columnName.equalsIgnoreCase("class") && !columnName.equalsIgnoreCase("teacher")){    				
+    				eventMap.put(columnName, value);
+    			}
+    			if(value != null && columnName.equalsIgnoreCase("class")){
+    				JSONArray jArray = new JSONArray();
+    				for(String val : value.split(",")){
+    					jArray.put(val);
+    				}
+    				eventMap.put(columnName, jArray.toString());
+    			}
+    			if(value != null && columnName.equalsIgnoreCase("teacher")){
+    				JSONArray jArray = new JSONArray();
+    				for(String val : value.split(",")){
+    					jArray.put(val);
+    				}
+    				eventMap.put(columnName, jArray.toString());
+    			}
+    		}
+    	}
+		return eventMap;
+    }
+    public Map<String,String> getContentInfo(Map<String,String> eventMap,String gooruOId){
+    	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
+    		if(resource != null){
+    			eventMap.put("title", resource.getStringValue("title", null));
+    			eventMap.put("description",resource.getStringValue("description", null));
+    			eventMap.put("sharing", resource.getStringValue("sharing", null));
+    			eventMap.put("contentType", resource.getStringValue("category", null));
+    			eventMap.put("license", resource.getStringValue("license_name", null));
+    		} 
+    	
+		return eventMap;
+    }
+    public Map<String,String> getTaxonomyInfo(Map<String,String> eventMap,String gooruOid){
+    	Collection<String> user = new ArrayList<String>();
+    	user.add(gooruOid);
+    	Map<String,String> whereColumn = new HashMap<String, String>();
+    	whereColumn.put("gooru_oid", gooruOid);
+    	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
+    	JSONArray subjectArray = new JSONArray();
+    	JSONArray courseArray = new JSONArray();
+    	JSONArray taxArray = new JSONArray();
+    	for (Row<String, String> row : eventDetailsNew) {
+    		ColumnList<String> userInfo = row.getColumns();
+    			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
+    			if(root == 20000L){
+	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
+	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
+	    			if(value != null &&  depth == 1L){    				
+	    				subjectArray.put(value);
+	    			}
+	    			else if(value != null && depth == 2L){
+	    				courseArray.put(value);
+	    			}
+	    			else if(value != null){
+	    				taxArray.put(value);
+	    				
+	    			}
+    		}
+    	}
+    	if(subjectArray.length() > 0){
+    		eventMap.put("subject", subjectArray.toString());
+    	}
+    	if(courseArray.length() > 0){
+    		eventMap.put("course", courseArray.toString());
+    	}
+    	if(taxArray.length() > 0){
+    		eventMap.put("taxonomy", taxArray.toString());
+    	}
+    	
+    	return eventMap;
+    }
+    
+    public void postMigration(String startTime , String endTime,String customEventName) {
+    	
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings");
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
+    	
+    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
+    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
+    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
+    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
+    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
+    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
+    		
+    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
+    		long start = System.currentTimeMillis();
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
+    		totalJobCount = (totalJobCount + 1);
+    		String jobId = "job-"+UUID.randomUUID();
+    		
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_job_count", ""+totalJobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+jobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "indexed_count", ""+endVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
+    		
+    		Rows<String, String> resource = null;
+    		MutationBatch m = null;
+    		try {
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+    		for(long i = startVal ; i < endVal ; i++){
+    			logger.info("contentId : "+ i);
+    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+    				if(resource != null && resource.size() > 0){
+    					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+    					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
+    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
+    					baseDao.generateNonCounter(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "status", "migrated", m);
+    					baseDao.generateNonCounter(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_migrated", dateFormatter.format((new Date())).toString(), m);
+    					baseDao.generateNonCounter(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "last_updated", columns.getColumnByName("last_modified").getStringValue(), m);
+    					baseDao.generateNonCounter(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid", columns.getColumnByName("gooru_oid").getStringValue(), m);
+    					
+    				}
+    			
+    		}
+    			m.execute();
+    			long stop = System.currentTimeMillis();
+    			
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+(jobCount - 1));
+    			
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}else{    		
+    		logger.info("Job queue is full! Or Job Reached its allowed end");
+    	}
+		
+    }
+    
+public void postStatMigration(String startTime , String endTime,String customEventName) {
+    	
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings");
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids");
+    	
+    	Collection<String> columnList = new ArrayList<String>();
+    	columnList.add("count~views");
+    	columnList.add("count~ratings");
+    	
+    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
+    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
+    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
+    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
+    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
+    	
+    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
+    		
+    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
+    		long start = System.currentTimeMillis();
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
+    		totalJobCount = (totalJobCount + 1);
+    		String jobId = "job-"+UUID.randomUUID();
+    		
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count",  ""+endVal);
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids", "job_names", runningJobs+","+jobId);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "total_job_count", ""+totalJobCount);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "running_job_count", ""+jobCount);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "indexed_count", ""+endVal);
+    		
+    		
+    		JSONArray resourceList = new JSONArray();
+    		try {
+	    		for(long i = startVal ; i <= endVal ; i++){
+	    			logger.info("contentId : "+ i);
+	    			String gooruOid = null;
+	    			Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
+	    			if(gooruOidColumnString != null){
+	    				gooruOid = gooruOidColumnString.getStringValue();
+	    			}
+	    				logger.info("gooruOid : {}",gooruOid);
+	    				if(gooruOid != null){
+	    					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid, columnList);
+	    					JSONObject resourceObj = new JSONObject();
+	    					for(Column<String> detail : vluesList) {
+	    						resourceObj.put("gooruOid", gooruOid);
+	    						if(detail.getName().contains("views")){
+	    							resourceObj.put("views", detail.getLongValue());
+	    						}
+	    						if(detail.getName().contains("ratings")){
+	    							resourceObj.put("ratings", detail.getLongValue());
+	    						}
+	    						resourceObj.put("resourceType", "resource");
+	    						logger.info("gooruOid : {}" , gooruOid);
+	    					}
+	    					resourceList.put(resourceObj);
+	    				}
+	    		}
+	    		try{
+	    			if((resourceList.length() != 0)){
+	    				this.callStatAPI(resourceList, null);
+	    			}
+	    			long stop = System.currentTimeMillis();
+	    			
+	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
+	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
+	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "running_job_count", ""+(jobCount - 1));
+	    			
+	    		}catch(Exception e){
+	    			logger.info("Error in search API : {}",e);
+	    		}
+	    		
+    		} catch (Exception e) {
+    			logger.info("Something went wrong : {}",e);
+    		}
+    	}else{    		
+    		logger.info("Job queue is full!Or Reached maximum count!!");
+    	}
+		
+    }
+    
+	public void balanceStatDataUpdate(){
+		if(cache.get("balance_view_job").equalsIgnoreCase("stop")){
+    		return;
+    	}
+		Calendar cal = Calendar.getInstance();
+		try{
+		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
+		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
+			JSONArray resourceList = new JSONArray();
+			logger.info("Start Date : {} ",String.valueOf(startDate));
+			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
+			Collection<String> gooruOids =  recentReources.getColumnNames();
+			
+			for(String id : gooruOids){
+				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
+				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
+				long insightsView = 0L;
+				long gooruView = 0L;
+				if(insightsData != null){
+					insightsView =   insightsData.getLongValue("count~views", 0L);
+				}
+				logger.info("insightsView : {} ",insightsView);
+				if(gooruData != null){
+					gooruView =  gooruData.getLongValue("views_count", 0L);
+				}
+				logger.info("gooruView : {} ",gooruView);
+				long balancedView = (gooruView - insightsView);
+				logger.info("Insights update views : {} ", (insightsView + balancedView) );
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
+				if(balancedView != 0){
+					logger.info("Generating resource Object : {}",balancedView);
+					JSONObject resourceObj = new JSONObject();
+					resourceObj.put("gooruOid", id);
+					resourceObj.put("views", (insightsView + balancedView));
+					resourceObj.put("resourceType", "resource");
+					resourceList.put(resourceObj);
+				}
+			}
+				m.execute();
+				if(resourceList.length() != 0){
+					this.callStatAPI(resourceList, null);
+				}
+				
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings", "last_updated_time", String.valueOf(startDate));
+				
+				cal.setTime(minuteDateFormatter.parse(String.valueOf(startDate)));
+				cal.add(Calendar.MINUTE, 1);
+				Date incrementedTime =cal.getTime(); 
+				startDate = Long.parseLong(minuteDateFormatter.format(incrementedTime));
+			}
+    	}catch(Exception e){
+			logger.info("Error in balancing view counts : {}",e);
+		}
+	
+	}
+    //Creating staging Events
+    public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
+    	HashMap<String, String> stagingEvents = new HashMap<String, String>();
+    	stagingEvents.put("minuteId", minuteId);
+    	stagingEvents.put("hourId", hourId);
+    	stagingEvents.put("dateId", dateId);
+    	stagingEvents.put("eventId", eventId);
+    	stagingEvents.put("userUid", userUid);
+    	stagingEvents.put("contentGooruOid",eventDetails.getStringValue("content_gooru_oid", null));
+    	stagingEvents.put("parentGooruOid",eventDetails.getStringValue("parent_gooru_oid", null));
+    	stagingEvents.put("timeSpentInMillis",eventDetails.getLongValue("time_spent_in_millis", 0L).toString());
+    	stagingEvents.put("organizationUid",eventDetails.getStringValue("organization_uid", null));
+    	stagingEvents.put("eventValue",eventDetails.getStringValue("event_value", null));
+    	stagingEvents.put("resourceType",eventDetails.getStringValue("resource_type", null));
+    	stagingEvents.put("appOid",eventDetails.getStringValue("app_oid", null));
+    	stagingEvents.put("appUid",eventDetails.getStringValue("app_uid", null));
+    	stagingEvents.put("city",eventDetails.getStringValue("city", null));
+    	stagingEvents.put("state",eventDetails.getStringValue("state", null));
+    	stagingEvents.put("country",eventDetails.getStringValue("country", null));
+    	stagingEvents.put("attempt_number_of_try_sequence",eventDetails.getStringValue("attempt_number_of_try_sequence", null));
+    	stagingEvents.put("attempt_first_status",eventDetails.getStringValue("attempt_first_status", null));
+    	stagingEvents.put("answer_first_id",eventDetails.getStringValue("answer_first_id", null));
+    	stagingEvents.put("attempt_status",eventDetails.getStringValue("attempt_status", null));
+    	stagingEvents.put("attempt_try_sequence",eventDetails.getStringValue("attempt_try_sequence", null));
+    	stagingEvents.put("answer_ids",eventDetails.getStringValue("answer_ids", null));
+    	stagingEvents.put("open_ended_text",eventDetails.getStringValue("open_ended_text", null));
+    	stagingEvents.put("keys",eventDetailUUID);
+    	return stagingEvents; 
+    }
+
+    public void callAPIViewCount() throws JSONException {
+    	if(cache.get("stat_job").equalsIgnoreCase("stop")){
+    		logger.info("job stopped");
+    		return;
+    	}
+    	JSONArray resourceList = new JSONArray();
+    	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN).getStringValue();
+		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		Date lastDate = null;
+		Date currDate = null;
+		
+		try {
+			lastDate = minuteDateFormatter.parse(lastUpadatedTime);
+			currDate = minuteDateFormatter.parse(currentTime);
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}		
+		
+		Date rowValues = new Date(lastDate.getTime() + 60000);
+
+		if((rowValues.getTime() <= currDate.getTime())){
+			this.getRecordsToProcess(rowValues, resourceList);
+			this.getRecordsToProcess(lastDate, resourceList);
+			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(rowValues));
+		}else{
+			logger.info("processing min : {} ",currDate);
+			this.getRecordsToProcess(currDate, resourceList);
+		}
+   }
+  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
+	  
+
+		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
+		for(int i = 0 ; i < contents.size() ; i++) {
+			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
+			for(Column<String> detail : vluesList) {
+				JSONObject resourceObj = new JSONObject();
+				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+				for(String column : statKeys){
+					if(detail.getName().equals(column)){
+						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
+						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+						resourceObj.put("resourceType", "resource");
+					}
+				}
+				if(resourceObj.length() > 0 ){
+					resourceList.put(resourceObj);
+				}
+			}
+		}
+		
+		if((resourceList.length() != 0)){
+			this.callStatAPI(resourceList, rowValues);
+		}else{
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+	 		logger.info("No content viewed");
+		}
+	 
+  }
+    
+    private void callStatAPI(JSONArray resourceList,Date rowValues){
+    	JSONObject staticsObj = new JSONObject();
+		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
+		try{
+				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=true&sessionToken=" + sessionToken;
+				DefaultHttpClient httpClient = new DefaultHttpClient();   
+				staticsObj.put("statisticsData", resourceList);
+				logger.info("staticsObj : {}",staticsObj);
+				StringEntity input = new StringEntity(staticsObj.toString());			        
+		 		HttpPost  postRequest = new HttpPost(url);
+		 		logger.info("staticsObj : {}",url);
+		 		postRequest.addHeader("accept", "application/json");
+		 		postRequest.setEntity(input);
+		 		HttpResponse response = httpClient.execute(postRequest);
+		 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
+		 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
+		 		if (response.getStatusLine().getStatusCode() != 200) {
+		 	 		logger.info("View count api call failed...");
+		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
+		 		} else {
+		 			if(rowValues != null){
+		 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+		 			}
+		 	 		logger.info("View count api call Success...");
+		 		}
+		 			
+		} catch(Exception e){
+			e.printStackTrace();
+		}		
+	
+    }
+    
+     public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap){
+       	Long startTime = activityRow.getLongValue(START_TIME, 0L), endTime = activityRow.getLongValue(END_TIME, 0L);
+       	String eventType = null;
+       	JsonElement jsonElement = null;
+       	JsonObject existingEventObj = null;
+       	String existingColumnName = null;
+       	
+       	if (activityRow.getStringValue(EVENT_TYPE, null) != null){
+       		eventType = activityRow.getStringValue(EVENT_TYPE, null);
+       	}
+       	
+           long timeInMillisecs = 0L;
+           if (endTime != null && startTime != null) {
+               timeInMillisecs = endTime - startTime;
+           }
+
+           if (!StringUtils.isEmpty(eventType) && userUid != null) {
+       		Map<String,Object> existingRecord = baseDao.isEventIdExists(ColumnFamily.ACITIVITYSTREAM.getColumnFamily(),userUid, eventId);
+       		if(existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
+   			    jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
+   				existingEventObj = jsonElement.getAsJsonObject();
+   			    if ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
+   					existingColumnName = existingRecord.get("existingColumnName").toString();
+   				    startTime = existingEventObj.get(START_TIME).getAsLong();
+   			    } else {
+   				    endTime = existingEventObj.get(END_TIME).getAsLong();
+   			    }
+       		}
+       		
+   			// Time taken for the event in milliseconds derived from the start / stop events.
+   			if (endTime != null && startTime != null) {
+   				timeInMillisecs = endTime - startTime;
+   			}
+   			if (timeInMillisecs > 1147483647) {
+   			    // When time in Milliseconds is very very huge, set to min time to serve the call.
+   			    timeInMillisecs = 30;
+   			    // Since this is an error condition, log it.
+   			}
+           }
+           timeMap.put("startTime", startTime);
+           timeMap.put("endTime", endTime);
+           timeMap.put("event_type", eventType);
+           timeMap.put("existingColumnName", existingColumnName);
+           timeMap.put("timeSpent", timeInMillisecs);    
+           
+       }
+
+    /**
+     * @return the connectionProvider
+     */
+    public CassandraConnectionProvider getConnectionProvider() {
+    	return connectionProvider;
+    }
+    
+    public void executeForEveryMinute(String startTime,String endTime){
+    	logger.debug("start the static loader");
+    	JSONObject jsonObject = new JSONObject();
+    	try {
+			jsonObject.put("startTime",startTime );
+			jsonObject.put("endTime",endTime );
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+    	microAggregator.sendEventForStaticAggregation(jsonObject.toString());
+    }
+    
+    public void watchSession(){
+    	try {
+			liveDashBoardDAOImpl.watchApplicationSession();
+		} catch (ParseException e) {
+			logger.info("Exception : {} ",e);
+		}
+    }
+    
+    public boolean createEvent(String eventName,String apiKey){
+
+    	Map<String,Object> records = new HashMap<String, Object>();
+    	apiKey = apiKey != null ? apiKey : DEFAULT_API_KEY;
+		records.put("api_key", apiKey);
+		records.put("event_name", eventName);
+    	if(baseDao.isValueExists(ColumnFamily.DIMEVENTS.getColumnFamily(),records)){
+				 
+				UUID eventId = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+				records.put("event_id", eventId.toString());
+				String key = apiKey+SEPERATOR+eventId.toString();
+				 baseDao.saveMultipleStringValue(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
+		return true;
+    	}
+    	return false;
+    }
+    
+	public boolean validateSchedular(String ipAddress) {
+
+		try {
+			//ColumnList<String> columnList = configSettings.getColumnList("schedular~ip");
+			ColumnList<String> columnList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip");
+			String configuredIp = columnList.getColumnByName("ip_address").getStringValue();
+			if (configuredIp != null) {
+				if (configuredIp.equalsIgnoreCase(ipAddress))
+					return true;
+			}
+		} catch (Exception e) {
+			logger.error(" unable to get the scedular IP " + e);
+			return false;
+		}
+		return false;
+	}
+    
+    private Map<String,String> formatEventMap(EventObject eventObject,Map<String,String> eventMap){
+    	
+    	String userUid = null;
+    	String organizationUid = DEFAULT_ORGANIZATION_UID;
+    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+    	if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
+    		eventObject.setParentEventId(eventMap.get("parentEventId"));
+    	}
+    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+    	eventObject.setEventType(eventMap.get("type"));
+    	
+    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
+				 try {
+					 userUid = eventMap.get("gooruUId");
+					 Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid);
+	   					for(Row<String, String> userDetail : userDetails){
+	   						organizationUid = userDetail.getColumns().getStringValue("organization_uid", null);
+	   					}
+					 eventObject.setOrganizationUid(organizationUid);
+			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+			    	 sessionObj.put("organizationUId", organizationUid);
+			    	 eventObject.setSession(sessionObj.toString());
+			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
+			    	 fieldsObj.put("session", sessionObj.toString());
+			    	 eventObject.setFields(fieldsObj.toString());
+			    	 eventMap.put("organizationUId", organizationUid);
+				 } catch (Exception e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 }
+    	eventMap.put("eventName", eventObject.getEventName());
+    	eventMap.put("eventId", eventObject.getEventId());
+    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	
+    	return eventMap;
+    }
+
+    private void getAndSetAnswerStatus(EventData eventData){
+    	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CQRPD.getName()) || eventData.getEventName().equalsIgnoreCase(LoaderConstants.QPD.getName())){
+    		String answerStatus = null;
+    			if(eventData.getAttemptStatus().length == 0){
+    				answerStatus = LoaderConstants.SKIPPED.getName();
+    				eventData.setAttemptFirstStatus(answerStatus);
+    				eventData.setAttemptNumberOfTrySequence(eventData.getAttemptTrySequence().length);
+    			}else {
+	    			if(eventData.getAttemptStatus()[0] == 1){
+	    				answerStatus = LoaderConstants.CORRECT.getName();
+	    			}else if(eventData.getAttemptStatus()[0] == 0){
+	    				answerStatus = LoaderConstants.INCORRECT.getName();
+	    			}
+	    			eventData.setAttemptFirstStatus(answerStatus);
+    				eventData.setAttemptNumberOfTrySequence(eventData.getAttemptTrySequence().length);
+    				eventData.setAnswerFirstId(eventData.getAnswerId()[0]);
+    			}
+    			
+    	}
+    }
+
     private void updateEventCompletion(EventData eventData) throws ConnectionException {
 
     	Long endTime = eventData.getEndTime(), startTime = eventData.getStartTime();
@@ -453,7 +1313,7 @@ public class CassandraDataLoader implements Constants {
         }
 
         if (!StringUtils.isEmpty(eventData.getEventType())) {
-			ColumnList<String> existingRecord = eventDetailDao.readEventDetail(eventData.getEventId());
+			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId());
 			if (existingRecord != null && !existingRecord.isEmpty()) {
 			    if ("stop".equalsIgnoreCase(eventData.getEventType())) {
 			        startTime = existingRecord.getLongValue("start_time", null);
@@ -486,672 +1346,18 @@ public class CassandraDataLoader implements Constants {
         }
 
         if(!StringUtils.isEmpty(eventData.getParentEventId())){
-        	ColumnList<String> existingParentRecord = eventDetailDao.readEventDetail(eventData.getParentEventId());
+        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getParentEventId());
         	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
         		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
-        		eventDetailDao.updateParentId(eventData.getParentEventId(), endTime, (endTime-parentStartTime));
+        		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData.getParentEventId(), "end_time", endTime);
+        		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData.getParentEventId(), "time_spent_in_millis", (endTime-parentStartTime));
+        		
         	}
         }
 
     }
-    
-    @Async
-    private void updateEventObjectCompletion(EventObject eventObejct) throws ConnectionException {
 
-    	Long endTime = eventObejct.getEndTime(), startTime = eventObejct.getStartTime();
-        long timeInMillisecs = 0L;
-        if (endTime != null && startTime != null) {
-            timeInMillisecs = endTime - startTime;
-        }
-        boolean eventComplete = false;
-
-        eventObejct.setTimeInMillSec(timeInMillisecs);
-
-        if (StringUtils.isEmpty(eventObejct.getEventId())) {
-            return;
-        }
-
-			ColumnList<String> existingRecord = eventDetailDao.readEventDetail(eventObejct.getEventId());
-			if (existingRecord != null && !existingRecord.isEmpty()) {
-			    if ("stop".equalsIgnoreCase(eventObejct.getEventType())) {
-			        startTime = existingRecord.getLongValue("start_time", null);
-			        //Update startTime with existingRecord, IF existingRecord.startTime < startTime
-			    } else {
-			        endTime = existingRecord.getLongValue("end_time", null);
-			        // Update endTime with existing record IF existingRecord.endTime > endTime
-			    }
-			    eventComplete = true;
-			}
-			// Time taken for the event in milliseconds derived from the start / stop events.
-			if (endTime != null && startTime != null) {
-				timeInMillisecs = endTime - startTime;
-			}
-			if (timeInMillisecs > 1147483647) {
-			    // When time in Milliseconds is very very huge, set to min time to serve the call.
-			    timeInMillisecs = 30;
-			    // Since this is an error condition, log it.
-			}
-
-			eventObejct.setStartTime(startTime);
-			eventObejct.setEndTime(endTime);
-
-        if (eventComplete) {
-        	eventObejct.setTimeInMillSec(timeInMillisecs);
-            eventObejct.setEventType("completed-event");
-            eventObejct.setEndTime(endTime);
-            eventObejct.setStartTime(startTime);
-        }
-
-        if(!StringUtils.isEmpty(eventObejct.getParentEventId())){
-        	ColumnList<String> existingParentRecord = eventDetailDao.readEventDetail(eventObejct.getParentEventId());
-        	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
-        		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
-        		eventDetailDao.updateParentId(eventObejct.getParentEventId(), endTime, (endTime-parentStartTime));
-        	}
-        }
-
-    }
-    
-    /**
-     * 
-     * @param eventData
-     * @return
-     * Save Event Data
-     */
-    
-    @Async
-    private String updateEvent(EventData eventData) {
-    	ColumnList<String> apiKeyValues = apiDao.readApiData(eventData.getApiKey());
-        String appOid = apiKeyValues.getStringValue("app_oid", null);
-        if(eventData.getTimeSpentInMs() != null){
-	          eventData.setTimeInMillSec(eventData.getTimeSpentInMs());
-	     }
-        return eventDetailDao.saveEvent(eventData,appOid);
-    }
-   
-    /**
-     * 
-     * @param startTime
-     * @param endTime
-     * @param customEventName
-     * @throws ParseException
-     */
-    public void updateStaging(String startTime , String endTime,String customEventName) throws ParseException {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
-    	
-    	String dateId = null;
-    	String minuteId = null;
-    	String hourId = null;
-    	String eventId = null;
-    	String userUid = null;
-    	String processingDate = null;
-    	long jobsCount = 0L;
-    
-    	//Check if already job is running
-    	jobsCount = configSettings.getJobsCount();
-    	
-    	if(jobsCount == 0 ){
-    		jobsCount ++;
-    		configSettings.balancingJobsCount(jobsCount);
-    		logger.info("Staging table truncated");
-    		
-    		stagingAgg.deleteAll();
-    	}else{
-    		jobsCount ++;
-    		configSettings.balancingJobsCount(jobsCount);
-    		logger.info("Job is already running! so Staging table will not truncate");
-    	}
-    	
-    	//Get all the event name and store for Caching
-    	HashMap<String, String> events = eventNameDao.readAllEventNames();
-    	
-    	//Process records for every minute
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
-    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
-    		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
-    		
-    		//Get Time ID and Hour ID
-    		Rows<String, String> timeDetails = dimTime.getTimeId(""+currentHour,""+currentMinute);	
-	   		 
-    		 for(Row<String, String> timeIds : timeDetails){
-	   			 minuteId = timeIds.getColumns().getStringValue("time_hm_id", null);
-				 hourId = timeIds.getColumns().getLongValue("time_h_id", null).toString();
-			 }
-	   		 
-   		 	if(!currentDate.equalsIgnoreCase(processingDate)){
-   		 			processingDate = currentDate;
-   		 			dateId = dimDate.getDateId(currentDate);
-   		 	}
-   		 	
-   		 	//Retry 100 times to get Date ID if Cassandra failed to respond
-   		 	int dateTrySeq = 1;
-   		 	while((dateId == null || dateId.equalsIgnoreCase("0")) && dateTrySeq < 100){
-   		 		dateId = dimDate.getDateId(currentDate);
-   		 		dateTrySeq++;
-   		 	}
-   		 	
-   		 	//Generate Key if loads custom Event Name
-   		 	String timeLineKey = null;   		 	
-   		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
-   		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
-   		 	}
-   		 	
-   		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = timelineDao.readTimeLine(timeLineKey);
-	    	if(eventUUID == null && eventUUID.isEmpty() ) {
-	    		logger.info("No events in given timeline :  {}",startDate);
-	    		return;
-	    	}
-	 
-	    	Collection<String> eventDetailkeys = new ArrayList<String>();
-	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-	    		eventDetailkeys.add(eventDetailUUID);
-	    	}
-	    	
-	    	//Read all records from Event Detail
-	    	Rows<String, String> eventDetailsNew = eventDetailDao.readEventDetailList(eventDetailkeys);
-	    	for (Row<String, String> row : eventDetailsNew) {
-	    		row.getColumns().getStringValue("event_name", null);
-	    		String searchType = row.getColumns().getStringValue("event_name", null);
-	    		
-	    		//Skip Invalid Events
-	    		if(searchType == null ) {
-	    			continue;
-	    		}
-	    		
-	    		if(searchType.equalsIgnoreCase("session-expired")) {
-	    			continue;
-	    		}
-	    		//Skip Duplicate events
-	    		if(searchType.equalsIgnoreCase(LoaderConstants.CP.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CPD.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CRPD.getName()) 
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CRP.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CRPV1.getName())
-	    				|| searchType.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-	    			String eventType = row.getColumns().getStringValue("event_type", null);
-	    			if(eventType != null) {
-		    			if(eventType.equalsIgnoreCase("stop")){
-		    				continue;
-		    			}
-	    			}
-	    		}
-	    		
-	    		//Get Event ID for corresponding Event Name
-	    		 eventId = events.get(searchType);
-	    		 
-	    		
-	    		if(eventId == null) {
-	    			continue;
-	    		}
-		    	//Get User ID	
-	    		if(row.getColumns().getStringValue("gooru_uid", null) != null) {
-					 userUid = row.getColumns().getStringValue("gooru_uid", null);
-				 }else if (row.getColumns().getStringValue("userid", null) != null) {
-					 try {
-						userUid = dimUser.getUserUid(row.getColumns().getStringValue("user_id", null));
-					} catch (ConnectionException e) {
-						logger.info("Error while fetching User uid ");
-					}
-				 }
-	    		
-	    		//Save Staging records
-    			HashMap<String, String> stagingEvents  = this.createStageEvents(minuteId,hourId,dateId, eventId, userUid, row.getColumns() , row.getKey());
-    			stagingAgg.saveAggregation(stagingEvents);
-	    			String newEventName = DataUtils.makeCombinedEventName(searchType);
-	    			if(!newEventName.equalsIgnoreCase(searchType)) {
-	    				String newEventId = events.get(newEventName);
-	    				HashMap<String, String> customStagingEvents  = this.createStageEvents(minuteId,hourId, dateId, newEventId, userUid, row.getColumns(),TimeUUIDUtils.getUniqueTimeUUIDinMillis().toString());
-	    				stagingAgg.saveAggregation(customStagingEvents);
-	    			}
-	    		}
-	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-    	}
-    	
-    	jobsCount = configSettings.getJobsCount();jobsCount--;
-    	configSettings.balancingJobsCount(jobsCount);
-    	logger.info("Process Ends  : Inserted successfully");
-    }
-
-    public void postMigration(String startTime , String endTime,String customEventName) throws ParseException{
-
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
-    	
-    	String dateId = null;
-    	String minuteId = null;
-    	String hourId = null;
-    	String eventId = null;
-    	String userUid = null;
-    	String processingDate = null;
-    	
-    	//Get all the event name and store for Caching
-    	HashMap<String, String> events = eventNameDao.readAllEventNames();
-    	
-    	//Process records for every minute
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
-    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
-    		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
-    		
-    		//Get Time ID and Hour ID
-    		Rows<String, String> timeDetails = dimTime.getTimeId(""+currentHour,""+currentMinute);	
-	   		 
-    		 for(Row<String, String> timeIds : timeDetails){
-	   			 minuteId = timeIds.getColumns().getStringValue("time_hm_id", null);
-				 hourId = timeIds.getColumns().getLongValue("time_h_id", null).toString();
-			 }
-	   		 
-   		 	if(!currentDate.equalsIgnoreCase(processingDate)){
-   		 			processingDate = currentDate;
-   		 			dateId = dimDate.getDateId(currentDate);
-   		 	}
-   		 	
-   		 	//Retry 100 times to get Date ID if Cassandra failed to respond
-   		 	int dateTrySeq = 1;
-   		 	while((dateId == null || dateId.equalsIgnoreCase("0")) && dateTrySeq < 100){
-   		 		dateId = dimDate.getDateId(currentDate);
-   		 		dateTrySeq++;
-   		 	}
-   		 	
-   		 	//Generate Key if loads custom Event Name
-   		 	String timeLineKey = null;   		 	
-   		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
-   		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
-   		 	}
-   		 	
-   		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = timelineDao.readTimeLine(timeLineKey);
-	    	if(eventUUID == null && eventUUID.isEmpty() ) {
-	    		logger.info("No events in given timeline :  {}",startDate);
-	    		return;
-	    	}
-	 
-	    	Collection<String> eventDetailkeys = new ArrayList<String>();
-	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-	    		eventDetailkeys.add(eventDetailUUID);
-	    	}
-	    	
-	    	//Read all records from Event Detail
-	    	Rows<String, String> eventDetailsNew = eventDetailDao.readEventDetailList(eventDetailkeys);
-	    	for (Row<String, String> row : eventDetailsNew) {
-	    		row.getColumns().getStringValue("event_name", null);
-	    		String eventJSON = row.getColumns().getStringValue("fields", null);
-	    		logger.info("eventJSON : {} ",eventJSON);
-	        	String organizationUid = null;
-	        	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
-	        	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
-	        	Map<String, String> eventMap = new HashMap<String, String>();
-				try {
-					eventMap = JSONDeserializer.deserializeEventObject(eventObject);
-				} catch (JSONException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-	        	
-	        	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
-	        	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
-	        	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
-	        	eventObject.setEventType(eventMap.get("type"));
-	        	if (eventMap != null && eventMap.get("gooruUId") != null) {
-	    				 try {
-	    					 userUid = eventMap.get("gooruUId");
-	    					 organizationUid = dimUser.getOrganizationUid(userUid);
-	    					 eventObject.setOrganizationUid(organizationUid);
-	    				 } catch (Exception e) {
-	    						logger.info("Error while fetching User uid ");
-	    				 }
-	    			 }
-	        	eventMap.put("organizationUId",eventObject.getOrganizationUid());
-	        	eventMap.put("eventName", eventObject.getEventName());
-	        	eventMap.put("eventId", eventObject.getEventId());
-	        	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
-	        	counterDetailsDao.migrationAndUpdate(eventMap);
-	    		}
-	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-    	}
-    	logger.info("Process Ends  : Inserted successfully");
-    
-    }
-    //Creating staging Events
-    public HashMap<String, String> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
-    	HashMap<String, String> stagingEvents = new HashMap<String, String>();
-    	stagingEvents.put("minuteId", minuteId);
-    	stagingEvents.put("hourId", hourId);
-    	stagingEvents.put("dateId", dateId);
-    	stagingEvents.put("eventId", eventId);
-    	stagingEvents.put("userUid", userUid);
-    	stagingEvents.put("contentGooruOid",eventDetails.getStringValue("content_gooru_oid", null));
-    	stagingEvents.put("parentGooruOid",eventDetails.getStringValue("parent_gooru_oid", null));
-    	stagingEvents.put("timeSpentInMillis",eventDetails.getLongValue("time_spent_in_millis", 0L).toString());
-    	stagingEvents.put("organizationUid",eventDetails.getStringValue("organization_uid", null));
-    	stagingEvents.put("eventValue",eventDetails.getStringValue("event_value", null));
-    	stagingEvents.put("resourceType",eventDetails.getStringValue("resource_type", null));
-    	stagingEvents.put("appOid",eventDetails.getStringValue("app_oid", null));
-    	stagingEvents.put("appUid",eventDetails.getStringValue("app_uid", null));
-    	stagingEvents.put("city",eventDetails.getStringValue("city", null));
-    	stagingEvents.put("state",eventDetails.getStringValue("state", null));
-    	stagingEvents.put("country",eventDetails.getStringValue("country", null));
-    	stagingEvents.put("attempt_number_of_try_sequence",eventDetails.getStringValue("attempt_number_of_try_sequence", null));
-    	stagingEvents.put("attempt_first_status",eventDetails.getStringValue("attempt_first_status", null));
-    	stagingEvents.put("answer_first_id",eventDetails.getStringValue("answer_first_id", null));
-    	stagingEvents.put("attempt_status",eventDetails.getStringValue("attempt_status", null));
-    	stagingEvents.put("attempt_try_sequence",eventDetails.getStringValue("attempt_try_sequence", null));
-    	stagingEvents.put("answer_ids",eventDetails.getStringValue("answer_ids", null));
-    	stagingEvents.put("open_ended_text",eventDetails.getStringValue("open_ended_text", null));
-    	stagingEvents.put("keys",eventDetailUUID);
-    	return stagingEvents; 
-    }
-    
-    /**
-     * 
-     * @param startTime
-     * @param endTime
-     * @throws ParseException
-     */
-    public void updateGeoLocation (String startTime , String endTime) throws ParseException {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
-    	
-    	String dateId = null;
-    	String minuteId = null;
-    	String hourId = null;
-    	String eventId = null;
-    	String userUid = null;
-
-		logger.info("Geo-location updation started...");
-    	
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
-    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
-    		
-    		logger.info("Geo-location Porcessing Date : {}" , startDate.toString());
-    		
-    		Rows<String, String> timeDetails = dimTime.getTimeId(""+currentHour,""+currentMinute);
-    		
-	   		 for(Row<String, String> timeIds : timeDetails){
-	   			 minuteId = timeIds.getColumns().getStringValue("time_hm_id", null);
-				 hourId = timeIds.getColumns().getLongValue("time_h_id", null).toString();
-			 }
-
-	   		 ColumnList<String> eventUUID = timelineDao.readTimeLine(startDate.toString());
-	    	
-	    	if(eventUUID == null && eventUUID.isEmpty() ) {
-	    		logger.info("No events in given timeline :  {}",startDate);
-	    		return;
-	    	}
-
-	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-	    		
-	    		UUID stagingKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-	    		ColumnList<String> eventDetails = eventDetailDao.readEventDetail(eventDetailUUID);
-	    		String user_ip = eventDetails.getStringValue("user_ip", null);
-	    		if(user_ip == null ){
-	    			continue;
-	    		}
-	    		user_ip = user_ip.trim();
-	    		String ip = user_ip;
-	    		String city = "";
-	    		String state = "";
-	    		String country = "";
-	        	GeoLocation geo = new GeoLocation();
-    	    	try {
-    				city = geo.getGeoCityByIP(ip);
-    	        	country = geo.getGeoCountryByIP(ip);
-    				state = geo.getGeoRegionByIP(ip);
-    			} catch (IOException e) {
-    		        logger.info("Geo-location : Exception fetching geo location {} ", e);
-    			} catch (GeoIp2Exception e) {
-    		        logger.info("Geo-location : Exception fetching geo location {} ", e);
-    			}
-	    		
-	    		eventDetailDao.saveGeoLocation(eventDetailUUID, city, state, country); 
-	    	}
-	    	
-	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    	
-    	}
-    	logger.info("Geo-location : Process Ends - Updated  successfully");
-    }
-
-    /**
-     * 
-     * @param gooruoid
-     * @param viewcount
-     * 		To update real time view count 
-     */
-    public void updateViewCount(String gooruoid, long viewcount ) {
-    	counterDetailsDao.updateCounter(gooruoid,LoaderConstants.VIEWS.getName(), viewcount );
-    }
-    
-    public void addAggregators(String eventName, String json ,String updateBy) {
-    	realTimeOperation.addAggregators(eventName,json, updateBy);
-    }
-    /**
-     *  Update bulk view count
-     */
-    public void callAPIViewCount() {
-    	Rows<String, String> dataDetail = null;
-		Long count = 0L;
-		dataDetail = recentViewedResources.readAll();
-				
-		List<Map<String, Object>> dataJSONList = new ArrayList<Map<String, Object>>();
-		for (Row<String, String> row : dataDetail) {
-			Map<String, Object> map = new HashMap<String, Object>();
-			String recentResources = row.getKey();
-			count = counterDetailsDao.getCounterLongValue(recentResources, "resource-view");
-			map.put("gooruOid", recentResources);
-			map.put("views", count);
-			dataJSONList.add(map);
-		}
-		logger.info("Serilizer : {}",new JSONSerializer().serialize(dataJSONList));
-		boolean flagError = false;
-		String sessionToken = configSettings.getConstants(LoaderConstants.SESSIONTOKEN.getName());
-		String VIEW_COUNT_REST_API_END_POINT = configSettings.getConstants(LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName());
-		String result = null;
-		
-		try{
-				String url = VIEW_COUNT_REST_API_END_POINT + "?sessionToken=" + sessionToken;
-				
-				DefaultHttpClient httpClient = new DefaultHttpClient();   
-		        StringEntity input = new StringEntity(new JSONSerializer().serialize(dataJSONList).toString());
-		 		HttpPost  postRequest = new HttpPost(url);
-		 		postRequest.addHeader("accept", "application/json");
-		 		postRequest.setEntity(input);
-		 		HttpResponse response = httpClient.execute(postRequest);
-		 		
-		 		if (response.getStatusLine().getStatusCode() != 200) {
-		 	 		logger.info("View count api call failed...");
-		 			flagError = true;
-		 	 		throw new AccessDeniedException("You can not delete resources! Api fails");
-		 		} else {
-		 	 		logger.info("View count api call Success...");
-		 		}
-		 			
-		} catch(Exception e){
-			e.printStackTrace();
-		}
-        
-		
-		if (!flagError) {
-			for (Row<String, String> row : dataDetail) {
-				String recentResources = row.getKey();
-				recentViewedResources.deleteRow(recentResources);
-			}
-		}
-		
-    }
-  
-    /**
-     * 
-     * @param eventName
-     * @throws Exception 
-     */
-    public void runPig(String eventName){
-    	//will come in next release
-    }
-    
-    protected static String convertStreamToString(InputStream is) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
-    }
-    
-    private static void findGeoLocation(EventData eventData){
-    	
-    	String city = null;
-       	String country = null ;
-       	String state = null ;
-       	String ip = "" ;
-
-    	GeoLocation geo = new GeoLocation();
-    	if(eventData.getUserIp() != null){
-	    	try {
-	    		ip = eventData.getUserIp().trim();
-				city = geo.getGeoCityByIP(ip);
-	        	country = geo.getGeoCountryByIP(ip);
-				state = geo.getGeoRegionByIP(ip);
-			} catch (IOException e) {
-		        logger.info("Exception fetching geo location {} ", e);
-		        return;
-			} catch (GeoIp2Exception e) {
-		        logger.info("Exception fetching geo location {} ", e);
-		        return;
-			}
-    	}
-    	
-		if(city != null){
-			eventData.setCity(city);
-		}
-		if(state !=null){
-			eventData.setState(state);
-		}
-		if(country != null){
-			eventData.setCountry(country);
-		}
-		
-    	
-    }
-
-    private void getAndSetAnswerStatus(EventData eventData){
-    	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CQRPD.getName()) || eventData.getEventName().equalsIgnoreCase(LoaderConstants.QPD.getName())){
-    		String answerStatus = null;
-    			if(eventData.getAttemptStatus().length == 0){
-    				answerStatus = LoaderConstants.SKIPPED.getName();
-    				eventData.setAttemptFirstStatus(answerStatus);
-    				eventData.setAttemptNumberOfTrySequence(eventData.getAttemptTrySequence().length);
-    			}else {
-	    			if(eventData.getAttemptStatus()[0] == 1){
-	    				answerStatus = LoaderConstants.CORRECT.getName();
-	    			}else if(eventData.getAttemptStatus()[0] == 0){
-	    				answerStatus = LoaderConstants.INCORRECT.getName();
-	    			}
-	    			eventData.setAttemptFirstStatus(answerStatus);
-    				eventData.setAttemptNumberOfTrySequence(eventData.getAttemptTrySequence().length);
-    				eventData.setAnswerFirstId(eventData.getAnswerId()[0]);
-    			}
-    			
-    	}
-    }
-    
-    public EventData getAndSetEventData(Map<String,String> eventMap) throws JSONException{
-    	EventData eventData = new EventData();
-    	int[] attemptStatus = TypeConverter.stringToIntArray(eventMap.get("attemptStatus"));
-    	int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get("attemptTrySequence"));
-    	int[] answers = TypeConverter.stringToIntArray(eventMap.get("answers"));
-    	String openEndedText = eventMap.get("text");
-    	
-    		String answerStatus = null;
-    		if(attemptStatus != null && attemptTrySequence != null){
-    			if(attemptStatus.length == 0){
-    				answerStatus = LoaderConstants.SKIPPED.getName();
-    				eventData.setAttemptFirstStatus(answerStatus);
-    				eventData.setAttemptNumberOfTrySequence(attemptTrySequence.length);
-    			}else {
-	    			if(attemptStatus[0] == 1){
-	    				answerStatus = LoaderConstants.CORRECT.getName();
-	    			}else if(attemptStatus[0] == 0){
-	    				answerStatus = LoaderConstants.INCORRECT.getName();
-	    			}
-	    			eventData.setAttemptFirstStatus(answerStatus);
-    				eventData.setAttemptNumberOfTrySequence(attemptTrySequence.length);
-    				eventData.setAnswerFirstId(answers[0]);
-    				}
-    			}
-    			eventData.setEventName(eventMap.get("eventName"));
-    			eventData.setEventId(eventMap.get("eventId"));
-    			eventData.setContentGooruId(eventMap.get("contentGooruId"));
-    			eventData.setParentGooruId(eventMap.get("parentGooruId"));
-    			eventData.setParentEventId(eventMap.get("parentEventId"));
-    			eventData.setFields(eventMap.get("fields"));
-    			eventData.setReactionType(eventMap.get("reactionType"));
-    			eventData.setQuery(eventMap.get("reactionType"));
-    			eventData.setAttemptStatus(attemptStatus);
-    			eventData.setAttemptTrySequence(attemptTrySequence);
-    			eventData.setAnswerId(answers);
-    			eventData.setOpenEndedText(openEndedText);
-    			eventData.setOrganizationUid(eventMap.get("organizationUId"));
-    			eventData.setType(eventMap.get("type"));
-    			eventData.setGooruUId(eventMap.get("gooruUId"));
-    			eventData.setApiKey(eventMap.get("apiKey"));
-    			
-		return eventData;
-    }
-    private static String loadStream(InputStream s) throws Exception {
-        BufferedReader br = new BufferedReader(new InputStreamReader(s));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while((line=br.readLine()) != null)
-            sb.append(line).append("\n");
-        return sb.toString();
-    }    
-
-
-    private void updateActivityStream(String eventId) throws JSONException {
+ private void updateActivityStream(String eventId) throws JSONException {
        	
        	if (eventId != null){
 
@@ -1165,7 +1371,7 @@ public class CassandraDataLoader implements Constants {
    	    	String organizationUid = null;
    	    	Date endDate = new Date();
    	    	
-   	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
+   	    	ColumnList<String> activityRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId);	
    	    	if (activityRow != null){
    	    	String fields = activityRow.getStringValue(FIELDS, null);
   	         	
@@ -1184,22 +1390,33 @@ public class CassandraDataLoader implements Constants {
    			if (rawMap != null && rawMap.get("gooruUId") != null) {
    				 try {
    					 userUid = rawMap.get("gooruUId");
-   					 userName = dimUser.getUserName(userUid);
-   				 } catch (ConnectionException e) {
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid);
+   					for(Row<String, String> userDetail : userDetails){
+   						userName = userDetail.getColumns().getStringValue("username", null);
+   					}
+   				 } catch (Exception e) {
    						logger.info("Error while fetching User uid ");
    				 }
    			 } else if (activityRow.getStringValue("gooru_uid", null) != null) {
    				try {
    					 userUid = activityRow.getStringValue("gooru_uid", null);
-   					 userName = dimUser.getUserName(activityRow.getStringValue("gooru_uid", null)); 
-   				} catch (ConnectionException e) {
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null));
+   					for(Row<String, String> userDetail : userDetails){
+   						userName = userDetail.getColumns().getStringValue("username", null);
+   					}
+   				} catch (Exception e) {
    					logger.info("Error while fetching User uid ");
    				}			
    			 } else if (activityRow.getStringValue("user_id", null) != null) {
    				 try {
-   					userUid = dimUser.getUserUid(activityRow.getStringValue("user_id", null));
-   					userName = dimUser.getUserName(activityRow.getStringValue("user_id", null));						
-   				} catch (ConnectionException e) {
+   					ColumnList<String> userUidList = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), activityRow.getStringValue("user_id", null));
+					userUid = userUidList.getStringValue("gooru_uid", null);
+					
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null));
+   					for(Row<String, String> userDetail : userDetails){
+   						userName = userDetail.getColumns().getStringValue("username", null);
+   					}						
+   				} catch (Exception e) {
    					logger.info("Error while fetching User uid ");
    				}
    			 } 	
@@ -1260,66 +1477,21 @@ public class CassandraDataLoader implements Constants {
    	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
    	    	
    	    	if(userUid != null){
-   	    		activityStreamDao.saveActivity(activityMap);
+   	    		baseDao.saveActivity(ColumnFamily.ACITIVITYSTREAM.getColumnFamily(), activityMap);
    	    	}
    	    	}
        	}
    	}
-       
-       public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap){
-       	Long startTime = activityRow.getLongValue(START_TIME, 0L), endTime = activityRow.getLongValue(END_TIME, 0L);
-       	String eventType = null;
-       	JsonElement jsonElement = null;
-       	JsonObject existingEventObj = null;
-       	String existingColumnName = null;
-       	
-       	if (activityRow.getStringValue(EVENT_TYPE, null) != null){
-       		eventType = activityRow.getStringValue(EVENT_TYPE, null);
-       	}
-       	
-           long timeInMillisecs = 0L;
-           if (endTime != null && startTime != null) {
-               timeInMillisecs = endTime - startTime;
-           }
-
-           if (!StringUtils.isEmpty(eventType) && userUid != null) {
-       		Map<String,Object> existingRecord = activityStreamDao.isEventIdExists(userUid, eventId);
-       		if(existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
-   			    jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
-   				existingEventObj = jsonElement.getAsJsonObject();
-   			    if ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
-   					existingColumnName = existingRecord.get("existingColumnName").toString();
-   				    startTime = existingEventObj.get(START_TIME).getAsLong();
-   			    } else {
-   				    endTime = existingEventObj.get(END_TIME).getAsLong();
-   			    }
-       		}
-       		
-   			// Time taken for the event in milliseconds derived from the start / stop events.
-   			if (endTime != null && startTime != null) {
-   				timeInMillisecs = endTime - startTime;
-   			}
-   			if (timeInMillisecs > 1147483647) {
-   			    // When time in Milliseconds is very very huge, set to min time to serve the call.
-   			    timeInMillisecs = 30;
-   			    // Since this is an error condition, log it.
-   			}
-           }
-           timeMap.put("startTime", startTime);
-           timeMap.put("endTime", endTime);
-           timeMap.put("event_type", eventType);
-           timeMap.put("existingColumnName", existingColumnName);
-           timeMap.put("timeSpent", timeInMillisecs);    
-           
-       }
-       
-    /**
-     * @return the connectionProvider
-     */
-    public CassandraConnectionProvider getConnectionProvider() {
-    	return connectionProvider;
-    }
-    
+ 
+    @Async
+    private String updateEvent(EventData eventData) {
+    	ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(),eventData.getApiKey());
+        String appOid = apiKeyValues.getStringValue("app_oid", null);
+        if(eventData.getTimeSpentInMs() != null){
+	          eventData.setTimeInMillSec(eventData.getTimeSpentInMs());
+	     }
+        return baseDao.saveEvent(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData);
+    }    
     /**
      * @param connectionProvider the connectionProvider to set
      */
@@ -1327,9 +1499,6 @@ public class CassandraDataLoader implements Constants {
     	this.connectionProvider = connectionProvider;
     }
     
-    private ColumnFamilyQuery<String, String> prepareQuery(ColumnFamily<String, String> columnFamily) {
-    	return cassandraKeyspace.prepareQuery(columnFamily).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    }
-    
 }
 
+  
