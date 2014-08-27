@@ -635,6 +635,7 @@ public class CassandraDataLoader implements Constants {
 		    		    	if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){  
 		    		    		eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
 		    		    	}
+		    		    	eventMap.put("dateId", dateId);
 		    		    	liveDashBoardDAOImpl.saveInStaging(eventMap);
 		    			} 
 		    			else{
@@ -657,7 +658,7 @@ public class CassandraDataLoader implements Constants {
 		    				   if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
 		    					   eventMap =   this.getUserInfo(eventMap,eventMap.get(GOORUID));
 		    				   }
-			    	    		
+		    				   	eventMap.put("dateId", dateId);	
 			    	    		liveDashBoardDAOImpl.saveInStaging(eventMap);
 		    		     }
 					} catch (Exception e) {
