@@ -214,7 +214,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	    long difference = 100L;
     	    if(lastCount != 0L){
     	    	if(thisCount > lastCount) {
-    	    		difference = (thisCount*100)/lastCount;
+    	    		difference = ((thisCount*100)/lastCount)/2;
     	    	} else {
     	    		difference = 0L;
     	    	}
