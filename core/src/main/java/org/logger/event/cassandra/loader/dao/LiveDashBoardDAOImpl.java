@@ -481,10 +481,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		            if(!typeToChange.equalsIgnoreCase("StringArray")){
 		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),typeToChange));
 		            }else{
-		            	logger.info("type : {} ",typeToChange);
 		            	String value = entry.getValue().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
-		            	logger.info("value : {} ",value);
-		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(value,typeToChange));
+		            	contentBuilder.put(entry.getKey(), value);
 		            }
 		      }
 			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), UUID.randomUUID().toString(), contentBuilder);		
