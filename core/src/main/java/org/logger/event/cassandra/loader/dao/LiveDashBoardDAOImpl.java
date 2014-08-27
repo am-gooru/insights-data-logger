@@ -477,7 +477,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
 			  for(Map.Entry<String, String> entry : eventMap.entrySet()){
-		            contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
+		            contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
 		      }
 			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), UUID.randomUUID().toString(), contentBuilder);		
 			
