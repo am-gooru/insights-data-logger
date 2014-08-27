@@ -453,15 +453,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		return key != null ? key.substring(1).trim():null;
 	}
-	
+
 	@Async
-	public void saveInESIndex(Map<String,String> eventMap) {
+	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			for(Map.Entry<String, String> entry : eventMap.entrySet()){
+			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 	            contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
 			}
-				getESClient().prepareIndex(ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")))
+				getESClient().prepareIndex(indexName, indexType, id)
 				.setSource(contentBuilder)
 				.execute()
 				.actionGet()
@@ -473,15 +473,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	@Async
-	public void saveInStaging(Map<String,String> eventMap) {
+	public void saveInStaging(Map<String,Object> eventMap) {
 		try {
 			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
-			  for(Map.Entry<String, String> entry : eventMap.entrySet()){
+			  for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";
 		            if(!typeToChange.equalsIgnoreCase("StringArray")){
-		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),typeToChange));
+		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange));
 		            }else{
-		            	String value = entry.getValue().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
+		            	String value = String.valueOf(entry.getValue()).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
 		            	contentBuilder.put(entry.getKey(), value);
 		            }
 		      }

@@ -72,7 +72,7 @@ public class TypeConverter {
 					result = value;
 				}else if(type.equals("IntegerArray")){
 
-					String[] items = value.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+					String[] items = value.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
 
 					int[] results = new int[items.length];
 

@@ -52,7 +52,12 @@ public enum ColumnFamily {
 	
 	COLLECTION("collection"),
 	
-	CLASSPAGE("classpage");
+	CLASSPAGE("classpage"),
+	
+	LICENSE("license"),
+	
+	RESOURCETYPES("resource_type"),
+	;
 	
 	String name;
 
