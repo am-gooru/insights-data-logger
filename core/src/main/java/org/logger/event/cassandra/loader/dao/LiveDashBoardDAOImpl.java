@@ -212,9 +212,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	    long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
     	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
     	    long difference = 100L;
+    	    long findDifference = 0L;
     	    if(lastCount != 0L){
     	    	if(thisCount > lastCount) {
-    	    		difference = (thisCount*100)/lastCount;
+    	    		findDifference = thisCount - lastCount;
+    	    		difference = (findDifference/lastCount)*100;
     	    	} else {
     	    		difference = 0L;
     	    	}
