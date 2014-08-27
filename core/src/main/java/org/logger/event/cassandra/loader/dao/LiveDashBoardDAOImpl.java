@@ -477,12 +477,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
 			  for(Map.Entry<String, String> entry : eventMap.entrySet()){
-		            contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
+				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";
+		            if(!typeToChange.equals("StringArray")){
+		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),typeToChange));
+		            }else{
+		            	String value = entry.getValue().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
+		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(value,typeToChange));
+		            }
 		      }
 			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), UUID.randomUUID().toString(), contentBuilder);		
 			
 		} catch (Exception e) {
-			logger.info("Indexing failed",e);
+			logger.info("Staging data failed",e);
 		}
 	}
 	@Async
