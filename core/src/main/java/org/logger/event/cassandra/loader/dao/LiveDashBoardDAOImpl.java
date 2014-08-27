@@ -478,10 +478,12 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
 			  for(Map.Entry<String, String> entry : eventMap.entrySet()){
 				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";
-		            if(!typeToChange.equals("StringArray")){
+		            if(!typeToChange.equalsIgnoreCase("StringArray")){
 		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(entry.getValue(),typeToChange));
 		            }else{
+		            	logger.info("type : {} ",typeToChange);
 		            	String value = entry.getValue().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
+		            	logger.info("value : {} ",value);
 		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(value,typeToChange));
 		            }
 		      }
