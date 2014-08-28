@@ -483,14 +483,14 @@ public class EventController {
 	}
 
 	public void postMigration(){
-		if(!validateSchedular()){
+		/*if(!validateSchedular()){
 			return;
-			}
+			}*/
 		logger.info("post migration............");
 		//eventService.postMigration(null, null, null);
-		eventService.postStatMigration(null, null, null);
+		//eventService.postStatMigration(null, null, null);
 		eventService.catalogMigration(null, null, null);
-		eventService.balanceStatDataUpdate();
+		//eventService.balanceStatDataUpdate();
 	}
 	
 	@SuppressWarnings("unchecked")
