@@ -57,6 +57,8 @@ public enum ColumnFamily {
 	LICENSE("license"),
 	
 	RESOURCETYPES("resource_type"),
+	
+	CATEGORY("category"),
 	;
 	
 	String name;
