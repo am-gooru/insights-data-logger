@@ -1000,7 +1000,9 @@ public class CassandraDataLoader implements Constants {
     					Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					logger.info("contentId : "+ i + " - Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
-    					resourceMap.put("title", columns.getColumnByName("title").getStringValue());
+    					if(columns.getColumnByName("title") != null){
+    						resourceMap.put("title", columns.getColumnByName("title").getStringValue());
+    					}
     					if(columns.getColumnByName("description") != null){
     						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
     					}
@@ -1035,7 +1037,11 @@ public class CassandraDataLoader implements Constants {
     						resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
     					}
     					if(columns.getColumnByName("grade") != null){
-    						resourceMap.put("grade", columns.getColumnByName("grade").getStringValue());
+    						JSONArray gradeArray = new JSONArray();
+    						for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
+    							gradeArray.put(gradeId);	
+    						}
+    						resourceMap.put("grade", gradeArray);
     					}
     					if(columns.getColumnByName("license_name") != null){
     						ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
