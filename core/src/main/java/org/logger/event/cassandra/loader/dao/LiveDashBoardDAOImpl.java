@@ -461,7 +461,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-	            if(fieldDefinations.containsKey(entry.getKey())){	            	
+	            if(fieldDefinations.containsKey(entry.getKey()) && entry.getValue() != null){	            	
 	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
 	            }/*else{
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
