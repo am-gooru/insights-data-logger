@@ -961,6 +961,7 @@ public class CassandraDataLoader implements Constants {
     	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
     	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
     	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
@@ -1004,8 +1005,16 @@ public class CassandraDataLoader implements Constants {
     						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
     					}
     					resourceMap.put("gooru_oid", columns.getColumnByName("gooru_oid").getStringValue());
-    					resourceMap.put("last_modified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
-    					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					try{
+    						resourceMap.put("last_modified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					}catch(Exception e){
+    						resourceMap.put("last_modified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					}
+    					try{
+    						resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					}catch(Exception e){
+    						resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					}
     					if(columns.getColumnByName("creator_uid") != null){
     						resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
     					}
