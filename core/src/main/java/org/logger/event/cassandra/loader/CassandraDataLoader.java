@@ -995,16 +995,21 @@ public class CassandraDataLoader implements Constants {
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
     				if(resource != null && resource.size() > 0){
     					Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
-    					
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
-    					
+    					logger.info("contentId : "+ i + " - Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
     					resourceMap.put("title", columns.getColumnByName("title").getStringValue());
-    					resourceMap.put("description", columns.getColumnByName("description").getStringValue());
+    					if(columns.getColumnByName("description") != null){
+    						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
+    					}
     					resourceMap.put("gooru_oid", columns.getColumnByName("gooru_oid").getStringValue());
     					resourceMap.put("last_modified", columns.getColumnByName("last_modified").getStringValue());
     					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? columns.getColumnByName("creator_uid").getStringValue() : columns.getColumnByName("last_modified").getStringValue());
-    					resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
-    					resourceMap.put("user_uid", columns.getColumnByName("user_uid").getStringValue());
+    					if(columns.getColumnByName("creator_uid") != null){
+    						resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
+    					}
+    					if(columns.getColumnByName("user_uid") != null){
+    						resourceMap.put("user_uid", columns.getColumnByName("user_uid").getStringValue());
+    					}
     					if(columns.getColumnByName("record_source") != null){
     						resourceMap.put("record_source", columns.getColumnByName("record_source").getStringValue());
     					}
