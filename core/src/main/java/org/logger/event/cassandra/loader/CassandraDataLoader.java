@@ -794,7 +794,7 @@ public class CassandraDataLoader implements Constants {
 		    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 		    				   }
 			    	    		
-			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINSIGHTS.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 		    		     }
 					} catch (Exception e) {
 						logger.info("Error while Migration : {} ",e);
@@ -1372,7 +1372,7 @@ public class CassandraDataLoader implements Constants {
     	JSONObject staticsObj = new JSONObject();
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=true&sessionToken=" + sessionToken;
+				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=flase&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				logger.info("staticsObj : {}",staticsObj);
