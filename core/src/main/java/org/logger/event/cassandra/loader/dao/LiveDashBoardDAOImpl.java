@@ -465,16 +465,16 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
 	            }else{
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-	            		contentBuilder.field(entry.getKey(), String.valueOf(entry.getValue()), null);
+	            		contentBuilder.field(entry.getKey(), String.valueOf(entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-	            		contentBuilder.field(entry.getKey(), Integer.valueOf(""+entry.getValue()), null);
+	            		contentBuilder.field(entry.getKey(), Integer.valueOf(""+entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-	            		contentBuilder.field(entry.getKey(), Long.valueOf(""+entry.getValue()), null);
+	            		contentBuilder.field(entry.getKey(), Long.valueOf(""+entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-	            		contentBuilder.field(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+	            		contentBuilder.field(entry.getKey(), Boolean.valueOf(""+entry.getValue()));
 	            	}
 	            	else{        		
 	            		contentBuilder.field(entry.getKey(), entry.getValue(), null);
