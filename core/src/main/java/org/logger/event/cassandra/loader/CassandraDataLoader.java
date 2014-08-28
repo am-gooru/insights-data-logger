@@ -99,6 +99,12 @@ public class CassandraDataLoader implements Constants {
     
     public static  Map<String,String> cache;
     
+    public static  Map<String,Object> licenseCache;
+    
+    public static  Map<String,Object> resourceTypesCache;
+    
+    public static  Map<String,Object> categoryCache;
+    
     private MicroAggregatorProducer microAggregator;
     
     private static GeoLocation geo;
@@ -190,6 +196,22 @@ public class CassandraDataLoader implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
     }
 
     public void clearCache(){
@@ -210,6 +232,22 @@ public class CassandraDataLoader implements Constants {
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
+        
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
     }
     
     /**
@@ -1044,26 +1082,33 @@ public class CassandraDataLoader implements Constants {
     						resourceMap.put("grade", gradeArray);
     					}
     					if(columns.getColumnByName("license_name") != null){
-    						ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
-    						if(!license.isEmpty()){    							
-    							resourceMap.put("license_id", license.getLongValue("id", 0L));
+    						//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
+    						if(licenseCache.containsKey(columns.getColumnByName("license_name").getStringValue())){    							
+    							resourceMap.put("license_id", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
     						}
     					}
     					if(columns.getColumnByName("type_name") != null){
-    						ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
-    						if(!resourceType.isEmpty()){    							
-    							resourceMap.put("resource_type_id", resourceType.getLongValue("id", 0L));
+    						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
+    						if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
+    							resourceMap.put("resource_type_id", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
     						}
     					}
     					if(columns.getColumnByName("category") != null){
-    						ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
-    						if(!resourceType.isEmpty()){    							
-    							resourceMap.put("resource_category_id", resourceType.getLongValue("id", 0L));
+    						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
+    						if(categoryCache.containsKey(columns.getColumnByName("category").getStringValue())){    							
+    							resourceMap.put("resource_category_id", categoryCache.get(columns.getColumnByName("category").getStringValue()));
     						}
     					}
     					ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
-    					if(!questionCount.isEmpty()){    						
-    						resourceMap.put("question_count", questionCount.getLongValue("questionCount", 0L));
+    					if(!questionCount.isEmpty()){
+    						Long questionCounts = questionCount.getLongValue("questionCount", 0L);
+    						resourceMap.put("question_count", questionCounts);
+    						if(questionCounts > 0L){
+    							ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
+        						if(!resourceType.isEmpty()){    							
+        							resourceMap.put("resource_type_id", resourceType.getLongValue("id", 0L));
+        						}	
+    						}
     					}else{
     						resourceMap.put("question_count",0L);
     					}
