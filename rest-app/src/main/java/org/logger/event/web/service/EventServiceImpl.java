@@ -259,6 +259,9 @@ public class EventServiceImpl implements EventService {
 	public void postStatMigration(String start,String end,String param){
 		dataLoaderService.postStatMigration(start, end, param);
 	}
+	public void catalogMigration(String start,String end,String param){
+		dataLoaderService.catalogMigration(start, end, param);
+	}
 
 	@Override
 	public void balanceStatDataUpdate() {

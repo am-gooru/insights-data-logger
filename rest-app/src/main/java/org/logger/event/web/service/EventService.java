@@ -68,6 +68,7 @@ public interface EventService {
 	
 	void postStatMigration(String start,String Stop,String param);
 	
+	void catalogMigration(String start,String Stop,String param);
 	void balanceStatDataUpdate();
 	
 	public void clearCacher();

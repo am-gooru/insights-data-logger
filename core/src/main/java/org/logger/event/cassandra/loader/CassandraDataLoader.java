@@ -882,7 +882,7 @@ public class CassandraDataLoader implements Constants {
     		eventMap.put("concept", conceptArray.toString());
     	}
     	if(taxArray.length() > 0){
-    		eventMap.put("taxonomy", taxArray.toString());
+    		eventMap.put("standards", taxArray.toString());
     	}
     	
     	return eventMap;
