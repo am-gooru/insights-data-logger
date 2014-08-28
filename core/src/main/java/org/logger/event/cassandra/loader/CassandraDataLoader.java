@@ -1055,6 +1055,12 @@ public class CassandraDataLoader implements Constants {
     							resourceMap.put("resource_type_id", resourceType.getLongValue("id", 0L));
     						}
     					}
+    					if(columns.getColumnByName("category") != null){
+    						ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
+    						if(!resourceType.isEmpty()){    							
+    							resourceMap.put("resource_category_id", resourceType.getLongValue("id", 0L));
+    						}
+    					}
     					ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
     					if(!questionCount.isEmpty()){    						
     						resourceMap.put("question_count", questionCount.getLongValue("questionCount", 0L));

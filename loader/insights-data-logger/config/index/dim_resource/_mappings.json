@@ -56,6 +56,10 @@
 "type":"Long",
 "index":"not_analyzed"
 },
+"resource_category_id":{
+"type":"Long",
+"index":"not_analyzed"
+},
 "subject":{
 "type":"String",
 "index":"not_analyzed"
