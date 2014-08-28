@@ -960,6 +960,8 @@ public class CassandraDataLoader implements Constants {
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings");
     	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
     	
+    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+    	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
     	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
     	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
@@ -1002,8 +1004,8 @@ public class CassandraDataLoader implements Constants {
     						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
     					}
     					resourceMap.put("gooru_oid", columns.getColumnByName("gooru_oid").getStringValue());
-    					resourceMap.put("last_modified", columns.getColumnByName("last_modified").getStringValue());
-    					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? columns.getColumnByName("creator_uid").getStringValue() : columns.getColumnByName("last_modified").getStringValue());
+    					resourceMap.put("last_modified", formatter.format(columns.getColumnByName("last_modified").getStringValue()));
+    					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.format(columns.getColumnByName("creator_uid").getStringValue()) : formatter.format(columns.getColumnByName("last_modified").getStringValue()));
     					if(columns.getColumnByName("creator_uid") != null){
     						resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
     					}

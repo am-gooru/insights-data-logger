@@ -461,7 +461,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-	            contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
+	            if(fieldDefinations.containsKey(entry.getKey())){
+	            	
+	            }
+				contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
 			}
 				getESClient().prepareIndex(indexName, indexType, id)
 				.setSource(contentBuilder)
