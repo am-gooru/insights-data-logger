@@ -477,7 +477,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	            		contentBuilder.field(entry.getKey(), Boolean.valueOf(""+entry.getValue()));
 	            	}
 	            	else{        		
-	            		contentBuilder.field(entry.getKey(), entry.getValue(), null);
+	            		contentBuilder.field(entry.getKey(), entry.getValue());
 	            	}
 	            }
 			}
