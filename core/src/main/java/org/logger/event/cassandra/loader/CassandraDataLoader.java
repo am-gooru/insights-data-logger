@@ -1031,7 +1031,7 @@ public class CassandraDataLoader implements Constants {
     					}
     					resourceMap.put("views_count", columns.getColumnByName("views_count").getLongValue());
     					if(columns.getColumnByName("organization_uid") != null){
-    						resourceMap.put("organization_uid", columns.getColumnByName("organization_uid").getStringValue());
+    						resourceMap.put("content_organization_uid", columns.getColumnByName("organization_uid").getStringValue());
     					}
     					if(columns.getColumnByName("thumbnail") != null){
     						resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
