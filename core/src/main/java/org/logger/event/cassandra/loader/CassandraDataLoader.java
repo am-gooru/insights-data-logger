@@ -202,14 +202,14 @@ public class CassandraDataLoader implements Constants {
         	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
-        licenseCache = new LinkedHashMap<String, Object>();
+        resourceTypesCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : resourceTypesRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
-        licenseCache = new LinkedHashMap<String, Object>();
+        categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         
     }
@@ -239,14 +239,14 @@ public class CassandraDataLoader implements Constants {
         	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
-        licenseCache = new LinkedHashMap<String, Object>();
+        resourceTypesCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : resourceTypesRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
-        licenseCache = new LinkedHashMap<String, Object>();
+        categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
     }
     
