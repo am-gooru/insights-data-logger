@@ -1004,8 +1004,8 @@ public class CassandraDataLoader implements Constants {
     						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
     					}
     					resourceMap.put("gooru_oid", columns.getColumnByName("gooru_oid").getStringValue());
-    					resourceMap.put("last_modified", formatter.format(columns.getColumnByName("last_modified").getStringValue()));
-    					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.format(columns.getColumnByName("creator_uid").getStringValue()) : formatter.format(columns.getColumnByName("last_modified").getStringValue()));
+    					resourceMap.put("last_modified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    					resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("creator_uid").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
     					if(columns.getColumnByName("creator_uid") != null){
     						resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
     					}

@@ -461,10 +461,25 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-	            if(fieldDefinations.containsKey(entry.getKey())){
-	            	
+	            if(fieldDefinations.containsKey(entry.getKey())){	            	
+	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.get(entry.getKey())));
+	            }else{
+	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
+	            		contentBuilder.field(entry.getKey(), String.valueOf(entry.getValue()), null);
+	            	}
+	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
+	            		contentBuilder.field(entry.getKey(), Integer.valueOf(""+entry.getValue()), null);
+	            	}
+	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
+	            		contentBuilder.field(entry.getKey(), Long.valueOf(""+entry.getValue()), null);
+	            	}
+	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
+	            		contentBuilder.field(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+	            	}
+	            	else{        		
+	            		contentBuilder.field(entry.getKey(), entry.getValue(), null);
+	            	}
 	            }
-				contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getKey()),fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String"));
 			}
 				getESClient().prepareIndex(indexName, indexType, id)
 				.setSource(contentBuilder)
