@@ -213,11 +213,6 @@ public class CassandraDataLoader implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.EXTRACTEDCODE.getColumnFamily());
-        gooruTaxonomy = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : taxonomy) {
-        	gooruTaxonomy.put(row.getKey(), row.getColumns());
-		}
         
     }
 
@@ -254,12 +249,6 @@ public class CassandraDataLoader implements Constants {
         categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        
-        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.EXTRACTEDCODE.getColumnFamily());
-        gooruTaxonomy = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : taxonomy) {
-        	gooruTaxonomy.put(row.getKey(), row.getColumns());
 		}
     }
     
@@ -888,14 +877,14 @@ public class CassandraDataLoader implements Constants {
 	    				subjectArray.put(value);
 	    			} 
 	    			else if(value != null && depth == 2L){
-	    			ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 	    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 	    			    subjectArray.put(subject);
 	    				courseArray.put(value);
 	    			}
 	    			
 	    			else if(value != null && depth == 3L){
-	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			subjectArray.put(subject);
@@ -903,7 +892,7 @@ public class CassandraDataLoader implements Constants {
 		    			unitArray.put(value);
 	    			}
 	    			else if(value != null && depth == 4L){
-	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -913,7 +902,7 @@ public class CassandraDataLoader implements Constants {
 	    				topicArray.put(value);
 	    			}
 	    			else if(value != null && depth == 5L){
-	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -925,7 +914,7 @@ public class CassandraDataLoader implements Constants {
 	    				lessonArray.put(value);
 	    			}
 	    			else if(value != null && depth == 6L){
-	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
