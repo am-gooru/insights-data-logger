@@ -821,16 +821,10 @@ public class CassandraDataLoader implements Constants {
     		for(int i = 0 ; i < userInfo.size() ; i++) {
     			String columnName = userInfo.getColumnByIndex(i).getName();
     			String value = userInfo.getColumnByIndex(i).getStringValue();
-    			if(value != null && !columnName.equalsIgnoreCase("class") && !columnName.equalsIgnoreCase("teacher")){    				
+    			if(!columnName.equalsIgnoreCase("teacher")){    				
     				eventMap.put(columnName, value);
     			}
-    			if(value != null && columnName.equalsIgnoreCase("class")){
-    				JSONArray jArray = new JSONArray();
-    				for(String val : value.split(",")){
-    					jArray.put(val);
-    				}
-    				eventMap.put(columnName, jArray.toString());
-    			}
+
     			if(value != null && columnName.equalsIgnoreCase("teacher")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
@@ -860,12 +854,13 @@ public class CassandraDataLoader implements Constants {
     	Map<String,String> whereColumn = new HashMap<String, String>();
     	whereColumn.put("gooru_oid", gooruOid);
     	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
-    	JSONArray subjectArray = new JSONArray();
-    	JSONArray courseArray = new JSONArray();
-    	JSONArray unitArray = new JSONArray();
-    	JSONArray topicArray = new JSONArray();
-    	JSONArray lessonArray = new JSONArray();
-    	JSONArray conceptArray = new JSONArray();
+    	Long subjectCode = 0L;
+    	Long courseCode = 0L;
+    	Long unitCode = 0L;
+    	Long topicCode = 0L;
+    	Long lessonCode = 0L;
+    	Long conceptCode= 0L;
+    	
     	JSONArray taxArray = new JSONArray();
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
@@ -874,32 +869,38 @@ public class CassandraDataLoader implements Constants {
 	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
 	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
 	    			if(value != null &&  depth == 1L){    				
-	    				subjectArray.put(value);
+	    				subjectCode = value;
 	    			} 
 	    			else if(value != null && depth == 2L){
 	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 	    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-	    			    subjectArray.put(subject);
-	    				courseArray.put(value);
+	    				if(subjectCode == 0L)
+	    				subjectCode = subject;
+	    				courseCode = value;
 	    			}
 	    			
 	    			else if(value != null && depth == 3L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-		    			subjectArray.put(subject);
-	    				courseArray.put(course);
-		    			unitArray.put(value);
+		    			if(subjectCode == 0L)
+		    			subjectCode = subject;
+		    			if(courseCode == 0L)
+		    			courseCode = course;
+		    			unitCode = value;
 	    			}
 	    			else if(value != null && depth == 4L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
-		    			subjectArray.put(subject);
-	    				courseArray.put(course);
-		    			unitArray.put(unit);
-	    				topicArray.put(value);
+		    			if(subjectCode == 0L)
+			    		subjectCode = subject;
+			    		if(courseCode == 0L)
+			    		courseCode = course;
+			    		if(unitCode == 0L)
+			    		unitCode = unit;
+			    		topicCode = value ;
 	    			}
 	    			else if(value != null && depth == 5L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
@@ -907,11 +908,15 @@ public class CassandraDataLoader implements Constants {
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
 		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
-		    			subjectArray.put(subject);
-	    				courseArray.put(course);
-		    			unitArray.put(unit);
-	    				topicArray.put(topic);
-	    				lessonArray.put(value);
+		    				if(subjectCode == 0L)
+				    		subjectCode = subject;
+				    		if(courseCode == 0L)
+				    		courseCode = course;
+				    		if(unitCode == 0L)
+				    		unitCode = unit;
+				    		if(topicCode == 0L)
+				    		topicCode = topic ;
+				    		lessonCode = value;
 	    			}
 	    			else if(value != null && depth == 6L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
@@ -920,12 +925,17 @@ public class CassandraDataLoader implements Constants {
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
 		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
 		    			Long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : 0L;
-		    			subjectArray.put(subject);
-	    				courseArray.put(course);
-		    			unitArray.put(unit);
-	    				topicArray.put(topic);
-	    				lessonArray.put(lesson);
-	    				conceptArray.put(value);
+		    			if(subjectCode == 0L)
+				    		subjectCode = subject;
+				    		if(courseCode == 0L)
+				    		courseCode = course;
+				    		if(unitCode == 0L)
+				    		unitCode = unit;
+				    		if(topicCode == 0L)
+				    		topicCode = topic ;
+				    		if(lessonCode == 0L)
+				    		lessonCode = lesson;
+				    		conceptCode = value;
 	    			}
 	    			else if(value != null){
 	    				taxArray.put(value);
@@ -936,27 +946,13 @@ public class CassandraDataLoader implements Constants {
     			taxArray.put(value);
     		}
     	}
-    	if(subjectArray.length() > 0){
-    		eventMap.put("subject", subjectArray.toString());
-    	}
-    	if(courseArray.length() > 0){
-    		eventMap.put("course", courseArray.toString());
-    	}
-    	if(unitArray.length() > 0){
-    		eventMap.put("unit", unitArray.toString());
-    	}
-    	if(topicArray.length() > 0){
-    		eventMap.put("topic", topicArray.toString());
-    	}
-    	if(lessonArray.length() > 0){
-    		eventMap.put("lesson", lessonArray.toString());
-    	}
-    	if(conceptArray.length() > 0){
-    		eventMap.put("concept", conceptArray.toString());
-    	}
-    	if(taxArray.length() > 0 && taxArray.toString() != null){
+    		eventMap.put("subject", subjectCode);
+    		eventMap.put("course", courseCode);
+    		eventMap.put("unit", unitCode);
+    		eventMap.put("topic", topicCode);
+    		eventMap.put("lesson", lessonCode);
+    		eventMap.put("concept", conceptCode);
     		eventMap.put("standards", taxArray.toString());
-    	}
     	
     	return eventMap;
     }
