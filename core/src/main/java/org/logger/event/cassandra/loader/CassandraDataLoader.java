@@ -772,7 +772,7 @@ public class CassandraDataLoader implements Constants {
 		    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 		    		    	}
 		    	    		
-		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+		    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 		    			} 
 		    			else{
 		    				   Iterator<?> keys = jsonField.keys();
@@ -796,7 +796,7 @@ public class CassandraDataLoader implements Constants {
 		    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 		    				   }
 			    	    		
-			    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 		    		     }
 					} catch (Exception e) {
 						logger.info("Error while Migration : {} ",e);

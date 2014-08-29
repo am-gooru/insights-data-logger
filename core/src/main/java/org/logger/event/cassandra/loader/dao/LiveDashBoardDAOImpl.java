@@ -457,13 +457,33 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 
 	@Async
+	public void saveActivityInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
+		try {
+			XContentBuilder contentBuilder = jsonBuilder().startObject();
+			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
+	            if(fieldDefinations.containsKey(entry.getKey()) && entry.getValue() != null){	            	
+	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
+	            }
+			}
+				getESClient().prepareIndex(indexName, indexType, id)
+				.setSource(contentBuilder)
+				.execute()
+				.actionGet()
+				;
+			} catch (Exception e) {
+				logger.info("Indexing failed",e);
+			}
+		
+	}
+
+	@Async
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 	            if(fieldDefinations.containsKey(entry.getKey()) && entry.getValue() != null){	            	
 	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
-	            }/*else{
+	            }else{
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
 	            		contentBuilder.field(entry.getKey(), String.valueOf(entry.getValue()));
 	            	}
@@ -479,7 +499,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	            	else{        		
 	            		contentBuilder.field(entry.getKey(), entry.getValue());
 	            	}
-	            }*/
+	            }
 			}
 				getESClient().prepareIndex(indexName, indexType, id)
 				.setSource(contentBuilder)
