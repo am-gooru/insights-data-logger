@@ -105,6 +105,8 @@ public class CassandraDataLoader implements Constants {
     
     public static  Map<String,Object> categoryCache;
     
+    public static  Map<String,Object> gooruTaxonomy;
+    
     private MicroAggregatorProducer microAggregator;
     
     private static GeoLocation geo;
@@ -211,6 +213,11 @@ public class CassandraDataLoader implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
+        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        gooruTaxonomy = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : taxonomy) {
+        	gooruTaxonomy.put(row.getKey(), row.getColumns());
+		}
         
     }
 
@@ -247,6 +254,12 @@ public class CassandraDataLoader implements Constants {
         categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        gooruTaxonomy = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : taxonomy) {
+        	gooruTaxonomy.put(row.getKey(), row.getColumns());
 		}
     }
     
@@ -873,23 +886,56 @@ public class CassandraDataLoader implements Constants {
 	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
 	    			if(value != null &&  depth == 1L){    				
 	    				subjectArray.put(value);
-	    			}
+	    			} 
 	    			else if(value != null && depth == 2L){
+	    			ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+	    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+	    			    subjectArray.put(subject);
 	    				courseArray.put(value);
 	    			}
-	    			else if(value != null && depth == 2L){
-	    				courseArray.put(value);
-	    			}
+	    			
 	    			else if(value != null && depth == 3L){
-	    				unitArray.put(value);
+	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			subjectArray.put(subject);
+	    				courseArray.put(course);
+		    			unitArray.put(value);
 	    			}
 	    			else if(value != null && depth == 4L){
+	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			subjectArray.put(subject);
+	    				courseArray.put(course);
+		    			unitArray.put(unit);
 	    				topicArray.put(value);
 	    			}
 	    			else if(value != null && depth == 5L){
+	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
+		    			subjectArray.put(subject);
+	    				courseArray.put(course);
+		    			unitArray.put(unit);
+	    				topicArray.put(topic);
 	    				lessonArray.put(value);
 	    			}
 	    			else if(value != null && depth == 6L){
+	    				ColumnList<String> columns = (ColumnList<String>) gooruTaxonomy.get(value);
+		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
+		    			Long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : 0L;
+		    			subjectArray.put(subject);
+	    				courseArray.put(course);
+		    			unitArray.put(unit);
+	    				topicArray.put(topic);
+	    				lessonArray.put(lesson);
 	    				conceptArray.put(value);
 	    			}
 	    			else if(value != null){
