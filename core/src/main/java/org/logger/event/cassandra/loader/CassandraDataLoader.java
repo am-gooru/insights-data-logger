@@ -213,7 +213,7 @@ public class CassandraDataLoader implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.EXTRACTEDCODE.getColumnFamily());
         gooruTaxonomy = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : taxonomy) {
         	gooruTaxonomy.put(row.getKey(), row.getColumns());
@@ -256,7 +256,7 @@ public class CassandraDataLoader implements Constants {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         
-        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        Rows<String, String> taxonomy = baseDao.readAllRows(ColumnFamily.EXTRACTEDCODE.getColumnFamily());
         gooruTaxonomy = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : taxonomy) {
         	gooruTaxonomy.put(row.getKey(), row.getColumns());
