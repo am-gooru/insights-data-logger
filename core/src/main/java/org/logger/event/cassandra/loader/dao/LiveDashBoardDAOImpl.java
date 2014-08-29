@@ -525,7 +525,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		            	contentBuilder.put(entry.getKey(), value);
 		            }
 		      }
-			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), UUID.randomUUID().toString(), contentBuilder);		
+			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), contentBuilder);		
 			
 		} catch (Exception e) {
 			logger.info("Staging data failed",e);
