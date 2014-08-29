@@ -821,10 +821,12 @@ public class CassandraDataLoader implements Constants {
     		for(int i = 0 ; i < userInfo.size() ; i++) {
     			String columnName = userInfo.getColumnByIndex(i).getName();
     			String value = userInfo.getColumnByIndex(i).getStringValue();
-    			if(!columnName.equalsIgnoreCase("teacher")){    				
+    			if(!columnName.equalsIgnoreCase("teacher") && !columnName.equalsIgnoreCase("organizationUId")){    				
+    				eventMap.put(columnName, Long.valueOf(value));
+    			}
+    			if(value != null && columnName.equalsIgnoreCase("organizationUId")){
     				eventMap.put(columnName, value);
     			}
-
     			if(value != null && columnName.equalsIgnoreCase("teacher")){
     				JSONArray jArray = new JSONArray();
     				for(String val : value.split(",")){
