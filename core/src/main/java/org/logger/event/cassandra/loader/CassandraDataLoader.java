@@ -946,12 +946,19 @@ public class CassandraDataLoader implements Constants {
     			taxArray.put(value);
     		}
     	}
+    		if(subjectCode != 0L && subjectCode != null)
     		eventMap.put("subject", subjectCode);
+    		if(courseCode != 0L && courseCode != null)
     		eventMap.put("course", courseCode);
+    		if(unitCode != 0L && unitCode != null)
     		eventMap.put("unit", unitCode);
+    		if(topicCode != 0L && topicCode != null)
     		eventMap.put("topic", topicCode);
+    		if(lessonCode != 0L && lessonCode != null)
     		eventMap.put("lesson", lessonCode);
+    		if(conceptCode != 0L && conceptCode != null)
     		eventMap.put("concept", conceptCode);
+    		if(taxArray != null && taxArray.toString() != null)
     		eventMap.put("standards", taxArray.toString());
     	
     	return eventMap;
