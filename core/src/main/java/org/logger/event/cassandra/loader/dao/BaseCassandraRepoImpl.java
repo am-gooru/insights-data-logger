@@ -427,8 +427,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     
     public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
-
-    	logger.info("columnValueList: " +  columnValueList);
     	
     	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
@@ -439,14 +437,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		m.putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-        		m.putColumnIfNotNull(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())), null);
+        		m.putColumnIfNotNull(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())));
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-        		logger.info(" Key : "+ entry.getKey() + " : valuess " + Long.valueOf(""+entry.getValue()));
-        		m.putColumnIfNotNull(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())), null);
+        		m.putColumnIfNotNull(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())));
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-        		m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+        		m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()));
         	}else{
         		m.putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
@@ -536,13 +533,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-    		m.putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)));
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-    		m.putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)));
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-    		m.putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)));
     	}else{
     		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
