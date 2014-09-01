@@ -426,39 +426,33 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     
     public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
+
     	logger.info("columnValueList: " +  columnValueList);
         
-    	MutationBatch stringMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        MutationBatch longMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        MutationBatch integerMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        MutationBatch booleanMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
         
         for (Entry<String, Object> entry : columnValueList.entrySet()) {
-        	logger.info( " Key : "+ entry.getKey() + " Type " + entry.getValue().getClass().getSimpleName());
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-        		stringMutation.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-        		integerMutation.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())), null);
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-        		logger.info("valuess " + Long.valueOf(""+entry.getValue()));
-        		longMutation.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())), null);
+        		logger.info(" Key : "+ entry.getKey() + " : valuess " + Long.valueOf(""+entry.getValue()));
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-        		booleanMutation.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
         	}else{
-        		stringMutation.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
+        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
         	
     	    
     	}
 
         try {
-        	stringMutation.execute();
-        	integerMutation.execute();
-        	longMutation.execute();
-        	booleanMutation.execute();
+        	m.execute();
         	
         } catch (ConnectionException e) {
             logger.info("Error while save in method : saveBulkLongList {}", e);
