@@ -450,12 +450,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         	
     	    
     	}
-
         try {
         	m.execute();
         	
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveBulkLongList {}", e);
+            logger.info("Error while save in method : saveBulkList {}", e);
         }
     }
     public void saveStringValue(String cfName, String key,String columnName,String value) {
@@ -531,12 +530,40 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         .incrementCounterColumn(columnName, value);
     }
     
+    public void generateNonCounter(String cfName,String key,String columnName, Object value ,MutationBatch m) {
+    	
+        if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    	}
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)), null);
+    	}
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)), null);
+    	}
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)), null);
+    	}else{
+    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    	}
+    	
+    }
+    
     public void generateNonCounter(String cfName,String key,String columnName, String value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
     }
     
     public void generateNonCounter(String cfName,String key,String columnName, long value ,MutationBatch m) {
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .putColumnIfNotNull(columnName, value);
+    }
+    public void generateNonCounter(String cfName,String key,String columnName, Integer value ,MutationBatch m) {
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .putColumnIfNotNull(columnName, value);
+    }
+    
+    public void generateNonCounter(String cfName,String key,String columnName, Boolean value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
     }

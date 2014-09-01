@@ -515,18 +515,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	@Async
 	public void saveInStaging(Map<String,Object> eventMap) {
 		try {
-			Map<String,Object> contentBuilder = new LinkedHashMap<String, Object>();
-			  for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";
-		            if(!typeToChange.equalsIgnoreCase("StringArray")){
-		            	contentBuilder.put(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange));
-		            }else{
-		            	String value = String.valueOf(entry.getValue()).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
-		            	contentBuilder.put(entry.getKey(), value);
-		            }
-		      }
-			baseDao.saveBulkList(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), contentBuilder);		
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
 			
+			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
+				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";		       
+				  	baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
+		     }
+			
+			m.execute();
 		} catch (Exception e) {
 			logger.info("Staging data failed",e);
 		}
