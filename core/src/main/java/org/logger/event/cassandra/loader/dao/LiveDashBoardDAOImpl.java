@@ -519,7 +519,24 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";		       
-				  	baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
+				//  	baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
+				  	
+				  	if(typeToChange.equalsIgnoreCase("String")){
+				  		String valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
+				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
+				  	}
+				  	if(typeToChange.equalsIgnoreCase("Long")){
+				  		Long valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
+				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
+				  	}
+				  	if(typeToChange.equalsIgnoreCase("Integer")){
+				  		Integer valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
+				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
+				  	}
+				  	if(typeToChange.equalsIgnoreCase("Boolean")){
+				  		Boolean valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
+				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
+				  	}
 		     }
 			
 			m.execute();
