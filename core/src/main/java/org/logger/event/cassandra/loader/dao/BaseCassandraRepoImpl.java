@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 
+import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
@@ -428,31 +429,30 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
 
     	logger.info("columnValueList: " +  columnValueList);
-        
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-        
+    	
+    	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	
+    	ColumnListMutation<String> m = mutation.withRow(this.accessColumnFamily(cfName), key);
+            	
         for (Entry<String, Object> entry : columnValueList.entrySet()) {
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), String.valueOf(entry.getValue()), null);
+        		m.putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())), null);
+        		m.putColumnIfNotNull(entry.getKey(), Integer.valueOf(String.valueOf(entry.getValue())), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
         		logger.info(" Key : "+ entry.getKey() + " : valuess " + Long.valueOf(""+entry.getValue()));
-        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())), null);
+        		m.putColumnIfNotNull(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())), null);
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
+        		m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()), null);
         	}else{
-        		m.withRow(this.accessColumnFamily(cfName), key).putColumn(entry.getKey(), String.valueOf(entry.getValue()), null);
+        		m.putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
         	}
-        	
-    	    
     	}
         try {
-        	m.execute();
-        	
+        	mutation.execute();	
         } catch (ConnectionException e) {
             logger.info("Error while save in method : saveBulkList {}", e);
         }
@@ -530,23 +530,22 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         .incrementCounterColumn(columnName, value);
     }
     
-    public void generateNonCounter(String cfName,String key,String columnName, Object value ,MutationBatch m) {
+    public void generateNonCounter(String columnName, Object value ,ColumnListMutation<String> m) {
     	
         if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
-    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)), null);
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)), null);
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)), null);
+    		m.putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)), null);
     	}else{
-    		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
+    		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
-    	
     }
     
     public void generateNonCounter(String cfName,String key,String columnName, String value ,MutationBatch m) {

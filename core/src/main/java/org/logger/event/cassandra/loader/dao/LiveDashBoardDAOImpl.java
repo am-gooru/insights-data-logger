@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.maxmind.geoip2.model.CityResponse;
+import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -515,31 +516,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	@Async
 	public void saveInStaging(Map<String,Object> eventMap) {
 		try {
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
+			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamily.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
 			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";		       
-				//  	baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
-				  	
-				  	if(typeToChange.equalsIgnoreCase("String")){
-				  		String valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
-				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
-				  	}
-				  	if(typeToChange.equalsIgnoreCase("Long")){
-				  		Long valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
-				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
-				  	}
-				  	if(typeToChange.equalsIgnoreCase("Integer")){
-				  		Integer valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
-				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
-				  	}
-				  	if(typeToChange.equalsIgnoreCase("Boolean")){
-				  		Boolean valuess = TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange);
-				  		baseDao.generateNonCounter(ColumnFamily.STAGING.getColumnFamily(), eventMap.get("eventId").toString(), entry.getKey(), valuess, m);
-				  	}
-		     }
+				  	baseDao.generateNonCounter(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
+		    }
 			
-			m.execute();
+			mutationBatch.execute();
 		} catch (Exception e) {
 			logger.info("Staging data failed",e);
 		}
