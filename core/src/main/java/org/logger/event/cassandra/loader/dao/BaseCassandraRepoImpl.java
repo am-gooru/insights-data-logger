@@ -443,9 +443,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		m.putColumnIfNotNull(entry.getKey(), Long.valueOf(String.valueOf(entry.getValue())));
         	}
         	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-        		m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(""+entry.getValue()));
-        	}else{
-        		m.putColumnIfNotNull(entry.getKey(), String.valueOf(entry.getValue()), null);
+        		m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(String.valueOf(entry.getValue())));
         	}
     	}
         try {
@@ -535,13 +533,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
     		m.putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)));
     	}
-    	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-    		m.putColumnIfNotNull(columnName, Long.valueOf(String.valueOf(value)));
+    	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){     
+    		m.putColumnIfNotNull(columnName,Long.valueOf(String.valueOf(value)));
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
     		m.putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)));
-    	}else{
-    		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
     }
     
