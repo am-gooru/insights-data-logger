@@ -68,7 +68,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     String customEventsConfig = null;
     
-    Map<String,String> fieldDefinations = null ;
+    Map<String,String> fieldDataTypes = null ;
+    
+    Map<String,String> beFieldName = null ;
     
     ColumnList<String> eventKeys = null;
     	
@@ -82,25 +84,35 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
         browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
         customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"custom~events",DEFAULTCOLUMN).getStringValue();
-        String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
-        esEventFields = Arrays.asList(esFields);
-        fieldDefinations =  new LinkedHashMap<String,String>();
-        Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-        for(String key : fieldTypes.getKeys()){
-        	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
+        /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
+        esEventFields = Arrays.asList(esFields);*/
+        fieldDataTypes =  new LinkedHashMap<String,String>();
+        beFieldName =  new LinkedHashMap<String,String>();
+        //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        for(String key : fieldDescrption.getKeys()){
+        	fieldDataTypes.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("description", null));
+        }
+        for(String key : fieldDescrption.getKeys()){
+        	beFieldName.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("be_column", null));
         }
     }
     
     public void clearCache(){  
     	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
 	    browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
-	    String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
-	    esEventFields = Arrays.asList(esFields);
-	    fieldDefinations =  new LinkedHashMap<String,String>();
-	    Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-	    for(String key : fieldTypes.getKeys()){
-	    	fieldDefinations.put(key, fieldTypes.getRow(key).getColumns().getStringValue("description", null));
-	    }
+	    /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
+	    esEventFields = Arrays.asList(esFields);*/
+	    fieldDataTypes =  new LinkedHashMap<String,String>();
+        beFieldName =  new LinkedHashMap<String,String>();
+        //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        for(String key : fieldDescrption.getKeys()){
+        	fieldDataTypes.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("description", null));
+        }
+        for(String key : fieldDescrption.getKeys()){
+        	beFieldName.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("be_column", null));
+        }
     }
     
     @Async
@@ -461,9 +473,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveActivityInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
+			String rowKey = null;  
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-	            if(fieldDefinations.containsKey(entry.getKey()) && entry.getValue() != null){	            	
-	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
+				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+					rowKey = beFieldName.get(entry.getKey());
+				}else{
+					rowKey = entry.getKey();
+				}
+	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey()) && entry.getValue() != null){	            	
+	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.get(entry.getKey())));
 	            }
 			}
 				getESClient().prepareIndex(indexName, indexType, id)
@@ -481,24 +499,32 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
+			String rowKey = null;  
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-	            if(fieldDefinations.containsKey(entry.getKey()) && entry.getValue() != null){	            	
-	            	contentBuilder.field(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDefinations.get(entry.getKey())));
-	            }else{
+				
+				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+					rowKey = beFieldName.get(entry.getKey());
+				}else{
+					rowKey = entry.getKey();
+				}
+				
+				if(rowKey != null && fieldDataTypes.containsKey(entry.getKey()) && entry.getValue() != null){	            	
+	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.get(entry.getKey())));
+	            }else if(rowKey != null){
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-	            		contentBuilder.field(entry.getKey(), String.valueOf(entry.getValue()));
+	            		contentBuilder.field(rowKey, String.valueOf(entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-	            		contentBuilder.field(entry.getKey(), Integer.valueOf(""+entry.getValue()));
+	            		contentBuilder.field(rowKey, Integer.valueOf(""+entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-	            		contentBuilder.field(entry.getKey(), Long.valueOf(""+entry.getValue()));
+	            		contentBuilder.field(rowKey, Long.valueOf(""+entry.getValue()));
 	            	}
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-	            		contentBuilder.field(entry.getKey(), Boolean.valueOf(""+entry.getValue()));
+	            		contentBuilder.field(rowKey, Boolean.valueOf(""+entry.getValue()));
 	            	}
 	            	else{        		
-	            		contentBuilder.field(entry.getKey(), entry.getValue());
+	            		contentBuilder.field(rowKey, entry.getValue());
 	            	}
 	            }
 			}
@@ -518,10 +544,17 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		try {
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
 			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamily.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
-			
+			String rowKey = null;
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				  	String typeToChange =  fieldDefinations.containsKey(entry.getKey()) ? fieldDefinations.get(entry.getKey()) : "String";		       
-				  	baseDao.generateNonCounter(entry.getKey(), TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
+				
+				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+					rowKey = beFieldName.get(entry.getKey());
+				}else{
+					rowKey = entry.getKey();
+				}
+				
+				String typeToChange =  fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String";		       
+				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
 		    }
 			
 			mutationBatch.execute();

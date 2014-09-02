@@ -470,15 +470,32 @@ public class CassandraDataLoader implements Constants {
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
+			
+			/*
+			 * 
+			 * Save in ElasticSearch
+			 * 
+			 */
+			Map<String,Object> eventEsMap = new LinkedHashMap<String, Object>();
 
-			/*long start = System.currentTimeMillis();
-				liveDashBoardDAOImpl.saveInESIndex(eventMap);
-			long stop = System.currentTimeMillis();
-			logger.info("Time Taken : {} ",(stop - start));*/
+			for(Map.Entry<String, String> entry : eventMap.entrySet()){
+				eventEsMap.put(entry.getKey(), entry.getValue());
+			}
+			
+			if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
+				eventEsMap =  this.getTaxonomyInfo(eventEsMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+				eventEsMap =  this.getContentInfo(eventEsMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    	}
+	    	if(eventMap.get(GOORUID) != null){  
+	    		eventEsMap =   this.getUserInfo(eventEsMap,String.valueOf(eventMap.get(GOORUID)));
+	    	}
 
+	    	liveDashBoardDAOImpl.saveActivityInESIndex(eventEsMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    	
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
+			
 			
 			/*
 			 * To be Re-enable 
@@ -670,9 +687,10 @@ public class CassandraDataLoader implements Constants {
 		    				
 		    				eventMap.put("eventName", eventObjects.getEventName());
 		    		    	eventMap.put("eventId", eventObjects.getEventId());
-		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
+		    		    	eventMap.put("eventTime",String.valueOf(eventObjects.getStartTime()));
 		    		    	if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
 		    		    		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+		    		    		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 		    		    	}
 		    		    	if(eventMap.get(GOORUID) != null){  
 		    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
@@ -696,6 +714,7 @@ public class CassandraDataLoader implements Constants {
 		    			        }
 		    				   if(eventMap.get(CONTENTGOORUOID) != null){
 		    				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+		    				   		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 		    				   }
 		    				   if(eventMap.get(GOORUID) != null){
 		    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
@@ -763,7 +782,7 @@ public class CassandraDataLoader implements Constants {
 		    				
 		    				eventMap.put("eventName", eventObjects.getEventName());
 		    		    	eventMap.put("eventId", eventObjects.getEventId());
-		    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));
+		    		    	eventMap.put("eventTime",String.valueOf(eventObjects.getStartTime()));
 		    		    	if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
 		    		    		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 		    		    		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
@@ -846,6 +865,29 @@ public class CassandraDataLoader implements Constants {
     			eventMap.put("sharing", resource.getStringValue("sharing", null));
     			eventMap.put("contentType", resource.getStringValue("category", null));
     			eventMap.put("license", resource.getStringValue("license_name", null));
+    			
+    			if(resource.getColumnByName("type_name") != null){
+					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
+						eventMap.put("resource_type_id", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+					}
+				}
+				if(resource.getColumnByName("category") != null){
+					if(categoryCache.containsKey(resource.getColumnByName("category").getStringValue())){    							
+						eventMap.put("resource_category_id", categoryCache.get(resource.getColumnByName("category").getStringValue()));
+					}
+				}
+				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), resource.getColumnByName("gooru_oid").getStringValue());
+				if(!questionCount.isEmpty()){
+					Long questionCounts = questionCount.getLongValue("questionCount", 0L);
+					eventMap.put("question_count", questionCounts);
+					if(questionCounts > 0L){
+						if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
+							eventMap.put("resource_type_id", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+						}	
+					}
+				}else{
+					eventMap.put("question_count",0L);
+				}
     		} 
     	
 		return eventMap;
