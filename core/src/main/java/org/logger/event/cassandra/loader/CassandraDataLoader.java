@@ -868,25 +868,25 @@ public class CassandraDataLoader implements Constants {
     			
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
-						eventMap.put("resource_type_id", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
 					}
 				}
 				if(resource.getColumnByName("category") != null){
 					if(categoryCache.containsKey(resource.getColumnByName("category").getStringValue())){    							
-						eventMap.put("resource_category_id", categoryCache.get(resource.getColumnByName("category").getStringValue()));
+						eventMap.put("resourceCategoryId", categoryCache.get(resource.getColumnByName("category").getStringValue()));
 					}
 				}
 				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), resource.getColumnByName("gooru_oid").getStringValue());
 				if(!questionCount.isEmpty()){
 					Long questionCounts = questionCount.getLongValue("questionCount", 0L);
-					eventMap.put("question_count", questionCounts);
+					eventMap.put("questionCount", questionCounts);
 					if(questionCounts > 0L){
 						if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
-							eventMap.put("resource_type_id", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+							eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
 						}	
 					}
 				}else{
-					eventMap.put("question_count",0L);
+					eventMap.put("questionCount",0L);
 				}
     		} 
     	

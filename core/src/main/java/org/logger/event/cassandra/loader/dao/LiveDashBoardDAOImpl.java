@@ -477,8 +477,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				}else{
 					rowKey = entry.getKey();
 				}
-	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey()) && entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.get(entry.getKey())));
+	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey())&& entry.getValue() != null){	            	
+	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.get(entry.getKey())));
 	            }
 			}
 				getESClient().prepareIndex(indexName, indexType, id)
@@ -505,8 +505,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					rowKey = entry.getKey();
 				}
 				
-				if(rowKey != null && fieldDataTypes.containsKey(entry.getKey()) && entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.get(entry.getKey())));
+				if(rowKey != null && entry.getValue() != null){	            	
+	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
 	            }else if(rowKey != null){
 	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
 	            		contentBuilder.field(rowKey, String.valueOf(entry.getValue()));
