@@ -42,6 +42,7 @@ import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveDashBoardDAO,Constants{
@@ -90,12 +91,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         beFieldName =  new LinkedHashMap<String,String>();
         //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
         Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
-        for(String key : fieldDescrption.getKeys()){
-        	fieldDataTypes.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("description", null));
-        }
-        for(String key : fieldDescrption.getKeys()){
-        	beFieldName.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("be_column", null));
-        }
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		}        
     }
     
     public void clearCache(){  
@@ -107,12 +106,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         beFieldName =  new LinkedHashMap<String,String>();
         //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
         Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
-        for(String key : fieldDescrption.getKeys()){
-        	fieldDataTypes.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("description", null));
-        }
-        for(String key : fieldDescrption.getKeys()){
-        	beFieldName.put(key, fieldDescrption.getRow(key).getColumns().getStringValue("be_column", null));
-        }
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		}   
     }
     
     @Async
