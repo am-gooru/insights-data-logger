@@ -1262,7 +1262,11 @@ public class CassandraDataLoader implements Constants {
 	    						if(detail.getName().contains("ratings")){
 	    							resourceObj.put("ratings", detail.getLongValue());
 	    						}
-	    						resourceObj.put("resourceType", "resource");
+	    						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOid);
+	    		    			if(resource.getColumnByName("type_name") != null){
+	    								String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
+	    								resourceObj.put("resourceType", resourceType);
+	    						}
 	    						logger.info("gooruOid : {}" , gooruOid);
 	    					}
 	    					resourceList.put(resourceObj);
@@ -1327,7 +1331,11 @@ public class CassandraDataLoader implements Constants {
 					JSONObject resourceObj = new JSONObject();
 					resourceObj.put("gooruOid", id);
 					resourceObj.put("views", (insightsView + balancedView));
-					resourceObj.put("resourceType", "resource");
+					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
+	    			if(resource.getColumnByName("type_name") != null){
+							String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
+							resourceObj.put("resourceType", resourceType);
+					}
 					resourceList.put(resourceObj);
 				}
 			}
@@ -1416,11 +1424,15 @@ public class CassandraDataLoader implements Constants {
 			for(Column<String> detail : vluesList) {
 				JSONObject resourceObj = new JSONObject();
 				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+				ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
+    			if(resource.getColumnByName("type_name") != null){
+						String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
+						resourceObj.put("resourceType", resourceType);
+				}
 				for(String column : statKeys){
 					if(detail.getName().equals(column)){
 						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
-						resourceObj.put("resourceType", "resource");
 					}
 				}
 				if(resourceObj.length() > 0 ){
