@@ -572,10 +572,10 @@ public class CassandraDataLoader implements Constants {
     	Calendar cal = Calendar.getInstance();
     	
     	String dateId = null;
-    	String minuteId = null;
-    	String hourId = null;
+    	Long weekId = null;
+    	Long monthId = null;
     	String eventId = null;
-    	String userUid = null;
+    	Long yearId = null;
     	String processingDate = null;
     	
     	//Get all the event name and store for Caching
@@ -598,7 +598,11 @@ public class CassandraDataLoader implements Constants {
    		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate);
    		 			
    		 		for(Row<String, String> dateIds : dateDetail){
-   		 			 	dateId = dateIds.getKey().toString();
+   		 			ColumnList<String> columns = dateIds.getColumns();
+   		 			dateId = dateIds.getKey().toString();
+   		 			monthId = columns.getLongValue("month_date_id", 0L);
+   		 			weekId = columns.getLongValue("week_date_id", 0L);
+   		 			yearId = columns.getLongValue("year_date_id", 0L);
    		 		}	
    		 	}
    		 	
@@ -609,7 +613,11 @@ public class CassandraDataLoader implements Constants {
    		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate);
 	 			
 		 		for(Row<String, String> dateIds : dateDetail){
-		 			 	dateId = dateIds.getKey().toString();
+		 			ColumnList<String> columns = dateIds.getColumns();
+   		 			dateId = dateIds.getKey().toString();
+   		 			monthId = columns.getLongValue("month_date_id", 0L);
+   		 			weekId = columns.getLongValue("week_date_id", 0L);
+   		 			yearId = columns.getLongValue("year_date_id", 0L);
 		 		}
    		 		dateTrySeq++;
    		 	}
@@ -678,6 +686,10 @@ public class CassandraDataLoader implements Constants {
 		    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 		    		    	}
 		    		    	eventMap.put("dateId", dateId);
+		    		    	eventMap.put("weekId", weekId);
+		    		    	eventMap.put("monthId", monthId);
+		    		    	eventMap.put("yearId", yearId);
+		    		    	
 		    		    	liveDashBoardDAOImpl.saveInStaging(eventMap);
 		    			} 
 		    			else{
@@ -701,7 +713,10 @@ public class CassandraDataLoader implements Constants {
 		    				   if(eventMap.get(GOORUID) != null){
 		    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 		    				   }
-		    				   	eventMap.put("dateId", dateId);	
+		    				   	eventMap.put("dateId", dateId);
+			    		    	eventMap.put("weekId", weekId);
+			    		    	eventMap.put("monthId", monthId);
+			    		    	eventMap.put("yearId", yearId);	
 			    	    		liveDashBoardDAOImpl.saveInStaging(eventMap);
 		    		     }
 					} catch (Exception e) {
