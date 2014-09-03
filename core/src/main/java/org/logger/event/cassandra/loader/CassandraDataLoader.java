@@ -434,6 +434,8 @@ public class CassandraDataLoader implements Constants {
 			if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				//Save Activity in ElasticSearch
+				this.saveActivityInIndex(eventObject.getFields());
 				
 			}
 	
@@ -471,27 +473,6 @@ public class CassandraDataLoader implements Constants {
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
 			
-			/*
-			 * 
-			 * Save in ElasticSearch
-			 * 
-			 */
-			Map<String,Object> eventEsMap = new LinkedHashMap<String, Object>();
-
-			for(Map.Entry<String, String> entry : eventMap.entrySet()){
-				eventEsMap.put(entry.getKey(), entry.getValue());
-			}
-			
-			if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
-				eventEsMap =  this.getTaxonomyInfo(eventEsMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-				eventEsMap =  this.getContentInfo(eventEsMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-	    	}
-	    	if(eventMap.get(GOORUID) != null){  
-	    		eventEsMap =   this.getUserInfo(eventEsMap,String.valueOf(eventMap.get(GOORUID)));
-	    	}
-
-	    	liveDashBoardDAOImpl.saveActivityInESIndex(eventEsMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-	    	
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
 			}
@@ -656,6 +637,10 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	//Read all records from Event Detail
 	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	if(eventDetailsNew.isEmpty()){
+	    		logger.info("No date :  {}",startDate);
+	    		return;
+	    	}
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		row.getColumns().getStringValue("event_name", null);
 	    		String searchType = row.getColumns().getStringValue("event_name", null);
@@ -770,58 +755,15 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	//Read all records from Event Detail
 	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	
+	    	if(eventDetailsNew.isEmpty()){
+	    		logger.info("No date :  {}",startDate);
+	    		return;
+	    	}
+	    	
 	    	for (Row<String, String> row : eventDetailsNew) {
-
-	    		String fields = row.getColumns().getStringValue("fields", null);
-	    		if(fields != null){
-	    		try {
-	    			JSONObject jsonField = new JSONObject(fields);
-		    			if(jsonField.has("version")){
-		    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-		    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
-		    				
-		    				eventMap.put("eventName", eventObjects.getEventName());
-		    		    	eventMap.put("eventId", eventObjects.getEventId());
-		    		    	eventMap.put("eventTime",String.valueOf(eventObjects.getStartTime()));
-		    		    	if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
-		    		    		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    		    		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    		    	}
-		    		    	if(eventMap.get(GOORUID) != null){  
-		    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
-		    		    	}
-		    	    		
-		    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-		    			} 
-		    			else{
-		    				   Iterator<?> keys = jsonField.keys();
-		    				   Map<String,Object> eventMap = new HashMap<String, Object>();
-		    				   while( keys.hasNext() ){
-		    			            String key = (String)keys.next();
-		    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
-		    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
-		    			            }
-
-		    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
-		    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
-		    			            }
-		    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
-		    			        }
-		    				   if(eventMap.get(CONTENTGOORUOID) != null){
-		    				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    				   		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    				   }
-		    				   if(eventMap.get(GOORUID) != null ){
-		    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
-		    				   }
-			    	    		
-			    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-		    		     }
-					} catch (Exception e) {
-						logger.info("Error while Migration : {} ",e);
-					}
-	    			}
-	    		}
+	    		saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
@@ -829,6 +771,58 @@ public class CassandraDataLoader implements Constants {
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
 	    	}
 	    
+    }
+    
+    public void saveActivityInIndex(String fields){
+    	if(fields != null){
+			try {
+				JSONObject jsonField = new JSONObject(fields);
+	    			if(jsonField.has("version")){
+	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+	    				
+	    				eventMap.put("eventName", eventObjects.getEventName());
+	    		    	eventMap.put("eventId", eventObjects.getEventId());
+	    		    	eventMap.put("eventTime",String.valueOf(eventObjects.getStartTime()));
+	    		    	if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
+	    		    		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    		    		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    		    	}
+	    		    	if(eventMap.get(GOORUID) != null){  
+	    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
+	    		    	}
+	    	    		
+	    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    			} 
+	    			else{
+	    				   Iterator<?> keys = jsonField.keys();
+	    				   Map<String,Object> eventMap = new HashMap<String, Object>();
+	    				   while( keys.hasNext() ){
+	    			            String key = (String)keys.next();
+	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+	    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+	    			            }
+	
+	    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
+	    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+	    			            }
+	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+	    			        }
+	    				   if(eventMap.get(CONTENTGOORUOID) != null){
+	    				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    				   		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    				   }
+	    				   if(eventMap.get(GOORUID) != null ){
+	    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
+	    				   }
+		    	    		
+		    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    		     }
+				} catch (Exception e) {
+					logger.info("Error while Migration : {} ",e);
+				}
+				}
+		
     }
     
     public Map<String, Object> getUserInfo(Map<String,Object> eventMap , String gooruUId){
@@ -859,6 +853,7 @@ public class CassandraDataLoader implements Constants {
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
+    	logger.info("Content Info : " + gooruOId);
     		if(resource != null){
     			eventMap.put("title", resource.getStringValue("title", null));
     			eventMap.put("description",resource.getStringValue("description", null));
@@ -876,8 +871,8 @@ public class CassandraDataLoader implements Constants {
 						eventMap.put("resourceCategoryId", categoryCache.get(resource.getColumnByName("category").getStringValue()));
 					}
 				}
-				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), resource.getColumnByName("gooru_oid").getStringValue());
-				if(!questionCount.isEmpty()){
+				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId);
+				if(questionCount != null && !questionCount.isEmpty()){
 					Long questionCounts = questionCount.getLongValue("questionCount", 0L);
 					eventMap.put("questionCount", questionCounts);
 					if(questionCounts > 0L){
@@ -1126,32 +1121,32 @@ public class CassandraDataLoader implements Constants {
     					if(columns.getColumnByName("description") != null){
     						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
     					}
-    					resourceMap.put("gooru_oid", columns.getColumnByName("gooru_oid").getStringValue());
+    					resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
     					try{
-    						resourceMap.put("last_modified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    						resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
     					}catch(Exception e){
-    						resourceMap.put("last_modified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+    						resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
     					}
     					try{
-    						resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+    						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
     					}catch(Exception e){
-    						resourceMap.put("created_on", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+    						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
     					}
     					if(columns.getColumnByName("creator_uid") != null){
-    						resourceMap.put("creator_uid", columns.getColumnByName("creator_uid").getStringValue());
+    						resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
     					}
     					if(columns.getColumnByName("user_uid") != null){
-    						resourceMap.put("user_uid", columns.getColumnByName("user_uid").getStringValue());
+    						resourceMap.put("userUid", columns.getColumnByName("user_uid").getStringValue());
     					}
     					if(columns.getColumnByName("record_source") != null){
-    						resourceMap.put("record_source", columns.getColumnByName("record_source").getStringValue());
+    						resourceMap.put("recordSource", columns.getColumnByName("record_source").getStringValue());
     					}
     					if(columns.getColumnByName("sharing") != null){
     						resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
     					}
-    					resourceMap.put("views_count", columns.getColumnByName("views_count").getLongValue());
+    					resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue());
     					if(columns.getColumnByName("organization_uid") != null){
-    						resourceMap.put("content_organization_uid", columns.getColumnByName("organization_uid").getStringValue());
+    						resourceMap.put("contentOrganizationUid", columns.getColumnByName("organization_uid").getStringValue());
     					}
     					if(columns.getColumnByName("thumbnail") != null){
     						resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
@@ -1166,32 +1161,32 @@ public class CassandraDataLoader implements Constants {
     					if(columns.getColumnByName("license_name") != null){
     						//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
     						if(licenseCache.containsKey(columns.getColumnByName("license_name").getStringValue())){    							
-    							resourceMap.put("license_id", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
+    							resourceMap.put("licenseId", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
     						}
     					}
     					if(columns.getColumnByName("type_name") != null){
     						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
     						if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
-    							resourceMap.put("resource_type_id", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
+    							resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
     						}
     					}
     					if(columns.getColumnByName("category") != null){
     						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
     						if(categoryCache.containsKey(columns.getColumnByName("category").getStringValue())){    							
-    							resourceMap.put("resource_category_id", categoryCache.get(columns.getColumnByName("category").getStringValue()));
+    							resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
     						}
     					}
     					ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
     					if(!questionCount.isEmpty()){
     						Long questionCounts = questionCount.getLongValue("questionCount", 0L);
-    						resourceMap.put("question_count", questionCounts);
+    						resourceMap.put("questionCount", questionCounts);
     						if(questionCounts > 0L){
     							if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
-        							resourceMap.put("resource_type_id", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
+        							resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
         						}	
     						}
     					}else{
-    						resourceMap.put("question_count",0L);
+    						resourceMap.put("questionCount",0L);
     					}
 
     					resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
