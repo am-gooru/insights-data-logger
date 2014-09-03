@@ -637,10 +637,7 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	//Read all records from Event Detail
 	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
-	    	if(eventDetailsNew.isEmpty()){
-	    		logger.info("No date :  {}",startDate);
-	    		return;
-	    	}
+
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		row.getColumns().getStringValue("event_name", null);
 	    		String searchType = row.getColumns().getStringValue("event_name", null);
@@ -756,13 +753,9 @@ public class CassandraDataLoader implements Constants {
 	    	//Read all records from Event Detail
 	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
 	    	
-	    	if(eventDetailsNew.isEmpty()){
-	    		logger.info("No date :  {}",startDate);
-	    		return;
-	    	}
 	    	
 	    	for (Row<String, String> row : eventDetailsNew) {
-	    		saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+	    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
@@ -773,6 +766,7 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
+    @Async
     public void saveActivityInIndex(String fields){
     	if(fields != null){
 			try {
@@ -853,7 +847,6 @@ public class CassandraDataLoader implements Constants {
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
-    	logger.info("Content Info : " + gooruOId);
     		if(resource != null){
     			eventMap.put("title", resource.getStringValue("title", null));
     			eventMap.put("description",resource.getStringValue("description", null));
