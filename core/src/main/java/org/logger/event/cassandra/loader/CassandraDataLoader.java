@@ -1442,7 +1442,7 @@ public class CassandraDataLoader implements Constants {
     	JSONObject staticsObj = new JSONObject();
 		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
 		try{
-				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=flase&sessionToken=" + sessionToken;
+				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=false&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
 				staticsObj.put("statisticsData", resourceList);
 				logger.info("staticsObj : {}",staticsObj);
