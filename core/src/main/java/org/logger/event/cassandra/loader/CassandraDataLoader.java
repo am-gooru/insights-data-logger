@@ -1264,15 +1264,13 @@ public class CassandraDataLoader implements Constants {
 	    			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
 	    			if(resource != null && resource.size() > 0){
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
-    				if(columns.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
-    						String resourceType = "scollection";
-	    			
-	    			/*Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
-	    			if(gooruOidColumnString != null){
-	    				gooruOid = gooruOidColumnString.getStringValue();
-	    			}*/
-    						gooruOid = columns.getColumnByName("gooru_oid").getStringValue(); 
-	    				logger.info("gooruOid : {}",gooruOid);
+    					
+    					String resourceType = columns.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
+
+    					gooruOid = columns.getColumnByName("gooru_oid").getStringValue(); 
+	    				
+    					logger.info("gooruOid : {}",gooruOid);
+	    				
 	    				if(gooruOid != null){
 	    					long insightsView = 0L;
 	    					long gooruView = columns.getLongValue("views_count", 0L);
@@ -1281,6 +1279,7 @@ public class CassandraDataLoader implements Constants {
 	    					JSONObject resourceObj = new JSONObject();
 	    					for(Column<String> detail : vluesList) {
 	    						resourceObj.put("gooruOid", gooruOid);
+	    				
 	    						if(detail.getName().contains("views")){
 	    							insightsView = detail.getLongValue();
 	    							long balancedView = (gooruView - insightsView);
@@ -1294,13 +1293,11 @@ public class CassandraDataLoader implements Constants {
 	    						if(detail.getName().contains("ratings")){
 	    							resourceObj.put("ratings", detail.getLongValue());
 	    						}
-	    								resourceObj.put("resourceType", resourceType);
-	    						logger.info("gooruOid : {}" , gooruOid);
+	    						resourceObj.put("resourceType", resourceType);
 	    					}
 	    					resourceList.put(resourceObj);
 	    				}
     				
-    					}
 	    			}
 	    		}
 	    		try{
