@@ -1033,9 +1033,9 @@ public class CassandraDataLoader implements Constants {
     		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+    		/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
     		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_job_count", ""+totalJobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+jobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "indexed_count", ""+endVal);
@@ -1064,8 +1064,8 @@ public class CassandraDataLoader implements Constants {
     			m.execute();
     			long stop = System.currentTimeMillis();
     			
-    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
-    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
+    		/*	baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");*/
     			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_time", ""+(totalTime + (stop-start)));
     			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+(jobCount - 1));
     			
@@ -1247,9 +1247,9 @@ public class CassandraDataLoader implements Constants {
     		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+			/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
 			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count",  ""+endVal);
-			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");
+			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
 			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids", "job_names", runningJobs+","+jobId);
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "total_job_count", ""+totalJobCount);
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "running_job_count", ""+jobCount);
@@ -1261,31 +1261,47 @@ public class CassandraDataLoader implements Constants {
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    			String gooruOid = null;
-	    			Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
+	    			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+	    			if(resource != null && resource.size() > 0){
+    					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+    				if(columns.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
+    						String resourceType = "scollection";
+	    			
+	    			/*Column<String> gooruOidColumnString = baseDao.readWithKeyColumn(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"views~"+i, "gooruOid");
 	    			if(gooruOidColumnString != null){
 	    				gooruOid = gooruOidColumnString.getStringValue();
-	    			}
+	    			}*/
+    						gooruOid = columns.getColumnByName("gooru_oid").getStringValue(); 
 	    				logger.info("gooruOid : {}",gooruOid);
 	    				if(gooruOid != null){
+	    					long insightsView = 0L;
+	    					long gooruView = columns.getLongValue("views_count", 0L);
+	    					
 	    					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid, columnList);
 	    					JSONObject resourceObj = new JSONObject();
 	    					for(Column<String> detail : vluesList) {
 	    						resourceObj.put("gooruOid", gooruOid);
 	    						if(detail.getName().contains("views")){
-	    							resourceObj.put("views", detail.getLongValue());
+	    							insightsView = detail.getLongValue();
+	    							long balancedView = (gooruView - insightsView);
+	    							if(balancedView != 0){
+	    								baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, "count~views", balancedView);
+	    							}
+	    							logger.info("Generating resource Object : {}",balancedView);
+	    							resourceObj.put("views", (insightsView + balancedView));
 	    						}
+	    						
 	    						if(detail.getName().contains("ratings")){
 	    							resourceObj.put("ratings", detail.getLongValue());
 	    						}
-	    						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOid);
-	    		    			if(resource.getColumnByName("type_name") != null){
-	    								String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
 	    								resourceObj.put("resourceType", resourceType);
-	    						}
 	    						logger.info("gooruOid : {}" , gooruOid);
 	    					}
 	    					resourceList.put(resourceObj);
 	    				}
+    				
+    					}
+	    			}
 	    		}
 	    		try{
 	    			if((resourceList.length() != 0)){
