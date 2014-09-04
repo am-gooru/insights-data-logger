@@ -1439,7 +1439,6 @@ public class CassandraDataLoader implements Constants {
 
 		if((rowValues.getTime() <= currDate.getTime())){
 			this.getRecordsToProcess(rowValues, resourceList);
-			this.getRecordsToProcess(lastDate, resourceList);
 			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(rowValues));
 		}else{
 			logger.info("processing min : {} ",currDate);
