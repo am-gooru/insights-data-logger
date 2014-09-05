@@ -1458,14 +1458,9 @@ public class CassandraDataLoader implements Constants {
 		if(contents.size() > 0 ){
 			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
 			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, null)) : 2;
-			
-			
 			allowedLimit = (indexedCount + indexedLimit);
-			
-			int diff = ((contents.size() - 1) - allowedLimit);
-			
-			if(diff < 0 ){
-				allowedLimit = (indexedCount + (diff * -1)) ;
+			if(allowedLimit > contents.size() ){
+				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
 			
