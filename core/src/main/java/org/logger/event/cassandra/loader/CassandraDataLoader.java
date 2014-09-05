@@ -1432,11 +1432,11 @@ public class CassandraDataLoader implements Constants {
 			e1.printStackTrace();
 		}		
 		
-		Date rowValues = new Date(lastDate.getTime() + 60000);
+		//Date rowValues = new Date(lastDate.getTime() + 60000);
 
-		if((rowValues.getTime() <= currDate.getTime())){
-			this.getRecordsToProcess(rowValues, resourceList);
-			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(rowValues));
+		if((lastDate.getTime() <= currDate.getTime())){
+			this.getRecordsToProcess(lastDate, resourceList);
+			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(lastDate));
 		}else{
 			logger.info("processing min : {} ",currDate);
 			this.getRecordsToProcess(currDate, resourceList);
@@ -1448,10 +1448,15 @@ public class CassandraDataLoader implements Constants {
 	  int allowedLimit = 0;
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
-		ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
+		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), null)) : 0;
+		if(indexedCount == (contents.size() - 1)){
+		 rowValues = new Date(rowValues.getTime() + 60000);
+		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		}
 		if(contents.size() > 0 ){
-			indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), null)) : 0;
+			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
 			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, null)) : 2;
+			
 			
 			allowedLimit = (indexedCount + indexedLimit);
 			
