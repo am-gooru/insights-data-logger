@@ -1449,9 +1449,11 @@ public class CassandraDataLoader implements Constants {
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), null)) : 0;
+		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		if(indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
 		if(contents.size() > 0 ){
 			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
@@ -1465,6 +1467,7 @@ public class CassandraDataLoader implements Constants {
 			if(diff < 0 ){
 				allowedLimit = (indexedCount + (diff * -1)) ;
 			}
+			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
 			
 			for(int i = indexedCount ; i < allowedLimit ; i++) {
 				indexedCount = i;
