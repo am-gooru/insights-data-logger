@@ -11,6 +11,8 @@ public enum ESIndexices {
 	USERCATALOG("user_catalog" , new String[] {"dim_user"}),
 	
 	TAXONOMYCATALOG("taxonomy_catalog" , new String[] {"taxonomy_code"}),
+
+	TESTCATALOG("test_catalog" , new String[] {"dim_resource"}),
 	
 	;
 	
