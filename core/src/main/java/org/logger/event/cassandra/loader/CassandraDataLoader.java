@@ -1443,33 +1443,51 @@ public class CassandraDataLoader implements Constants {
 		}
    }
   private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
-	  
-
-		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));		
-		for(int i = 0 ; i < contents.size() ; i++) {
-			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
-			for(Column<String> detail : vluesList) {
-				JSONObject resourceObj = new JSONObject();
-				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-				ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
-    			if(resource.getColumnByName("type_name") != null){
-						String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
-						resourceObj.put("resourceType", resourceType);
-				}
-				for(String column : statKeys){
-					if(detail.getName().equals(column)){
-						logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
-						resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+	  int indexedCount = 0;
+	  int indexedLimit = 2;
+	  int allowedLimit = 0;
+		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
+		ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
+		if(contents.size() > 0 ){
+			indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), null)) : 0;
+			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, null)) : 2;
+			
+			allowedLimit = (indexedCount + indexedLimit);
+			
+			int diff = ((contents.size() - 1) - allowedLimit);
+			
+			if(diff < 0 ){
+				allowedLimit = (indexedCount + (diff * -1)) ;
+			}
+			
+			for(int i = indexedCount ; i < allowedLimit ; i++) {
+				indexedCount = i;
+				ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
+				for(Column<String> detail : vluesList) {
+					JSONObject resourceObj = new JSONObject();
+					resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
+	    			if(resource.getColumnByName("type_name") != null){
+							String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
+							resourceObj.put("resourceType", resourceType);
 					}
-				}
-				if(resourceObj.length() > 0 ){
-					resourceList.put(resourceObj);
+					for(String column : statKeys){
+						if(detail.getName().equals(column)){
+							logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
+							resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+						}
+					}
+					if(resourceObj.length() > 0 ){
+						resourceList.put(resourceObj);
+					}
 				}
 			}
 		}
-		
 		if((resourceList.length() != 0)){
-			this.callStatAPI(resourceList, rowValues);
+			this.callStatAPI(resourceList, rowValues);			
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
+
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 	 		logger.info("No content viewed");

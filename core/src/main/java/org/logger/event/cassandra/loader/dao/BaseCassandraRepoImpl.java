@@ -464,6 +464,31 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
             logger.info("Error while save in method : saveStringValue {}", e);
         }
     }
+
+    public void saveStringValue(String cfName, String key,String columnName,String value,int expireTime) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
+
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveStringValue {}", e);
+        }
+    }
+    public void saveLongValue(String cfName, String key,String columnName,long value,int expireTime) {
+
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+        m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
+
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+            logger.info("Error while save in method : saveLongValue {}", e);
+        }
+    }
     
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 
