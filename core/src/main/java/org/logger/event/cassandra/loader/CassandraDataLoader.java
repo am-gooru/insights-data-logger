@@ -757,7 +757,7 @@ public class CassandraDataLoader implements Constants {
    		 	
 	    	if(eventUUID == null || eventUUID.isEmpty() ) {
 	    		logger.info("No events in given timeline :  {}",startDate);
-	    		return;
+	    		continue;
 	    	}
 	 
 	    	Collection<String> eventDetailkeys = new ArrayList<String>();
