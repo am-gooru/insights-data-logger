@@ -753,7 +753,7 @@ public class CassandraDataLoader implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,"AWS");
 	    	if(eventUUID == null && eventUUID.isEmpty() ) {
 	    		logger.info("No events in given timeline :  {}",startDate);
 	    		return;
@@ -766,7 +766,7 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	    	
 	    	//Read all records from Event Detail
-	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,"AWS");
 	    	
 	    	
 	    	for (Row<String, String> row : eventDetailsNew) {

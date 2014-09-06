@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
+import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -128,7 +129,31 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	return result;
     }
-    
+
+    public ColumnList<String> readWithKey(String cfName,String key,String keySpaceType){
+        
+    	ColumnList<String> result = null;
+    	
+    	Keyspace keyspace = getKeyspace();
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWS")){
+    		keyspace = getAwsKeyspace();
+    	}
+    	
+    	try {
+              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (Exception e) {
+            logger.info("Error while fetching data from method : readWithKey {} ", e);
+        }
+    	
+    	return result;
+    }
     public Rows<String, String> readWithKeyList(String cfName,Collection<String> key){
         
     	Rows<String, String> result = null;
@@ -147,6 +172,32 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
 
+    public Rows<String, String> readWithKeyList(String cfName,Collection<String> key,String keySpaceType){
+        
+    	Rows<String, String> result = null;
+    	
+    	Keyspace keyspace = getKeyspace();
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWS")){
+    		keyspace = getAwsKeyspace();
+    	}
+    	
+    	
+    	try {
+              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .getKeySlice(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (Exception e) {
+            logger.info("Error while fetching data from method : readWithKey {}", e);
+        }
+    	
+    	return result;
+    }
+    
     public Rows<String, String> readCommaKeyList(String cfName,String... key){
 
     	Rows<String, String> result = null;
