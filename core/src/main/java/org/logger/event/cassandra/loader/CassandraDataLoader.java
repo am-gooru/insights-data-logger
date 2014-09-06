@@ -754,7 +754,8 @@ public class CassandraDataLoader implements Constants {
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
    		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,"AWS");
-	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+   		 	
+	    	if(eventUUID == null || eventUUID.isEmpty() ) {
 	    		logger.info("No events in given timeline :  {}",startDate);
 	    		return;
 	    	}
@@ -770,6 +771,7 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	
 	    	for (Row<String, String> row : eventDetailsNew) {
+	    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
 	    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
 	    	}
 	    	//Incrementing time - one minute
