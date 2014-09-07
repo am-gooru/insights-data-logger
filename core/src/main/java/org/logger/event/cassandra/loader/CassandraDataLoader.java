@@ -755,31 +755,28 @@ public class CassandraDataLoader implements Constants {
    		 	//Read Event Time Line for event keys and create as a Collection
    		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,"AWS");
    		 	
-	    	if(eventUUID == null || eventUUID.isEmpty() ) {
-	    		logger.info("No events in given timeline :  {}",startDate);
-	    		continue;
-	    	}
-	 
-	    	Collection<String> eventDetailkeys = new ArrayList<String>();
-	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-	    		eventDetailkeys.add(eventDetailUUID);
-	    	}
-	    	
-	    	//Read all records from Event Detail
-	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,"AWS");
-	    	
-	    	
-	    	for (Row<String, String> row : eventDetailsNew) {
-	    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
-	    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
+
+		    	Collection<String> eventDetailkeys = new ArrayList<String>();
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    		eventDetailkeys.add(eventDetailUUID);
+		    	}
+		    	
+		    	//Read all records from Event Detail
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,"AWS");
+		    	
+		    	for (Row<String, String> row : eventDetailsNew) {
+		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
+		    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+		    	}
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
 	    	Date incrementedTime =cal.getTime(); 
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    	}
+	    }
 	    
     }
     
