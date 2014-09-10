@@ -968,7 +968,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         return sb.toString();
     }
 
-    public List<String> getParentId(String cfName,String Key){
+    public List<String> getParentIds(String cfName,String Key){
 
     	Rows<String, String> collectionItem = null;
     	List<String> classPages = new ArrayList<String>();
@@ -994,6 +994,29 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		 }
     	}
     	return classPages; 
+    	}
+
+    public String getParentId(String cfName,String Key){
+    	Rows<String, String> collectionItem = null;
+    	String parentId = null;
+    	try {
+    		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		 	.searchWithIndex()
+    			.addExpression()
+    			.whereColumn("resource_gooru_oid")
+    			.equals()
+    			.value(Key).execute().getResult();
+    	} catch (ConnectionException e) {
+    		
+    		logger.info("Error while retieveing data : {}" ,e);
+    	}
+    	if(collectionItem != null){
+    		for(Row<String, String> collectionItems : collectionItem){
+    			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+    		 }
+    	}
+    	return parentId; 
     	}
     
 	public void updateCollectionItem(String cfName,Map<String ,String> eventMap){

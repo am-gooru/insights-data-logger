@@ -760,6 +760,7 @@ public class CassandraDataLoader implements Constants {
 		    	Collection<String> eventDetailkeys = new ArrayList<String>();
 		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
 		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
 		    		eventDetailkeys.add(eventDetailUUID);
 		    	}
 		    	
