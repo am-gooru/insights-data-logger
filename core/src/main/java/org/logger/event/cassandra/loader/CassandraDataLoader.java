@@ -781,7 +781,7 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
-    public void migrateEventsToCounter(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    public void migrateEventsToCounter(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
