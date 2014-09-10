@@ -781,6 +781,85 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
+    public void migrateEventsToCounter(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,"AWS");
+   		 	
+	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
+
+		    	Collection<String> eventDetailkeys = new ArrayList<String>();
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
+		    		eventDetailkeys.add(eventDetailUUID);
+		    	}
+		    	
+		    	//Read all records from Event Detail
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,"AWS");
+		    	
+		    	for (Row<String, String> row : eventDetailsNew) {
+		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
+		    		String fields = row.getColumns().getStringValue("fields", null);
+		        	if(fields != null){
+		    			try {
+		    				JSONObject jsonField = new JSONObject(fields);
+		    	    			if(jsonField.has("version")){
+		    	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    	    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+		    	    				eventMap.put("eventName", eventObjects.getEventName());
+		    	    		    	eventMap.put("eventId", eventObjects.getEventId());
+		    	    	    		
+		    	    	    		liveDashBoardDAOImpl.callCountersV2(eventMap);
+		    	    			} 
+		    	    			else{
+		    	    				   Iterator<?> keys = jsonField.keys();
+		    	    				   Map<String,String> eventMap = new HashMap<String, String>();
+		    	    				   while( keys.hasNext() ){
+		    	    			            String key = (String)keys.next();
+		    	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+		    	    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+		    	    			            }
+		    	
+		    	    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
+		    	    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+		    	    			            }
+		    	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+		    	    			        }
+		    		    	    		
+		    	    				   liveDashBoardDAOImpl.callCountersV2(eventMap);
+		    	    		     }
+		    				} catch (Exception e) {
+		    					logger.info("Error while Migration : {} ",e);
+		    				}
+		    				}
+		    		
+		        
+		    	}
+	    	}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    }
+	    
+    }
     @Async
     public void saveActivityInIndex(String fields){
     	if(fields != null){
