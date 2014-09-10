@@ -782,6 +782,7 @@ public class CassandraDataLoader implements Constants {
     }
     
     public void migrateEventsToCounter(String startTime , String endTime,String customEventName) throws ParseException {
+    	logger.info("counter job started");
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
@@ -799,7 +800,7 @@ public class CassandraDataLoader implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,"AWS");
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
@@ -811,7 +812,7 @@ public class CassandraDataLoader implements Constants {
 		    	}
 		    	
 		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,"AWS");
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
