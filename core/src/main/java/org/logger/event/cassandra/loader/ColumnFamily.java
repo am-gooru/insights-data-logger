@@ -38,6 +38,8 @@ public enum ColumnFamily {
 	
 	LIVEDASHBOARD("live_dashboard"),
 	
+	LIVEDASHBOARDTEST("live_dashboard_test"),
+	
 	MICROAGGREGATION("micro_aggregation"),
 	
 	ACITIVITYSTREAM("activity_stream"),
