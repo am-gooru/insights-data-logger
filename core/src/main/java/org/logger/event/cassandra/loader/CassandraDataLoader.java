@@ -822,8 +822,10 @@ public class CassandraDataLoader implements Constants {
 		    				JSONObject jsonField = new JSONObject(fields);
 		    	    			if(jsonField.has("version")){
 		    	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    	    				
 		    	    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
 		    	    				eventMap.put("eventName", eventObjects.getEventName());
+		    	    		    	eventMap.put("startTime",String.valueOf(eventObjects.getStartTime()));		    	    		    	
 		    	    		    	eventMap.put("eventId", eventObjects.getEventId());
 		    	    	    		
 		    	    	    		liveDashBoardDAOImpl.callCountersV2Custom(eventMap);
