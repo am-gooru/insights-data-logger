@@ -826,7 +826,7 @@ public class CassandraDataLoader implements Constants {
 		    	    				eventMap.put("eventName", eventObjects.getEventName());
 		    	    		    	eventMap.put("eventId", eventObjects.getEventId());
 		    	    	    		
-		    	    	    		liveDashBoardDAOImpl.callCountersV2(eventMap);
+		    	    	    		liveDashBoardDAOImpl.callCountersV2Custom(eventMap);
 		    	    			} 
 		    	    			else{
 		    	    				   Iterator<?> keys = jsonField.keys();
@@ -843,7 +843,7 @@ public class CassandraDataLoader implements Constants {
 		    	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
 		    	    			        }
 		    		    	    		
-		    	    				   liveDashBoardDAOImpl.callCountersV2(eventMap);
+		    	    				   liveDashBoardDAOImpl.callCountersV2Custom(eventMap);
 		    	    		     }
 		    				} catch (Exception e) {
 		    					logger.info("Error while Migration : {} ",e);

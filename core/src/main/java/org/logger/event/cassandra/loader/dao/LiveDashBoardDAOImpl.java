@@ -130,7 +130,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	            			}else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
 	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
 	            			}else if(orginalColumn.startsWith("sum"+SEPERATOR)){
+	            				logger.info("orginalColumn" + orginalColumn); 
 	            				String[] rowKey = orginalColumn.split("~");
+	            				logger.info("rowKey[1]" + rowKey[1]);
 	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1]))),m);
 	            				
 	            			}
@@ -143,6 +145,41 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
                     }
             	
             }
+    	}
+    }
+    
+    @Async
+    public void callCountersV2Custom(Map<String,String> eventMap) {
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	if((eventMap.containsKey(EVENTNAME))) {
+            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"));
+
+            String columnName = "C:all~E:contentGooruId";
+            	String columnValue = eventKeys.getColumnByName("C:all~E:contentGooruId").getStringValue();
+        		String key = this.formOrginalKey(columnName, eventMap);
+        		for(String value : columnValue.split(",")){
+            		String orginalColumn = this.formOrginalKey(value, eventMap);
+	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+	            			if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
+	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
+	            			}else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
+	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
+	            			}else if(orginalColumn.startsWith("sum"+SEPERATOR)){
+	            				logger.info("orginalColumn" + orginalColumn); 
+	            				String[] rowKey = orginalColumn.split("~");
+	            				logger.info("rowKey[1]" + rowKey[1]);
+	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1]))),m);
+	            				
+	            			}
+	            		} 
+            		}
+                	try {
+                        m.execute();
+                    } catch (ConnectionException e) {
+                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+                    }
+            	
+            
     	}
     }
     
