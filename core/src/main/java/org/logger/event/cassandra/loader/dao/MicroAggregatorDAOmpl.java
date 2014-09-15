@@ -164,8 +164,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.info("isStudent : {}",isStudent);
 					
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					/*if(!isOwner && isStudent){*/
-						if(!isOwner){
+					if(!isOwner && isStudent){
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 					keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					}
@@ -174,8 +173,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					
-					/*if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){*/
-						if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner){
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -200,15 +198,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage);
 					
-					/*if(!isOwner && isStudent){*/
-						if(!isOwner){
+					if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
-					/*if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){*/
-						if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner){
+					if(!this.isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
@@ -527,6 +523,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			Column<String> viewsValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());    	
 	    	long views =  viewsValues != null ? viewsValues.getLongValue() : 0L;
 
+	    	if(views == 0L && totalTimeSpent > 0L){
+	    		baseCassandraDao.saveLongValue(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
+	    		views = 1;
+	    	}
 	    	
 			if(views != 0L){
 				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent, m);
@@ -772,9 +772,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage);
-					//boolean isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage);
-					/*if(!isOwner && isStudent){*/
-						if(!isOwner){
+					boolean isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage);
+					if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
