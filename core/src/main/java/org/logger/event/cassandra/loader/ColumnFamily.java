@@ -44,9 +44,9 @@ public enum ColumnFamily {
 	
 	ACITIVITYSTREAM("activity_stream"),
 	
-	REALTIMECOUNTER("real_time_counter"),
+	REALTIMECOUNTER("real_time_counter_test"),
 	
-	REALTIMEAGGREGATOR("real_time_aggregator"),
+	REALTIMEAGGREGATOR("real_time_aggregator_test"),
 	
 	QUESTIONCOUNT("question_count"),
 	
