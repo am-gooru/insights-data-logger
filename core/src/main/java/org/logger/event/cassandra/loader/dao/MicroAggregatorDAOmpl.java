@@ -556,6 +556,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			Column<String> viewsValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName());    	
 	    	long views =  viewsValues != null ? viewsValues.getLongValue() : 0L;
 
+	    	if(views == 0L && totalTimeSpent > 0L){
+	    		baseCassandraDao.saveLongValue(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
+	    		views = 1;
+	    	}
 	    	
 			if(views != 0L){
 				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(),totalTimeSpent, m);

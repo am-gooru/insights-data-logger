@@ -734,6 +734,7 @@ public class CassandraDataLoader implements Constants {
 
     	logger.info("Process Ends  : Inserted successfully");
     }
+
     
     public void updateStagingES(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -770,6 +771,74 @@ public class CassandraDataLoader implements Constants {
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
 		    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+		    	}
+	    	}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    }
+	    
+    }
+    
+    public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+   		 	
+	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
+
+		    	Collection<String> eventDetailkeys = new ArrayList<String>();
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
+		    		eventDetailkeys.add(eventDetailUUID);
+		    	}
+		    	
+		    	//Read all records from Event Detail
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+		    	
+		    	for (Row<String, String> row : eventDetailsNew) {
+		    		String fields = row.getColumns().getStringValue("fields", null);
+		    		
+		    		logger.info("Fields : " + fields);
+
+		    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    		
+					try {
+	    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects); 
+	    				
+						eventMap = this.formatEventMap(eventObjects, eventMap);
+						
+						String aggregatorJson = cache.get(eventMap.get("eventName"));
+						
+						logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
+						
+						if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+							liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+						}
+						eventMap = JSONDeserializer.deserializeEventObject(eventObjects);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					} 
+    				
+		    		
 		    	}
 	    	}
 	    	//Incrementing time - one minute
