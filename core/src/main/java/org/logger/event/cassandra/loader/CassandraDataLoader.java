@@ -831,7 +831,7 @@ public class CassandraDataLoader implements Constants {
 						logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 						
 						if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-							liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+							//liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 						}
 						eventMap = JSONDeserializer.deserializeEventObject(eventObjects);
 					} catch (JSONException e) {
