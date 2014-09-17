@@ -1187,9 +1187,9 @@ public class CassandraDataLoader implements Constants {
     		/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
     		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
     		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_job_count", ""+totalJobCount);
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+jobCount);
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "indexed_count", ""+endVal);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings", "total_job_count", ""+totalJobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings", "running_job_count", ""+jobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings", "indexed_count", ""+endVal);
     		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
@@ -1216,8 +1216,8 @@ public class CassandraDataLoader implements Constants {
     			
     		/*	baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
     			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");*/
-    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "total_time", ""+(totalTime + (stop-start)));
-    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings", "running_job_count", ""+(jobCount - 1));
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings", "running_job_count", ""+(jobCount - 1));
     			
     		} catch (Exception e) {
     			e.printStackTrace();
