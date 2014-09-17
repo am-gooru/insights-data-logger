@@ -1204,7 +1204,7 @@ public class CassandraDataLoader implements Constants {
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					
-    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (columns.getColumnByName("views_count").getLongValue() * 4000), m);
+    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARDTEST.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (columns.getColumnByName("views_count").getLongValue() * 4000), m);
     					
     				}
     			
