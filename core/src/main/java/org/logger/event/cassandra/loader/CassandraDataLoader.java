@@ -1164,7 +1164,7 @@ public class CassandraDataLoader implements Constants {
     
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
-    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views_job_settings");
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings");
     	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
     	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
@@ -1201,7 +1201,9 @@ public class CassandraDataLoader implements Constants {
     			logger.info("contentId : "+ i);
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
     				if(resource != null && resource.size() > 0){
+    					
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+    					
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					
     					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARDTEST.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (columns.getColumnByName("views_count").getLongValue() * 4000), m);
