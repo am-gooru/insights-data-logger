@@ -69,16 +69,21 @@ public class TypeConverter {
 					//accepting timestamp
 				 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 					SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+					SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 					try{
 						result =  new Date(Long.valueOf(value));
 					}catch(Exception e){
 						try{
-							result = formatter.parse(String.valueOf(value));
+							result = formatter.parse(value);
 						}catch(Exception e1){
 							try{
-								result = formatter2.parse(String.valueOf(value));
+								result = formatter2.parse(value);
 							}catch(Exception e2){
-								System.out.print("Error while convert " + value + " to date");
+								try{
+									result = formatter3.parse(value);
+								}catch(Exception e3){
+									System.out.print("Error while convert " + value + " to date");
+								}
 							}
 						}
 					}
