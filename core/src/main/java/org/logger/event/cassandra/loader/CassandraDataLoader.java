@@ -837,7 +837,6 @@ public class CassandraDataLoader implements Constants {
 					} catch (JSONException e) {
 						e.printStackTrace();
 					} 
-    				
 		    		
 		    	}
 	    	}
@@ -1206,7 +1205,8 @@ public class CassandraDataLoader implements Constants {
     					
     					logger.info("Gooru Id: {} = Views : {} ",columns.getColumnByName("gooru_oid").getStringValue(),columns.getColumnByName("views_count").getLongValue());
     					
-    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARDTEST.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (columns.getColumnByName("views_count").getLongValue() * 4000), m);
+    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "count~views", columns.getColumnByName("views_count").getLongValue(), m);
+    					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (columns.getColumnByName("views_count").getLongValue() * 4000), m);
     					
     				}
     			
