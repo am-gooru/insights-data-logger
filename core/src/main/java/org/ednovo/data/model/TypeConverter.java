@@ -23,11 +23,14 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import ch.qos.logback.classic.Logger;
 
 import com.google.gson.Gson;
 
@@ -64,9 +67,24 @@ public class TypeConverter {
 					result = new JSONObject(value);
 				}else if(type.equals("Date")){
 					//accepting timestamp
-					result =  new Date(Long.valueOf(value));
+				 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+					SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+					try{
+						result =  new Date(Long.valueOf(value));
+					}catch(Exception e){
+						try{
+							result = formatter.parse(String.valueOf(value));
+						}catch(Exception e1){
+							try{
+								result = formatter2.parse(String.valueOf(value));
+							}catch(Exception e2){
+								System.out.print("Error while convert " + value + " to date");
+							}
+						}
+					}
+
 				}else if(type.equals("Boolean")){
-					result = Boolean.valueOf(value);
+						result = Boolean.valueOf(value);
 				}
 				else if(type.equals("String")){
 					result = value;
