@@ -237,7 +237,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	paginateObj.put("sortBy","itemSequence");
     	paginateObj.put("sortOrder","ASC");
     	
-    	List<String> classpage = microAggregatorDAOmpl.getPathWays(eventMap);
+    	List<String> classpage = microAggregatorDAOmpl.getPathWaysFromClass(eventMap);
     	
     	for(String classId : classpage){
 	    	filtersObj.put("classId",classId);
