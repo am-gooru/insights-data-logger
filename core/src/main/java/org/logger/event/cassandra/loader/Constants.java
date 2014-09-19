@@ -44,6 +44,8 @@ public interface Constants {
 	
 	public String CLASSPAGEGOORUOID= "classpageGooruId";
 	
+	public String PATHWAYGOORUOID= "pathwayGooruId";
+	
 	public String VERSION = "version";
 
 	public String EVENTTYPE = "eventType";

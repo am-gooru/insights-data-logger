@@ -134,6 +134,8 @@ public enum LoaderConstants {
 	RUFB("resource.user.feedback"),
 	
 	CLASSPAGE("classpage"),
+	
+	PATHWAY("pathway"),
     
     ;
 	
