@@ -817,25 +817,33 @@ public class CassandraDataLoader implements Constants {
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		String fields = row.getColumns().getStringValue("fields", null);
 		    		
+		    		try {
 		    		logger.info("Fields : " + fields);
 
-		    		EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    		JSONObject jsonField = new JSONObject(fields);
+	    		
+		    		if(jsonField.has("version")){
 		    		
-					try {
+	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+		    		
 	    				Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects); 
 	    				
 						eventMap = this.formatEventMap(eventObjects, eventMap);
 						
 						String aggregatorJson = cache.get(eventMap.get("eventName"));
 						
-						if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-							liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
-						}
+							if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+								liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
+							}
+	    				}
 					} catch (Exception e) {
 						logger.info("Exception : " + e);
 					} 
 		    		
-		    	}
+		    		}
+		    	
+	    		}
+		    	
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
