@@ -842,8 +842,6 @@ public class CassandraDataLoader implements Constants {
 		    		
 		    		}
 		    	
-	    		}
-		    	
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
