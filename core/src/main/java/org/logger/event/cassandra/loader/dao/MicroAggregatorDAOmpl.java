@@ -294,13 +294,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
      }
 
     public void realTimeMetricsMigration(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
-    	
+    	logger.info("Migration starts....... " ); 
     	List<String> pathWays = this.getPathWaysFromClass(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
 		boolean isStudent = false;
 
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(MODE) &&  eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
@@ -313,7 +313,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        }
 		}
 		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) ){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(MODE) && eventMap.get(MODE).equalsIgnoreCase(STUDY) ){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        
@@ -327,7 +327,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        }
 		}
 		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY) ){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(MODE) &&  eventMap.get(MODE).equalsIgnoreCase(STUDY) ){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
@@ -341,7 +341,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        }
 		}
 		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(MODE).equalsIgnoreCase(STUDY)){
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(MODE) &&  eventMap.get(MODE).equalsIgnoreCase(STUDY)){
 			questionCountInQuiz = this.getQuestionCount(eventMap);
 			if(pathWays != null && pathWays.size() > 0){
 				for(String pathWay : pathWays){
@@ -809,8 +809,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if(resourcesDetail != null){
 				for(Row<String, String> resource : resourcesDetail){
 					type =  resource.getColumns().getColumnByName("type_name") != null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
+					logger.info("resource type : " + type);
 				 }
 			}
+			
+			logger.info("pathwayId : " + pathwayId); 
 			
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				pathwayIds.add(pathwayId);
@@ -897,6 +900,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	public List<String> getPathWaysFromClass(Map<String,String> eventMap){
 
+		logger.info("pathway migration from class.. ");
+		
+		logger.info("Event name : " + eventMap.get(EVENTNAME) + "content_gooru_id " + eventMap.get(CONTENTGOORUOID));
+		
 		List<String> classPages = new ArrayList<String>();
     	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
     		List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(CONTENTGOORUOID));

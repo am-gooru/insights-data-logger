@@ -833,9 +833,8 @@ public class CassandraDataLoader implements Constants {
 						if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 							liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
 						}
-						eventMap = JSONDeserializer.deserializeEventObject(eventObjects);
-					} catch (JSONException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						logger.info("Exception : " + e);
 					} 
 		    		
 		    	}
