@@ -473,20 +473,21 @@ public class CassandraDataLoader implements Constants {
 
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
 			
-			if(pushingEvents.contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
-			}
-			
 			
 			/*
 			 * To be Re-enable 
 			 * 
+
+			if(pushingEvents.contains(eventMap.get("eventName"))){
+				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
+			}
 	
-			  if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
-			}*/
-	
+			}
 			
+			*/
+	
     	}catch(Exception e){
     		logger.info("Exception in handleEventObjectHandler : {} ",e);
     	}
@@ -500,7 +501,6 @@ public class CassandraDataLoader implements Constants {
      * 		If the host is unavailable
      */
     
-    @Async
     private void updateEventObjectCompletion(EventObject eventObject) throws ConnectionException {
 
     	Long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();

@@ -146,6 +146,8 @@ public interface Constants {
 	
 	public String CLASSPAGEID = "classpage_id";
 	
+	public String PATHWAYID = "pathway_id";
+	
 	public String MINUTEDATEFORMATTER = "yyyyMMddkkmm";
 
 	public String FIELDS = "fields";

@@ -113,7 +113,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}   
     }
     
-    @Async
+    
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
@@ -256,7 +256,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
        
     }
     
-    @Async
     public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
     	
     	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
@@ -333,7 +332,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT+SEPERATOR+eventMap.get(EVENTNAME), 1);
     }	
     
-	@Async
 	public void addApplicationSession(Map<String,String> eventMap){
 		
 		int expireTime = 3600;
@@ -385,7 +383,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         }
 	}
 	
-	@Async
 	public void addContentForPostViews(Map<String,String> eventMap){
 		String dateKey = minDateFormatter.format(new Date()).toString();
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
@@ -606,7 +603,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 	}
 	@Async
-    public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
+	public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
     	
 		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
 			
