@@ -808,7 +808,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			if(resourcesDetail != null){
 				for(Row<String, String> resource : resourcesDetail){
-					type =  resource.getColumns().getColumnByName("type_name") != null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
+					type =  resource.getColumns().getColumnByName("type_name") == null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
 					logger.info("resource type : " + type);
 				 }
 			}
