@@ -415,7 +415,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 		if(keysList != null && keysList.size() > 0 ){
-			this.startCounters(eventMap, aggregatorJson, keysList, key);
+			this.startCountersMig(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
 			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
 		}
@@ -993,4 +993,95 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		
 	}
+
+	//to be removed 
+	
+	 public void startCountersMig(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{    	
+	    	JSONObject j = new JSONObject(aggregatorJson);
+	    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
+	    	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
+	    	
+	    	for (Entry entry : entrySet) {
+	        	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
+	        	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
+		        for(String localKey : keysList){
+		        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
+		        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName())) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+			        			 baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+					}	
+		        		
+		        		if(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()))){
+
+		        			ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey);
+		        			
+		        			long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
+		        			//long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(eventMap.get(CONTENTGOORUOID)+SEPERATOR+LoaderConstants.TS.getName(), 0L) : 0L;
+		        			
+		        			if(views == 0L){
+		        				baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+		        			}
+		        		}
+		        		
+		        		if(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+		    				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ)) ;
+		    				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS)) ;
+		    				String answerStatus = null;
+		    				int status = 0;
+		    				
+		    				status = Integer.parseInt(eventMap.get("attemptCount"));
+	    					if(status != 0){
+						         status = status-1;
+	    					}
+	    					
+							if(attempStatus[status] == 1){
+								answerStatus = LoaderConstants.CORRECT.getName();
+							}else if(attempStatus[status] == 0){
+								answerStatus = LoaderConstants.INCORRECT.getName();
+							}
+		    	    		
+							String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 :attemptTrySequence[status]);
+		    	    		if(option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+		    	    			answerStatus = 	option;
+		    	    		}
+		    				String openEndedText = eventMap.get(TEXT);
+		    				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()){
+		    					option = "A";
+		    				}
+		    				boolean answered = this.isUserAlreadyAnswered(localKey, key);
+	        				
+		    				if(answered){
+		    					if(!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){
+		    						baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+		        					updatePostAggregator(localKey,key+SEPERATOR+option);
+		    					}
+		    				}else{
+		    					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+option,e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+	        					updatePostAggregator(localKey,key+SEPERATOR+option);
+		    				}
+	        				
+	        				if(eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+	        					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+answerStatus,1L,m);
+	        					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+	        				}
+	        				else if(answerStatus != null && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())){	    					
+	        					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey ,key+SEPERATOR+answerStatus,1L,m);
+	        					updatePostAggregator(localKey,key+SEPERATOR+answerStatus);
+	        				}
+						}
+		        		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null){
+			        		baseCassandraDao.saveLongValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),localKey,key+SEPERATOR+eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
+			        		baseCassandraDao.saveLongValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),localKey+SEPERATOR+key,eventMap.get(GOORUID)+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
+			        		baseCassandraDao.saveLongValue(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey().toString(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
+		        		}
+		        	}				
+		        }
+	    	}
+	    	try {
+	            m.execute();
+	        } catch (ConnectionException e) {
+	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+	        }
+	    }
+
 }
