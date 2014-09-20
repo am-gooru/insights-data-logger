@@ -828,8 +828,6 @@ public class CassandraDataLoader implements Constants {
 						
 						String aggregatorJson = cache.get(eventMap.get("eventName"));
 						
-						logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
-						
 						if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 							liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
 						}
