@@ -804,14 +804,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		List<String> pathwayIds = new ArrayList<String>();
 		for(String pathwayId : parentIds){
 			String type = null;
-			Rows<String, String>  resourcesDetail = baseCassandraDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(),"gooru_oid",pathwayId);
-
-			if(resourcesDetail != null){
+			//Rows<String, String>  resourcesDetail = baseCassandraDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(),"gooru_oid",pathwayId);
+			
+			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId);
+			
+			type = resourcesDetail.getStringValue("type_name", null);
+			
+			/*if(resourcesDetail != null){
 				for(Row<String, String> resource : resourcesDetail){
 					type =  resource.getColumns().getColumnByName("type_name") == null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
 					logger.info("resource type : " + type);
 				 }
 			}
+			*/
 			
 			logger.info("pathwayId : " + pathwayId); 
 			
