@@ -40,13 +40,13 @@ public enum ColumnFamily {
 	
 	LIVEDASHBOARDTEST("live_dashboard_test"),
 	
-	MICROAGGREGATION("micro_aggregation"),
+	MICROAGGREGATION("micro_aggregation_test"),
 	
 	ACITIVITYSTREAM("activity_stream"),
 	
-	REALTIMECOUNTER("real_time_counter_test"),
+	REALTIMECOUNTER("real_time_counter"),
 	
-	REALTIMEAGGREGATOR("real_time_aggregator_test"),
+	REALTIMEAGGREGATOR("real_time_aggregator"),
 	
 	QUESTIONCOUNT("question_count"),
 	
