@@ -403,10 +403,21 @@ public class CassandraDataLoader implements Constants {
     }
 
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
-	    try {
-	    	
-	    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
-	    	
+
+    	Map<String,String> eventMap = new LinkedHashMap<String, String>();
+    	String aggregatorJson = cache.get(eventMap.get("eventName"));
+    	
+    	try {
+	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
+
+	    	if (eventObject.getFields() != null) {
+				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
+				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				//Save Activity in ElasticSearch
+				this.saveActivityInIndex(eventObject.getFields());
+				
+			}
+
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
 	    	
 	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
@@ -430,52 +441,50 @@ public class CassandraDataLoader implements Constants {
 			if (eventKeyUUID == null) {
 			    return;
 			}
-	      
-			if (eventObject.getFields() != null) {
-				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-				kafkaLogWriter.sendEventLog(eventObject.getFields());
-				//Save Activity in ElasticSearch
-				this.saveActivityInIndex(eventObject.getFields());
-				
-			}
 			
-			if(eventObject.getEventName().equalsIgnoreCase("loade.test")){
-				logger.info("Writing error log : {} ",eventObject.getEventId());
-				kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
-			}
 			Date eventDateTime = new Date(eventObject.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 	
 			if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
-			
-			String aggregatorJson = cache.get(eventMap.get("eventName"));
-			
+						
 			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-	
-				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
-	
-				microAggregator.sendEventForAggregation(eventObject.getFields());
-			
+
+				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 		  
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 				liveAggregator.updateRawData(eventMap);
 			}
+			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
+			
+		
+    	}catch(Exception e){
+    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+			logger.info("Writing error log : {} ",eventObject.getEventId());
+    	}
+
+    	try {
+    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+    			
+				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 	
+				microAggregator.sendEventForAggregation(eventObject.getFields());			
+			}
+
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 			}
 			
 			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
-
+	
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
-
-			liveDashBoardDAOImpl.saveGeoLocations(eventMap);		
+	
+			liveDashBoardDAOImpl.saveGeoLocations(eventMap);
 			
 			
 			/*
@@ -493,9 +502,8 @@ public class CassandraDataLoader implements Constants {
 			*/
 	
     	}catch(Exception e){
-    		logger.info("Exception in handleEventObjectHandler : {} ",e);
+    		logger.info("Exception in handleEventObjectHandler Post Process : {} ",e);
     	}
-		
    }
     /**
      * 
