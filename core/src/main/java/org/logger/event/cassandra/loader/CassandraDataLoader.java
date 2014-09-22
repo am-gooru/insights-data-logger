@@ -438,7 +438,11 @@ public class CassandraDataLoader implements Constants {
 				this.saveActivityInIndex(eventObject.getFields());
 				
 			}
-	
+			
+			if(eventObject.getEventName().equalsIgnoreCase("loade.test")){
+				logger.info("Writing error log : {} ",eventObject.getEventId());
+				kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+			}
 			Date eventDateTime = new Date(eventObject.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 	
@@ -835,7 +839,7 @@ public class CassandraDataLoader implements Constants {
 								logger.info("Fields : " + fields);
 								logger.info("SessionId : " + eventMap.get(SESSION));
 
-								//liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
+								liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
 							}
 	    				}
 					} catch (Exception e) {
