@@ -33,9 +33,8 @@ import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
-import com.netflix.astyanax.query.ColumnFamilyQuery;
 import com.netflix.astyanax.query.IndexQuery;
-import com.netflix.astyanax.query.RowQuery;
+import com.netflix.astyanax.retry.ConstantBackoff;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
@@ -61,7 +60,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Column<String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .getColumn(columnName)
                     .execute()
@@ -80,7 +79,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	ColumnList<String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .withColumnSlice(columnList)
                     .execute()
@@ -99,7 +98,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(keys)
                     .withColumnSlice(columnList)
                     .execute()
@@ -117,7 +116,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	ColumnList<String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .execute()
                     .getResult()
@@ -142,7 +141,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	try {
               result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .execute()
                     .getResult()
@@ -159,7 +158,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(key)
                     .execute()
                     .getResult()
@@ -185,7 +184,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	try {
               result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(key)
                     .execute()
                     .getResult()
@@ -203,7 +202,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(key)
                     .execute()
                     .getResult()
@@ -221,7 +220,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(keys)
                     .execute()
                     .getResult()
@@ -239,7 +238,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try{
     		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 		 	.searchWithIndex()
 			.addExpression()
 			.whereColumn(columnName)
@@ -260,7 +259,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
     	try{
     		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 		 	.searchWithIndex()
 			.addExpression()
 			.whereColumn(columnName)
@@ -281,7 +280,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		Rows<String, String> result = null;
     	try {
     		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-			 			   .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			 			   .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					 	   .searchWithIndex().autoPaginateRows(true)
 					 	   .setRowLimit(rowsToRead.intValue())
 					 	   .addExpression().whereColumn(columnName)
@@ -298,7 +297,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	ColumnList<String> result = null;
     	try {
     		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-    		.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     		.getKey(key)
     		.withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build())
     		.execute().getResult();
@@ -315,7 +314,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		
     	try {
 			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					.getKey(key)
 					.getCount()
 					.execute().getResult();
@@ -332,7 +331,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	IndexQuery<String, String> query = null;
 
     	query = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-    				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     				.searchWithIndex();
     	
     	for (Map.Entry<String, String> entry : columnList.entrySet()) {
@@ -354,7 +353,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			return getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 				.getKey(key).execute()
 				.getResult()
 				.isEmpty();
@@ -368,7 +367,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			IndexQuery<String, String> cfQuery = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex();
 			
 			for(Map.Entry<String, Object> map : columns.entrySet()){
 				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
@@ -385,7 +384,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			
 			IndexQuery<String, String> cfQuery = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex();
+				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex();
 			
 			for(Map.Entry<String, Object> map : columns.entrySet()){
 				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
@@ -407,7 +406,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 			.getKey(rowKey) .withColumnRange(new RangeBuilder().setLimit(rowsToRead)
 			.setStart(startColumnPrefix)
 			.setEnd(endColumnPrefix)
@@ -424,7 +423,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					.getAllRows()
 					.withColumnRange(new RangeBuilder().setMaxSize(10).build())
 			        .setExceptionCallback(new ExceptionCallback() {
@@ -447,7 +446,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkStringList(String cfName, String key,Map<String,String> columnValueList) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         for (Map.Entry<String,String> entry : columnValueList.entrySet()) {
     			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
@@ -463,7 +462,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkLongList(String cfName, String key,Map<String,Long> columnValueList) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         for (Map.Entry<String,Long> entry : columnValueList.entrySet()) {
     			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
@@ -479,7 +478,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
     	
-    	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
     	
     	ColumnListMutation<String> m = mutation.withRow(this.accessColumnFamily(cfName), key);
             	
@@ -505,7 +504,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void saveStringValue(String cfName, String key,String columnName,String value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
 
@@ -518,7 +517,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
     public void saveStringValue(String cfName, String key,String columnName,String value,int expireTime) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 
@@ -530,7 +529,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void saveLongValue(String cfName, String key,String columnName,long value,int expireTime) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 
@@ -543,7 +542,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
 
@@ -556,7 +555,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveValue(String cfName, String key,String columnName,Object value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
         if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
     		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
@@ -584,7 +583,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void increamentCounter(String cfName, String key,String columnName,long value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key)
         .incrementCounterColumn(columnName, value);
@@ -752,7 +751,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         	answereIds = eventData.getAnswerId().toString();
         }
         // Inserting data
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
              
         m.withRow(this.accessColumnFamily(cfName), key)
                 .putColumn("date_time", date, null)
@@ -812,7 +811,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		key	= eventObject.getEventId(); 
     	}
     	
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
     	
         m.withRow(this.accessColumnFamily(cfName), key)
                 .putColumnIfNotNull("start_time", eventObject.getStartTime(), null)
@@ -846,7 +845,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
-        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
                 eventColumnTimeUUID.toString(), CoulmnValue, null);
@@ -869,7 +868,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
-        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
                 eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
@@ -902,7 +901,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		 }
 	 
 	     try {        	
-			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);	
+			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));	
 			 m.withRow(this.accessColumnFamily(cfName), rowKey)
 			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
 			 
@@ -919,7 +918,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		List<Map<String,Object>> resultList = new ArrayList<Map<String,Object>>();
 		Boolean isExists = false;
 		try {
-			eventColumns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+			eventColumns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 			.getKey(userUid).execute();
 			if (eventColumns != null)
 				for(Column<String> eventColumn : eventColumns.getResult()){
@@ -975,7 +974,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	String parentId = null;
     	try {
     		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     		 	.searchWithIndex()
     			.addExpression()
     			.whereColumn("resource_gooru_oid")
@@ -1001,7 +1000,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	String parentId = null;
     	try {
     		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     		 	.searchWithIndex()
     			.addExpression()
     			.whereColumn("resource_gooru_oid")
@@ -1021,7 +1020,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
 	public void updateCollectionItem(String cfName,Map<String ,String> eventMap){
 		
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 	    
 		 m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTIONITEMID))
 	     .putColumnIfNotNull(CONTENT_ID,eventMap.get(CONTENTID))
@@ -1036,7 +1035,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateClasspage(String cfName,Map<String ,String> eventMap){
 
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
         
 		int isGroupOwner = 0;
 		int deleted = 0;
@@ -1063,7 +1062,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		Rows<String, String>  result = null;
     	try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).searchWithIndex()
+			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
 					.addExpression().whereColumn("gooru_uid").equals().value(key)
 					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid)
 					.addExpression().whereColumn("is_group_owner").equals().value(1)
@@ -1081,7 +1080,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		Rows<String, String>  result = null;
     	try {
-    		 result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+    		 result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     		 	.searchWithIndex()
 				.addExpression()
 				.whereColumn("classpage_gooru_oid")

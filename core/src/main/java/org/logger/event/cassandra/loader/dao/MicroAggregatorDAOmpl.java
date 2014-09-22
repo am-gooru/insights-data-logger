@@ -113,7 +113,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long stop = System.currentTimeMillis();
 		logger.info("Time spent for counters : {}",(stop-start));	
     }
-    @Async
+    
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
     	List<String> pathWays = this.getPathWaysFromCollection(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
@@ -318,20 +318,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        	if(pathWays != null && pathWays.size() > 0){
-					for(String pathWay : pathWays){
-						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay);
-						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-					}
-	        	}
-	        }
-		}
-		
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(MODE) &&  eventMap.get(MODE).equalsIgnoreCase(STUDY) ){
-			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
-	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay);
@@ -700,7 +686,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+GOORUOID,eventMap.get(CONTENTGOORUOID), m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, USERID,eventMap.get(GOORUID), m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, CLASSPAGEID,eventMap.get(CLASSPAGEGOORUOID), m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, PATHWAYGOORUOID,eventMap.get(PATHWAYGOORUOID), m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, PATHWAYID,eventMap.get(PATHWAYGOORUOID), m);
 			
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 
@@ -982,7 +968,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 	}
-	@Async
+	
 	public void updateRawData(Map<String,String> eventMap){
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CCV1.getName())){
 			baseCassandraDao.saveStringValue(ColumnFamily.COLLECTION.getColumnFamily(), eventMap.get(CONTENTID), CONTENT_ID, eventMap.get(CONTENTID));

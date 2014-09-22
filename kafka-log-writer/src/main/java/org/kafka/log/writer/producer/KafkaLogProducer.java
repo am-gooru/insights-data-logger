@@ -51,7 +51,10 @@ public class KafkaLogProducer
 	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
 	private Producer<String, String> producer;
 	private String topic = "event-log-writer-dev";
+	private String errorLogTopic = "error-event-log-writer";
+	
 	protected Properties props = new Properties();
+	
 	
 	public KafkaLogProducer(){
 	}
@@ -84,6 +87,20 @@ public class KafkaLogProducer
 		
 		String messageAsJson = new JSONObject(message).toString();
 		send(messageAsJson);
+	}
+	
+	public void sendErrorEventLog(String eventLog) {
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		
+		String messageAsJson = new JSONObject(message).toString();
+		sendErrorEvent(messageAsJson);
+	}
+	
+	private void sendErrorEvent(String message) {
+		ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
+		producer.send(data);
 	}
 	
 	private void send(String message) {

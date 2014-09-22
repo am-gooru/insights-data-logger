@@ -818,7 +818,6 @@ public class CassandraDataLoader implements Constants {
 		    		String fields = row.getColumns().getStringValue("fields", null);
 		    		
 		    		try {
-		    		logger.info("Fields : " + fields);
 
 		    		JSONObject jsonField = new JSONObject(fields);
 	    		
@@ -832,8 +831,11 @@ public class CassandraDataLoader implements Constants {
 						
 						String aggregatorJson = cache.get(eventMap.get("eventName"));
 						
-							if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-								liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
+							if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+								logger.info("Fields : " + fields);
+								logger.info("SessionId : " + eventMap.get(SESSION));
+
+								//liveAggregator.realTimeMetricsMigration(eventMap, aggregatorJson);
 							}
 	    				}
 					} catch (Exception e) {

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -94,8 +93,14 @@ public class CassandraConnectionProvider {
 
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
-                    .setMaxConnsPerHost(3)
-                    .setSeeds(hosts);
+                    .setMaxConnsPerHost(4)
+                    .setSeeds(hosts)
+                    .setLatencyAwareUpdateInterval(10000)
+                    .setLatencyAwareResetInterval(0)
+                    .setLatencyAwareBadnessThreshold(2)
+                    .setLatencyAwareWindowSize(100)
+                    ;
+            
             if (!hosts.startsWith("127.0")) {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
@@ -106,8 +111,8 @@ public class CassandraConnectionProvider {
                     .forCluster(clusterName)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-                    .setDiscoveryType(NodeDiscoveryType.NONE)
-                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
+                    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE	))
                     .withConnectionPoolConfiguration(poolConfig)
                     .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
