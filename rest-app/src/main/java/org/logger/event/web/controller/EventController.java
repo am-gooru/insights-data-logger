@@ -396,8 +396,8 @@ public class EventController {
 	@RequestMapping(value = "/resource/index", method = RequestMethod.GET)
 	public void indexResource(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids ,HttpServletResponse response) {
 		try {
-			eventService.clearCacher();
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+			eventService.indexResource(ids);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 		} catch (Exception e) {
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
