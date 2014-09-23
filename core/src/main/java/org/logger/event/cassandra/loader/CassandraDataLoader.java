@@ -1311,7 +1311,7 @@ public class CassandraDataLoader implements Constants {
     public void indexResource(String ids){
     	Collection<String> idList = new ArrayList<String>();
     	for(String id : ids.split(ids)){
-    		idList.add(id);
+    		idList.add("GLP~" + id);
     	}
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
     	try {
