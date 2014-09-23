@@ -1316,7 +1316,7 @@ public class CassandraDataLoader implements Constants {
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
     	try {
 			this.getResourceAndIndex(resource);
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			logger.info("indexing failed .. :{}",e);
 		}
     }
