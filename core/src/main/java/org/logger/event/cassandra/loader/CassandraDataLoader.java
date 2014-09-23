@@ -1391,8 +1391,12 @@ public class CassandraDataLoader implements Constants {
 		SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 		
 		Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
-		ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+		
+		for(int a = 0 ; a < resource.size(); a++){
+			
+		ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
 		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+		
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
 		}
@@ -1481,7 +1485,7 @@ public class CassandraDataLoader implements Constants {
 		resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
 		
 		liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
-	
+		}
     }
     public void postStatMigration(String startTime , String endTime,String customEventName) {
     	
