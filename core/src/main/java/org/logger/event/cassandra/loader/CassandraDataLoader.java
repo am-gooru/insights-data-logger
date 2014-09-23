@@ -1388,7 +1388,8 @@ public class CassandraDataLoader implements Constants {
     private void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-
+		SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
+		
 		Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
 		ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
 		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
@@ -1402,12 +1403,20 @@ public class CassandraDataLoader implements Constants {
 		try{
 			resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
 		}catch(Exception e){
-			resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+			try{
+				resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+			}catch(Exception e2){
+				resourceMap.put("lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
+			}
 		}
 		try{
 			resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
 		}catch(Exception e){
-			resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+			try{
+				resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+			}catch(Exception e2){
+				resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
+			}
 		}
 		if(columns.getColumnByName("creator_uid") != null){
 			resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
