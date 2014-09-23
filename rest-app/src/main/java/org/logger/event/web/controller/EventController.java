@@ -393,6 +393,16 @@ public class EventController {
 		}
 	}
 	
+	@RequestMapping(value = "/resource/index", method = RequestMethod.GET)
+	public void indexResource(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids ,HttpServletResponse response) {
+		try {
+			eventService.clearCacher();
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
+	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
 			@RequestParam(value = "apiKey", required = true) String apiKey,

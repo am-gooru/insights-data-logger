@@ -270,4 +270,7 @@ public class EventServiceImpl implements EventService {
 	public void clearCacher(){
 		dataLoaderService.clearCache();
 	}
+	public void indexResource(){
+		dataLoaderService.indexResource();
+	}
 }

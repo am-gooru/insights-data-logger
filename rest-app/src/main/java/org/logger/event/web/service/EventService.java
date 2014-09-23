@@ -72,4 +72,6 @@ public interface EventService {
 	void balanceStatDataUpdate();
 	
 	public void clearCacher();
+	
+	public void indexResource(String ids);
 }

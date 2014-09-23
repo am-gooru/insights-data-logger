@@ -1308,6 +1308,19 @@ public class CassandraDataLoader implements Constants {
 		
     }
 
+    public void indexResource(String ids){
+    	Collection<String> idList = new ArrayList<String>();
+    	for(String id : ids.split(ids)){
+    		idList.add(id);
+    	}
+    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
+    	try {
+			this.getResourceAndIndex(resource);
+		} catch (ParseException e) {
+			logger.info("indexing failed .. :{}",e);
+		}
+    }
+    
     public void catalogMigrationCustom(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings");
