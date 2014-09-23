@@ -1287,87 +1287,7 @@ public class CassandraDataLoader implements Constants {
     			logger.info("contentId : "+ i);
     				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
     				if(resource != null && resource.size() > 0){
-    					Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
-    					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
-    					logger.info("contentId : "+ i + " - Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
-    					if(columns.getColumnByName("title") != null){
-    						resourceMap.put("title", columns.getColumnByName("title").getStringValue());
-    					}
-    					if(columns.getColumnByName("description") != null){
-    						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
-    					}
-    					resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
-    					try{
-    						resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
-    					}catch(Exception e){
-    						resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
-    					}
-    					try{
-    						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
-    					}catch(Exception e){
-    						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
-    					}
-    					if(columns.getColumnByName("creator_uid") != null){
-    						resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
-    					}
-    					if(columns.getColumnByName("user_uid") != null){
-    						resourceMap.put("userUid", columns.getColumnByName("user_uid").getStringValue());
-    					}
-    					if(columns.getColumnByName("record_source") != null){
-    						resourceMap.put("recordSource", columns.getColumnByName("record_source").getStringValue());
-    					}
-    					if(columns.getColumnByName("sharing") != null){
-    						resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
-    					}
-    					resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue());
-    					if(columns.getColumnByName("organization_uid") != null){
-    						resourceMap.put("contentOrganizationUid", columns.getColumnByName("organization_uid").getStringValue());
-    					}
-    					if(columns.getColumnByName("thumbnail") != null){
-    						resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
-    					}
-    					if(columns.getColumnByName("grade") != null){
-    						JSONArray gradeArray = new JSONArray();
-    						for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
-    							gradeArray.put(gradeId);	
-    						}
-    						resourceMap.put("grade", gradeArray);
-    					}
-    					if(columns.getColumnByName("license_name") != null){
-    						//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
-    						if(licenseCache.containsKey(columns.getColumnByName("license_name").getStringValue())){    							
-    							resourceMap.put("licenseId", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
-    						}
-    					}
-    					if(columns.getColumnByName("type_name") != null){
-    						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
-    						if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
-    							resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
-    						}
-    					}
-    					if(columns.getColumnByName("category") != null){
-    						//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
-    						if(categoryCache.containsKey(columns.getColumnByName("category").getStringValue())){    							
-    							resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
-    						}
-    					}
-    					ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
-    					if(!questionCount.isEmpty()){
-    						Long questionCounts = questionCount.getLongValue("questionCount", 0L);
-    						resourceMap.put("questionCount", questionCounts);
-    						if(questionCounts > 0L){
-    							if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
-        							resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
-        						}	
-    						}
-    					}else{
-    						resourceMap.put("questionCount",0L);
-    					}
-
-    					resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
-    					resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-    					
-    					liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+    					this.getResourceAndIndex(resource);
     				}
     			
     		}
@@ -1386,6 +1306,160 @@ public class CassandraDataLoader implements Constants {
     		logger.info("Job queue is full! Or Job Reached its allowed end");
     	}
 		
+    }
+
+    public void catalogMigrationCustom(String startTime , String endTime,String customEventName) {
+    	
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings");
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
+    	
+    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+    	
+    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
+    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
+    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
+    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
+    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
+    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
+    		
+    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
+    		long start = System.currentTimeMillis();
+    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
+    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
+    		long endVal = (endIndex + startVal);
+    		jobCount = (jobCount + 1);
+    		totalJobCount = (totalJobCount + 1);
+    		String jobId = "job-"+UUID.randomUUID();
+    		
+    	/*	baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_job_count", ""+totalJobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+jobCount);
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "indexed_count", ""+endVal);
+    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
+    		
+    		Rows<String, String> resource = null;
+    		MutationBatch m = null;
+    		try {
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+    		for(long i = startVal ; i < endVal ; i++){
+    			logger.info("contentId : "+ i);
+    				ColumnList<String> rowKey = baseDao.readWithKey("temp_scollection", ""+i, null);
+    				if(rowKey.getStringValue("gooru_oid", null) != null){
+    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "gooru_oid", rowKey.getStringValue("gooru_oid", null));
+    				if(resource != null && resource.size() > 0){
+    					this.getResourceAndIndex(resource);
+    				}
+    			}
+    		}
+    			m.execute();
+    			long stop = System.currentTimeMillis();
+    			
+    			/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
+    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");*/
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_time", ""+(totalTime + (stop-start)));
+    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+(jobCount - 1));
+    			
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}else{    		
+    		logger.info("Job queue is full! Or Job Reached its allowed end");
+    	}
+		
+    }
+    private void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
+    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+
+		Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
+		ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
+		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+		if(columns.getColumnByName("title") != null){
+			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
+		}
+		if(columns.getColumnByName("description") != null){
+			resourceMap.put("description", columns.getColumnByName("description").getStringValue());
+		}
+		resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
+		try{
+			resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+		}catch(Exception e){
+			resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+		}
+		try{
+			resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+		}catch(Exception e){
+			resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+		}
+		if(columns.getColumnByName("creator_uid") != null){
+			resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
+		}
+		if(columns.getColumnByName("user_uid") != null){
+			resourceMap.put("userUid", columns.getColumnByName("user_uid").getStringValue());
+		}
+		if(columns.getColumnByName("record_source") != null){
+			resourceMap.put("recordSource", columns.getColumnByName("record_source").getStringValue());
+		}
+		if(columns.getColumnByName("sharing") != null){
+			resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
+		}
+		if(columns.getColumnByName("views_count") != null){
+			resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue());
+		}
+		if(columns.getColumnByName("organization_uid") != null){
+			resourceMap.put("contentOrganizationUid", columns.getColumnByName("organization_uid").getStringValue());
+		}
+		if(columns.getColumnByName("thumbnail") != null){
+			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
+		}
+		if(columns.getColumnByName("grade") != null){
+			JSONArray gradeArray = new JSONArray();
+			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
+				gradeArray.put(gradeId);	
+			}
+			resourceMap.put("grade", gradeArray);
+		}
+		if(columns.getColumnByName("license_name") != null){
+			//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
+			if(licenseCache.containsKey(columns.getColumnByName("license_name").getStringValue())){    							
+				resourceMap.put("licenseId", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
+			}
+		}
+		if(columns.getColumnByName("type_name") != null){
+			//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.RESOURCETYPES.getColumnFamily(), columns.getColumnByName("type_name").getStringValue());
+			if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
+				resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
+			}
+		}
+		if(columns.getColumnByName("category") != null){
+			//ColumnList<String> resourceType = baseDao.readWithKey(ColumnFamily.CATEGORY.getColumnFamily(), columns.getColumnByName("category").getStringValue());
+			if(categoryCache.containsKey(columns.getColumnByName("category").getStringValue())){    							
+				resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
+			}
+		}
+		ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
+		if(!questionCount.isEmpty()){
+			Long questionCounts = questionCount.getLongValue("questionCount", 0L);
+			resourceMap.put("questionCount", questionCounts);
+			if(questionCounts > 0L){
+				if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
+					resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
+				}	
+			}
+		}else{
+			resourceMap.put("questionCount",0L);
+		}
+
+		resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
+		resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
+		
+		liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+	
     }
     public void postStatMigration(String startTime , String endTime,String customEventName) {
     	
