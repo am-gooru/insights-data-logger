@@ -70,6 +70,7 @@ public class TypeConverter {
 				 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 					SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 					SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
+					SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 					try{
 						result =  new Date(Long.valueOf(value));
 					}catch(Exception e){
@@ -82,7 +83,11 @@ public class TypeConverter {
 								try{
 									result = formatter3.parse(value);
 								}catch(Exception e3){
-									System.out.print("Error while convert " + value + " to date");
+									try{
+										result = formatter4.parse(value);
+									}catch(Exception e4){
+										System.out.print("Error while convert " + value + " to date");
+									}
 								}
 							}
 						}
