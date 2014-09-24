@@ -52,9 +52,7 @@ public class KafkaLogProducer
 	private Producer<String, String> producer;
 	private String topic = "event-log-writer-dev";
 	private String errorLogTopic = "error-event-log-writer";
-	
 	protected Properties props = new Properties();
-	
 	
 	public KafkaLogProducer(){
 	}
@@ -65,7 +63,12 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
+		this.errorLogTopic = "error"+System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
+	
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		
+		LOG.info("Kafka Erro File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
+		
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("zk.connect", kafkaIp + ":" + port);		
 		props.put("producer.type", producerType);
@@ -90,19 +93,20 @@ public class KafkaLogProducer
 	}
 	
 	public void sendErrorEventLog(String eventLog) {
-		Map<String, String> message = new HashMap<String, String>();
-		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-		message.put("raw", new String(eventLog));
-		
-		String messageAsJson = new JSONObject(message).toString();
-		sendErrorEvent(messageAsJson);
+        Map<String, String> message = new HashMap<String, String>();
+        message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+        message.put("raw", new String(eventLog));
+
+        String messageAsJson = new JSONObject(message).toString();
+        sendErrorEvent(messageAsJson);
 	}
 	
-	private void sendErrorEvent(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
-		producer.send(data);
-	}
-	
+	 private void sendErrorEvent(String message) {
+         ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
+         producer.send(data);
+	 }
+
+	 
 	private void send(String message) {
 		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
 		producer.send(data);

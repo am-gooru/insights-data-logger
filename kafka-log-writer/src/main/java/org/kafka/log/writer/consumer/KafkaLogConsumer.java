@@ -51,8 +51,10 @@ public class KafkaLogConsumer extends Thread {
 	private static String KAFKA_IP;
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_GROUPID;
+	private static String errorFileWriterTopic;
 	static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
 	private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
+	private static final Logger activityErrorLog = LoggerFactory.getLogger("activityErrorLog");
 	
 	public KafkaLogConsumer(String topic)
 	  {
@@ -65,7 +67,7 @@ public class KafkaLogConsumer extends Thread {
         KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
         KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-        
+        errorFileWriterTopic = "error-"+KAFKA_FILE_TOPIC;
         this.topic = KAFKA_FILE_TOPIC;
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	  }
@@ -86,6 +88,42 @@ public class KafkaLogConsumer extends Thread {
 	  }
 	 
 	  public void run() {
+		  
+
+		    Map<String, Integer> topicErrorCountMap = new HashMap<String, Integer>();
+		    topicErrorCountMap.put(errorFileWriterTopic, new Integer(1));
+		    Map<String, List<KafkaMessageStream<Message>>> consumerErrorMap = consumer.createMessageStreams(topicErrorCountMap);
+		    KafkaMessageStream<Message> streamError =  consumerErrorMap.get(errorFileWriterTopic).get(0);
+		    ConsumerIterator<Message> itErr = streamError.iterator();
+		    while(itErr.hasNext())
+		    {
+		    	String message = ExampleUtils.getMessage(itErr.next());
+		    	Gson gson = new Gson();
+		    	Map<String, String> messageMap = new HashMap<String, String>();
+		    	try {
+		    		messageMap = gson.fromJson(message, messageMap.getClass());
+				} catch (Exception e) {
+					LOG.error("Message Consumer Error: "+ e.getMessage());
+					continue; 
+				}
+		    	
+		    	//TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+		    	if(messageMap != null)
+		    	{
+		    		String eventJson = (String)messageMap.get("raw");
+		    		
+		    		//Write the consumed JSON to Log file.
+		    		LOG.info("Kafka Error Log writer  :\n" + eventJson + "\n");
+		    		activityErrorLog.info(eventJson);
+		    	}
+		    	else
+		    	{
+		    		LOG.error("Message Consumer Error messageMap : No data found");
+		    		continue;
+		    	}
+		    }
+		    
+		  
 	    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 	    topicCountMap.put(topic, new Integer(1));
 	    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
