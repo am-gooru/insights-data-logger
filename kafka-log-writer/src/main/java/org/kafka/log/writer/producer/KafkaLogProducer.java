@@ -63,7 +63,12 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
+		this.errorLogTopic = errorLogTopic;
+	
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		
+		LOG.info("Kafka Erro File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
+		
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("zk.connect", kafkaIp + ":" + port);		
 		props.put("producer.type", producerType);
