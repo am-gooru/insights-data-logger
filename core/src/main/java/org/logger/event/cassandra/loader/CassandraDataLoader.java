@@ -1310,10 +1310,10 @@ public class CassandraDataLoader implements Constants {
 
     public void indexResource(String ids){
     	Collection<String> idList = new ArrayList<String>();
-    	for(String id : ids.split(ids)){
+    	for(String id : ids.split(",")){
     		idList.add("GLP~" + id);
-    		logger.info("resource ids : {}",id);
     	}
+    	logger.info("resource id : {}",idList);
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
     	try {
     		if(resource != null && resource.size() > 0){
