@@ -848,7 +848,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				classPages.add(eventMap.get(PARENTGOORUOID));
-			}else{
+			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
 				List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(CONTENTGOORUOID));
 	    		if(!parents.isEmpty()){    			
 	    			classPages = this.getPathwayFromItems(parents);
@@ -873,7 +873,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    			
 			    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 			    				classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
-			    			}else{
+			    			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
+			    				
 			    				List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventDetail.getStringValue(CONTENT_GOORU_OID, null));
 				    			if(!parents.isEmpty()){    			
 				        			classPages = this.getPathwayFromItems(parents);
