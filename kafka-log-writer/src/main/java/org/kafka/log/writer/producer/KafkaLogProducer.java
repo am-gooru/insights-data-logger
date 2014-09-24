@@ -63,7 +63,7 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
-		this.errorLogTopic = errorLogTopic;
+		this.errorLogTopic = "error"+System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
 	
 		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		
