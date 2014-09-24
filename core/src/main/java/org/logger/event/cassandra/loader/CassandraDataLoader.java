@@ -1399,6 +1399,10 @@ public class CassandraDataLoader implements Constants {
 			
 		ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
 		
+		if(columns == null){
+			return;
+		}
+		
 		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
 		
 		if(columns.getColumnByName("title") != null){
