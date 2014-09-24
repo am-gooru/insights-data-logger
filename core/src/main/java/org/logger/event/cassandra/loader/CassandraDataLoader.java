@@ -1312,10 +1312,13 @@ public class CassandraDataLoader implements Constants {
     	Collection<String> idList = new ArrayList<String>();
     	for(String id : ids.split(ids)){
     		idList.add("GLP~" + id);
+    		logger.info("resource ids : {}",id);
     	}
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
     	try {
-			this.getResourceAndIndex(resource);
+    		if(resource != null && resource.size() > 0){
+    			this.getResourceAndIndex(resource);
+    		}
 		} catch (Exception e) {
 			logger.info("indexing failed .. :{}",e);
 		}
@@ -1395,6 +1398,7 @@ public class CassandraDataLoader implements Constants {
 		for(int a = 0 ; a < resource.size(); a++){
 			
 		ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
+		
 		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
 		
 		if(columns.getColumnByName("title") != null){
