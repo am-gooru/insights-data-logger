@@ -1402,8 +1402,9 @@ public class CassandraDataLoader implements Constants {
 		if(columns == null){
 			return;
 		}
-		
-		logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+		if(columns.getColumnByName("gooru_oid") != null){
+			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+		}
 		
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
