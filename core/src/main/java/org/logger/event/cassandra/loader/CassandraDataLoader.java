@@ -1406,7 +1406,7 @@ public class CassandraDataLoader implements Constants {
 			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
 		}
 		if(columns.getColumnByName("gooru_oid") == null){
-			logger.info( " Columns "+ columns.toString());
+			logger.info( " Columns size "+ columns.size());
 		}
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
@@ -1417,6 +1417,7 @@ public class CassandraDataLoader implements Constants {
 		if(columns.getColumnByName("gooru_oid") != null){
 			resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
 		}
+		if(columns.getColumnByName("last_modified") != null){
 		try{
 			resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
 		}catch(Exception e){
@@ -1426,6 +1427,8 @@ public class CassandraDataLoader implements Constants {
 				resourceMap.put("lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
 			}
 		}
+		}
+		if(columns.getColumnByName("created_on") != null){
 		try{
 			resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
 		}catch(Exception e){
@@ -1434,6 +1437,7 @@ public class CassandraDataLoader implements Constants {
 			}catch(Exception e2){
 				resourceMap.put("createdOn", columns.getColumnByName("created_on") != null  ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
 			}
+		}
 		}
 		if(columns.getColumnByName("creator_uid") != null){
 			resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
@@ -1482,7 +1486,7 @@ public class CassandraDataLoader implements Constants {
 			}
 		}
 		ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
-		if(!questionCount.isEmpty()){
+		if(!questionCount.isEmpty() && columns.getColumnByName("type_name") != null){
 			Long questionCounts = questionCount.getLongValue("questionCount", 0L);
 			resourceMap.put("questionCount", questionCounts);
 			if(questionCounts > 0L){
@@ -1493,11 +1497,13 @@ public class CassandraDataLoader implements Constants {
 		}else{
 			resourceMap.put("questionCount",0L);
 		}
-
-		resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
-		resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-		
-		liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+		if(columns.getColumnByName("user_uid") != null){
+			resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
+		}
+		if(columns.getColumnByName("gooru_oid") != null){
+			resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
+			liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+		}
 		}
     }
     public void postStatMigration(String startTime , String endTime,String customEventName) {
