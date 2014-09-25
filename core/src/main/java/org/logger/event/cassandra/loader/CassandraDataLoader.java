@@ -1330,7 +1330,7 @@ public class CassandraDataLoader  implements Constants {
     
     public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
     	for(String id : key.split(",")){
-    		ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), id);
+    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		Collection<String> columnNames = sourceValues.getColumnNames();
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();

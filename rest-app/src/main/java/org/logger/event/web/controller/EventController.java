@@ -410,7 +410,7 @@ public class EventController {
 			eventService.indexAnyCf(sourceCf,key,targetIndex,targetType);
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 		} catch (Exception e) {
-			logger.info("Exception : " + e);
+			logger.error("Exception :: " + e);
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
