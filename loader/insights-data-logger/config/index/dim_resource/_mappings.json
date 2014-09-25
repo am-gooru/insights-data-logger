@@ -16,7 +16,7 @@
 "type":"string",
 "index":"not_analyzed"
 },
-"content_organization_uid":{
+"organization_uid":{
 "type":"string",
 "index":"not_analyzed"
 },

@@ -8,6 +8,10 @@ public enum ESIndexices {
 	
 	CONTENTCATALOG("content_catalog" , new String[] {"dim_resource"}),
 	
+	EVENTLOGGERINFO("event_logger_info" , new String[] {"event_detail"}),
+	
+	CONTENTCATALOGINFO("content_catalog_info" , new String[] {"dim_resource"}),
+	
 	USERCATALOG("user_catalog" , new String[] {"dim_user"}),
 	
 	TAXONOMYCATALOG("taxonomy_catalog" , new String[] {"taxonomy_code"}),

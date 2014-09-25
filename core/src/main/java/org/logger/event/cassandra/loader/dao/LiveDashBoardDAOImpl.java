@@ -517,8 +517,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
 					rowKey = beFieldName.get(entry.getKey());
-				}else{
-					rowKey = entry.getKey();
 				}
 	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey())&& entry.getValue() != null){	            	
 	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.get(entry.getKey())));
@@ -544,8 +542,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				
 				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
 					rowKey = beFieldName.get(entry.getKey());
-				}else{
-					rowKey = entry.getKey();
 				}
 				
 				if(rowKey != null && entry.getValue() != null){	            	
