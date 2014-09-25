@@ -79,7 +79,7 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
 
-public class CassandraDataLoader extends BaseDAOCassandraImpl implements Constants {
+public class CassandraDataLoader  implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
     
