@@ -1374,7 +1374,7 @@ public class CassandraDataLoader  implements Constants {
 	    			}
 	    		}
 	    		
-	    		getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
+	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 				
 	    		;
 	    	}
