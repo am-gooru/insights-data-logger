@@ -968,7 +968,7 @@ public class CassandraDataLoader implements Constants {
 	    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 	    		    	}
 	    	    		
-	    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    			} 
 	    			else{
 	    				   Iterator<?> keys = jsonField.keys();
@@ -992,7 +992,7 @@ public class CassandraDataLoader implements Constants {
 	    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 	    				   }
 		    	    		
-		    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGER.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+		    	    		liveDashBoardDAOImpl.saveActivityInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    		     }
 				} catch (Exception e) {
 					logger.info("Error while Migration : {} ",e);
@@ -1504,7 +1504,7 @@ public class CassandraDataLoader implements Constants {
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
 			resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-			liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOG.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+			liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
 		}
 		}
     }
