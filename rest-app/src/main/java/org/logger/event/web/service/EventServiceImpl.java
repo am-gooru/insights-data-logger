@@ -273,4 +273,8 @@ public class EventServiceImpl implements EventService {
 	public void indexResource(String ids){
 		dataLoaderService.indexResource(ids);
 	}
+	
+	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+		dataLoaderService.indexAnyCf(sourceCf, key, targetIndex, targetType);
+	}
 }

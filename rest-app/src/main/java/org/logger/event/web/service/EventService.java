@@ -74,4 +74,6 @@ public interface EventService {
 	public void clearCacher();
 	
 	public void indexResource(String ids);
+
+	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception;
 }

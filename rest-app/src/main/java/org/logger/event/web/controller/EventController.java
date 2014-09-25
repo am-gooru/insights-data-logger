@@ -404,6 +404,17 @@ public class EventController {
 		}
 	}
 	
+	@RequestMapping(value = "/index/any", method = RequestMethod.GET)
+	public void indexAnyCf(HttpServletRequest request,@RequestParam(value = "sourceCf", required = true) String sourceCf,@RequestParam(value = "key", required = true) String key ,@RequestParam(value = "targetIndex", required = true) String targetIndex,@RequestParam(value = "targetType", required = true) String targetType, HttpServletResponse response) {
+		try {
+			eventService.indexAnyCf(sourceCf,key,targetIndex,targetType);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
+		} catch (Exception e) {
+			logger.info("Exception : " + e);
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
+	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
 			@RequestParam(value = "apiKey", required = true) String apiKey,

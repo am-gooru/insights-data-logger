@@ -23,6 +23,8 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -45,12 +47,14 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
@@ -75,7 +79,7 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
 
-public class CassandraDataLoader implements Constants {
+public class CassandraDataLoader extends BaseDAOCassandraImpl implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
     
@@ -1324,6 +1328,58 @@ public class CassandraDataLoader implements Constants {
 		}
     }
     
+    public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+    	for(String id : key.split(",")){
+    		ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), id);
+	    	if(sourceValues != null && sourceValues.size() > 0){
+	    		Collection<String> columnNames = sourceValues.getColumnNames();
+	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
+	    		for(String columnName : columnNames){
+	    			try{
+	    				if(sourceValues.getStringValue(columnName, null) != null){
+	    					contentBuilder.field(columnName,sourceValues.getStringValue(columnName, null));
+	    				}
+	    			}catch(Exception e){
+	    				try{
+	    					if(sourceValues.getLongValue(columnName, 0L) != null){
+		    					contentBuilder.field(columnName,sourceValues.getLongValue(columnName, 0L));
+	    					}
+	    				}catch(Exception e1){
+	    					try{
+	    						if(sourceValues.getIntegerValue(columnName, 0) != null){
+		    					contentBuilder.field(columnName,sourceValues.getIntegerValue(columnName, 0));
+	    						}
+	    					}catch(Exception e2){
+		    					try{
+			    					if(sourceValues.getBooleanValue(columnName, null) != null){
+				    					contentBuilder.field(columnName,sourceValues.getBooleanValue(columnName, null));
+				    				}
+		    					}catch(Exception e3){
+		    						try{
+				    					if(sourceValues.getDoubleValue(columnName, null) != null){
+					    					contentBuilder.field(columnName,sourceValues.getDoubleValue(columnName, null));
+					    				}
+		    						}catch(Exception e4){
+		    							try{
+		    								if(sourceValues.getDateValue(columnName, null) != null){
+						    					contentBuilder.field(columnName,sourceValues.getDateValue(columnName, null));
+						    				}
+		    							}catch(Exception e5){
+		    								logger.info("Exception while indexing : "+ e);
+		    							}
+		    						}
+		    					}
+		    				}
+		    			}
+	    			}
+	    		}
+	    		
+	    		getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
+				
+	    		;
+	    	}
+    	}
+    }
     public void catalogMigrationCustom(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings");
@@ -2190,6 +2246,7 @@ public class CassandraDataLoader implements Constants {
     public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
     	this.connectionProvider = connectionProvider;
     }
+
     
 }
 
