@@ -209,7 +209,8 @@ public class MicroAggregationLoader implements Constants{
 	    	
 	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
 	    	String fields = activityRow.getStringValue(FIELDS, null);
-
+	    	
+	    	if(activityRow != null & activityRow.size() > 0){
 	    	if (fields != null){
 		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
 		        	EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
@@ -333,6 +334,9 @@ public class MicroAggregationLoader implements Constants{
 	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
 	    	
 	    	activityStreamDao.saveActivity(activityMap);
+	    	} else {
+	    		logger.info("Entry is not available for this key {}", eventId);
+	    	}
     	}
 	}
     
