@@ -1338,7 +1338,7 @@ public class CassandraDataLoader  implements Constants {
     }
     
     private void getUserAndIndex(String userId) throws Exception{
-    	
+    	logger.info("user id : "+ userId);
 		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId);
 		
 		if(userInfos != null & userInfos.size() > 0){
