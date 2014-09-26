@@ -1466,38 +1466,33 @@ public class CassandraDataLoader  implements Constants {
 	    		Collection<String> columnNames = sourceValues.getColumnNames();
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
 	    		for(String columnName : columnNames){
+	    			logger.info("columnName : {} ",columnName);
 	    			try{
 	    				if(sourceValues.getStringValue(columnName, null) != null){
-	    					contentBuilder.field(columnName,sourceValues.getStringValue(columnName, null));
+	    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getStringValue());
 	    				}
 	    			}catch(Exception e){
 	    				try{
-	    					if(sourceValues.getLongValue(columnName, 0L) != null){
-		    					contentBuilder.field(columnName,sourceValues.getLongValue(columnName, 0L));
+	    					if(sourceValues.getLongValue(columnName, null) != null){
+		    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getLongValue());
 	    					}
 	    				}catch(Exception e1){
 	    					try{
-	    						if(sourceValues.getIntegerValue(columnName, 0) != null){
-		    					contentBuilder.field(columnName,sourceValues.getIntegerValue(columnName, 0));
+	    						if(sourceValues.getIntegerValue(columnName, null) != null){
+	    							contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getIntegerValue());
 	    						}
 	    					}catch(Exception e2){
 		    					try{
 			    					if(sourceValues.getBooleanValue(columnName, null) != null){
-				    					contentBuilder.field(columnName,sourceValues.getBooleanValue(columnName, null));
-				    				}
+			    						contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getBooleanValue());
+			    					}
 		    					}catch(Exception e3){
 		    						try{
 				    					if(sourceValues.getDoubleValue(columnName, null) != null){
-					    					contentBuilder.field(columnName,sourceValues.getDoubleValue(columnName, null));
+					    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getDoubleValue());
 					    				}
 		    						}catch(Exception e4){
-		    							try{
-		    								if(sourceValues.getDateValue(columnName, null) != null){
-						    					contentBuilder.field(columnName,sourceValues.getDateValue(columnName, null));
-						    				}
-		    							}catch(Exception e5){
-		    								logger.info("Exception while indexing : "+ e);
-		    							}
+		    							logger.info("Exception while indexing : "+ e4);
 		    						}
 		    					}
 		    				}
