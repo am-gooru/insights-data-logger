@@ -33,7 +33,8 @@
 "type":"Long",
 "index":"not_analyzed"
 },"registered_on":{
-"type":"String",
+"format":"date_time",
+"type":"date",
 "index":"not_analyzed"
 },"added_by_system":{
 "type":"Long",
@@ -48,13 +49,15 @@
 "type":"String",
 "index":"not_analyzed"
 },"deactivated_on":{
-"type":"String",
+"format":"date_time",
+"type":"date",
 "index":"not_analyzed"
 },"active":{
 "type":"Integer",
 "index":"not_analyzed"
 },"last_login":{
-"type":"Integer",
+"format":"date_time",
+"type":"date",
 "index":"not_analyzed"
 },"identity_id":{
 "type":"Integer",
@@ -118,6 +121,9 @@
 "index":"not_analyzed"
 },"view_flag":{
 "type":"Long",
+"index":"not_analyzed"
+},"external_id":{
+"type":"String",
 "index":"not_analyzed"
 }
 }
