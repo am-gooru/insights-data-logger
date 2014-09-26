@@ -30,6 +30,8 @@ public enum ColumnFamily {
 	
 	EVENTFIELDS("event_fields"),
 	
+	TABLEDATATYPES("table_datatypes"),
+	
 	CONFIGSETTINGS("job_config_settings"),
 	
 	REALTIMECONFIG("real_time_operation_config"),
