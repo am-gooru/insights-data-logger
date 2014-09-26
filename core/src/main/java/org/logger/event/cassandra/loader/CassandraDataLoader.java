@@ -124,6 +124,8 @@ public class CassandraDataLoader  implements Constants {
         
     private BaseCassandraRepoImpl baseDao ;
     
+    public static  Map<String,String> taxonomyCodeType;
+    
     /**
      * Get Kafka properties from Environment
      */
@@ -199,6 +201,11 @@ public class CassandraDataLoader  implements Constants {
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
@@ -255,6 +262,11 @@ public class CassandraDataLoader  implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
     }
     
     /**
@@ -1463,49 +1475,24 @@ public class CassandraDataLoader  implements Constants {
     	for(String id : key.split(",")){
     		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id);
 	    	if(sourceValues != null && sourceValues.size() > 0){
-	    		Collection<String> columnNames = sourceValues.getColumnNames();
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
-	    		JSONObject jsob = new JSONObject();
-	    		for(String columnName : columnNames){
-	    			logger.info("columnName : {} ",columnName);
-	    			try{
-	    				if(sourceValues.getStringValue(columnName, null) != null){
-	    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getStringValue());
-	    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getStringValue());
-	    				}
-	    			}catch(Exception e){
-	    				try{
-	    					if(sourceValues.getLongValue(columnName, null) != null){
-		    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getLongValue());
-		    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getStringValue());
-	    					}
-	    				}catch(Exception e1){
-	    					try{
-	    						if(sourceValues.getIntegerValue(columnName, null) != null){
-	    							contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getIntegerValue());
-	    							jsob.put(columnName,sourceValues.getColumnByName(columnName).getIntegerValue());
-	    						}
-	    					}catch(Exception e2){
-		    					try{
-			    					if(sourceValues.getBooleanValue(columnName, null) != null){
-			    						contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getBooleanValue());
-			    						jsob.put(columnName,sourceValues.getColumnByName(columnName).getBooleanValue());
-			    					}
-		    					}catch(Exception e3){
-		    						try{
-				    					if(sourceValues.getDoubleValue(columnName, null) != null){
-					    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getDoubleValue());
-					    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getDoubleValue());
-					    				}
-		    						}catch(Exception e4){
-		    							logger.info("Exception while indexing : "+ e4);
-		    						}
-		    					}
-		    				}
-		    			}
-	    			}
-	    		}
-	    		logger.info("jsob : " + jsob.toString());
+	            for(int i = 0 ; i < sourceValues.size() ; i++) {
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getStringValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getLongValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getIntegerValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getDoubleValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
+	            	}
+	            }
 	    		
 	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 				
