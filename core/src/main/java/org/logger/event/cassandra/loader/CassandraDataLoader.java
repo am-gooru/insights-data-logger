@@ -201,6 +201,7 @@ public class CassandraDataLoader  implements Constants {
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
+        taxonomyCodeType = new LinkedHashMap<String, String>();
         ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
