@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -393,10 +394,15 @@ public class EventController {
 		}
 	}
 	
-	@RequestMapping(value = "/resource/index", method = RequestMethod.GET)
-	public void indexResource(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids ,HttpServletResponse response) {
+	@RequestMapping(value = "/resource/index/{type}", method = RequestMethod.GET)
+	public void indexResource(HttpServletRequest request,@PathVariable String indexType, @RequestParam(value = "ids", required = true) String ids ,HttpServletResponse response) {
 		try {
-			eventService.indexResource(ids);
+			if(indexType.equalsIgnoreCase("resource")){
+				eventService.indexResource(ids);
+			}
+			if(indexType.equalsIgnoreCase("user")){
+				eventService.indexUser(ids);
+			}
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 		} catch (Exception e) {
 			logger.info("Exception : " + e);

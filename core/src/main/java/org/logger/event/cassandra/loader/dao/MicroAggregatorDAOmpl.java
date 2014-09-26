@@ -402,9 +402,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		if(keysList != null && keysList.size() > 0 ){
 			this.startCountersMig2(eventMap, aggregatorJson, keysList, key);
-			/*this.startCountersMig(eventMap, aggregatorJson, keysList, key);
+			//this.startCountersMig(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
-			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);*/
+			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
 		}
      }
     

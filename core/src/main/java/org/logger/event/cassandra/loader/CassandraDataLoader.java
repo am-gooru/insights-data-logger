@@ -47,6 +47,7 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -1322,11 +1323,139 @@ public class CassandraDataLoader  implements Constants {
     	try {
     		if(resource != null && resource.size() > 0){
     			this.getResourceAndIndex(resource);
+    		}else {
+    			throw new AccessDeniedException("Invalid Id!!");
     		}
 		} catch (Exception e) {
 			logger.info("indexing failed .. :{}",e);
 		}
     }
+    
+    public void indexUser(String ids) throws Exception{
+    	for(String userId : ids.split(",")){
+    		getUserAndIndex(userId);
+    	}
+    }
+    
+    private void getUserAndIndex(String userId) throws Exception{
+    	
+		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), userId);
+		
+		if(userInfos != null & userInfos.size() > 0){
+			
+			XContentBuilder contentBuilder = jsonBuilder().startObject();
+		
+			if(userInfos.getColumnByName("gooru_uid") != null){
+				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
+				contentBuilder.field("gooru_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("confirm_status") != null){
+				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirm_status").getLongValue());
+			}
+			if(userInfos.getColumnByName("registered_on") != null){
+				contentBuilder.field("registered_on",TypeConverter.stringToAny(userInfos.getColumnByName("registered_on").getStringValue(), "Date"));
+			}
+			if(userInfos.getColumnByName("added_by_system") != null){
+				contentBuilder.field("added_by_system",userInfos.getColumnByName("added_by_system").getLongValue());
+			}
+			if(userInfos.getColumnByName("account_created_type") != null){
+				contentBuilder.field("account_created_type",userInfos.getColumnByName("account_created_type").getStringValue());
+			}
+			if(userInfos.getColumnByName("reference_uid") != null){
+				contentBuilder.field("reference_uid",userInfos.getColumnByName("reference_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("email_sso") != null){
+				contentBuilder.field("email_sso",userInfos.getColumnByName("email_sso").getStringValue());
+			}
+			if(userInfos.getColumnByName("deactivated_on") != null){
+				contentBuilder.field("deactivated_on",TypeConverter.stringToAny(userInfos.getColumnByName("deactivated_on").getStringValue(), "Date"));
+			}
+			if(userInfos.getColumnByName("active") != null){
+				contentBuilder.field("active",userInfos.getColumnByName("active").getIntegerValue());
+			}
+			if(userInfos.getColumnByName("last_login") != null){
+				contentBuilder.field("last_login",TypeConverter.stringToAny(userInfos.getColumnByName("last_login").getStringValue(), "Date"));
+			}
+			if(userInfos.getColumnByName("identity_id") != null){
+				contentBuilder.field("identity_id",userInfos.getColumnByName("identity_id").getIntegerValue());
+			}
+			if(userInfos.getColumnByName("mail_status") != null){
+				contentBuilder.field("mail_status",userInfos.getColumnByName("mail_status").getLongValue());
+			}
+			if(userInfos.getColumnByName("idp_id") != null){
+				contentBuilder.field("idp_id",userInfos.getColumnByName("idp_id").getIntegerValue());
+			}
+			if(userInfos.getColumnByName("state") != null){
+				contentBuilder.field("state",userInfos.getColumnByName("state").getStringValue());
+			}
+			if(userInfos.getColumnByName("login_type") != null){
+				contentBuilder.field("login_type",userInfos.getColumnByName("login_type").getStringValue());
+			}
+			if(userInfos.getColumnByName("user_group_uid") != null){
+				contentBuilder.field("user_group_uid",userInfos.getColumnByName("user_group_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("primary_organization_uid") != null){
+				contentBuilder.field("primary_organization_uid",userInfos.getColumnByName("primary_organization_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("license_version") != null){
+				contentBuilder.field("license_version",userInfos.getColumnByName("license_version").getStringValue());
+			}
+			if(userInfos.getColumnByName("parent_id") != null){
+				contentBuilder.field("parent_id",userInfos.getColumnByName("parent_id").getLongValue());
+			}
+			if(userInfos.getColumnByName("lastname") != null){
+				contentBuilder.field("lastname",userInfos.getColumnByName("lastname").getStringValue());
+			}
+			if(userInfos.getColumnByName("account_type_id") != null){
+				contentBuilder.field("account_type_id",userInfos.getColumnByName("account_type_id").getLongValue());
+			}
+			if(userInfos.getColumnByName("is_deleted") != null){
+				contentBuilder.field("is_deleted",userInfos.getColumnByName("is_deleted").getIntegerValue());
+			}
+			if(userInfos.getColumnByName("external_id") != null){
+				contentBuilder.field("external_id",userInfos.getColumnByName("external_id").getStringValue());
+			}
+			if(userInfos.getColumnByName("organization_uid") != null){
+				contentBuilder.field("organization_uid",userInfos.getColumnByName("organization_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("import_code") != null){
+				contentBuilder.field("import_code",userInfos.getColumnByName("import_code").getStringValue());
+			}
+			if(userInfos.getColumnByName("parent_uid") != null){
+				contentBuilder.field("parent_uid",userInfos.getColumnByName("parent_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("security_group_uid") != null){
+				contentBuilder.field("security_group_uid",userInfos.getColumnByName("security_group_uid").getStringValue());
+			}
+			if(userInfos.getColumnByName("username") != null){
+				contentBuilder.field("username",userInfos.getColumnByName("username").getStringValue());
+			}
+			if(userInfos.getColumnByName("role_id") != null){
+				contentBuilder.field("role_id",userInfos.getColumnByName("role_id").getLongValue());
+			}
+			if(userInfos.getColumnByName("firstname") != null){
+				contentBuilder.field("firstname",userInfos.getColumnByName("firstname").getStringValue());
+			}
+			if(userInfos.getColumnByName("register_token") != null){
+				contentBuilder.field("register_token",userInfos.getColumnByName("register_token").getStringValue());
+			}
+			if(userInfos.getColumnByName("view_flag") != null){
+				contentBuilder.field("view_flag",userInfos.getColumnByName("view_flag").getLongValue());
+			}
+			if(userInfos.getColumnByName("account_uid") != null){
+				contentBuilder.field("account_uid",userInfos.getColumnByName("account_uid").getStringValue());
+			}
+			
+			getConnectionProvider().getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
+			
+    		;
+		}else {
+			throw new AccessDeniedException("Invalid Id : " + userId);
+		}	
+			
+		
+		
+	}
     
     public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
     	for(String id : key.split(",")){
