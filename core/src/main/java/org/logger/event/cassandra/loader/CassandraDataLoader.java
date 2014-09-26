@@ -469,8 +469,10 @@ public class CassandraDataLoader  implements Constants {
 			
 		
     	}catch(Exception e){
-    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
-			logger.info("Writing error log : {} ",eventObject.getEventId());
+			logger.info("Writing error log : {} ",e);
+			if (eventObject.getFields() != null) {
+				kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+			}
     	}
 
     	try {
