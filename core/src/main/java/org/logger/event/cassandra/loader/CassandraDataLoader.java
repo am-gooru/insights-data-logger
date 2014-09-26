@@ -1465,31 +1465,37 @@ public class CassandraDataLoader  implements Constants {
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		Collection<String> columnNames = sourceValues.getColumnNames();
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
+	    		JSONObject jsob = new JSONObject();
 	    		for(String columnName : columnNames){
 	    			logger.info("columnName : {} ",columnName);
 	    			try{
 	    				if(sourceValues.getStringValue(columnName, null) != null){
 	    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getStringValue());
+	    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getStringValue());
 	    				}
 	    			}catch(Exception e){
 	    				try{
 	    					if(sourceValues.getLongValue(columnName, null) != null){
 		    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getLongValue());
+		    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getStringValue());
 	    					}
 	    				}catch(Exception e1){
 	    					try{
 	    						if(sourceValues.getIntegerValue(columnName, null) != null){
 	    							contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getIntegerValue());
+	    							jsob.put(columnName,sourceValues.getColumnByName(columnName).getIntegerValue());
 	    						}
 	    					}catch(Exception e2){
 		    					try{
 			    					if(sourceValues.getBooleanValue(columnName, null) != null){
 			    						contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getBooleanValue());
+			    						jsob.put(columnName,sourceValues.getColumnByName(columnName).getBooleanValue());
 			    					}
 		    					}catch(Exception e3){
 		    						try{
 				    					if(sourceValues.getDoubleValue(columnName, null) != null){
 					    					contentBuilder.field(columnName,sourceValues.getColumnByName(columnName).getDoubleValue());
+					    					jsob.put(columnName,sourceValues.getColumnByName(columnName).getDoubleValue());
 					    				}
 		    						}catch(Exception e4){
 		    							logger.info("Exception while indexing : "+ e4);
@@ -1499,6 +1505,7 @@ public class CassandraDataLoader  implements Constants {
 		    			}
 	    			}
 	    		}
+	    		logger.info("jsob : " + jsob.toString());
 	    		
 	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 				
