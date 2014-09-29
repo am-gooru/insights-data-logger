@@ -423,7 +423,7 @@ public class CassandraDataLoader  implements Constants {
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 
     	Map<String,String> eventMap = new LinkedHashMap<String, String>();
-    	String aggregatorJson = cache.get(eventMap.get("eventName"));
+    	String aggregatorJson = null;
     	
     	try {
 	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
@@ -466,6 +466,8 @@ public class CassandraDataLoader  implements Constants {
 			if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
+			
+			aggregatorJson = cache.get(eventMap.get("eventName"));
 						
 			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 			
@@ -489,6 +491,8 @@ public class CassandraDataLoader  implements Constants {
     	}
 
     	try {
+    		aggregatorJson = cache.get(eventMap.get("eventName"));
+    		
     		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
     			
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);

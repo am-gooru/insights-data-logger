@@ -80,6 +80,7 @@ public class KafkaLogProducer
 				new ProducerConfig(props));
 		}
 		catch (Exception e) {
+			LOG.info("Error while intializing producer : " + e);
 		}
 	}
 	
