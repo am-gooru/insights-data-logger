@@ -115,19 +115,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     }
     
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JSONException{
-    	logger.info("aggregator starts.......");
     	List<String> pathWays = this.getPathWaysFromCollection(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
 		
 		boolean isStudent = false;
-		logger.info("aggregator starts2.......");
 		/*Maintain session - Start */
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-	        logger.info("parentGooruOid :   " + eventMap.get(PARENTGOORUOID));
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 	        	/*isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID));
 	        	if(isStudent){*/
@@ -136,8 +133,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay);
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-						
-						logger.info("pathway :   " + classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						
 					}
 				}

@@ -42,7 +42,7 @@ public enum ColumnFamily {
 	
 	LIVEDASHBOARDTEST("live_dashboard_test"),
 	
-	MICROAGGREGATION("micro_aggregation_test"),
+	MICROAGGREGATION("micro_aggregation"),
 	
 	ACITIVITYSTREAM("activity_stream"),
 	
@@ -63,6 +63,9 @@ public enum ColumnFamily {
 	RESOURCETYPES("resource_type"),
 	
 	CATEGORY("category"),
+	
+	RESOURCE("resource"),
+	
 	;
 	
 	String name;

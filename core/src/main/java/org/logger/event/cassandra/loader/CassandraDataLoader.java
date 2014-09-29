@@ -121,7 +121,10 @@ public class CassandraDataLoader  implements Constants {
     public Collection<String> statKeys ;
     
     public ColumnList<String> statMetrics ;
-        
+    
+    public ColumnList<String> statCassMetrics ;
+    
+    
     private BaseCassandraRepoImpl baseDao ;
     
     public static  Map<String,String> taxonomyCodeType;
@@ -211,6 +214,8 @@ public class CassandraDataLoader  implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
         
+        statCassMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~cass~metrics");
+        
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily());
         licenseCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : licenseRows) {
@@ -242,6 +247,7 @@ public class CassandraDataLoader  implements Constants {
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
+        statCassMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~cass~metrics");
         liveDashBoardDAOImpl.clearCache();
         ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
@@ -1911,7 +1917,8 @@ public class CassandraDataLoader  implements Constants {
 			this.getRecordsToProcess(currDate, resourceList);
 		}
    }
-  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
+  private void getRecordsToProcess(Date rowValues,JSONArray resourceList){
+	  try{
 	  int indexedCount = 0;
 	  int indexedLimit = 2;
 	  int allowedLimit = 0;
@@ -1934,6 +1941,7 @@ public class CassandraDataLoader  implements Constants {
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
 			
 			for(int i = indexedCount ; i < allowedLimit ; i++) {
+				MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 				indexedCount = i;
 				ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
 				for(Column<String> detail : vluesList) {
@@ -1947,6 +1955,8 @@ public class CassandraDataLoader  implements Constants {
 					for(String column : statKeys){
 						if(detail.getName().equals(column)){
 							logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
+							logger.info("statCassMetrics : {}",statCassMetrics.getStringValue(column, null));
+							baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statCassMetrics.getStringValue(column, null),detail.getLongValue(),m);
 							resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
 						}
 					}
@@ -1954,17 +1964,20 @@ public class CassandraDataLoader  implements Constants {
 						resourceList.put(resourceObj);
 					}
 				}
+				m.execute();
 			}
 		}
 		if((resourceList.length() != 0)){
-			this.callStatAPI(resourceList, rowValues);			
+			//this.callStatAPI(resourceList, rowValues);			
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 	 		logger.info("No content viewed");
 		}
-	 
+  	}catch(Exception e){
+	  logger.info("Error while statistical update" + e);
+  	}
   }
     
     private void callStatAPI(JSONArray resourceList,Date rowValues){
