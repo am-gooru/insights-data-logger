@@ -71,7 +71,7 @@ public class CassandraConnectionProvider {
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
 
         String esClusterName = "";
-        String esHost = "162.243.130.94";
+        String esHost = "107.170.199.76";
         int esPort = 9300;
         try {
 
