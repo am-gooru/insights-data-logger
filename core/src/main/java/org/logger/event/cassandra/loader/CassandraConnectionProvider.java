@@ -63,15 +63,21 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
     private Client client;
+    private static String AWS_CASSANDRA_KEYSPACE;
+    private static String AWS_CASSANDRA_IP;
+    private static String INSIHGHTS_ES_IP;
+    
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-
+        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
+        AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
+        AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
+        
         String esClusterName = "";
-        String esHost = "107.170.199.76";
         int esPort = 9300;
         try {
 
@@ -127,7 +133,7 @@ public class CassandraConnectionProvider {
             //Elastic search connection provider
            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
            TransportClient transportClient = new TransportClient(settings);
-           transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));
+           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
            client = transportClient;
            
            this.registerIndices();
@@ -138,9 +144,9 @@ public class CassandraConnectionProvider {
 
 	public  Keyspace initializeAwsCassandra(){
 	 
-		String awsHosts =  "184.169.249.30";
+		String awsHosts =  AWS_CASSANDRA_IP;
 		String awsCluster = "gooru-cassandra";
-		String keyspace = "event_logger_insights";
+		String keyspace = AWS_CASSANDRA_KEYSPACE;
 		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
 	    .setPort(9160)
 	    .setMaxConnsPerHost(3)
