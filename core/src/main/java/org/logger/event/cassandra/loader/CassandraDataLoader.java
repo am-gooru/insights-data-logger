@@ -1956,7 +1956,9 @@ public class CassandraDataLoader  implements Constants {
 						if(detail.getName().equals(column)){
 							logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 							logger.info("statCassMetrics : {}",statCassMetrics.getStringValue(column, null));
-							baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statCassMetrics.getStringValue(column, null),detail.getLongValue(),m);
+							if(statCassMetrics.getStringValue(column, null) != null){
+								baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statCassMetrics.getStringValue(column, null),detail.getLongValue(),m);
+							}
 							resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
 						}
 					}
