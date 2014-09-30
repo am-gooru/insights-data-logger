@@ -45,6 +45,8 @@ public class BaseDAOCassandraImpl {
     
     private Keyspace keyspace;
     
+    private Keyspace awsKeyspace;
+    
     private Client client;
     
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
@@ -69,6 +71,16 @@ public class BaseDAOCassandraImpl {
         return this.keyspace;
     }
     
+    public Keyspace getAwsKeyspace() {
+        if(awsKeyspace == null && this.connectionProvider != null) {
+            try {
+                this.awsKeyspace = this.connectionProvider.getAwsKeyspace();
+            } catch (IOException ex) {
+                logger.info("Error while initializing AWS keyspace{}", ex);
+            }
+        }
+        return this.awsKeyspace;
+    }
     public Client getESClient() {
         if(client == null && this.connectionProvider != null) {
             try {
