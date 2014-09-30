@@ -1472,6 +1472,7 @@ public class CassandraDataLoader implements Constants {
 	  try{
 		  	String indexCollectionType = null;
 			String indexResourceType = null;
+			String IndexingStatus = null;
 			String resourceIds = "";
 			String collectionIds = "";
 			int indexedCount = 0;
@@ -1496,7 +1497,8 @@ public class CassandraDataLoader implements Constants {
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
 			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status");
-			if(indexingStat.getStringValue(DEFAULTCOLUMN,null).equalsIgnoreCase("completed")){
+			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
+			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
 					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
@@ -1517,7 +1519,6 @@ public class CassandraDataLoader implements Constants {
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
 								}
-								resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
 							}
 						}
 					
@@ -1544,9 +1545,11 @@ public class CassandraDataLoader implements Constants {
 				throw new AccessDeniedException("Statistical data update failed");
 			}
 
+		}else if(IndexingStatus.equalsIgnoreCase("in-progress")){
+	 		logger.info("Waiting for indexing");
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 		logger.info("No content viewed");
+	 		logger.info("No content is viewed");
 		}
 	}catch(Exception e){
 	  logger.info("Error while statistical update" + e);
@@ -1560,7 +1563,7 @@ public class CassandraDataLoader implements Constants {
     	
     	try{
     		String sessionToken = cache.get(SESSIONTOKEN);
-    		String url = cache.get(SEARCHINDEXAPI) + "/index?sessionToken=" + sessionToken + "&ids="+ids;
+    		String url = cache.get(SEARCHINDEXAPI) + resourceType + "/index?sessionToken=" + sessionToken + "&ids="+ids;
     		DefaultHttpClient httpClient = new DefaultHttpClient();
     		HttpPost  postRequest = new HttpPost(url);
     		logger.info("Indexing url : {} ",url);
