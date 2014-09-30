@@ -1887,7 +1887,7 @@ public class CassandraDataLoader  implements Constants {
     	return stagingEvents; 
     }
 
-    public void callAPIViewCount() throws JSONException {
+    public void callAPIViewCount() throws Exception {
     	if(cache.get("stat_job").equalsIgnoreCase("stop")){
     		logger.info("job stopped");
     		return;
@@ -1919,6 +1919,7 @@ public class CassandraDataLoader  implements Constants {
 	  try{
 		  	String indexCollectionType = null;
 			String indexResourceType = null;
+			String IndexingStatus = null;
 			String resourceIds = "";
 			String collectionIds = "";
 			int indexedCount = 0;
@@ -1929,9 +1930,10 @@ public class CassandraDataLoader  implements Constants {
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
-		if(indexedCount == (contents.size() - 1)){
+		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		 
 		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
 		if(contents.size() > 0 ){
@@ -1942,8 +1944,9 @@ public class CassandraDataLoader  implements Constants {
 				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
-			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),"search~index~status");
-			if(indexingStat.getStringValue(DEFAULTCOLUMN,null).equalsIgnoreCase("completed")){
+			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status");
+			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
+			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
 					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
@@ -1955,7 +1958,7 @@ public class CassandraDataLoader  implements Constants {
 		    				indexCollectionType = "scollection";
 		    				collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
 						}else{
-							indexResourceType = "scollection";
+							indexResourceType = "resource";
 							resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
 						}
 						for(String column : statKeys){
@@ -1964,7 +1967,6 @@ public class CassandraDataLoader  implements Constants {
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
 								}
-								resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
 							}
 						}
 					
@@ -1985,20 +1987,22 @@ public class CassandraDataLoader  implements Constants {
 			}
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
-			if(indexingStatus == 200){
+			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
 			}else{
 				throw new AccessDeniedException("Statistical data update failed");
 			}
 
+		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
+	 		logger.info("Waiting for indexing");
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 		logger.info("No content viewed");
+	 		logger.info("No content is viewed");
 		}
-  	}catch(Exception e){
+	}catch(Exception e){
 	  logger.info("Error while statistical update" + e);
-  	}
-  }
+	}
+}
   /*
    * rowValues can be null
    */
@@ -2013,7 +2017,7 @@ public class CassandraDataLoader  implements Constants {
     		HttpResponse response = httpClient.execute(postRequest);
 	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
-	 		if (response.getStatusLine().getStatusCode() != 200) {
+	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
