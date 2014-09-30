@@ -1495,7 +1495,7 @@ public class CassandraDataLoader implements Constants {
 				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
-			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),"search~index~status");
+			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status");
 			if(indexingStat.getStringValue(DEFAULTCOLUMN,null).equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
@@ -1563,7 +1563,7 @@ public class CassandraDataLoader implements Constants {
     		String url = cache.get(SEARCHINDEXAPI) + "/index?sessionToken=" + sessionToken + "&ids="+ids;
     		DefaultHttpClient httpClient = new DefaultHttpClient();
     		HttpPost  postRequest = new HttpPost(url);
-    		
+    		logger.info("Indexing url : {} ",url);
     		HttpResponse response = httpClient.execute(postRequest);
 	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
