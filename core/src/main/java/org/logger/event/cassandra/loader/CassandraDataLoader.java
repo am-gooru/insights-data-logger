@@ -1514,7 +1514,7 @@ public class CassandraDataLoader implements Constants {
 		    				indexCollectionType = "scollection";
 		    				collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
 						}else{
-							indexResourceType = "scollection";
+							indexResourceType = "resource";
 							resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
 						}
 						for(String column : statKeys){
