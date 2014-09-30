@@ -1440,7 +1440,7 @@ public class CassandraDataLoader implements Constants {
     	return stagingEvents; 
     }
 
-    public void callAPIViewCount() throws JSONException {
+    public void callAPIViewCount() throws Exception {
     	if(cache.get("stat_job").equalsIgnoreCase("stop")){
     		logger.info("job stopped");
     		return;
@@ -1468,8 +1468,8 @@ public class CassandraDataLoader implements Constants {
 			this.getRecordsToProcess(currDate, resourceList);
 		}
    }
-  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
-	  try{
+  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws Exception{
+	  
 		  	String indexCollectionType = null;
 			String indexResourceType = null;
 			String IndexingStatus = null;
@@ -1483,12 +1483,16 @@ public class CassandraDataLoader implements Constants {
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
-		if(indexedCount == (contents.size() - 1)){
+		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
+  logger.info("contents : " + contents.size());
+
 		if(contents.size() > 0 ){
+  logger.info("contents2 : " + contents.size());
+
 			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
 			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
 			allowedLimit = (indexedCount + indexedLimit);
@@ -1539,21 +1543,18 @@ public class CassandraDataLoader implements Constants {
 			}
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
-			if(indexingStatus == 200){
+			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
 			}else{
 				throw new AccessDeniedException("Statistical data update failed");
 			}
 
-		}else if(IndexingStatus.equalsIgnoreCase("in-progress")){
+		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
 	 		logger.info("Waiting for indexing");
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 	 		logger.info("No content is viewed");
 		}
-	}catch(Exception e){
-	  logger.info("Error while statistical update" + e);
-	}
 }
     
   /*
@@ -1570,7 +1571,7 @@ public class CassandraDataLoader implements Constants {
     		HttpResponse response = httpClient.execute(postRequest);
 	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
-	 		if (response.getStatusLine().getStatusCode() != 200) {
+	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
