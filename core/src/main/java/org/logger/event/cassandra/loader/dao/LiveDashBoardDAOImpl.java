@@ -512,9 +512,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveActivityInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			String rowKey = null;  
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+				String rowKey = null;  
+				if(beFieldName.containsKey(entry.getKey())){
 					rowKey = beFieldName.get(entry.getKey());
 				}
 	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey())&& entry.getValue() != null){	            	
@@ -532,42 +532,29 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 	}
 
-	@Async
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			String rowKey = null;  
+			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				
-				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+				String rowKey = null;  				
+				
+				logger.info("Key : " + entry.getKey() + " value"+ entry.getValue());
+				
+				if(beFieldName.containsKey(entry.getKey())){
 					rowKey = beFieldName.get(entry.getKey());
 				}
 				
 				if(rowKey != null && entry.getValue() != null){	            	
 	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
-	            }else if(rowKey != null){
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-	            		contentBuilder.field(rowKey, String.valueOf(entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-	            		contentBuilder.field(rowKey, Integer.valueOf(""+entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-	            		contentBuilder.field(rowKey, Long.valueOf(""+entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-	            		contentBuilder.field(rowKey, Boolean.valueOf(""+entry.getValue()));
-	            	}
-	            	else{        		
-	            		contentBuilder.field(rowKey, entry.getValue());
-	            	}
+	            }else{        		
+	            	contentBuilder.field(rowKey, entry.getValue());
 	            }
 			}
-				getESClient().prepareIndex(indexName, indexType, id)
-				.setSource(contentBuilder)
-				.execute()
-				.actionGet()
-				;
+			
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			
 			} catch (Exception e) {
 				logger.info("Indexing failed",e);
 			}
