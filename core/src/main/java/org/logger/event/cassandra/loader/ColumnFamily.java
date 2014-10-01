@@ -59,6 +59,9 @@ public enum ColumnFamily {
 	RESOURCETYPES("resource_type"),
 	
 	CATEGORY("category"),
+	
+	RESOURCE("resource"),
+	
 	;
 	
 	String name;
