@@ -1499,70 +1499,7 @@ public class CassandraDataLoader  implements Constants {
 	    	}
     	}
     }
-    public void catalogMigrationCustom(String startTime , String endTime,String customEventName) {
-    	
-    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings");
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
-    	
-    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
-		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-    	
-    	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
-    	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
-    	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
-    	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
-    	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
-    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
-    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
-    		
-    	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
-    		long start = System.currentTimeMillis();
-    		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
-    		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
-    		long endVal = (endIndex + startVal);
-    		jobCount = (jobCount + 1);
-    		totalJobCount = (totalJobCount + 1);
-    		String jobId = "job-"+UUID.randomUUID();
-    		
-    	/*	baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_job_count", ""+totalJobCount);
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+jobCount);
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "indexed_count", ""+endVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
-    		
-    		Rows<String, String> resource = null;
-    		MutationBatch m = null;
-    		try {
-    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-    		for(long i = startVal ; i < endVal ; i++){
-    			logger.info("contentId : "+ i);
-    				ColumnList<String> rowKey = baseDao.readWithKey("temp_scollection", ""+i, null);
-    				if(rowKey.getStringValue("gooru_oid", null) != null){
-    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "gooru_oid", rowKey.getStringValue("gooru_oid", null));
-    				if(resource != null && resource.size() > 0){
-    					this.getResourceAndIndex(resource);
-    				}
-    			}
-    		}
-    			m.execute();
-    			long stop = System.currentTimeMillis();
-    			
-    			/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
-    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");*/
-    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_time", ""+(totalTime + (stop-start)));
-    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+(jobCount - 1));
-    			
-    		} catch (Exception e) {
-    			e.printStackTrace();
-    		}
-    	}else{    		
-    		logger.info("Job queue is full! Or Job Reached its allowed end");
-    	}
-		
-    }
     private void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
