@@ -1003,14 +1003,64 @@ public class CassandraDataLoader  implements Constants {
 	    				   Map<String,Object> eventMap = new HashMap<String, Object>();
 	    				   while( keys.hasNext() ){
 	    			            String key = (String)keys.next();
+	    			            
+	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+	    			            
 	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
 	    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
 	    			            }
 	
+	    			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
+	    			            	eventMap.put("eventName", "reaction.create");
+	    			            }
+	    			            
+	    			            if(key.equalsIgnoreCase("eventName") 
+	    			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") 
+	    			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
+	    			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played")
+	    			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))){
+	    			            	
+	    			            	eventMap.put("eventName", "collection.play");
+	    			            }
+	    			            
+	    			            if(key.equalsIgnoreCase("eventName") 
+	    			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") 
+	    			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home")
+	    			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))){
+	    			            	eventMap.put("eventName", "user.login");
+	    			            }
+	    			            
+	    			            if(key.equalsIgnoreCase("eventName") 
+	    			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") 
+	    			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))){
+	    			            	eventMap.put("eventName", "user.register");
+	    			            }
+	    			            
+	    			            if(key.equalsIgnoreCase("eventName") 
+	    			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") 
+	    			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
+	    			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
+	    			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
+	    			            							|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots")
+	    			            								|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-question-play-dots"))){
+	    			            	eventMap.put("eventName", "collection.resource.play");
+	    			            }
+	    			            
+	    			            if(key.equalsIgnoreCase("eventName") 
+	    			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") 
+	    			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
+	    			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart")
+	    			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
+	    			            							|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played")
+	    			            								|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots")
+	    			            									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))){
+	    			            	eventMap.put("eventName", "resource.play");
+	    			            }
+	    			            
 	    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
 	    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
 	    			            }
-	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
+	    			            
 	    			        }
 	    				   if(eventMap.get(CONTENTGOORUOID) != null){
 	    				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));

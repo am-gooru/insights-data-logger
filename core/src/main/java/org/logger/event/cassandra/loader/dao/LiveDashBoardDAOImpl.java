@@ -540,8 +540,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				
 				String rowKey = null;  				
 				
-				logger.info("Key : " + entry.getKey() + " value"+ entry.getValue());
-				
 				if(beFieldName.containsKey(entry.getKey())){
 					rowKey = beFieldName.get(entry.getKey());
 				}
