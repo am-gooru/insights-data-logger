@@ -144,7 +144,7 @@ public class EventServiceImpl implements EventService {
 	public void updateProdViews() {
 		try {
 			dataLoaderService.callAPIViewCount();
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

@@ -121,8 +121,10 @@ public class CassandraDataLoader  implements Constants {
     public Collection<String> statKeys ;
     
     public ColumnList<String> statMetrics ;
-        
+    
     private BaseCassandraRepoImpl baseDao ;
+    
+    public static  Map<String,String> taxonomyCodeType;
     
     /**
      * Get Kafka properties from Environment
@@ -192,13 +194,21 @@ public class CassandraDataLoader  implements Constants {
         cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
         cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
         cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
-
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
+        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue());
+        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN).getStringValue());
         geo = new GeoLocation();
         
         ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
+        taxonomyCodeType = new LinkedHashMap<String, String>();
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
@@ -231,6 +241,8 @@ public class CassandraDataLoader  implements Constants {
         cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
         cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
         cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
+        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue());
+        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN).getStringValue());
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
         statKeys = statMetrics.getColumnNames();
@@ -255,6 +267,11 @@ public class CassandraDataLoader  implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
     }
     
     /**
@@ -410,7 +427,7 @@ public class CassandraDataLoader  implements Constants {
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 
     	Map<String,String> eventMap = new LinkedHashMap<String, String>();
-    	String aggregatorJson = cache.get(eventMap.get("eventName"));
+    	String aggregatorJson = null;
     	
     	try {
 	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
@@ -453,6 +470,8 @@ public class CassandraDataLoader  implements Constants {
 			if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
+			
+			aggregatorJson = cache.get(eventMap.get("eventName"));
 						
 			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 			
@@ -469,11 +488,15 @@ public class CassandraDataLoader  implements Constants {
 			
 		
     	}catch(Exception e){
-    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
-			logger.info("Writing error log : {} ",eventObject.getEventId());
+			logger.info("Writing error log : {} ",e);
+			if (eventObject.getFields() != null) {
+				kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+			}
     	}
 
     	try {
+    		aggregatorJson = cache.get(eventMap.get("eventName"));
+    		
     		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
     			
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
@@ -1461,47 +1484,24 @@ public class CassandraDataLoader  implements Constants {
     	for(String id : key.split(",")){
     		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id);
 	    	if(sourceValues != null && sourceValues.size() > 0){
-	    		Collection<String> columnNames = sourceValues.getColumnNames();
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
-	    		for(String columnName : columnNames){
-	    			try{
-	    				if(sourceValues.getStringValue(columnName, null) != null){
-	    					contentBuilder.field(columnName,sourceValues.getStringValue(columnName, null));
-	    				}
-	    			}catch(Exception e){
-	    				try{
-	    					if(sourceValues.getLongValue(columnName, 0L) != null){
-		    					contentBuilder.field(columnName,sourceValues.getLongValue(columnName, 0L));
-	    					}
-	    				}catch(Exception e1){
-	    					try{
-	    						if(sourceValues.getIntegerValue(columnName, 0) != null){
-		    					contentBuilder.field(columnName,sourceValues.getIntegerValue(columnName, 0));
-	    						}
-	    					}catch(Exception e2){
-		    					try{
-			    					if(sourceValues.getBooleanValue(columnName, null) != null){
-				    					contentBuilder.field(columnName,sourceValues.getBooleanValue(columnName, null));
-				    				}
-		    					}catch(Exception e3){
-		    						try{
-				    					if(sourceValues.getDoubleValue(columnName, null) != null){
-					    					contentBuilder.field(columnName,sourceValues.getDoubleValue(columnName, null));
-					    				}
-		    						}catch(Exception e4){
-		    							try{
-		    								if(sourceValues.getDateValue(columnName, null) != null){
-						    					contentBuilder.field(columnName,sourceValues.getDateValue(columnName, null));
-						    				}
-		    							}catch(Exception e5){
-		    								logger.info("Exception while indexing : "+ e);
-		    							}
-		    						}
-		    					}
-		    				}
-		    			}
-	    			}
-	    		}
+	            for(int i = 0 ; i < sourceValues.size() ; i++) {
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getStringValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getLongValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getIntegerValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),sourceValues.getColumnByIndex(i).getDoubleValue());
+	            	}
+	            	if(taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")){
+	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
+	            	}
+	            }
 	    		
 	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 				
@@ -1887,7 +1887,7 @@ public class CassandraDataLoader  implements Constants {
     	return stagingEvents; 
     }
 
-    public void callAPIViewCount() throws JSONException {
+    public void callAPIViewCount() throws Exception {
     	if(cache.get("stat_job").equalsIgnoreCase("stop")){
     		logger.info("job stopped");
     		return;
@@ -1915,17 +1915,25 @@ public class CassandraDataLoader  implements Constants {
 			this.getRecordsToProcess(currDate, resourceList);
 		}
    }
-  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws JSONException{
-	  int indexedCount = 0;
-	  int indexedLimit = 2;
-	  int allowedLimit = 0;
+  private void getRecordsToProcess(Date rowValues,JSONArray resourceList){
+	  try{
+		  	String indexCollectionType = null;
+			String indexResourceType = null;
+			String IndexingStatus = null;
+			String resourceIds = "";
+			String collectionIds = "";
+			int indexedCount = 0;
+			int indexedLimit = 2;
+			int allowedLimit = 0;
+		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
-		if(indexedCount == (contents.size() - 1)){
+		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		 
 		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
 		if(contents.size() > 0 ){
@@ -1936,40 +1944,95 @@ public class CassandraDataLoader  implements Constants {
 				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
-			
-			for(int i = indexedCount ; i < allowedLimit ; i++) {
-				indexedCount = i;
-				ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
-				for(Column<String> detail : vluesList) {
-					JSONObject resourceObj = new JSONObject();
-					resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
-	    			if(resource.getColumnByName("type_name") != null){
-							String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
-							resourceObj.put("resourceType", resourceType);
-					}
-					for(String column : statKeys){
-						if(detail.getName().equals(column)){
-							logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
-							resourceObj.put(statMetrics.getStringValue(column, null), detail.getLongValue());
+			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status");
+			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
+			if(IndexingStatus.equalsIgnoreCase("completed")){
+				for(int i = indexedCount ; i < allowedLimit ; i++) {
+					indexedCount = i;
+					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
+					for(Column<String> detail : vluesList) {
+						JSONObject resourceObj = new JSONObject();
+						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
+		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
+		    				indexCollectionType = "scollection";
+		    				collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
+						}else{
+							indexResourceType = "resource";
+							resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
 						}
-					}
-					if(resourceObj.length() > 0 ){
-						resourceList.put(resourceObj);
+						for(String column : statKeys){
+							if(detail.getName().equals(column)){
+								logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
+								if(statMetrics.getStringValue(column, null) != null){
+									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
+								}
+							}
+						}
+					
 					}
 				}
 			}
 		}
-		if((resourceList.length() != 0)){
-			this.callStatAPI(resourceList, rowValues);			
+		if(indexCollectionType != null || indexResourceType != null){
+			m.execute();
+			
+			int indexingStatus = 0;
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
+			if(indexCollectionType != null){
+				indexingStatus  = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1), rowValues);
+			}
+			if(indexResourceType != null){
+				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
+			}
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
+			if(indexingStatus == 200 || indexingStatus == 404){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+			}else{
+				throw new AccessDeniedException("Statistical data update failed");
+			}
+
+		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
+	 		logger.info("Waiting for indexing");
 		}else{
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 		logger.info("No content viewed");
+	 		logger.info("No content is viewed");
 		}
-	 
-  }
+	}catch(Exception e){
+	  logger.info("Error while statistical update" + e);
+	}
+}
+  /*
+   * rowValues can be null
+   */
+    private int callIndexingAPI(String resourceType,String ids,Date rowValues){
+    	
+    	try{
+    		String sessionToken = cache.get(SESSIONTOKEN);
+    		String url = cache.get(SEARCHINDEXAPI) + "/index?sessionToken=" + sessionToken + "&ids="+ids;
+    		DefaultHttpClient httpClient = new DefaultHttpClient();
+    		HttpPost  postRequest = new HttpPost(url);
+    		
+    		HttpResponse response = httpClient.execute(postRequest);
+	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
+	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
+	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
+	 	 		logger.info("Search Indexing failed...");
+	 	 		return response.getStatusLine().getStatusCode();
+	 		} else {
+	 			if(rowValues != null){
+	 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+	 			}
+	 	 		logger.info("Search Indexing call Success...");
+	 	 		
+	 	 		return response.getStatusLine().getStatusCode();
+	 		}
+    	}catch(Exception e){
+    		logger.info("Search Indexing failed..." + e);
+ 	 		return 500;
+    	}
+    }
     
     private void callStatAPI(JSONArray resourceList,Date rowValues){
     	JSONObject staticsObj = new JSONObject();

@@ -130,6 +130,8 @@ public interface Constants {
 	
 	public String VIEWUPDATEENDPOINT = "viewCountAPI";
 	
+	public String SEARCHINDEXAPI = "searchIndexAPI";
+	
 	public String QUESTION = "question";
 
 	public String ATTMPTTRYSEQ = "attemptTrySequence";

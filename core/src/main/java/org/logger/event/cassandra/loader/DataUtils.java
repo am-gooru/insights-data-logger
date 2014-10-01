@@ -81,7 +81,7 @@ public class DataUtils {
 	}
 	
 	public static Long formatReactionString(String key) {
-		return formatedReaction.get(key) == null ? 0L : formatedReaction.get(key);
+		return formatedReaction.containsKey(key) ? formatedReaction.get(key) : 0L ;
 	}
 	
 	public static String makeCombinedAnswerSeq(int sequence) {
