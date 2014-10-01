@@ -335,7 +335,7 @@ public class MicroAggregationLoader implements Constants{
 	    	
 	    	activityStreamDao.saveActivity(activityMap);
 	    	} else {
-	    		logger.info("Entry is not available for this key {}", eventId);
+	    		logger.info("Entry is not available for this key in EventDetailCF {}", eventId);
 	    	}
     	}
 	}
