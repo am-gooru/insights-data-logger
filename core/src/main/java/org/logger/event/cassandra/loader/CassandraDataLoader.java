@@ -468,10 +468,6 @@ public class CassandraDataLoader implements Constants {
 			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
-			if(eventMap.get(EVENTNAME).equalsIgnoreCase("load.test")){
-				kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
-				logger.info("Writing error log : {} ",eventObject.getEventId());
-			}	
 		
     	}catch(Exception e){
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
@@ -479,14 +475,6 @@ public class CassandraDataLoader implements Constants {
     	}
 
     	try {
-    		aggregatorJson = cache.get(eventMap.get("eventName"));
-    		
-    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-    			
-				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
-	
-				microAggregator.sendEventForAggregation(eventObject.getFields());			
-			}
 
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);

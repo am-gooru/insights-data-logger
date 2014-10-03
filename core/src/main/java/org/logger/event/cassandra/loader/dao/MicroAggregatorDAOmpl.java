@@ -232,12 +232,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 		if(keysList != null && keysList.size() > 0 ){
-			LinkedHashSet<String> listToSet = new LinkedHashSet<String>(keysList);
-			List<String> listWithoutDuplicates = new ArrayList<String>(listToSet);  
-			
-			this.startCounters(eventMap, aggregatorJson, listWithoutDuplicates, key);
-			this.postAggregatorUpdate(eventMap, aggregatorJson, listWithoutDuplicates, key);
-			this.startCounterAggregator(eventMap, aggregatorJson, listWithoutDuplicates, key);
+			this.startCounters(eventMap, aggregatorJson, keysList, key);
+			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
+			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
 		}
      }
     
