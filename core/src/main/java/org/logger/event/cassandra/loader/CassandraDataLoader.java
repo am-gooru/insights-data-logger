@@ -467,7 +467,10 @@ public class CassandraDataLoader implements Constants {
 			}
 			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
-		
+			
+			if(eventObject.getFields() != null) {
+				microAggregator.sendEventForAggregation(eventObject.getFields());
+			}
 		
     	}catch(Exception e){
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
