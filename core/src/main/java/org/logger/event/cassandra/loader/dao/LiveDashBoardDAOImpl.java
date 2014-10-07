@@ -82,15 +82,15 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         this.connectionProvider = connectionProvider;
         this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
         this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
-        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
-        customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"custom~events",DEFAULTCOLUMN).getStringValue();
+        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN,0).getStringValue();
+        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN,0).getStringValue();
+        customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"custom~events",DEFAULTCOLUMN,0).getStringValue();
         /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
         esEventFields = Arrays.asList(esFields);*/
         fieldDataTypes =  new LinkedHashMap<String,String>();
         beFieldName =  new LinkedHashMap<String,String>();
         //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
         for (Row<String, String> row : fieldDescrption) {
         	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
         	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
@@ -98,14 +98,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     public void clearCache(){  
-    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN).getStringValue();
-	    browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN).getStringValue();
+    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN,0).getStringValue();
+	    browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN,0).getStringValue();
 	    /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
 	    esEventFields = Arrays.asList(esFields);*/
 	    fieldDataTypes =  new LinkedHashMap<String,String>();
         beFieldName =  new LinkedHashMap<String,String>();
         //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
         for (Row<String, String> row : fieldDescrption) {
         	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
         	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
@@ -116,7 +116,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     public void callCountersV2(Map<String,String> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	if((eventMap.containsKey(EVENTNAME))) {
-            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"));
+            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
             for(int i=0 ; i < eventKeys.size() ; i++ ){
             	String columnName = eventKeys.getColumnByIndex(i).getName();
             	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
@@ -217,8 +217,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
-    		Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME));
-    		Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME)); 
+    		Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME),0);
+    		Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME),0); 
     	    long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
     	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
     	    long difference = 100L;
@@ -367,21 +367,21 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		long allCollectionResourcePlayCounts = 0L;
 		
 		try{
-			Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ALLUSERSESSION);
-			Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ANONYMOUSSESSION);
-			Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+USERSESSION);
+			Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ALLUSERSESSION,0);
+			Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ANONYMOUSSESSION,0);
+			Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+USERSESSION,0);
 			
-			ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION);
-			ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION);
-			ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION);
+			ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION,0);
+			ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION,0);
+			ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION,0);
 			
-			Column<String> allCollectionPlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS);
-			Column<String> allResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVERESOURCEPLAYS);
-			Column<String> allCollectionResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS);
+			Column<String> allCollectionPlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS,0);
+			Column<String> allResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVERESOURCEPLAYS,0);
+			Column<String> allCollectionResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS,0);
 			
-			ColumnList<String> allCollectionPlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS);
-			ColumnList<String> allResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS);
-			ColumnList<String> allCollectionResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS);
+			ColumnList<String> allCollectionPlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS,0);
+			ColumnList<String> allResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS,0);
+			ColumnList<String> allCollectionResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS,0);
 			
 			if(allUserSession != null)
 			allUserSessionCounts = allUserSession.size();
