@@ -66,7 +66,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readWithKeyColumn(cfName,key,columnName,retryCount++);
@@ -91,7 +91,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readWithKeyColumnList(cfName,key,columnList,retryCount++);
@@ -116,7 +116,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readWithKeyListColumnList(cfName,keys,columnList ,retryCount++);
@@ -139,7 +139,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readWithKey(cfName,key,retryCount++);
@@ -163,7 +163,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readWithKeyList(cfName, key,retryCount++);
@@ -187,7 +187,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
             logger.info("Error while fetching data from method : readWithKey {}", e);
         }
     	
@@ -205,7 +205,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     .getResult()
                     ;
 
-        } catch (Exception e) {
+        } catch (ConnectionException e) {
             logger.info("Error while fetching data from method : readWithKey {} ", e);
         }
     	
@@ -227,7 +227,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.getResult()
 			;
 	    	
-    	} catch(Exception e){
+    	} catch(ConnectionException e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readIndexedColumn(cfName,columnName,value ,retryCount++);
@@ -254,7 +254,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.getResult()
 			;
 	    	
-    	} catch(Exception e){
+    	} catch(ConnectionException e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readIndexedColumn(cfName,columnName,value ,retryCount++);
@@ -345,7 +345,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	try{
     		result = query.execute().getResult()
 			;
-    	} catch(Exception e){
+    	} catch(ConnectionException e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readIndexedColumnList(cfName,columnList,retryCount++);
@@ -366,7 +366,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.getKey(key).execute()
 				.getResult()
 				.isEmpty();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return isRowKeyExists(cfName,key,retryCount++);
@@ -388,7 +388,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
 			}
 			return cfQuery.execute().getResult().isEmpty();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
 		}
 		return false;
@@ -406,7 +406,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
 		}
 		return new ArrayList();
@@ -426,7 +426,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.setStart(startColumnPrefix)
 			.setEnd(endColumnPrefix)
 			.build()).execute().getResult();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			logger.info("Error while fetching data from method : readColumnsWithPrefix {} ", e);
 		} 
 		
@@ -451,7 +451,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			                 return true;
 			             }})
 			        .execute().getResult();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
         		return readAllRows(cfName,retryCount++);
@@ -668,7 +668,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public void  deleteAll(String cfName){
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			 logger.info("Error while deleting rows in method :deleteAll {} ",e);
 		} 
     }
@@ -681,7 +681,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 			
 			m.execute();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			 logger.info("Error while deleting rows in method :deleteRowKey {} ",e);
 		} 
     }
@@ -693,7 +693,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.deleteColumn(columnName)
 			;
 			m.execute();
-		} catch (Exception e) {
+		} catch (ConnectionException e) {
 			 logger.info("Error while deleting rows in method :deleteColumn {} ",e);
 		} 
     }
