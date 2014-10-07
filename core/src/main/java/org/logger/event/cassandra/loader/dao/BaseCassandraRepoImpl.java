@@ -69,7 +69,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         } catch (Exception e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readWithKeyColumn(cfName,key,columnName,retryCount);
+        		return readWithKeyColumn(cfName,key,columnName,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -94,7 +94,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         } catch (Exception e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readWithKeyColumnList(cfName,key,columnList,retryCount);
+        		return readWithKeyColumnList(cfName,key,columnList,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -119,7 +119,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         } catch (Exception e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readWithKeyListColumnList(cfName,keys,columnList ,retryCount);
+        		return readWithKeyListColumnList(cfName,keys,columnList ,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -142,7 +142,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         } catch (Exception e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readWithKey(cfName,key,retryCount);
+        		return readWithKey(cfName,key,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -166,7 +166,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         } catch (Exception e) {
         	if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readWithKeyList(cfName, key,retryCount);
+        		return readWithKeyList(cfName, key,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -230,7 +230,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	} catch(Exception e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readIndexedColumn(cfName,columnName,value ,retryCount);
+        		return readIndexedColumn(cfName,columnName,value ,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -257,7 +257,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	} catch(Exception e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readIndexedColumn(cfName,columnName,value ,retryCount);
+        		return readIndexedColumn(cfName,columnName,value ,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -279,7 +279,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readIndexedColumnLastNrows(cfName ,columnName,value,rowsToRead,retryCount);
+        		return readIndexedColumnLastNrows(cfName ,columnName,value,rowsToRead,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -348,7 +348,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	} catch(Exception e){
     		if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readIndexedColumnList(cfName,columnList,retryCount);
+        		return readIndexedColumnList(cfName,columnList,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -369,7 +369,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (Exception e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return isRowKeyExists(cfName,key,retryCount);
+        		return isRowKeyExists(cfName,key,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -454,7 +454,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (Exception e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return readAllRows(cfName,retryCount);
+        		return readAllRows(cfName,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
@@ -1068,7 +1068,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	} catch (ConnectionException e) {
 		if(retryCount < 6){
     		logger.info("retryCount : " + retryCount);
-    		return getClassPageOwnerInfo(cfName,key ,classPageGooruOid,retryCount);
+    		return getClassPageOwnerInfo(cfName,key ,classPageGooruOid,retryCount++);
     	}else{
     		e.printStackTrace();
     		logger.info("Error in while read : " + e);
@@ -1096,7 +1096,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
         		logger.info("retryCount : " + retryCount);
-        		return isUserPartOfClass(cfName,key ,classPageGooruOid ,retryCount);
+        		return isUserPartOfClass(cfName,key ,classPageGooruOid ,retryCount++);
         	}else{
         		e.printStackTrace();
         		logger.info("Error in while read : " + e);
