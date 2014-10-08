@@ -809,6 +809,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			
 			type = resourcesDetail.getStringValue("type_name", null);
 			
+			logger.info("item ID : {} - type : {} ",pathwayId,type);
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				pathwayIds.add(pathwayId);
 			}
@@ -883,7 +884,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENT_GOORU_OID),0);
 			    			
 			    			type = resourcesDetail.getStringValue("type_name", null);
-			    			
+			    			logger.info("id : {} - type : {} ",eventMap.get(PARENT_GOORU_OID),type);
 			    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 			    				classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -896,6 +897,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    		}
 		    	}
 	    	}else{
+	    		logger.info("parent gooru id : {} ",eventMap.get(PARENTGOORUOID));
 	    		List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(PARENTGOORUOID),0);
     			if(!parents.isEmpty()){    			
         			classPages = this.getPathwayFromItems(parents);
