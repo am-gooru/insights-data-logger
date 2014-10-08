@@ -58,11 +58,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public Column<String> readWithKeyColumn(String cfName,String key,String columnName ,int retryCount){
         
     	Column<String> result = null;
+    	ColumnList<String> columnList = null;
     	try {
-              result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		 columnList = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
                     .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
-                    .getColumn(columnName)
                     .execute()
                     .getResult()
                     ;
@@ -75,7 +75,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		e.printStackTrace();
         	}
         }
-    	
+    	if(columnList != null){
+    		result = columnList.getColumnByName(columnName);
+    	}
     	return result;
     }
 
