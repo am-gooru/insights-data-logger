@@ -115,7 +115,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		logger.info("Time spent for counters : {}",(stop-start));	
     }
     @Async
-    public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws JException{
+    public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws Exception{
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
