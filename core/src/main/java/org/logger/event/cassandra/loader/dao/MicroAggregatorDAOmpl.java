@@ -122,7 +122,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		
 		boolean isStudent = false;
 		
-		logger.info("2 - eventName : {} - type : {} " , eventMap.get(EVENTNAME),eventMap.get(TYPE));
+		logger.info("1 - eventName : {} - type : {} " , eventMap.get(EVENTNAME),eventMap.get(TYPE));
 		
 		/*Maintain session - Start */
 		
@@ -690,7 +690,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     	if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null){
     		List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(CONTENTGOORUOID),0);
     		if(!parents.isEmpty()){    			
-    			classPages = this.getClassPagesFromItems(classPages);
+    			classPages = this.getClassPagesFromItems(parents);
     		}
     	}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
     		classPages.add(eventMap.get(PARENTGOORUOID));
@@ -706,7 +706,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    		if(eventDetail.getStringValue(PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
 			    			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventDetail.getStringValue(CONTENT_GOORU_OID, null),0);
 			    			if(!parents.isEmpty()){    			
-			        			classPages = this.getClassPagesFromItems(classPages);
+			        			classPages = this.getClassPagesFromItems(parents);
 			        		}
 			    		}else{
 			    			classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
@@ -729,7 +729,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				    		if(C.getStringValue(PARENT_GOORU_OID, null) == null || C.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
 				    			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),C.getStringValue(CONTENT_GOORU_OID, null),0);
 				    			if(!parents.isEmpty()){    			
-				        			classPages = this.getClassPagesFromItems(classPages);
+				        			classPages = this.getClassPagesFromItems(parents);
 				        		}
 				    		}else{
 				    			classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
