@@ -6,7 +6,7 @@ public enum ESIndexices {
 	
 	CONTENTCATALOGINFO("content_catalog_info" , new String[] {"dim_resource"}),
 	
-	USERCATALOG("user_catalog" , new String[] {"dim_user"}),
+	USERCATALOG("user_catalog_info" , new String[] {"dim_user"}),
 	
 	TAXONOMYCATALOG("taxonomy_catalog" , new String[] {"taxonomy_code"}),
 
