@@ -886,10 +886,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    		}else{
 			        		String type = null;
 			        		
-			        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENT_GOORU_OID),0);
+			        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventDetail.getStringValue(PARENT_GOORU_OID, null),0);
 			    			
 			    			type = resourcesDetail.getStringValue("type_name", null);
-			    			logger.info("log - id : {} - type : {} ",eventMap.get(PARENT_GOORU_OID),type);
+			    			logger.info("log - id : {} - type : {} ",eventDetail.getStringValue(PARENT_GOORU_OID, null),type);
 			    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 			    				classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -925,7 +925,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 				        		String type = null;
 				        		
-				        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENT_GOORU_OID),0);
+				        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + C.getStringValue(PARENT_GOORU_OID, null),0);
 				    			
 				    			type = resourcesDetail.getStringValue("type_name", null);
 				    			
