@@ -122,8 +122,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		
 		boolean isStudent = false;
 		
-		logger.info("1 - eventName : {} - type : {} " , eventMap.get(EVENTNAME),eventMap.get(TYPE));
-		
 		/*Maintain session - Start */
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
@@ -711,8 +709,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    			classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    		}
 		    		}
+		    	}else{
+		    		List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(PARENTGOORUOID),0);
+		    		if(!parents.isEmpty()){    			
+		    			classPages = this.getClassPagesFromItems(parents);
+		    		}
 		    	}
-	    	}
+    		}
     	}
 	    	if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)){
 	    		if(eventMap.get(CLASSPAGEGOORUOID) == null){
