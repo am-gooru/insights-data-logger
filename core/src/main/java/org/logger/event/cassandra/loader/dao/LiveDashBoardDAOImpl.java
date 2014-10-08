@@ -7,13 +7,11 @@ import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
@@ -24,8 +22,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
-import org.logger.event.cassandra.loader.ESIndexices;
-import org.logger.event.cassandra.loader.IndexType;
+import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
 import org.restlet.resource.ClientResource;
@@ -113,29 +110,36 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     @Async
-    public void callCountersV2(Map<String,String> eventMap) {
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	if((eventMap.containsKey(EVENTNAME))) {
-            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
-            for(int i=0 ; i < eventKeys.size() ; i++ ){
-            	String columnName = eventKeys.getColumnByIndex(i).getName();
-            	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-        		String key = this.formOrginalKey(columnName, eventMap);
-        		for(String value : columnValue.split(",")){
-            		String orginalColumn = this.formOrginalKey(value, eventMap);
-	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-	            			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, orginalColumn.startsWith(TIMESPENT+SEPERATOR) ? Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))) : 1L, m);
-	            		} 
-            		}
-                	try {
-                        m.execute();
-                    } catch (ConnectionException e) {
-                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+    public void callCountersV2(Map<String,String> eventMap) { MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    if((eventMap.containsKey(EVENTNAME))) {
+        eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
+        for(int i=0 ; i < eventKeys.size() ; i++ ){
+            String columnName = eventKeys.getColumnByIndex(i).getName();
+            String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+                    String key = this.formOrginalKey(columnName, eventMap);
+                    for(String value : columnValue.split(",")){
+                    String orginalColumn = this.formOrginalKey(value, eventMap);
+                            if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+                                    if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
+                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
+                                    }else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
+                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
+                                    }else if(orginalColumn.startsWith("sum"+SEPERATOR)){
+                                            String[] rowKey = orginalColumn.split("~");
+                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
+
+                                    }
+                            }
                     }
-            	
-            }
-    	}
+                    try {
+                    m.execute();
+                } catch (ConnectionException e) {
+                    logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+                }
+
+        }
     }
+}
     
     public String getBrowser(String userAgent) {
     	String browser = "";
