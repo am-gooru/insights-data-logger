@@ -1500,7 +1500,21 @@ public class CassandraDataLoader  implements Constants {
 			if(userInfos.getColumnByName("account_uid") != null){
 				contentBuilder.field("account_uid",userInfos.getColumnByName("account_uid").getStringValue());
 			}
-			
+
+	    	Collection<String> user = new ArrayList<String>();
+	    	user.add(userId);
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user,0);
+	    	for (Row<String, String> row : eventDetailsNew) {
+	    		ColumnList<String> userInfo = row.getColumns();
+	    		for(int i = 0 ; i < userInfo.size() ; i++) {
+	    			String columnName = userInfo.getColumnByIndex(i).getName();
+	    			String value = userInfo.getColumnByIndex(i).getStringValue();
+	    			if(value != null){
+	    				contentBuilder.field(columnName, value);
+	    			}
+	    		}
+	    	}
+		
 			getConnectionProvider().getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
 			
     		;
