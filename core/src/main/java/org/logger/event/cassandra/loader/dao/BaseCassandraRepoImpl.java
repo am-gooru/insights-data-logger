@@ -68,7 +68,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 71");
         	if(retryCount < 6){
         		return readWithKeyColumn(cfName,key,columnName ,retryCount++);
         	}else{
@@ -117,7 +116,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 118");
         	if(retryCount < 6){
         		return readWithKeyListColumnList(cfName,keys,columnList,retryCount++);
         	}else{
@@ -139,7 +137,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 140");
         	if(retryCount < 6){
         		return readWithKey(cfName,key,retryCount++);
         	}else{
@@ -169,7 +166,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 170");
         	if(retryCount < 6){
         		return readWithKey(cfName,key,keySpaceType,retryCount++);
         	}else{
@@ -191,7 +187,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 192");
         	if(retryCount < 6){
         		return readWithKeyList(cfName,key,retryCount++);
         	}else{
@@ -222,7 +217,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 216");
         	if(retryCount < 6){
         		return readWithKeyList(cfName,key,keySpaceType,retryCount++);
         	}else{
@@ -263,7 +257,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-        	logger.info("Error in the line 264");
         	if(retryCount < 6){
         		return readIterableKeyList(cfName, keys,retryCount++);
         	}else{
@@ -290,13 +283,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 	    	
     	} catch(ConnectionException e){
-    		/*if(retryCount < 6){
+    		if(retryCount < 6){
         		return readIndexedColumn(cfName,columnName,value,retryCount++);
         	}else{
         		e.printStackTrace();
         	}    		
-    		*/
-    		logger.info("Exception in line 290");
+    		
     	}
     	return result;
     }
@@ -317,11 +309,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 	    	
     	} catch(ConnectionException e){
-    		/*if(retryCount < 6){
+    		if(retryCount < 6){
         		return readIndexedColumn(cfName,columnName,value,retryCount++);
         	}else{
         		e.printStackTrace();
-        	}*/
+        	}
     		logger.info("Exception in line 316");
     	}
     	return result;
@@ -338,11 +330,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					 	   .addExpression().whereColumn(columnName)
 					 	   .equals().value(value).execute().getResult();
 		} catch (ConnectionException e) {
-			/*if(retryCount < 6){
+			if(retryCount < 6){
         		return readIndexedColumnLastNrows(cfName ,columnName,value,rowsToRead,retryCount++);
         	}else{
         		e.printStackTrace();
-        	}  */
+        	}
 			logger.info("Exception in line 337");
 		}
     	
@@ -359,11 +351,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		.withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build())
     		.execute().getResult();
     	} catch (ConnectionException e) {
-    		/*if(retryCount < 6){
+    		if(retryCount < 6){
         		return readKeyLastNColumns(cfName,key,columnsToRead,retryCount++);
         	}else{
         		e.printStackTrace();
-        	}*/
+        	}
     		logger.info("Exception in line 358");
     	}
     	
@@ -405,11 +397,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		result = query.execute().getResult()
 			;
     	} catch(ConnectionException e){
-    		/*if(retryCount < 6){
+    		if(retryCount < 6){
         		return readIndexedColumnList(cfName,columnList,retryCount++);
         	}else{
         		e.printStackTrace();
-        	}  */
+        	}
     		logger.info("Exception in line 404");
     	}
 
@@ -425,7 +417,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.getResult()
 				.isEmpty();
 		} catch (ConnectionException e) {
-			logger.info("Error in the line 426");
 			if(retryCount < 6){
         		return isRowKeyExists(cfName,key,retryCount++);
         	}else{
@@ -464,7 +455,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
 		} catch (ConnectionException e) {
-			logger.info("Error in the line 465");
 			if(retryCount < 6){
         		return getKey(cfName,columns ,retryCount++);
         	}else{
@@ -1048,7 +1038,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         return sb.toString();
     }
 
-    public List<String> getParentIds(String cfName,String Key){
+    public List<String> getParentIds(String cfName,String Key,int retryCount){
 
     	Rows<String, String> collectionItem = null;
     	List<String> classPages = new ArrayList<String>();
@@ -1062,8 +1052,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			.equals()
     			.value(Key).execute().getResult();
     	} catch (ConnectionException e) {
-    		
-    		logger.info("Error while retieveing data : {}" ,e);
+    		if(retryCount < 6){
+    			return getParentIds(cfName,Key , retryCount++);
+    		}else{
+    			e.printStackTrace();
+    		}
     	}
     	if(collectionItem != null){
     		for(Row<String, String> collectionItems : collectionItem){
@@ -1076,7 +1069,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return classPages; 
     	}
 
-    public String getParentId(String cfName,String Key){
+    public String getParentId(String cfName,String Key , int retryCount){
     	Rows<String, String> collectionItem = null;
     	String parentId = null;
     	try {
@@ -1088,8 +1081,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			.equals()
     			.value(Key).execute().getResult();
     	} catch (ConnectionException e) {
-    		
-    		logger.info("Error while retieveing data : {}" ,e);
+    		if(retryCount < 6){
+    			return getParentId(cfName,Key , retryCount++);
+    		}else{
+    			e.printStackTrace();
+    		}
     	}
     	if(collectionItem != null){
     		for(Row<String, String> collectionItems : collectionItem){
@@ -1149,12 +1145,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.addExpression().whereColumn("is_group_owner").equals().value(1)
 					.execute().getResult();
 	} catch (ConnectionException e) {
-		/*if(retryCount < 6){
+		if(retryCount < 6){
     		return getClassPageOwnerInfo(cfName,key ,classPageGooruOid,retryCount++);
     	}else{
     		e.printStackTrace();
-    	}*/
-		logger.info("Error in the line 1146");
+    	}
 		}
     	if (result != null && !result.isEmpty()) {
     	return true;	
@@ -1176,12 +1171,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.equals().value(key)
 				.execute().getResult();
 		} catch (ConnectionException e) {
-			/*if(retryCount < 6){
+			if(retryCount < 6){
         		return isUserPartOfClass(cfName,key ,classPageGooruOid , retryCount++);
         	}else{
         		e.printStackTrace();
-        	}*/
-			logger.info("Error in the line 1146");
+        	}
 		}
 		
     	if (result != null && !result.isEmpty()) {
