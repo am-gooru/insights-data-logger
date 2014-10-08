@@ -246,6 +246,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					
+					int retryCount = 1;
+			        while (retryCount < 6 && !isStudent) {
+			        	Thread.sleep(1000);
+			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
+			        	logger.info("retrying to check if a student : {}",retryCount);
+			            retryCount++;
+			        }
 					if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						
@@ -888,6 +895,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    			}
 			    		}
 		    	}
+	    	}else{
+	    		List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(PARENTGOORUOID),0);
+    			if(!parents.isEmpty()){    			
+        			classPages = this.getPathwayFromItems(parents);
+        		}
 	    	}
     	}
 	    	if((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()))){
