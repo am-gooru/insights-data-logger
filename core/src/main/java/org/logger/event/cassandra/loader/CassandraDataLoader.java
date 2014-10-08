@@ -186,44 +186,44 @@ public class CassandraDataLoader  implements Constants {
         this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 
-        Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+        Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(),0);
         cache = new LinkedHashMap<String, String>();
         for (Row<String, String> row : operators) {
         	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
 		}
-        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
-        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
-        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
-        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
-        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue());
-        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN).getStringValue());
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN,0).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN,0).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN,0).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN,0).getStringValue());
+        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN,0).getStringValue());
+        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN,0).getStringValue());
         geo = new GeoLocation();
         
-        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status",0);
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
         taxonomyCodeType = new LinkedHashMap<String, String>();
-        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
         }
         
-        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
-        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key",0).getColumnNames();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics",0);
         statKeys = statMetrics.getColumnNames();
         
-        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily());
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : licenseRows) {
         	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
         resourceTypesCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : resourceTypesRows) {
         	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
         categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
@@ -233,42 +233,42 @@ public class CassandraDataLoader  implements Constants {
 
     public void clearCache(){
     	cache.clear();
-    	Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily());
+    	Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(),0);
         cache = new LinkedHashMap<String, String>();
         for (Row<String, String> row : operators) {
         	cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
 		}
-        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN).getStringValue());
-        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN).getStringValue());
-        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN).getStringValue());
-        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue());
-        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN).getStringValue());
-        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key").getColumnNames();
-        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics");
+        cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN,0).getStringValue());
+        cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN,0).getStringValue());
+        cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN,0).getStringValue());
+        cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN,0).getStringValue());
+        cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN,0).getStringValue());
+        pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key",0).getColumnNames();
+        statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics",0);
         statKeys = statMetrics.getColumnNames();
         liveDashBoardDAOImpl.clearCache();
-        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status");
+        ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status",0);
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
         
-        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily());
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : licenseRows) {
         	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily());
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
         resourceTypesCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : resourceTypesRows) {
         	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
-        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily());
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
         categoryCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         
-        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code");
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
         }
@@ -365,7 +365,7 @@ public class CassandraDataLoader  implements Constants {
 	         Long endTimeVal = null;
 
 	         if (eventData.getEventId() != null) {
-	        	 existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId());
+	        	 existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId(),0);
 	        	 if (existingRecord != null && !existingRecord.isEmpty()) {
 			         if ("start".equalsIgnoreCase(eventData.getEventType())) {
 			        	 startTimeVal = existingRecord.getLongValue("start_time", null);
@@ -382,7 +382,7 @@ public class CassandraDataLoader  implements Constants {
 	         Map<String,Object> records = new HashMap<String, Object>();
 	         records.put("event_name", eventData.getEventName());
 	         records.put("api_key",eventData.getApiKey() != null ? eventData.getApiKey() : DEFAULT_API_KEY );
-	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
+	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records,0);
 	
 	         if(existingEventRecord == null && existingEventRecord.isEmpty()){
 	        	 logger.info("Please add new event in to events table ");
@@ -436,7 +436,7 @@ public class CassandraDataLoader  implements Constants {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
 				//Save Activity in ElasticSearch
-				this.saveActivityInIndex(eventObject.getFields());
+				//this.saveActivityInIndex(eventObject.getFields());
 				
 			}
 
@@ -447,7 +447,7 @@ public class CassandraDataLoader  implements Constants {
 	    	Map<String,Object> records = new HashMap<String, Object>();
 	    	records.put("event_name", eventMap.get("eventName"));
 	    	records.put("api_key",apiKey);
-	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
+	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records,0);
 
 	    	if(eventId == null || eventId.isEmpty()){
 	    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -495,14 +495,6 @@ public class CassandraDataLoader  implements Constants {
     	}
 
     	try {
-    		aggregatorJson = cache.get(eventMap.get("eventName"));
-    		
-    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-    			
-				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
-	
-				microAggregator.sendEventForAggregation(eventObject.getFields());			
-			}
 
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
@@ -556,7 +548,7 @@ public class CassandraDataLoader  implements Constants {
             return;
         }
 
-			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getEventId());
+			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getEventId(),0);
 			if (existingRecord != null && !existingRecord.isEmpty()) {
 			    if ("stop".equalsIgnoreCase(eventObject.getEventType())) {
 			        startTime = existingRecord.getLongValue("start_time", null);
@@ -588,7 +580,7 @@ public class CassandraDataLoader  implements Constants {
         }
 
         if(!StringUtils.isEmpty(eventObject.getParentEventId())){
-        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getParentEventId());
+        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getParentEventId(),0);
         	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
         		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventObject.getParentEventId(), "end_time", endTime);
@@ -621,7 +613,7 @@ public class CassandraDataLoader  implements Constants {
     	//Get all the event name and store for Caching
     	Map<String,String> events = new LinkedHashMap<String, String>();
     	
-    	Rows<String, String> eventRows  = baseDao.readAllRows(ColumnFamily.DIMEVENTS.getColumnFamily());
+    	Rows<String, String> eventRows  = baseDao.readAllRows(ColumnFamily.DIMEVENTS.getColumnFamily(),0);
     	
     	for(Row<String, String> eventRow : eventRows){
     		ColumnList<String> eventColumns = eventRow.getColumns();
@@ -635,7 +627,7 @@ public class CassandraDataLoader  implements Constants {
     		
    		 	if(!currentDate.equalsIgnoreCase(processingDate)){
    		 			processingDate = currentDate;
-   		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate);
+   		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate,0);
    		 			
    		 		for(Row<String, String> dateIds : dateDetail){
    		 			ColumnList<String> columns = dateIds.getColumns();
@@ -650,7 +642,7 @@ public class CassandraDataLoader  implements Constants {
    		 	int dateTrySeq = 1;
    		 	while((dateId == null || dateId.equalsIgnoreCase("0")) && dateTrySeq < 100){
    		 	
-   		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate);
+   		 		Rows<String, String> dateDetail = baseDao.readIndexedColumn(ColumnFamily.DIMDATE.getColumnFamily(),"date",currentDate,0);
 	 			
 		 		for(Row<String, String> dateIds : dateDetail){
 		 			ColumnList<String> columns = dateIds.getColumns();
@@ -671,7 +663,7 @@ public class CassandraDataLoader  implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+   		 ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
 	    	if(eventUUID == null && eventUUID.isEmpty() ) {
 	    		logger.info("No events in given timeline :  {}",startDate);
 	    		return;
@@ -684,7 +676,7 @@ public class CassandraDataLoader  implements Constants {
 	    	}
 	    	
 	    	//Read all records from Event Detail
-	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		row.getColumns().getStringValue("event_name", null);
@@ -794,7 +786,7 @@ public class CassandraDataLoader  implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,null);
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
@@ -806,7 +798,7 @@ public class CassandraDataLoader  implements Constants {
 		    	}
 		    	
 		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,null);
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
@@ -840,7 +832,7 @@ public class CassandraDataLoader  implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
@@ -852,7 +844,7 @@ public class CassandraDataLoader  implements Constants {
 		    	}
 		    	
 		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		String fields = row.getColumns().getStringValue("fields", null);
@@ -913,7 +905,7 @@ public class CassandraDataLoader  implements Constants {
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey);
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
@@ -925,7 +917,7 @@ public class CassandraDataLoader  implements Constants {
 		    	}
 		    	
 		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys);
+		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
@@ -1082,7 +1074,7 @@ public class CassandraDataLoader  implements Constants {
     public Map<String, Object> getUserInfo(Map<String,Object> eventMap , String gooruUId){
     	Collection<String> user = new ArrayList<String>();
     	user.add(gooruUId);
-    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user);
+    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user,0);
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
     		for(int i = 0 ; i < userInfo.size() ; i++) {
@@ -1096,7 +1088,7 @@ public class CassandraDataLoader  implements Constants {
 		return eventMap;
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
-    	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId);
+    	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){
     			eventMap.put("title", resource.getStringValue("title", null));
     			eventMap.put("description",resource.getStringValue("description", null));
@@ -1114,7 +1106,7 @@ public class CassandraDataLoader  implements Constants {
 						eventMap.put("resourceCategoryId", categoryCache.get(resource.getColumnByName("category").getStringValue()));
 					}
 				}
-				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId);
+				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId,0);
 				if(questionCount != null && !questionCount.isEmpty()){
 					Long questionCounts = questionCount.getLongValue("questionCount", 0L);
 					eventMap.put("questionCount", questionCounts);
@@ -1135,7 +1127,7 @@ public class CassandraDataLoader  implements Constants {
     	user.add(gooruOid);
     	Map<String,String> whereColumn = new HashMap<String, String>();
     	whereColumn.put("gooru_oid", gooruOid);
-    	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn);
+    	Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn,0);
     	Long subjectCode = 0L;
     	Long courseCode = 0L;
     	Long unitCode = 0L;
@@ -1154,7 +1146,7 @@ public class CassandraDataLoader  implements Constants {
 	    				subjectCode = value;
 	    			} 
 	    			else if(value != null && depth == 2L){
-	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
+	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
 	    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 	    				if(subjectCode == 0L)
 	    				subjectCode = subject;
@@ -1162,7 +1154,7 @@ public class CassandraDataLoader  implements Constants {
 	    			}
 	    			
 	    			else if(value != null && depth == 3L){
-	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			if(subjectCode == 0L)
@@ -1172,7 +1164,7 @@ public class CassandraDataLoader  implements Constants {
 		    			unitCode = value;
 	    			}
 	    			else if(value != null && depth == 4L){
-	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -1185,7 +1177,7 @@ public class CassandraDataLoader  implements Constants {
 			    		topicCode = value ;
 	    			}
 	    			else if(value != null && depth == 5L){
-	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -1201,7 +1193,7 @@ public class CassandraDataLoader  implements Constants {
 				    		lessonCode = value;
 	    			}
 	    			else if(value != null && depth == 6L){
-	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value));
+	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
 		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -1248,8 +1240,8 @@ public class CassandraDataLoader  implements Constants {
     
     public void postMigration(String startTime , String endTime,String customEventName) {
     	
-    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings");
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "ts_job_settings",0);
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids",0);
     	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
     	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
@@ -1283,7 +1275,7 @@ public class CassandraDataLoader  implements Constants {
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
     				if(resource != null && resource.size() > 0){
     					
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
@@ -1315,8 +1307,8 @@ public class CassandraDataLoader  implements Constants {
     
     public void catalogMigration(String startTime , String endTime,String customEventName) {
     	
-    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings");
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids");
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -1353,7 +1345,7 @@ public class CassandraDataLoader  implements Constants {
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
     				if(resource != null && resource.size() > 0){
     					this.getResourceAndIndex(resource);
     				}
@@ -1382,7 +1374,7 @@ public class CassandraDataLoader  implements Constants {
     		idList.add("GLP~" + id);
     	}
     	logger.info("resource id : {}",idList);
-    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList);
+    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
     	try {
     		if(resource != null && resource.size() > 0){
     			this.getResourceAndIndex(resource);
@@ -1402,7 +1394,7 @@ public class CassandraDataLoader  implements Constants {
     
     private void getUserAndIndex(String userId) throws Exception{
     	logger.info("user id : "+ userId);
-		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId);
+		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId,0);
 		
 		if(userInfos != null & userInfos.size() > 0){
 			
@@ -1522,7 +1514,7 @@ public class CassandraDataLoader  implements Constants {
     
     public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
     	for(String id : key.split(",")){
-    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id);
+    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
 	            for(int i = 0 ; i < sourceValues.size() ; i++) {
@@ -1648,7 +1640,7 @@ public class CassandraDataLoader  implements Constants {
 			}
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
-			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue());
+			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 			if(!questionCount.isEmpty() && columns.getColumnByName("type_name") != null){
 				Long questionCounts = questionCount.getLongValue("questionCount", 0L);
 				resourceMap.put("questionCount", questionCounts);
@@ -1672,8 +1664,8 @@ public class CassandraDataLoader  implements Constants {
     }
     public void postStatMigration(String startTime , String endTime,String customEventName) {
     	
-    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings");
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids");
+    	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings",0);
+    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids",0);
     	
     	Collection<String> columnList = new ArrayList<String>();
     	columnList.add("count~views");
@@ -1711,7 +1703,7 @@ public class CassandraDataLoader  implements Constants {
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
 	    			String gooruOid = null;
-	    			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+	    			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
 	    			if(resource != null && resource.size() > 0){
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					
@@ -1725,7 +1717,7 @@ public class CassandraDataLoader  implements Constants {
 	    					long insightsView = 0L;
 	    					long gooruView = columns.getLongValue("views_count", 0L);
 	    					
-	    					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid, columnList);
+	    					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid, columnList,0);
 	    					JSONObject resourceObj = new JSONObject();
 	    					for(Column<String> detail : vluesList) {
 	    						resourceObj.put("gooruOid", gooruOid);
@@ -1781,16 +1773,16 @@ public class CassandraDataLoader  implements Constants {
 		Calendar cal = Calendar.getInstance();
 		try{
 		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings");
+		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings",0);
 		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
 			JSONArray resourceList = new JSONArray();
 			logger.info("Start Date : {} ",String.valueOf(startDate));
-			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate));
+			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate),0);
 			Collection<String> gooruOids =  recentReources.getColumnNames();
 			
 			for(String id : gooruOids){
-				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id);
-				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
+				ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
+				ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
 				long insightsView = 0L;
 				long gooruView = 0L;
 				if(insightsData != null){
@@ -1809,7 +1801,7 @@ public class CassandraDataLoader  implements Constants {
 					JSONObject resourceObj = new JSONObject();
 					resourceObj.put("gooruOid", id);
 					resourceObj.put("views", (insightsView + balancedView));
-					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id);
+					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
 	    			if(resource.getColumnByName("type_name") != null){
 							String resourceType = resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
 							resourceObj.put("resourceType", resourceType);
@@ -1870,7 +1862,7 @@ public class CassandraDataLoader  implements Constants {
     		return;
     	}
     	JSONArray resourceList = new JSONArray();
-    	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN).getStringValue();
+    	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN,0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
 		Date currDate = null;
@@ -1903,34 +1895,34 @@ public class CassandraDataLoader  implements Constants {
 			int indexedLimit = 2;
 			int allowedLimit = 0;
 		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
-		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count");
+		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count",0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
-		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues));
+		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 		 
 		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
 		if(contents.size() > 0 ){
-			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit");
+			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
 			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
 			allowedLimit = (indexedCount + indexedLimit);
 			if(allowedLimit > contents.size() ){
 				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
 			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
-			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status");
+			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
 			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
 			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
-					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys);
+					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys,0);
 					for(Column<String> detail : vluesList) {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue());
+						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
 		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
 		    				collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
@@ -2013,7 +2005,7 @@ public class CassandraDataLoader  implements Constants {
     
     private void callStatAPI(JSONArray resourceList,Date rowValues){
     	JSONObject staticsObj = new JSONObject();
-		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN).getStringValue();
+		String sessionToken = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN,0).getStringValue();
 		try{
 				String url = cache.get(VIEWUPDATEENDPOINT) + "?skipReindex=false&sessionToken=" + sessionToken;
 				DefaultHttpClient httpClient = new DefaultHttpClient();   
@@ -2138,7 +2130,7 @@ public class CassandraDataLoader  implements Constants {
 
 		try {
 			//ColumnList<String> columnList = configSettings.getColumnList("schedular~ip");
-			ColumnList<String> columnList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip");
+			ColumnList<String> columnList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip",0);
 			String configuredIp = columnList.getColumnByName("ip_address").getStringValue();
 			if (configuredIp != null) {
 				if (configuredIp.equalsIgnoreCase(ipAddress))
@@ -2166,7 +2158,7 @@ public class CassandraDataLoader  implements Constants {
     	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
-					 Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid);
+					 Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid,0);
 	   					for(Row<String, String> userDetail : userDetails){
 	   						organizationUid = userDetail.getColumns().getStringValue("organization_uid", null);
 	   					}
@@ -2230,7 +2222,7 @@ public class CassandraDataLoader  implements Constants {
         }
 
         if (!StringUtils.isEmpty(eventData.getEventType())) {
-			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId());
+			ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId(),0);
 			if (existingRecord != null && !existingRecord.isEmpty()) {
 			    if ("stop".equalsIgnoreCase(eventData.getEventType())) {
 			        startTime = existingRecord.getLongValue("start_time", null);
@@ -2263,7 +2255,7 @@ public class CassandraDataLoader  implements Constants {
         }
 
         if(!StringUtils.isEmpty(eventData.getParentEventId())){
-        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getParentEventId());
+        	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getParentEventId(),0);
         	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
         		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData.getParentEventId(), "end_time", endTime);
@@ -2288,7 +2280,7 @@ public class CassandraDataLoader  implements Constants {
    	    	String organizationUid = null;
    	    	Date endDate = new Date();
    	    	
-   	    	ColumnList<String> activityRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId);	
+   	    	ColumnList<String> activityRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);	
    	    	if (activityRow != null){
    	    	String fields = activityRow.getStringValue(FIELDS, null);
   	         	
@@ -2307,7 +2299,7 @@ public class CassandraDataLoader  implements Constants {
    			if (rawMap != null && rawMap.get("gooruUId") != null) {
    				 try {
    					 userUid = rawMap.get("gooruUId");
-   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid);
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid,0);
    					for(Row<String, String> userDetail : userDetails){
    						userName = userDetail.getColumns().getStringValue("username", null);
    					}
@@ -2317,7 +2309,7 @@ public class CassandraDataLoader  implements Constants {
    			 } else if (activityRow.getStringValue("gooru_uid", null) != null) {
    				try {
    					 userUid = activityRow.getStringValue("gooru_uid", null);
-   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null));
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null),0);
    					for(Row<String, String> userDetail : userDetails){
    						userName = userDetail.getColumns().getStringValue("username", null);
    					}
@@ -2326,10 +2318,10 @@ public class CassandraDataLoader  implements Constants {
    				}			
    			 } else if (activityRow.getStringValue("user_id", null) != null) {
    				 try {
-   					ColumnList<String> userUidList = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), activityRow.getStringValue("user_id", null));
+   					ColumnList<String> userUidList = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), activityRow.getStringValue("user_id", null),0);
 					userUid = userUidList.getStringValue("gooru_uid", null);
 					
-   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null));
+   					Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", activityRow.getStringValue("gooru_uid", null),0);
    					for(Row<String, String> userDetail : userDetails){
    						userName = userDetail.getColumns().getStringValue("username", null);
    					}						
@@ -2402,7 +2394,7 @@ public class CassandraDataLoader  implements Constants {
  
     @Async
     private String updateEvent(EventData eventData) {
-    	ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(),eventData.getApiKey());
+    	ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(),eventData.getApiKey(),0);
         String appOid = apiKeyValues.getStringValue("app_oid", null);
         if(eventData.getTimeSpentInMs() != null){
 	          eventData.setTimeInMillSec(eventData.getTimeSpentInMs());

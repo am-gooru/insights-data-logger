@@ -90,7 +90,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public AppDO verifyApiKey(String apiKey) {
-        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey);
+        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey,0);
         AppDO appDO = new AppDO();
         appDO.setApiKey(apiKey);
         appDO.setAppName(apiKeyValues.getStringValue("appName", null));
@@ -129,14 +129,14 @@ public class EventServiceImpl implements EventService {
     }
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
-		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey);
+		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey,0);
 		return eventColumnList;
 	}
 
 	@Override
 	public Rows<String, String> readLastNevents(String apiKey,
 			Integer rowsToRead) {
-		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
+		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead,0);
 		return eventRowList;
 	}
 
@@ -170,7 +170,7 @@ public class EventServiceImpl implements EventService {
 		
 		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
 		if((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead);
+			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead,0);
 		}	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
