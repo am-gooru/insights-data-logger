@@ -639,13 +639,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		List<String> classPageGooruOids = new ArrayList<String>();
 		for(String classPageGooruOid : parentIds){
 			String type = null;
-			Rows<String, String>  resourcesDetail = baseCassandraDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(),"gooru_oid",classPageGooruOid,0);
-
-			if(resourcesDetail != null){
-				for(Row<String, String> resource : resourcesDetail){
-					type =  resource.getColumns().getColumnByName("type_name") != null ? null : resource.getColumns().getColumnByName("type_name").getStringValue() ;
-				 }
+			ColumnList<String>  resource = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+classPageGooruOid,0);
+			if(resource != null){	
+				type =  resource.getColumnByName("type_name") != null ? null : resource.getColumnByName("type_name").getStringValue() ;
 			}
+					
+			logger.info("id : {} - type : {} ",classPageGooruOid,type);
 			
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
 				classPageGooruOids.add(classPageGooruOid);
@@ -696,9 +695,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     		if(eventMap.get(CLASSPAGEGOORUOID) == null){
 	    		ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventMap.get(PARENTEVENTID),0);
 		    	if(eventDetail != null && eventDetail.size() > 0){
-		    		if(eventDetail.getStringValue(EVENT_NAME, null) != null && (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())){
-		    			classPages.add(eventDetail.getStringValue(CONTENT_GOORU_OID, null));
-		    		}		    		
 		    		if(eventDetail.getStringValue(EVENT_NAME, null) != null &&  (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			    		if(eventDetail.getStringValue(PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(PARENT_GOORU_OID, null).isEmpty()){
 			    			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventDetail.getStringValue(CONTENT_GOORU_OID, null),0);
@@ -710,6 +706,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    		}
 		    		}
 		    	}else{
+		    		logger.info("parent gooru id : {} ",eventMap.get(PARENTGOORUOID));
 		    		List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(PARENTGOORUOID),0);
 		    		if(!parents.isEmpty()){    			
 		    			classPages = this.getClassPagesFromItems(parents);
