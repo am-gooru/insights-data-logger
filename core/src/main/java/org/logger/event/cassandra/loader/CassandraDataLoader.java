@@ -1561,12 +1561,11 @@ public class CassandraDataLoader implements Constants {
 		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
 	 		logger.info("Waiting for indexing");
 	 		return false;
-		}else{
-			logger.info("No content is viewed");
-			return true;
 		}
+	}else{
+		logger.info("No content is viewed");
+		return true;
 	}
-	return false;
 }
     
   /*
