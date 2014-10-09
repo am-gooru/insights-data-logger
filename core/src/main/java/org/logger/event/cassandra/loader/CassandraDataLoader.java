@@ -1455,8 +1455,9 @@ public class CassandraDataLoader implements Constants {
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		
-		if((rowValues.getTime() < rowValues.getTime())){
-			logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
+		logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
+
+		if((rowValues.getTime() < currDate.getTime())){
 			ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 			ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~limit",0);
 			int indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
@@ -1464,16 +1465,13 @@ public class CassandraDataLoader implements Constants {
 			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexed~limit");
 			
 			if((contents.size() == 0 || indexedCount == (contents.size() - 1)) && status){
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "view~count~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(lastDate));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "view~count~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 			}
-		}
-		if((rowValues.getTime() == currDate.getTime())) {
-			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
-			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexing~limit");
-		}else{
-			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(currDate),minuteDateFormatter.format(currDate));
-			boolean status = this.getRecordsToProcess(currDate, resourceList,"curr~indexing~limit");
-		}
+		}	
+		
+		logger.info("2-processing curr mins : {}",minuteDateFormatter.format(currDate));
+		boolean status = this.getRecordsToProcess(currDate, resourceList,"curr~indexing~limit");
+		
    }
   private boolean getRecordsToProcess(Date rowValues,JSONArray resourceList,String indexLabelLimit) throws Exception{
 	  
