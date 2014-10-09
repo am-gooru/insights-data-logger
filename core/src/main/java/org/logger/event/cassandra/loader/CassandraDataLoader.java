@@ -1474,6 +1474,7 @@ public class CassandraDataLoader implements Constants {
 			int indexedLimit = 2;
 			int allowedLimit = 0;
 		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~count",0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
@@ -1521,6 +1522,9 @@ public class CassandraDataLoader implements Constants {
 								logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){										
+										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
+									}
 								}
 							}
 						}
@@ -1531,7 +1535,7 @@ public class CassandraDataLoader implements Constants {
 		}
 		if(indexCollectionType != null || indexResourceType != null){
 			m.execute();
-			
+			m2.execute();
 			int indexingStatus = 0;
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
 			if(indexCollectionType != null){
