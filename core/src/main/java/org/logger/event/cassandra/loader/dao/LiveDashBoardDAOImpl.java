@@ -350,7 +350,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
 		
-		baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey, secondDateFormatter.format(new Date()).toString()+SEPERATOR+eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
+		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey,eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000,m);
 		
 		try {
             m.execute();
