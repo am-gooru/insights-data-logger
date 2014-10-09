@@ -1566,6 +1566,7 @@ public class CassandraDataLoader implements Constants {
 		logger.info("No content is viewed");
 		return true;
 	}
+	return false;
 }
     
   /*
