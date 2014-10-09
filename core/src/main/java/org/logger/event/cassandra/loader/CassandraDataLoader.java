@@ -120,6 +120,8 @@ public class CassandraDataLoader implements Constants {
         
     private BaseCassandraRepoImpl baseDao ;
     
+    private String configuredIp;
+    
     /**
      * Get Kafka properties from Environment
      */
@@ -216,6 +218,7 @@ public class CassandraDataLoader implements Constants {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         
+        configuredIp = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip",0).getStringValue("ip_address", null);
     }
 
     public void clearCache(){
@@ -256,6 +259,7 @@ public class CassandraDataLoader implements Constants {
         for (Row<String, String> row : categoryRows) {
         	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
+        configuredIp = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip",0).getStringValue("ip_address", null);
     }
     
     /**
@@ -1471,7 +1475,7 @@ public class CassandraDataLoader implements Constants {
 			int allowedLimit = 0;
 		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"index~count",0);
+		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~count",0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
@@ -1536,7 +1540,7 @@ public class CassandraDataLoader implements Constants {
 			if(indexResourceType != null){
 				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
 			}
-			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"index~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"indexed~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
 			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
@@ -1708,9 +1712,9 @@ public class CassandraDataLoader implements Constants {
 	public boolean validateSchedular(String ipAddress) {
 
 		try {
-			//ColumnList<String> columnList = configSettings.getColumnList("schedular~ip");
+			/*
 			ColumnList<String> columnList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip",0);
-			String configuredIp = columnList.getColumnByName("ip_address").getStringValue();
+			String configuredIp = columnList.getColumnByName("ip_address").getStringValue();*/
 			if (configuredIp != null) {
 				if (configuredIp.equalsIgnoreCase(ipAddress))
 					return true;

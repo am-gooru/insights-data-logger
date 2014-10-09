@@ -378,7 +378,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
 	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-	        				logger.info("2 - eventName : {} - type : {} " , eventMap.get(EVENTNAME),eventMap.get(TYPE));
 		        			baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
 				}	
 	        		
@@ -643,8 +642,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if(resource != null){	
 				type =  resource.getColumnByName("type_name") != null ? resource.getColumnByName("type_name").getStringValue() : null ;
 			}
-					
-			logger.info("id : {} - type : {} ",classPageGooruOid,type);
 			
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
 				classPageGooruOids.add(classPageGooruOid);
@@ -706,7 +703,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			    		}
 		    		}
 		    	}else{
-		    		logger.info("parent gooru id : {} ",eventMap.get(PARENTGOORUOID));
 		    		List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap.get(PARENTGOORUOID),0);
 		    		if(!parents.isEmpty()){    			
 		    			classPages = this.getClassPagesFromItems(parents);
