@@ -1453,17 +1453,20 @@ public class CassandraDataLoader implements Constants {
 			e1.printStackTrace();
 		}		
 		
-		//Date rowValues = new Date(lastDate.getTime() + 60000);
-
-		if((lastDate.getTime() <= currDate.getTime())){
-			this.getRecordsToProcess(lastDate, resourceList);
-			logger.info("processing mins : {} , {} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(lastDate));
-		}else{
-			logger.info("processing min : {} ",currDate);
-			this.getRecordsToProcess(currDate, resourceList);
+		Date rowValues = new Date(lastDate.getTime() + 60000);
+		
+		if((rowValues.getTime() < currDate.getTime())){
+			logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
+			boolean status = this.getRecordsToProcess(lastDate, resourceList,"indexed~limit");
+			if(status){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+			}
+		}else if((rowValues.getTime() == currDate.getTime())) {
+			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
+			boolean status = this.getRecordsToProcess(currDate, resourceList,"indexing~limit");
 		}
    }
-  private void getRecordsToProcess(Date rowValues,JSONArray resourceList) throws Exception{
+  private boolean getRecordsToProcess(Date rowValues,JSONArray resourceList,String indexLabelLimit) throws Exception{
 	  
 		  	String indexCollectionType = null;
 			String indexResourceType = null;
@@ -1476,12 +1479,12 @@ public class CassandraDataLoader implements Constants {
 		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~count",0);
+		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
+		/*if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-		}
+		}*/
 		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 
 		if(contents.size() > 0 ){
@@ -1526,7 +1529,6 @@ public class CassandraDataLoader implements Constants {
 					}
 				}
 			}
-		}
 		if(indexCollectionType != null || indexResourceType != null){
 			m.execute();
 			m2.execute();
@@ -1538,20 +1540,24 @@ public class CassandraDataLoader implements Constants {
 			if(indexResourceType != null){
 				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
 			}
-			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+"indexed~count", minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
 
 			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+				return true;
 			}else{
-				throw new AccessDeniedException("Statistical data update failed");
+				logger.info("Statistical data update failed");
+				return false;
 			}
-
 		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
 	 		logger.info("Waiting for indexing");
+	 		return false;
 		}else{
-			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 		logger.info("No content is viewed");
+			logger.info("No content is viewed");
+			return true;
 		}
+	}
+	return false;
 }
     
   /*
@@ -1572,11 +1578,7 @@ public class CassandraDataLoader implements Constants {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
-	 			if(rowValues != null){
-	 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 			}
 	 	 		logger.info("Search Indexing call Success...");
-	 	 		
 	 	 		return response.getStatusLine().getStatusCode();
 	 		}
     	}catch(Exception e){
