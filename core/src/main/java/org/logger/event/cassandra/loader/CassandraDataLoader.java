@@ -1504,7 +1504,7 @@ public class CassandraDataLoader implements Constants {
 			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
 			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
 			if(IndexingStatus.equalsIgnoreCase("completed")){
-				for(int i = indexedCount ; i <= allowedLimit ; i++) {
+				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
 					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
 					for(Column<String> detail : vluesList) {
@@ -1547,7 +1547,7 @@ public class CassandraDataLoader implements Constants {
 			if(indexResourceType != null){
 				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
 			}
-			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount),86400);
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount++),86400);
 
 			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
