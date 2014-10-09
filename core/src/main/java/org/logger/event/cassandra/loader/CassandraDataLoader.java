@@ -1455,13 +1455,19 @@ public class CassandraDataLoader implements Constants {
 		
 		Date rowValues = new Date(lastDate.getTime() + 60000);
 		
-		if((rowValues.getTime() < currDate.getTime())){
-			logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
-			boolean status = this.getRecordsToProcess(lastDate, resourceList,"indexed~limit");
-			if(status){
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
+		if((rowValues.getTime() < rowValues.getTime())){
+			logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
+			ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+			ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~limit",0);
+			int indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
+			
+			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexed~limit");
+			
+			if((contents.size() == 0 || indexedCount == (contents.size() - 1)) && status){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(lastDate));
 			}
-		}else if((rowValues.getTime() == currDate.getTime())) {
+		}
+		if((rowValues.getTime() == currDate.getTime())) {
 			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
 			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexing~limit");
 		}else{
@@ -1609,9 +1615,6 @@ public class CassandraDataLoader implements Constants {
 		 	 		logger.info("View count api call failed...");
 		 	 		throw new AccessDeniedException("Something went wrong! Api fails");
 		 		} else {
-		 			if(rowValues != null){
-		 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-		 			}
 		 	 		logger.info("View count api call Success...");
 		 		}
 		 			
