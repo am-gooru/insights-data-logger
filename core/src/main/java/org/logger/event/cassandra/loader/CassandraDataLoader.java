@@ -1478,31 +1478,27 @@ public class CassandraDataLoader implements Constants {
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+"indexed~count",0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
 		 rowValues = new Date(rowValues.getTime() + 60000);
 		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-		 logger.info("2:-> size : " + contents.size() + "indexed count : " + indexedCount);
 		}
-  logger.info("contents : " + contents.size());
+		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 
 		if(contents.size() > 0 ){
-  logger.info("contents2 : " + contents.size());
-
 			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
 			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
 			allowedLimit = (indexedCount + indexedLimit);
 			if(allowedLimit > contents.size() ){
 				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
 			}
-			logger.info("3:-> indexedCount : " + indexedCount + "allowedLimit : " + allowedLimit);
 			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
 			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
 			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
-					indexedCount = i;
+					indexedCount = i--;
 					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
 					for(Column<String> detail : vluesList) {
+						logger.info("column : " +contents.getColumnByIndex(i).getName() + "position : "+ i);
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
@@ -1519,7 +1515,6 @@ public class CassandraDataLoader implements Constants {
 						}
 						for(String column : statKeys){
 							if(detail.getName().equals(column)){
-								logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){										
