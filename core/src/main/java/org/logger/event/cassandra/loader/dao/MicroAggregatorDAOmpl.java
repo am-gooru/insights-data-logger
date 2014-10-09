@@ -641,7 +641,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String type = null;
 			ColumnList<String>  resource = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+classPageGooruOid,0);
 			if(resource != null){	
-				type =  resource.getColumnByName("type_name") != null ? null : resource.getColumnByName("type_name").getStringValue() ;
+				type =  resource.getColumnByName("type_name") != null ? resource.getColumnByName("type_name").getStringValue() : null ;
 			}
 					
 			logger.info("id : {} - type : {} ",classPageGooruOid,type);
