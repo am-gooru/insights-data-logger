@@ -1496,17 +1496,21 @@ public class CassandraDataLoader implements Constants {
 			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
 					indexedCount = i;
-					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getName(), statKeys,0);
+					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
 					for(Column<String> detail : vluesList) {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
 		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
-		    				collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
+		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
+		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
+		    				}
 						}else{
 							indexResourceType = "resource";
-							resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
+							if(!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())){
+								resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
+							}
 						}
 						for(String column : statKeys){
 							if(detail.getName().equals(column)){
