@@ -1441,7 +1441,7 @@ public class CassandraDataLoader implements Constants {
     		return;
     	}
     	JSONArray resourceList = new JSONArray();
-    	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN,0).getStringValue();
+    	String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "view~count~last~updated", DEFAULTCOLUMN,0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		Date lastDate = null;
 		Date currDate = null;
@@ -1464,7 +1464,7 @@ public class CassandraDataLoader implements Constants {
 			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexed~limit");
 			
 			if((contents.size() == 0 || indexedCount == (contents.size() - 1)) && status){
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(lastDate));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "view~count~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(lastDate));
 			}
 		}
 		if((rowValues.getTime() == currDate.getTime())) {
