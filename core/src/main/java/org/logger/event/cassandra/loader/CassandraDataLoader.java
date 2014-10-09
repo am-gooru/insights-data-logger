@@ -1457,15 +1457,15 @@ public class CassandraDataLoader implements Constants {
 		
 		if((rowValues.getTime() < currDate.getTime())){
 			logger.info("1-processing mins : {} ,current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
-			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexed~limit");
+			boolean status = this.getRecordsToProcess(lastDate, resourceList,"indexed~limit");
 			if(status){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 			}
 		}else if((rowValues.getTime() == currDate.getTime())) {
-			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
+			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(rowValues),minuteDateFormatter.format(currDate));
 			boolean status = this.getRecordsToProcess(rowValues, resourceList,"indexing~limit");
 		}else{
-			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(lastDate),minuteDateFormatter.format(currDate));
+			logger.info("2-processing mins : {} , current mins :{} ",minuteDateFormatter.format(currDate),minuteDateFormatter.format(currDate));
 			boolean status = this.getRecordsToProcess(currDate, resourceList,"curr~indexing~limit");
 		}
    }
