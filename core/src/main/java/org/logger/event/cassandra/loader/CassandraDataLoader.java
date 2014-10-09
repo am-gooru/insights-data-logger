@@ -1495,7 +1495,7 @@ public class CassandraDataLoader implements Constants {
 			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
 			if(IndexingStatus.equalsIgnoreCase("completed")){
 				for(int i = indexedCount ; i < allowedLimit ; i++) {
-					indexedCount = i--;
+					indexedCount = i;
 					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
 					for(Column<String> detail : vluesList) {
 						logger.info("column : " +contents.getColumnByIndex(i).getName() + "position : "+ i);
