@@ -848,9 +848,6 @@ public class CassandraDataLoader  implements Constants {
 		    	
 		    	//Read all records from Event Detail
 		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
-		    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		    	boolean proceed = false;
 		    	for (Row<String, String> row : eventDetailsNew) {
 
 		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
@@ -858,15 +855,11 @@ public class CassandraDataLoader  implements Constants {
 		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
 		    		
 		    		if(id != null){
-			    		this.migrateViews(ids,id,m ,m2 ,proceed);
+		    			ids += ","+id;
 		    		}
 					
 		    	}
-		    	if(proceed){
-		    		m2.execute();
-		    		m.execute();
-		    		this.callIndexingAPI(resourceType, ids.substring(1),null);
-		    	}
+		    	this.migrateViews(ids.substring(1),resourceType);
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
@@ -876,8 +869,15 @@ public class CassandraDataLoader  implements Constants {
 	    }
 	    
     }
-    public void migrateViews(String ids,String id,MutationBatch m ,MutationBatch m2 , boolean proceed){
+    public void migrateViews(String ids ,String resourceType) throws Exception{
     	
+    	boolean proceed = false;
+    	
+    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+    	for(String id : ids.split(",")){
+    		
     	ids += ","+id;
 		
 		ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
@@ -898,6 +898,13 @@ public class CassandraDataLoader  implements Constants {
 	
 		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
 		proceed = true;
+    		
+    	}
+    	if(proceed){
+    		m2.execute();
+    		m.execute();
+    		this.callIndexingAPI(resourceType, ids.substring(1),null);
+    	}
     }
     
     public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
@@ -1479,19 +1486,7 @@ public class CassandraDataLoader  implements Constants {
     }
     
     public void indexResourceView(String resourceIds,String type) throws Exception{
-    	String ids = "";
-    	boolean proceed = false;
-    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	for(String id : resourceIds.split(",")){
-    		this.migrateViews(ids, id, m, m2, proceed);
-    	}
-    	logger.info("ids : {} - status : {}",ids,proceed);
-    	if(proceed){
-    		m2.execute();
-    		m.execute();
-    		this.callIndexingAPI(type, ids.substring(1),null);
-    	}
+    	this.migrateViews(resourceIds,type);
     }
     
     
