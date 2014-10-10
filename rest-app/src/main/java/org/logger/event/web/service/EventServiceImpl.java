@@ -275,7 +275,7 @@ public class EventServiceImpl implements EventService {
 	}
 	
 	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
-		dataLoaderService.indexAnyCf(sourceCf, key, targetIndex, targetType);
+		dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
 	}
 	
 	public void indexUser(String ids) throws Exception{
