@@ -869,14 +869,15 @@ public class CassandraDataLoader  implements Constants {
 	    }
 	    
     }
-    public void migrateViews(String ids ,String resourceType) throws Exception{
+    public void migrateViews(String resourceIds ,String resourceType) throws Exception{
     	
     	boolean proceed = false;
+    	String ids = "";
     	
     	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-    	for(String id : ids.split(",")){
+    	for(String id : resourceIds.split(",")){
     		
     	ids += ","+id;
 		logger.info("type : {} ",resourceType);
