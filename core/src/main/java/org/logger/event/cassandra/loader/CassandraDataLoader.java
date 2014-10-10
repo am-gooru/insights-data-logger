@@ -850,37 +850,41 @@ public class CassandraDataLoader  implements Constants {
 		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		    	boolean proceed = false;
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		
 		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
 		    	
 		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
-		    		
-		    		ids += ","+id;
-		    		
-					ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
-					ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
-					long insightsView = 0L;
-					long gooruView = 0L;
-					if(insightsData != null){
-						insightsView =   insightsData.getLongValue("count~views", 0L);
-					}
-					logger.info("insightsView : {} ",insightsView);
-					if(gooruData != null){
-						gooruView =  gooruData.getLongValue("views_count", 0L);
-					}
-					logger.info("gooruView : {} ",gooruView);
-					long balancedView = (gooruView - insightsView);
-					logger.info("Insights update views : {} ", (insightsView + balancedView) );
-					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-				
-					baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
+		    		if(id != null){
+			    		ids += ","+id;
+			    		
+						ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
+						ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
+						long insightsView = 0L;
+						long gooruView = 0L;
+						if(insightsData != null){
+							insightsView =   insightsData.getLongValue("count~views", 0L);
+						}
+						logger.info("insightsView : {} ",insightsView);
+						if(gooruData != null){
+							gooruView =  gooruData.getLongValue("views_count", 0L);
+						}
+						logger.info("gooruView : {} ",gooruView);
+						long balancedView = (gooruView - insightsView);
+						logger.info("Insights update views : {} ", (insightsView + balancedView) );
+						baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
 					
+						baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
+						proceed = true;
+		    		}
 					
 		    	}
-		    	m2.execute();
-		    	m.execute();
-		    	this.callIndexingAPI(resourceType, ids.substring(1),null);
+		    	if(proceed){
+		    		m2.execute();
+		    		m.execute();
+		    		this.callIndexingAPI(resourceType, ids.substring(1),null);
+		    	}
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
