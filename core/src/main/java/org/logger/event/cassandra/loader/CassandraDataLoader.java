@@ -1483,7 +1483,7 @@ public class CassandraDataLoader  implements Constants {
     	boolean proceed = false;
     	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	for(String id : ids.split(",")){
+    	for(String id : resourceIds.split(",")){
     		this.migrateViews(ids, id, m, m2, proceed);
     	}
     	logger.info("ids : {} - status : {}",ids,proceed);
