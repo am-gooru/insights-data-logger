@@ -879,7 +879,8 @@ public class CassandraDataLoader  implements Constants {
     	for(String id : ids.split(",")){
     		
     	ids += ","+id;
-		
+		logger.info("type : {} ",resourceType);
+		logger.info("id : {} ",id);
 		ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
 		ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
 		long insightsView = 0L;
@@ -2104,17 +2105,15 @@ public class CassandraDataLoader  implements Constants {
     		HttpPost  postRequest = new HttpPost(url);
     		
     		HttpResponse response = httpClient.execute(postRequest);
+    		logger.info("URL  : {} ",url);
+    		
 	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
 	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
-	 			if(rowValues != null){
-	 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~last~updated", DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
-	 			}
-	 	 		logger.info("Search Indexing call Success...");
-	 	 		
+	 	 		logger.info("Search Indexing call Success...");	 	 		
 	 	 		return response.getStatusLine().getStatusCode();
 	 		}
     	}catch(Exception e){
