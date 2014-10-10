@@ -78,4 +78,6 @@ public interface EventService {
 	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception;
 	
 	public void indexUser(String ids) throws Exception;
+	
+	public void indexResourceViews(String ids,String type) throws Exception;
 }

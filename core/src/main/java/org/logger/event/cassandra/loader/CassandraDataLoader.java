@@ -852,31 +852,13 @@ public class CassandraDataLoader  implements Constants {
 		    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		    	boolean proceed = false;
 		    	for (Row<String, String> row : eventDetailsNew) {
-		    		
+
 		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
-		    	
+		    		
 		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
+		    		
 		    		if(id != null){
-			    		ids += ","+id;
-			    		
-						ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
-						ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
-						long insightsView = 0L;
-						long gooruView = 0L;
-						if(insightsData != null){
-							insightsView =   insightsData.getLongValue("count~views", 0L);
-						}
-						logger.info("insightsView : {} ",insightsView);
-						if(gooruData != null){
-							gooruView =  gooruData.getLongValue("views_count", 0L);
-						}
-						logger.info("gooruView : {} ",gooruView);
-						long balancedView = (gooruView - insightsView);
-						logger.info("Insights update views : {} ", (insightsView + balancedView) );
-						baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-					
-						baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
-						proceed = true;
+			    		this.migrateViews(ids,id,m ,m2 ,proceed);
 		    		}
 					
 		    	}
@@ -894,6 +876,30 @@ public class CassandraDataLoader  implements Constants {
 	    }
 	    
     }
+    public void migrateViews(String ids,String id,MutationBatch m ,MutationBatch m2 , boolean proceed){
+    	
+    	ids += ","+id;
+		
+		ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
+		ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
+		long insightsView = 0L;
+		long gooruView = 0L;
+		if(insightsData != null){
+			insightsView =   insightsData.getLongValue("count~views", 0L);
+		}
+		logger.info("insightsView : {} ",insightsView);
+		if(gooruData != null){
+			gooruView =  gooruData.getLongValue("views_count", 0L);
+		}
+		logger.info("gooruView : {} ",gooruView);
+		long balancedView = (gooruView - insightsView);
+		logger.info("Insights update views : {} ", (insightsView + balancedView) );
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
+	
+		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
+		proceed = true;
+    }
+    
     public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
@@ -1471,6 +1477,23 @@ public class CassandraDataLoader  implements Constants {
     		getUserAndIndex(userId);
     	}
     }
+    
+    public void indexResourceView(String resourceIds,String type) throws Exception{
+    	String ids = "";
+    	boolean proceed = false;
+    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    	for(String id : ids.split(",")){
+    		this.migrateViews(ids, id, m, m2, proceed);
+    	}
+    	logger.info("ids : {} - status : {}",ids,proceed);
+    	if(proceed){
+    		m2.execute();
+    		m.execute();
+    		this.callIndexingAPI(type, ids.substring(1),null);
+    	}
+    }
+    
     
     private void getUserAndIndex(String userId) throws Exception{
     	logger.info("user id : "+ userId);

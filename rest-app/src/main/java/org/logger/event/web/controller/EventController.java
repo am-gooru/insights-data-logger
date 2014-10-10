@@ -395,13 +395,16 @@ public class EventController {
 	}
 	
 	@RequestMapping(value = "/resource/index/{type}", method = RequestMethod.GET)
-	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids ,HttpServletResponse response) {
+	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids,@RequestParam(value = "resorceType", required = false) String resorceType ,HttpServletResponse response) {
 		try {
 			if(indexType.equalsIgnoreCase("resource")){
 				eventService.indexResource(ids);
 			}
 			if(indexType.equalsIgnoreCase("user")){
 				eventService.indexUser(ids);
+			}
+			if(indexType.equalsIgnoreCase("views")){
+				eventService.indexResourceViews(ids, resorceType);
 			}
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 		} catch (Exception e) {
