@@ -1551,13 +1551,26 @@ public class CassandraDataLoader implements Constants {
 
 			if(indexingStatus == 200 || indexingStatus == 404){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
 				return true;
 			}else{
 				logger.info("Statistical data update failed");
 				return false;
 			}
 		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
-	 		logger.info("Waiting for indexing");
+			ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~limit",0);
+			String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULTCOLUMN, "0") : "0";
+			
+			ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~count",0);
+			String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULTCOLUMN, "0") : "0";
+			
+			if(Integer.valueOf(count) > Integer.valueOf(limit)){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
+			}else{
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, ""+(Integer.valueOf(count)+1));
+			}
+	 		logger.info("Waiting for indexing"+ (Integer.valueOf(count)+1));
 	 		return false;
 		}
 	}else{
