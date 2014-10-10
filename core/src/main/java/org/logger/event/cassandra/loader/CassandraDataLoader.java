@@ -818,6 +818,7 @@ public class CassandraDataLoader  implements Constants {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
+    	String resourceType = "resource";
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
     		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
@@ -830,10 +831,12 @@ public class CassandraDataLoader  implements Constants {
    		 	} else {
    		 		timeLineKey = startDate.toString()+"~"+customEventName;
    		 	}
-   		 	
+   		 	if(customEventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+   		 	resourceType = "scollection";
+   		 	}
    		 	//Read Event Time Line for event keys and create as a Collection
    		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
-   		 	
+   		 	String ids = "";
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
 		    	Collection<String> eventDetailkeys = new ArrayList<String>();
@@ -846,13 +849,15 @@ public class CassandraDataLoader  implements Constants {
 		    	//Read all records from Event Detail
 		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		    	
+		    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		
 		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
 		    	
 		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
-
+		    		
+		    		ids += ","+id;
+		    		
 					ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
 					ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
 					long insightsView = 0L;
@@ -869,8 +874,13 @@ public class CassandraDataLoader  implements Constants {
 					logger.info("Insights update views : {} ", (insightsView + balancedView) );
 					baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
 				
+					baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
+					
+					
 		    	}
+		    	m2.execute();
 		    	m.execute();
+		    	this.callIndexingAPI(resourceType, ids.substring(1),null);
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
@@ -1592,7 +1602,7 @@ public class CassandraDataLoader  implements Constants {
 		
 	}
     
-    public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
     	for(String id : key.split(",")){
     		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
@@ -2020,7 +2030,9 @@ public class CassandraDataLoader  implements Constants {
 								logger.info("statValuess : {}",statMetrics.getStringValue(column, null));
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
-									baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){
+										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
+									}
 								}
 							}
 						}
@@ -2065,7 +2077,7 @@ public class CassandraDataLoader  implements Constants {
     	
     	try{
     		String sessionToken = cache.get(SESSIONTOKEN);
-    		String url = cache.get(SEARCHINDEXAPI) + "/index?sessionToken=" + sessionToken + "&ids="+ids;
+    		String url = cache.get(SEARCHINDEXAPI) + resourceType + "/index?sessionToken=" + sessionToken + "&ids="+ids;
     		DefaultHttpClient httpClient = new DefaultHttpClient();
     		HttpPost  postRequest = new HttpPost(url);
     		
