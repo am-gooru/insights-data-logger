@@ -387,7 +387,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		
 		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
 		
-		baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey, secondDateFormatter.format(new Date()).toString()+SEPERATOR+eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), m);
+		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey,eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000,m);
 		
 		try {
             m.execute();
@@ -507,47 +507,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return key != null ? key.substring(1).trim():null;
 	}
 
-	@Async
-	public void saveActivityInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
-		try {
-			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				String rowKey = null;  
-				if(beFieldName.containsKey(entry.getKey())){
-					rowKey = beFieldName.get(entry.getKey());
-				}
-	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey())&& entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.get(entry.getKey())));
-	            }
-			}
-				getESClient().prepareIndex(indexName, indexType, id)
-				.setSource(contentBuilder)
-				.execute()
-				.actionGet()
-				;
-			} catch (Exception e) {
-				logger.info("Indexing failed",e);
-			}
-		
-	}
 
+	@Async
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
-			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			
+			XContentBuilder contentBuilder = jsonBuilder().startObject();			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				
 				String rowKey = null;  				
-				
 				if(beFieldName.containsKey(entry.getKey())){
 					rowKey = beFieldName.get(entry.getKey());
 				}
-				
 				if(rowKey != null && entry.getValue() != null){	            	
 	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
-	            }else{        		
-	            	contentBuilder.field(rowKey, entry.getValue());
 	            }
+				
 			}
 			
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
