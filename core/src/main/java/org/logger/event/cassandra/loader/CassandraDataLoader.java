@@ -1782,18 +1782,25 @@ public class CassandraDataLoader  implements Constants {
     public void indexContentPrefrences(String gooruOid){
     	
     try {
+    	boolean isContentAvail = false;
+    	boolean isQnAvail = false;
     	XContentBuilder contentBuilder = jsonBuilder().startObject();
+    	logger.info("preference id : {} ",gooruOid);
     	
     	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid,0);
     	
+    	logger.info("vlue size : {} ",vluesList.size());
+    	
     	if(vluesList != null && vluesList.size() > 0){
-    		for(int i = 0 ; i < vluesList.size() ; i++) {
-    			contentBuilder.field(vluesList.getColumnByIndex(i).getName().replaceAll("~", "-"),vluesList.getColumnByIndex(i).getLongValue());
-    		}
+    		isContentAvail = true;
+    			contentBuilder.field("views_count",vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L );
+    			contentBuilder.field("total_timespent",vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L );
+    			contentBuilder.field("avg_timespent",vluesList.getColumnByName("avg_time_spent~total") != null ?vluesList.getColumnByName("avg_time_spent~total").getLongValue() : 0L );
     	}
     	ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(),gooruOid,0);
     	
     	if(questionList != null && questionList.size() > 0){
+    		isQnAvail = true;
     		contentBuilder.field("question_count",questionList.getColumnByName("questionCount").getLongValue());
     		contentBuilder.field("resource_count",questionList.getColumnByName("resourceCount").getLongValue());
     		contentBuilder.field("oe_count",questionList.getColumnByName("oeCount").getLongValue());
@@ -1801,7 +1808,11 @@ public class CassandraDataLoader  implements Constants {
     		contentBuilder.field("mc_count",questionList.getColumnByName("mcCount").getLongValue());
     		contentBuilder.field("item_count",questionList.getColumnByName("itemCount").getLongValue());
     	}
-    	getConnectionProvider().getESClient().prepareIndex(ESIndexices.CONTENTCATALOGINFO.getIndex(), IndexType.DIMRESOURCE.getIndexType(), gooruOid).setSource(contentBuilder).execute().actionGet();
+    	if(isContentAvail ||isQnAvail){
+    		getConnectionProvider().getESClient().prepareIndex(ESIndexices.CONTENTCATALOGINFO.getIndex(), IndexType.DIMRESOURCE.getIndexType(), gooruOid).setSource(contentBuilder).execute().actionGet();
+    	}else{
+    		logger.info("No Activity for this content : " + gooruOid);
+    	}
     
 		} catch (IOException e) {
 			e.printStackTrace();
