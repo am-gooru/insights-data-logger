@@ -282,7 +282,12 @@ public class EventServiceImpl implements EventService {
 	}
 	
 	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType){
-		dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
+		try {
+			dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void indexUser(String ids) throws Exception{

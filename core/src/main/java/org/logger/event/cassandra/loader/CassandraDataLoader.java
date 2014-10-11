@@ -1626,10 +1626,9 @@ public class CassandraDataLoader  implements Constants {
 		
 	}
     
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType){
+    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
     	
     	for(String id : key.split(",")){
-    		try{
     		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
@@ -1654,10 +1653,6 @@ public class CassandraDataLoader  implements Constants {
 	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 				
 	    		;
-	    	}
-    		
-	    	}catch(Exception e){
-	    		logger.info("Error while Exception : " + e);	
 	    	}
     	}
     }
