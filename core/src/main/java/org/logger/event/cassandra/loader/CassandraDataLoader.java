@@ -1720,9 +1720,9 @@ public class CassandraDataLoader  implements Constants {
 		if(columns.getColumnByName("sharing") != null){
 			resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
 		}
-		if(columns.getColumnByName("views_count") != null){
+		/*if(columns.getColumnByName("views_count") != null){
 			resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue());
-		}
+		}*/
 		if(columns.getColumnByName("organization_uid") != null){
 			resourceMap.put("contentOrganizationUid", columns.getColumnByName("organization_uid").getStringValue());
 		}
@@ -1755,18 +1755,25 @@ public class CassandraDataLoader  implements Constants {
 			}
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
-			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
-			if(!questionCount.isEmpty() && columns.getColumnByName("type_name") != null){
-				Long questionCounts = questionCount.getLongValue("questionCount", 0L);
-				resourceMap.put("questionCount", questionCounts);
-				if(questionCounts > 0L){
-					if(resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())){    							
-						resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
-					}	
-				}
-			}else{
-				resourceMap.put("questionCount",0L);
-			}
+			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
+
+	    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(),0);
+	    	
+	    	logger.info("vlue size : {} ",vluesList.size());
+	    	
+	    	if(vluesList != null && vluesList.size() > 0){
+	    		resourceMap.put("viewsCount",vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L );
+	    		resourceMap.put("totalTimespent",vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L );
+	    		resourceMap.put("avgTimespent",vluesList.getColumnByName("avg_time_spent~total") != null ?vluesList.getColumnByName("avg_time_spent~total").getLongValue() : 0L );
+	    	}
+	    	
+	    	if(questionList != null && questionList.size() > 0){
+	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
+	    		resourceMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
+	    		resourceMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
+	    		resourceMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
+	    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+	    	}
 		}
 		if(columns.getColumnByName("user_uid") != null){
 			resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
