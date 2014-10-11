@@ -292,10 +292,4 @@ public class EventServiceImpl implements EventService {
 	public void indexUser(String ids) throws Exception{
 		dataLoaderService.indexUser(ids);
 	}
-	
-	public void indexPrefrences(String ids) throws Exception{
-		for(String id : ids.split(",")){
-			dataLoaderService.indexContentPrefrences(id);
-		}
-	}
 }
