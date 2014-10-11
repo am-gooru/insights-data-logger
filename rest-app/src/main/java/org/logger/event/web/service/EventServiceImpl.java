@@ -285,12 +285,17 @@ public class EventServiceImpl implements EventService {
 		try {
 			dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	public void indexUser(String ids) throws Exception{
 		dataLoaderService.indexUser(ids);
+	}
+	
+	public void indexPrefrences(String ids) throws Exception{
+		for(String id : ids.split(",")){
+			dataLoaderService.indexContentPrefrences(id);
+		}
 	}
 }

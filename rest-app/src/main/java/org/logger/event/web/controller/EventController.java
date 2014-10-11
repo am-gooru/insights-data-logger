@@ -406,6 +406,9 @@ public class EventController {
 			if(indexType.equalsIgnoreCase("views")){
 				eventService.indexResourceViews(ids, resourceType);
 			}
+			if(indexType.equalsIgnoreCase("prefrences")){
+				eventService.indexPrefrences(ids);
+			}
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 		} catch (Exception e) {
 			logger.info("Exception : " + e);

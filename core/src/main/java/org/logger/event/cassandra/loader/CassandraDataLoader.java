@@ -1773,13 +1773,40 @@ public class CassandraDataLoader  implements Constants {
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
 			resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
+			this.indexContentPrefrences(columns.getColumnByName("gooru_oid").getStringValue());
 			liveDashBoardDAOImpl.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex(), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
 		}
 		}
     }
     
-    public void getContentPrefrences(String gooruOid){
+    public void indexContentPrefrences(String gooruOid){
     	
+    try {
+    	XContentBuilder contentBuilder = jsonBuilder().startObject();
+    	
+    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid,0);
+    	
+    	if(vluesList != null && vluesList.size() > 0){
+    		for(int i = 0 ; i < vluesList.size() ; i++) {
+    			contentBuilder.field(vluesList.getColumnByIndex(i).getName().replaceAll("~", "-"),vluesList.getColumnByIndex(i).getLongValue());
+    		}
+    	}
+    	ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(),gooruOid,0);
+    	
+    	if(questionList != null && questionList.size() > 0){
+    		contentBuilder.field("question_count",questionList.getColumnByName("questionCount").getLongValue());
+    		contentBuilder.field("resource_count",questionList.getColumnByName("resourceCount").getLongValue());
+    		contentBuilder.field("oe_count",questionList.getColumnByName("oeCount").getLongValue());
+    		contentBuilder.field("mc_count",questionList.getColumnByName("mcCount").getLongValue());
+    		contentBuilder.field("mc_count",questionList.getColumnByName("mcCount").getLongValue());
+    		contentBuilder.field("item_count",questionList.getColumnByName("itemCount").getLongValue());
+    	}
+    	getConnectionProvider().getESClient().prepareIndex(ESIndexices.CONTENTCATALOGINFO.getIndex(), IndexType.DIMRESOURCE.getIndexType(), gooruOid).setSource(contentBuilder).execute().actionGet();
+    
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    
     }
     
     public void postStatMigration(String startTime , String endTime,String customEventName) {

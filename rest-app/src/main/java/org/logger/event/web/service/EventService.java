@@ -79,5 +79,7 @@ public interface EventService {
 	
 	public void indexUser(String ids) throws Exception;
 	
+	public void indexPrefrences(String ids) throws Exception;
+	
 	public void indexResourceViews(String ids,String type) throws Exception;
 }
