@@ -1496,20 +1496,20 @@ public class CassandraDataLoader  implements Constants {
 							
 							Object value = null;
 							String columnNameType = resourceCodeType.get(columns.getColumnByIndex(j).getName());
-							logger.info("columnNameType" + columnNameType);
+
 							if(columnNameType == null){
 								value = columns.getColumnByIndex(j).getStringValue();
 							}
-			            	if(columnNameType.equalsIgnoreCase("String")){
+							else if(value != null && columnNameType.equalsIgnoreCase("String")){
 			            		value = columns.getColumnByIndex(j).getStringValue();
 			            	}
-			            	if(columnNameType.equalsIgnoreCase("Long")){
+							else if(value != null && columnNameType.equalsIgnoreCase("Long")){
 			            		value = columns.getColumnByIndex(j).getLongValue();
 			            	}
-			            	if(columnNameType.equalsIgnoreCase("Integer")){
+							else if(value != null && columnNameType.equalsIgnoreCase("Integer")){
 			            		value = columns.getColumnByIndex(j).getIntegerValue();
 			            	}
-			            	if(columnNameType.equalsIgnoreCase("Boolean")){
+							else if(value != null && columnNameType.equalsIgnoreCase("Boolean")){
 			            		value = columns.getColumnByIndex(j).getBooleanValue();
 			            	}
 			            	else{
