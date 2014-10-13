@@ -130,6 +130,8 @@ public class CassandraConnectionProvider {
             logger.info("Initialized connection to Cassandra");
             
             cassandraAwsKeyspace = this.initializeAwsCassandra();
+            
+            cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
 
             //Elastic search connection provider
            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
