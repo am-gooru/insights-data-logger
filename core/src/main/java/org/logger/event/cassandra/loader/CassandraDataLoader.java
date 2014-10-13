@@ -1478,17 +1478,17 @@ public class CassandraDataLoader  implements Constants {
 		
 			try {
 			logger.info("contentId : "+ i);
-			MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
 				if(resource != null && resource.size() > 0){
 					for(int a = 0 ; a < resource.size(); a++){
+						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						String Key = resource.getRowByIndex(a).getKey();
+						logger.info("Key : " + Key);
 						ColumnListMutation<String> cm = m.withRow(baseDao.accessColumnFamily(ColumnFamily.DIMRESOURCE.getColumnFamily()), Key);
 						ColumnList<String> columns = resource.getRow(Key).getColumns();
 						for(int j = 0 ; j < columns.size() ; j++){
 							
 							Object value = null;
-							
 							
 			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("String")){
 			            		value = columns.getColumnByIndex(j).getStringValue();
@@ -1509,10 +1509,10 @@ public class CassandraDataLoader  implements Constants {
 			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
 			            
 						}
+						m.execute();		
 					}
 				}
 			
-				m.execute();		
 			} catch(Exception e){
 				logger.info("error while migrating content : " + i + " \n" + e );
 			}
