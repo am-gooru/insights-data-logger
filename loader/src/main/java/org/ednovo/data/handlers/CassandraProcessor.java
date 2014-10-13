@@ -125,6 +125,9 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         		if(methodName.equalsIgnoreCase("views")){
         			dataLoader.viewMigFromEvents(startTime, endTime, eventName);
         		}
+        		if(methodName.equalsIgnoreCase("resourceMigration")){
+        			dataLoader.MigrateResourceCF(Long.valueOf(startTime), Long.valueOf(endTime));
+        		}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

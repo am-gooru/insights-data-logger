@@ -68,6 +68,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
+import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -125,6 +126,8 @@ public class CassandraDataLoader  implements Constants {
     private BaseCassandraRepoImpl baseDao ;
     
     public static  Map<String,String> taxonomyCodeType;
+    
+    public static  Map<String,String> resourceCodeType;
     
     /**
      * Get Kafka properties from Environment
@@ -204,11 +207,17 @@ public class CassandraDataLoader  implements Constants {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
         taxonomyCodeType = new LinkedHashMap<String, String>();
+        resourceCodeType = new LinkedHashMap<String, String>();
+        
         ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
         }
         
+        ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "dim_resource",0);
+        for(int i = 0 ; i < resourceCodeTypeList.size() ; i++) {
+        	resourceCodeType.put(resourceCodeTypeList.getColumnByIndex(i).getName(), resourceCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
         pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key",0).getColumnNames();
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics",0);
         statKeys = statMetrics.getColumnNames();
@@ -1463,6 +1472,55 @@ public class CassandraDataLoader  implements Constants {
 		
     }
 
+    public void MigrateResourceCF(long start,long end) {
+    	
+		for(long i = start ; i < end ; i++){
+		
+			try {
+			logger.info("contentId : "+ i);
+			MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
+				if(resource != null && resource.size() > 0){
+					for(int a = 0 ; a < resource.size(); a++){
+						String Key = resource.getRowByIndex(a).getKey();
+						ColumnListMutation<String> cm = m.withRow(baseDao.accessColumnFamily(ColumnFamily.DIMRESOURCE.getColumnFamily()), Key);
+						ColumnList<String> columns = resource.getRow(Key).getColumns();
+						for(int j = 0 ; j < columns.size() ; j++){
+							
+							Object value = null;
+							
+							logger.info("column name : {} - value : {} ",columns.getColumnByIndex(j).getName(),value);
+							
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("String")){
+			            		value = columns.getColumnByIndex(j).getStringValue();
+			            	}
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Long")){
+			            		value = columns.getColumnByIndex(j).getLongValue();
+			            	}
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Integer")){
+			            		value = columns.getColumnByIndex(j).getIntegerValue();
+			            	}
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Boolean")){
+			            		value = columns.getColumnByIndex(j).getBooleanValue();
+			            	}
+			            	else{
+			            		value = columns.getColumnByIndex(j).getStringValue();
+			            	}
+			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
+			            
+						}
+					}
+				}
+			
+				m.execute();		
+			} catch(Exception e){
+				logger.info("error while migrating content : " + i);
+			}
+		
+		}
+    }
+
+    
     public void indexResource(String ids){
     	Collection<String> idList = new ArrayList<String>();
     	for(String id : ids.split(",")){
