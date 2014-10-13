@@ -207,14 +207,15 @@ public class CassandraDataLoader  implements Constants {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
         }
         taxonomyCodeType = new LinkedHashMap<String, String>();
-        resourceCodeType = new LinkedHashMap<String, String>();
         
         ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
         }
+      
+        resourceCodeType = new LinkedHashMap<String, String>();
         
-        ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "dim_resource",0);
+        ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), ColumnFamily.DIMRESOURCE.getColumnFamily(),0);
         for(int i = 0 ; i < resourceCodeTypeList.size() ; i++) {
         	resourceCodeType.put(resourceCodeTypeList.getColumnByIndex(i).getName(), resourceCodeTypeList.getColumnByIndex(i).getStringValue());
         }
@@ -280,6 +281,11 @@ public class CassandraDataLoader  implements Constants {
         ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        
+        ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), ColumnFamily.DIMRESOURCE.getColumnFamily(),0);
+        for(int i = 0 ; i < resourceCodeTypeList.size() ; i++) {
+        	resourceCodeType.put(resourceCodeTypeList.getColumnByIndex(i).getName(), resourceCodeTypeList.getColumnByIndex(i).getStringValue());
         }
     }
     
@@ -1514,7 +1520,7 @@ public class CassandraDataLoader  implements Constants {
 				}
 			
 			} catch(Exception e){
-				logger.info("error while migrating content : " + i + " \n" + e );
+				logger.info("error while migrating content : " + e );
 			}
 		
 		}
