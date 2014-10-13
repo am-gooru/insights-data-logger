@@ -1496,16 +1496,16 @@ public class CassandraDataLoader  implements Constants {
 							
 							Object value = null;
 							
-			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("String")){
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(j)).equalsIgnoreCase("String")){
 			            		value = columns.getColumnByIndex(j).getStringValue();
 			            	}
-			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Long")){
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(j)).equalsIgnoreCase("Long")){
 			            		value = columns.getColumnByIndex(j).getLongValue();
 			            	}
-			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Integer")){
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(j)).equalsIgnoreCase("Integer")){
 			            		value = columns.getColumnByIndex(j).getIntegerValue();
 			            	}
-			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("Boolean")){
+			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(j)).equalsIgnoreCase("Boolean")){
 			            		value = columns.getColumnByIndex(j).getBooleanValue();
 			            	}
 			            	else{
