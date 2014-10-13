@@ -181,22 +181,22 @@ public class CassandraConnectionProvider {
 
 	public  Keyspace initializeNewAwsCassandra(){
 		 
-		String awsHosts =  "10.233.0.236";
-		String awsCluster = "gooru-cassandra-prod";
+		String awsNewHosts =  "54.193.233.64";
+		String awsNewCluster = "gooru-cassandra-prod";
 		String keyspace = CASSANDRA_KEYSPACE;
 		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
 	    .setPort(9160)
 	    .setMaxConnsPerHost(3)
-	    .setSeeds(awsHosts);
+	    .setSeeds(awsNewHosts);
 		
-		if (!awsHosts.startsWith("127.0")) {
+		if (!awsNewHosts.startsWith("127.0")) {
 			poolConfig.setLocalDatacenter("us-west");
 		}
 	
 		poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
 	
 		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-		    .forCluster(awsCluster)
+		    .forCluster(awsNewCluster)
 		    .forKeyspace(keyspace)
 		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
 		    .setDiscoveryType(NodeDiscoveryType.NONE)
