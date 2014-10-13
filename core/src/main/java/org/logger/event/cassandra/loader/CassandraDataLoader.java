@@ -1489,7 +1489,6 @@ public class CassandraDataLoader  implements Constants {
 							
 							Object value = null;
 							
-							logger.info("column name : {} - value : {} ",columns.getColumnByIndex(j).getName(),value);
 							
 			            	if(resourceCodeType.get(resource.getRow(Key).getColumns().getColumnByIndex(a)).equalsIgnoreCase("String")){
 			            		value = columns.getColumnByIndex(j).getStringValue();
@@ -1506,6 +1505,7 @@ public class CassandraDataLoader  implements Constants {
 			            	else{
 			            		value = columns.getColumnByIndex(j).getStringValue();
 			            	}
+			            	logger.info("column name : {} - value : {} ",columns.getColumnByIndex(j).getName(),value);
 			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
 			            
 						}
@@ -1514,7 +1514,7 @@ public class CassandraDataLoader  implements Constants {
 			
 				m.execute();		
 			} catch(Exception e){
-				logger.info("error while migrating content : " + i);
+				logger.info("error while migrating content : " + i + " \n" + e );
 			}
 		
 		}
