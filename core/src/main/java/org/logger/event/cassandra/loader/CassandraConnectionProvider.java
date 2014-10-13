@@ -58,6 +58,7 @@ public class CassandraConnectionProvider {
     private Properties properties;
     private Keyspace cassandraKeyspace;
     private Keyspace cassandraAwsKeyspace;
+    private Keyspace cassandraNewAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
@@ -177,7 +178,44 @@ public class CassandraConnectionProvider {
 		return cassandraAwsKeyspace;
         
 	}    
-    public Keyspace getKeyspace() throws IOException {
+
+	public  Keyspace initializeNewAwsCassandra(){
+		 
+		String awsHosts =  "10.233.0.236";
+		String awsCluster = "gooru-cassandra-prod";
+		String keyspace = CASSANDRA_KEYSPACE;
+		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
+	    .setPort(9160)
+	    .setMaxConnsPerHost(3)
+	    .setSeeds(awsHosts);
+		
+		if (!awsHosts.startsWith("127.0")) {
+			poolConfig.setLocalDatacenter("us-west");
+		}
+	
+		poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+	
+		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
+		    .forCluster(awsCluster)
+		    .forKeyspace(keyspace)
+		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+		    .setDiscoveryType(NodeDiscoveryType.NONE)
+		    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
+		    .withConnectionPoolConfiguration(poolConfig)
+		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+		    .buildKeyspace(ThriftFamilyFactory.getInstance());
+	
+		context.start();
+		
+		cassandraNewAwsKeyspace = (Keyspace) context.getClient();
+		
+        logger.info("Initialized connection to New AWS Cassandra");
+        
+		return cassandraNewAwsKeyspace;
+        
+	}
+	
+	public Keyspace getKeyspace() throws IOException {
         if (cassandraKeyspace == null) {
             throw new IOException("Keyspace not initialized.");
         }
@@ -189,6 +227,14 @@ public class CassandraConnectionProvider {
         }
         return cassandraAwsKeyspace;
     }
+    
+    public Keyspace getNewAwsKeyspace() throws IOException {
+        if (cassandraNewAwsKeyspace == null) {
+            throw new IOException("New Keyspace not initialized.");
+        }
+        return cassandraNewAwsKeyspace;
+    }
+    
     public Client getESClient() throws IOException{
     	if (client == null) {
             throw new IOException("Elastic Search is not initialized.");
