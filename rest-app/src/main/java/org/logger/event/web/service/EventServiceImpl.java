@@ -301,14 +301,10 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		Date lastDate = null;
-		Date currDate = null;
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
 		if(status.equalsIgnoreCase("completed")){
 			try {
-				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
-				currDate = minuteDateFormatter.parse(currentTime);	
-				dataLoaderService.updateStagingES(""+lastDate, ""+currDate, "all",true);
+				dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, "all",true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
