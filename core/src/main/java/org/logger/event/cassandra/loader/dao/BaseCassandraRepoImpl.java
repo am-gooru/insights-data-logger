@@ -540,7 +540,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void saveLongValue(String cfName, String key,String columnName,long value,int expireTime) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 
@@ -553,7 +553,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
 
