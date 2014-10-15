@@ -783,10 +783,13 @@ public class CassandraDataLoader  implements Constants {
     }
 
     
-    public void updateStagingES(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    public void updateStagingES(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
+    	if(isSchduler){
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
+    	}
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
     		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
@@ -820,6 +823,9 @@ public class CassandraDataLoader  implements Constants {
 		    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
 		    	}
 	    	}
+	    	if(isSchduler){
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+startDate);
+	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
@@ -827,6 +833,11 @@ public class CassandraDataLoader  implements Constants {
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
 	    }
 	    
+    	if(isSchduler){
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"completed");
+    	}
+    	
+    	logger.info("Indexing completed..........");
     }
 
     public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
@@ -1097,7 +1108,16 @@ public class CassandraDataLoader  implements Constants {
 	    		    	if(eventMap.get(GOORUID) != null){  
 	    		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 	    		    	}
-	    	    		
+    				   if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
+    						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
+    				    	if(questionList != null && questionList.size() > 0){
+    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
+    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
+    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
+    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
+    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+    				    	}
+    					}
 	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    			} 
 	    			else{
@@ -1170,8 +1190,18 @@ public class CassandraDataLoader  implements Constants {
 	    				   }
 	    				   if(eventMap.get(GOORUID) != null ){
 	    					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
-	    				   }
-		    	    		
+	    				   }	    	    	
+	    				   
+	    				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.get(CONTENTGOORUOID) != null){
+	    						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
+	    				    	if(questionList != null && questionList.size() > 0){
+	    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
+	    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
+	    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
+	    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
+	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+	    				    	}
+	    					}
 		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    		     }
 				} catch (Exception e) {
@@ -1489,7 +1519,6 @@ public class CassandraDataLoader  implements Constants {
 					for(int a = 0 ; a < resource.size(); a++){
 						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						String Key = resource.getRowByIndex(a).getKey();
-						logger.info("Key : " + Key);
 						ColumnListMutation<String> cm = m.withRow(baseDao.accessColumnFamily(ColumnFamily.DIMRESOURCE.getColumnFamily()), Key);
 						ColumnList<String> columns = resource.getRow(Key).getColumns();
 						for(int j = 0 ; j < columns.size() ; j++){
@@ -1515,7 +1544,7 @@ public class CassandraDataLoader  implements Constants {
 			            	else{
 			            		value = columns.getColumnByIndex(j).getStringValue();
 			            	}
-			            	logger.info("column name : {} - value : {} ",columns.getColumnByIndex(j).getName(),value);
+							
 			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
 			            
 						}

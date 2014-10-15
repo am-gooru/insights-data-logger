@@ -111,7 +111,7 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         			dataLoader.updateStaging(startTime, endTime,eventName,apiKey);
         		}
         		if(methodName.equalsIgnoreCase("activity")){        			
-        			dataLoader.updateStagingES(startTime, endTime,eventName,apiKey);
+        			dataLoader.updateStagingES(startTime, endTime,eventName,false);
         		}
         		if(methodName.equalsIgnoreCase("catalog")){        			
         			dataLoader.catalogMigration(startTime, endTime, eventName);

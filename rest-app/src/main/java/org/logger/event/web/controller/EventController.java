@@ -514,6 +514,10 @@ public class EventController {
 		eventService.watchSession();
 	}
 
+	public void updateEventEs(){
+		logger.info("Indexing activity...");
+		eventService.indexActivity();
+	}
 	public void postMigration(){
 		/*if(!validateSchedular()){
 			return;

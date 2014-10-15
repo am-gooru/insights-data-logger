@@ -57,6 +57,8 @@ public interface EventService {
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 
 	public void watchSession();
+	
+	public void indexActivity();
 
 	void executeForEveryMinute(String startTime, String endTime);
 	
