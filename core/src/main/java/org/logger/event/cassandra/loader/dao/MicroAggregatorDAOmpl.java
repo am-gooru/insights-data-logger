@@ -368,7 +368,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{    	
     	JSONObject j = new JSONObject(aggregatorJson);
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
     	

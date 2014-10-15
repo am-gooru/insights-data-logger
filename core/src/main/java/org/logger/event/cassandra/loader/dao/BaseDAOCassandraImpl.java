@@ -43,6 +43,8 @@ public class BaseDAOCassandraImpl {
 
     protected static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ANY;
     
+    protected static final ConsistencyLevel CONSISTENCY_LEVEL_ONE = ConsistencyLevel.CL_ONE;
+    
     private CassandraConnectionProvider connectionProvider;
     
     private Keyspace keyspace;
