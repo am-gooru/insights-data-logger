@@ -105,10 +105,10 @@ public class CassandraConnectionProvider {
 					.setMaxTimeoutWhenExhausted(2000)
 					.setMaxConnsPerHost(10)
 					.setInitConnsPerHost(5)
-					.setLatencyAwareUpdateInterval(10000)
+					/*.setLatencyAwareUpdateInterval(10000)
                     .setLatencyAwareResetInterval(0)
                     .setLatencyAwareBadnessThreshold(2)
-                    .setLatencyAwareWindowSize(100)
+                    .setLatencyAwareWindowSize(100)*/
                     ;
             
             if (!hosts.startsWith("127.0")) {
