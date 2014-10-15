@@ -115,14 +115,14 @@ public class CassandraConnectionProvider {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
 
-            poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+            //poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
                     .forCluster(clusterName)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
-                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE	))
+                    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
                     //.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                     .withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
