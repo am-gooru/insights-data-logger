@@ -304,7 +304,7 @@ public class EventServiceImpl implements EventService {
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
 		if(status.equalsIgnoreCase("completed")){
 			try {
-				dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, "all",true);
+				dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
