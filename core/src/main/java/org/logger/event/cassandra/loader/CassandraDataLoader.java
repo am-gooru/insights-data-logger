@@ -82,9 +82,9 @@ public class CassandraDataLoader implements Constants {
     
     private Keyspace cassandraKeyspace;
     
-    private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ALL;
+    private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
     
-    private static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ALL;
+    private static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
    
     private SimpleDateFormat minuteDateFormatter;
     
