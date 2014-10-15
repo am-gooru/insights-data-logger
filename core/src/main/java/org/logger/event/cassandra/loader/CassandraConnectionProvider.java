@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -49,6 +48,7 @@ import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
+import com.netflix.astyanax.connectionpool.impl.Slf4jConnectionPoolMonitorImpl;
 import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
@@ -124,7 +124,8 @@ public class CassandraConnectionProvider {
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE	))
                     .withConnectionPoolConfiguration(poolConfig)
-                    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+                    //.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+                    .withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
 
             context.start();
