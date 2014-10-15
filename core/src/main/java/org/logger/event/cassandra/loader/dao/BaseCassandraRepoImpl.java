@@ -68,6 +68,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         } catch (ConnectionException e) {
         	if(retryCount < 6){
+        		retryCount++;
         		return readWithKeyColumn(cfName,key,columnName ,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -92,6 +93,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         } catch (ConnectionException e) {
         	if(retryCount < 6){
+        		retryCount++;
         		return readWithKeyColumnList(cfName,key,columnList,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -115,6 +117,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         } catch (ConnectionException e) {
         	if(retryCount < 6){
+        		retryCount++;
         		return readWithKeyListColumnList(cfName,keys,columnList ,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -136,7 +139,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         } catch (ConnectionException e) {
         	if(retryCount < 6){
-        		
+        		retryCount++;
         		return readWithKey(cfName,key,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -160,6 +163,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         } catch (ConnectionException e) {
         	if(retryCount < 6){
+        		retryCount++;
         		return readWithKeyList(cfName, key,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -222,6 +226,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	    	
     	} catch(ConnectionException e){
     		if(retryCount < 6){
+    			retryCount++;
         		return readIndexedColumn(cfName,columnName,value ,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -247,6 +252,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	    	
     	} catch(ConnectionException e){
     		if(retryCount < 6){
+    			retryCount++;
         		return readIndexedColumn(cfName,columnName,value ,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -267,6 +273,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					 	   .equals().value(value).execute().getResult();
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
+				retryCount++;
         		return readIndexedColumnLastNrows(cfName ,columnName,value,rowsToRead,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -332,7 +339,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
     	} catch(ConnectionException e){
     		if(retryCount < 6){
-        		
+    			retryCount++;
         		return readIndexedColumnList(cfName,columnList,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -353,6 +360,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.isEmpty();
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
+				retryCount++;
         		return isRowKeyExists(cfName,key,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -436,6 +444,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			        .execute().getResult();
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
+				retryCount++;
         		return readAllRows(cfName,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -984,6 +993,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			.value(Key).execute().getResult();
     	} catch (ConnectionException e) {
     		if(retryCount < 6){
+    			retryCount++;
         		return getParentId(cfName,Key,retryCount++);
         	}else{
         		e.printStackTrace();
@@ -1051,6 +1061,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult();
 	} catch (ConnectionException e) {
 		if(retryCount < 6){
+			retryCount++;
     		return getClassPageOwnerInfo(cfName,key ,classPageGooruOid,retryCount++);
     	}else{
     		e.printStackTrace();
@@ -1078,6 +1089,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.execute().getResult();
 		} catch (ConnectionException e) {
 			if(retryCount < 6){
+				retryCount++;
         		return isUserPartOfClass(cfName,key ,classPageGooruOid ,retryCount++);
         	}else{
         		e.printStackTrace();
