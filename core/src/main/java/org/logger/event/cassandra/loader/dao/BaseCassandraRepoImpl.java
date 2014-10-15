@@ -457,7 +457,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkStringList(String cfName, String key,Map<String,String> columnValueList) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         for (Map.Entry<String,String> entry : columnValueList.entrySet()) {
     			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
@@ -473,7 +473,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkLongList(String cfName, String key,Map<String,Long> columnValueList) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         for (Map.Entry<String,Long> entry : columnValueList.entrySet()) {
     			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
@@ -489,7 +489,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveBulkList(String cfName, String key,Map<String,Object> columnValueList) {
     	
-    	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+    	MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
     	
     	ColumnListMutation<String> m = mutation.withRow(this.accessColumnFamily(cfName), key);
             	
@@ -515,7 +515,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void saveStringValue(String cfName, String key,String columnName,String value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
 
@@ -528,7 +528,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
     public void saveStringValue(String cfName, String key,String columnName,String value,int expireTime) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 
@@ -540,7 +540,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void saveLongValue(String cfName, String key,String columnName,long value,int expireTime) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 
@@ -553,7 +553,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveLongValue(String cfName, String key,String columnName,long value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
 
@@ -566,7 +566,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
     public void saveValue(String cfName, String key,String columnName,Object value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
         if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
     		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
@@ -594,7 +594,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     public void increamentCounter(String cfName, String key,String columnName,long value) {
 
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         m.withRow(this.accessColumnFamily(cfName), key)
         .incrementCounterColumn(columnName, value);
@@ -762,7 +762,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         	answereIds = eventData.getAnswerId().toString();
         }
         // Inserting data
-        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
              
         m.withRow(this.accessColumnFamily(cfName), key)
                 .putColumn("date_time", date, null)
@@ -822,7 +822,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		key	= eventObject.getEventId(); 
     	}
     	
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
     	
         m.withRow(this.accessColumnFamily(cfName), key)
                 .putColumnIfNotNull("start_time", eventObject.getStartTime(), null)
@@ -856,7 +856,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
-        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
                 eventColumnTimeUUID.toString(), CoulmnValue, null);
@@ -879,7 +879,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
         UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
-        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+        MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
                 eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
@@ -912,7 +912,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		 }
 	 
 	     try {        	
-			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));	
+			 MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));	
 			 m.withRow(this.accessColumnFamily(cfName), rowKey)
 			 .putColumnIfNotNull(columnName, activities.get("activity") != null ? activities.get("activity").toString():null, null)
 			 
@@ -1012,7 +1012,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     
 	public void updateCollectionItem(String cfName,Map<String ,String> eventMap){
 		
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 	    
 		 m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTIONITEMID))
 	     .putColumnIfNotNull(CONTENT_ID,eventMap.get(CONTENTID))
@@ -1027,7 +1027,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateClasspage(String cfName,Map<String ,String> eventMap){
 
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
         
 		int isGroupOwner = 0;
 		int deleted = 0;
