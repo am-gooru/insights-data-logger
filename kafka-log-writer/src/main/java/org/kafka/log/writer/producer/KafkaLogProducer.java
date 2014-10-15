@@ -140,7 +140,7 @@ public class KafkaLogProducer
 	     String kafkaProducerType = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
 	    // kafkaIp, String port, String topic, String producerType
 		KafkaLogProducer producer = new KafkaLogProducer(kafkaIp,kafkaPort, topic,kafkaProducerType);
-		producer.sendEventLog(message);
+		producer.sendEventLog(message,"test");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
