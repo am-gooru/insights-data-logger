@@ -819,7 +819,7 @@ public class CassandraDataLoader  implements Constants {
 		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
-		    		logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
+		    		//logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
 		    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
 		    	}
 	    	}
@@ -1111,11 +1111,11 @@ public class CassandraDataLoader  implements Constants {
     				   if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
     						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
     				    	if(questionList != null && questionList.size() > 0){
-    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
-    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
-    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
-    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
-    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
     				    	}
     					}
 	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
@@ -1195,11 +1195,11 @@ public class CassandraDataLoader  implements Constants {
 	    				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.get(CONTENTGOORUOID) != null){
 	    						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
 	    				    	if(questionList != null && questionList.size() > 0){
-	    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
-	    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
-	    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
-	    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
-	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+	    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+	    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+	    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+	    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    				    	}
 	    					}
 		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
@@ -1865,11 +1865,11 @@ public class CassandraDataLoader  implements Constants {
 	    	}
 	    	
 	    	if(questionList != null && questionList.size() > 0){
-	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount").getLongValue());
-	    		resourceMap.put("resourceCount",questionList.getColumnByName("resourceCount").getLongValue());
-	    		resourceMap.put("oeCount",questionList.getColumnByName("oeCount").getLongValue());
-	    		resourceMap.put("mcCount",questionList.getColumnByName("mcCount").getLongValue());
-	    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount").getLongValue());
+	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+	    		resourceMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+	    		resourceMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+	    		resourceMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+	    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    	}
 		}
 		if(columns.getColumnByName("user_uid") != null){
