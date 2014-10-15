@@ -84,16 +84,16 @@ public class KafkaLogProducer
 		}
 	}
 	
-	public void sendEventLog(String eventLog) {
+	public void sendEventLog(String eventLog,String Ktopic) {
 		Map<String, String> message = new HashMap<String, String>();
 		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
 		message.put("raw", new String(eventLog));
 		
 		String messageAsJson = new JSONObject(message).toString();
-		send(messageAsJson);
+		send(messageAsJson,Ktopic);
 	}
 	
-	public void sendErrorEventLog(String eventLog) {
+	/*public void sendErrorEventLog(String eventLog) {
         Map<String, String> message = new HashMap<String, String>();
         message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
         message.put("raw", new String(eventLog));
@@ -106,11 +106,16 @@ public class KafkaLogProducer
          ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
          producer.send(data);
 	 }
-
+*/
 	 
-	private void send(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
-		producer.send(data);
+	private void send(String message,String Ktopic) {
+		ProducerData<String, String> data = new ProducerData<String, String>(Ktopic, message);
+		LOG.info("Kafka Log write message : " + message);
+		try{			
+			producer.send(data);
+		}catch(Exception e){
+			LOG.info("Error while pushing logs to topic : " + e);
+		}
 	}
 
 	public static void main(String args[]) {

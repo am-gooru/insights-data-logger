@@ -124,6 +124,8 @@ public class CassandraDataLoader implements Constants {
     
     private String configuredIp;
     
+    private String KafkaTopic;
+    
     /**
      * Get Kafka properties from Environment
      */
@@ -140,7 +142,7 @@ public class CassandraDataLoader implements Constants {
         String KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-        
+        KafkaTopic = KAFKA_FILE_TOPIC;
         kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
         microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
     }
@@ -157,7 +159,7 @@ public class CassandraDataLoader implements Constants {
         String KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
         String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
         String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-        
+        KafkaTopic = KAFKA_FILE_TOPIC;
         microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
         kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_ZK_PORT,  KAFKA_FILE_TOPIC, KAFKA_PRODUCER_TYPE);
     }
@@ -391,7 +393,7 @@ public class CassandraDataLoader implements Constants {
 			 */
 			if (eventData.getFields() != null) {
 				baseDao.saveEvent(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData);
-				kafkaLogWriter.sendEventLog(eventData.getFields());
+				kafkaLogWriter.sendEventLog(eventData.getFields(),KafkaTopic);
 				logger.info("CORE: Writing to activity log - :"+ eventData.getFields().toString());
 			}
 	    
@@ -423,7 +425,7 @@ public class CassandraDataLoader implements Constants {
 
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
 				//Save Activity in ElasticSearch
 				//this.saveActivityInIndex(eventObject.getFields());
 				
@@ -479,7 +481,7 @@ public class CassandraDataLoader implements Constants {
 			}
 		
     	}catch(Exception e){
-    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+    		kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
 
