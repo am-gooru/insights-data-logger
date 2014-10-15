@@ -39,11 +39,11 @@ import com.netflix.astyanax.model.ConsistencyLevel;
 
 public class BaseDAOCassandraImpl {
 	
-    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
+    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ALL;
 
-    protected static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ANY;
+    protected static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ALL;
     
-    protected static final ConsistencyLevel CONSISTENCY_LEVEL_ONE = ConsistencyLevel.CL_ONE;
+    protected static final ConsistencyLevel CONSISTENCY_LEVEL_ONE = ConsistencyLevel.CL_ALL;
     
     private CassandraConnectionProvider connectionProvider;
     
