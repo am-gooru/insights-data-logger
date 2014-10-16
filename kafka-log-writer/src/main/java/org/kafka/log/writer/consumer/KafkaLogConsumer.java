@@ -93,6 +93,7 @@ public class KafkaLogConsumer extends Thread {
 		    Map<String, Integer> topicErrorCountMap = new HashMap<String, Integer>();
 		    topicErrorCountMap.put(errorFileWriterTopic, new Integer(1));
 		    LOG.info("Error Log writer topic : " + errorFileWriterTopic);
+		    try{
 		    Map<String, List<KafkaMessageStream<Message>>> consumerErrorMap = consumer.createMessageStreams(topicErrorCountMap);
 		    KafkaMessageStream<Message> streamError =  consumerErrorMap.get(errorFileWriterTopic).get(0);
 		    ConsumerIterator<Message> itErr = streamError.iterator();
@@ -124,11 +125,14 @@ public class KafkaLogConsumer extends Thread {
 		    		continue;
 		    	}
 		    }
-		    
+		    }catch(Exception e){
+		    	LOG.error("Message Consumer Error....." + e);
+		    }
 		  
 	    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 	    topicCountMap.put(topic, new Integer(1));
 	    LOG.info("Log writer topic : " + topic);
+	    try{
 	    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 	    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
 	    ConsumerIterator<Message> it = stream.iterator();
@@ -159,6 +163,9 @@ public class KafkaLogConsumer extends Thread {
 	    		LOG.error("Message Consumer Error messageMap : No data found");
 	    		continue;
 	    	}
+	    }
+	    }catch(Exception e){
+	    	LOG.error("Log Message Consumer Error....." + e);
 	    }
 	  }
 }
