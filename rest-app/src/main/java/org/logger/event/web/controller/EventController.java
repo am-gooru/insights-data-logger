@@ -67,7 +67,7 @@ import com.netflix.astyanax.model.Rows;
 
 @Controller
 @RequestMapping(value="/event")
-@EnableAsync
+//@EnableAsync
 public class EventController {
 
 	protected final Logger logger = LoggerFactory 
