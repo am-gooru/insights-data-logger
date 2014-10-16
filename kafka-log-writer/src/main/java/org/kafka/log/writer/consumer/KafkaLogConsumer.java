@@ -92,9 +92,11 @@ public class KafkaLogConsumer extends Thread {
 
 		    Map<String, Integer> topicErrorCountMap = new HashMap<String, Integer>();
 		    topicErrorCountMap.put(errorFileWriterTopic, new Integer(1));
+		    LOG.info("Error Log writer topic : " + errorFileWriterTopic);
 		    Map<String, List<KafkaMessageStream<Message>>> consumerErrorMap = consumer.createMessageStreams(topicErrorCountMap);
 		    KafkaMessageStream<Message> streamError =  consumerErrorMap.get(errorFileWriterTopic).get(0);
 		    ConsumerIterator<Message> itErr = streamError.iterator();
+		    LOG.info("Error Log writer iterator: " + itErr.hasNext());
 		    while(itErr.hasNext())
 		    {
 		    	String message = ExampleUtils.getMessage(itErr.next());
@@ -126,9 +128,11 @@ public class KafkaLogConsumer extends Thread {
 		  
 	    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 	    topicCountMap.put(topic, new Integer(1));
+	    LOG.info("Log writer topic : " + topic);
 	    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 	    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
 	    ConsumerIterator<Message> it = stream.iterator();
+	    LOG.info("Log writer iterator: " + it.hasNext());
 	    while(it.hasNext())
 	    {
 	    	String message = ExampleUtils.getMessage(it.next());
