@@ -104,7 +104,7 @@ public class CassandraConnectionProvider {
                     .setSeeds(hosts)
                     .setSocketTimeout(30000)
 					.setMaxTimeoutWhenExhausted(2000)
-					.setMaxConnsPerHost(10)
+					.setMaxConnsPerHost(2)
 					.setInitConnsPerHost(1)
 					/*.setLatencyAwareUpdateInterval(10000)
                     .setLatencyAwareResetInterval(0)
