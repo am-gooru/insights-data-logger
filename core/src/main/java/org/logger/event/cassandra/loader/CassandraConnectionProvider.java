@@ -57,8 +57,8 @@ import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 public class CassandraConnectionProvider {
 
     private Properties properties;
-    private Keyspace cassandraKeyspace;
-    private Keyspace cassandraAwsKeyspace;
+    private static Keyspace cassandraKeyspace;
+    private static Keyspace cassandraAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
@@ -98,6 +98,7 @@ public class CassandraConnectionProvider {
             String clusterName = properties.getProperty("cluster.name",
                     "gooruinsights");
 
+            if(cassandraKeyspace == null){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
                     .setSeeds(hosts)
@@ -132,15 +133,18 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
-            
+            }
+            if(cassandraAwsKeyspace == null){
             cassandraAwsKeyspace = this.initializeAwsCassandra();
-
+            }
+            
+            if(client == null){
             //Elastic search connection provider
            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
            TransportClient transportClient = new TransportClient(settings);
            transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
            client = transportClient;
-           
+            }
            this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
