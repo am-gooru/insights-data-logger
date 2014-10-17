@@ -96,6 +96,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		retryCount++;
         		return readWithKeyColumnList(cfName,key,columnList,retryCount);
         	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName); 
         		e.printStackTrace();
         	}
         }
@@ -120,6 +121,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		retryCount++;
         		return readWithKeyListColumnList(cfName,keys,columnList ,retryCount);
         	}else{
+        		logger.info("Exception while read keys : " + keys + " from Column Family" + cfName);
         		e.printStackTrace();
         	}
         }
@@ -142,8 +144,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		retryCount++;
         		return readWithKey(cfName,key,retryCount);
         	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
         		e.printStackTrace();
-        		logger.info("Error in while read : " + e);
         	}
         }
     	
@@ -166,6 +168,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		retryCount++;
         		return readWithKeyList(cfName, key,retryCount);
         	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
         		e.printStackTrace();
         	}
         }
@@ -185,7 +188,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-            logger.info("Error while fetching data from method : readWithKey {}", e);
+        	logger.info("Exception while read key : " + key + " from Column Family" + cfName);
         }
     	
     	return result;
@@ -203,7 +206,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
                     ;
 
         } catch (ConnectionException e) {
-            logger.info("Error while fetching data from method : readWithKey {} ", e);
+        	logger.info("Exception while read key : " + keys + " from Column Family" + cfName);
         }
     	
     	return result;
@@ -229,6 +232,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			retryCount++;
         		return readIndexedColumn(cfName,columnName,value ,retryCount);
         	}else{
+        		logger.info("Exception while read Column : " + columnName + " from Column Family" + cfName);
         		e.printStackTrace();
         	}    		
     	}
@@ -255,6 +259,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			retryCount++;
         		return readIndexedColumn(cfName,columnName,value ,retryCount);
         	}else{
+        		logger.info("Exception while read Column : " + columnName + " from Column Family" + cfName);
         		e.printStackTrace();
         	}    		    		
     	}
@@ -314,6 +319,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.getCount()
 					.execute().getResult();
 		} catch (ConnectionException e) {
+			logger.info("Exception while read key : " + key + " from Column Family" + cfName);
 			e.printStackTrace();
 		}
 		
@@ -342,8 +348,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			retryCount++;
         		return readIndexedColumnList(cfName,columnList,retryCount);
         	}else{
+        		logger.info("Exception while read from Column Family" + cfName);
         		e.printStackTrace();
-        		logger.info("Error in while read : " + e);
         	}    		
     	}
 
@@ -363,6 +369,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				retryCount++;
         		return isRowKeyExists(cfName,key,retryCount);
         	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
         		e.printStackTrace();
         	}
 		}
@@ -380,7 +387,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			return cfQuery.execute().getResult().isEmpty();
 		} catch (ConnectionException e) {
-			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
+			logger.info("Exception while read from Column Family" + cfName + " columns : " + columns);
 		}
 		return false;
 	}
@@ -398,7 +405,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
 		} catch (ConnectionException e) {
-			logger.info("Error while fetching data from method : isRowKeyExists {} ", e);
+			logger.info("Exception while read  from Column Family" + cfName + " columns : " + columns);
 		}
 		return new ArrayList();
 	}
@@ -447,6 +454,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				retryCount++;
         		return readAllRows(cfName,retryCount);
         	}else{
+        		logger.info("Exception while read all rows  from Column Family" + cfName);
         		e.printStackTrace();
         	}
 		}
@@ -467,7 +475,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveBulkStringList {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -483,7 +492,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveBulkLongList {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -510,7 +520,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
         	mutation.execute();	
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveBulkList {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     public void saveStringValue(String cfName, String key,String columnName,String value) {
@@ -522,7 +533,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveStringValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
 
@@ -535,7 +547,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveStringValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     public void saveLongValue(String cfName, String key,String columnName,long value,int expireTime) {
@@ -547,7 +560,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveLongValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -560,7 +574,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveLongValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -589,7 +604,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveLongValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     public void increamentCounter(String cfName, String key,String columnName,long value) {
@@ -602,7 +618,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while save in method : saveLongValue {}", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -805,8 +822,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while inserting to cassandra - JSON - ", e);
-            return null;
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+            e.printStackTrace();
         }
         return key;
     }
@@ -843,8 +860,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while inserting Event Object to cassandra - JSON - ", e);
-            return null;
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+            e.printStackTrace();
         }
 		return key;
                 
@@ -870,7 +887,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             eventTimelineMutation.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while inserting event data to cassandra", e);
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
 
@@ -893,7 +911,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             eventTimelineMutation.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while inserting event data to cassandra", e);
+        	logger.info("Exception while write  from Column Family" + cfName);
+        	e.printStackTrace();
         }
     }
     
@@ -919,7 +938,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			 ;
 	            m.execute();
        } catch (ConnectionException e) {
-           logger.info("Error while inserting to cassandra ", e);       
+    	   logger.info("Exception while write from Column Family" + cfName);
+    	   e.printStackTrace();
        }
 	}
     
@@ -996,6 +1016,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     			retryCount++;
         		return getParentId(cfName,Key,retryCount);
         	}else{
+        		logger.info("Exception while write read key : " + Key + " from Column Family" + cfName);
         		e.printStackTrace();
         	}	
     	}
@@ -1046,7 +1067,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
          try{
           	m.execute();
           } catch (ConnectionException e) {
-          	logger.info("Error while inserting to cassandra - JSON - ", e);
+        	  logger.info("Exception while write from Column Family" + cfName);
+        	  e.printStackTrace();
           }
 	}
 
@@ -1064,8 +1086,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			retryCount++;
     		return getClassPageOwnerInfo(cfName,key ,classPageGooruOid,retryCount);
     	}else{
+    		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
     		e.printStackTrace();
-    		logger.info("Error in while read : " + e);
     	}
 		}
     	if (result != null && !result.isEmpty()) {
@@ -1092,6 +1114,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				retryCount++;
         		return isUserPartOfClass(cfName,key ,classPageGooruOid ,retryCount);
         	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
         		e.printStackTrace();
         	}
 		}

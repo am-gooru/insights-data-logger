@@ -259,12 +259,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     public void postAggregatorUpdate(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
     	JSONObject j = new JSONObject(aggregatorJson);
-    	//MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
     	
     	for (Entry entry : entrySet) {
-    		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
@@ -319,17 +318,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	this.realTimeAggregator(localKey,eventMap);
 	        }
     	
-	        try {
-	            m.execute();
-	        } catch (ConnectionException e2) {
-	            logger.info("updateCounter => Error while inserting to cassandra {} ", e2);
-	        }
     	}
-    	/*try {
+    	try {
             m.execute();
         } catch (ConnectionException e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }*/
+        }
     }
 
     public void startCounterAggregator(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{
@@ -373,12 +367,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     public void startCounters(Map<String,String> eventMap,String aggregatorJson,List<String> keysList,String key) throws JSONException{    	
     	JSONObject j = new JSONObject(aggregatorJson);
-    //	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
 		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {});
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
     	
     	for (Entry entry : entrySet) {
-    		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
@@ -453,17 +446,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        		}
 	        	}				
 	        }
-	        try {
-	            m.execute();
-	        } catch (ConnectionException e1) {
-	            logger.info("updateCounter => Error while inserting to cassandra {} ", e1);
-	        }
     	}
-    /*	try {
+    	try {
             m.execute();
         } catch (ConnectionException e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }*/
+        }
     }
 
     private void updatePostAggregator(String key,String columnName){

@@ -79,6 +79,10 @@ import flexjson.JSONSerializer;
 public class CassandraDataLoader implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
+
+    private static final Logger activityErrorLog = LoggerFactory.getLogger("activityErrorLog");
+
+    private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
     
     private Keyspace cassandraKeyspace;
     
@@ -425,7 +429,8 @@ public class CassandraDataLoader implements Constants {
 
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-				kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
+				//kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
+				activityLogger.info(eventObject.getFields());
 				//Save Activity in ElasticSearch
 				//this.saveActivityInIndex(eventObject.getFields());
 				
@@ -481,7 +486,8 @@ public class CassandraDataLoader implements Constants {
 			}
 		
     	}catch(Exception e){
-    		kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
+    		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
+    		activityErrorLog.info(eventObject.getFields());
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
 
@@ -491,16 +497,17 @@ public class CassandraDataLoader implements Constants {
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 			}
 			
+			
+			/*
+			 * To be Re-enable 
+			 * 
+
 			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
 	
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 	
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);
 			
-			
-			/*
-			 * To be Re-enable 
-			 * 
 
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
