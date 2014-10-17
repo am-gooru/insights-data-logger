@@ -887,7 +887,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         try {
             eventTimelineMutation.execute();
         } catch (ConnectionException e) {
-        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	logger.info("Exception while write Column Family" + cfName);
         	e.printStackTrace();
         }
     }
