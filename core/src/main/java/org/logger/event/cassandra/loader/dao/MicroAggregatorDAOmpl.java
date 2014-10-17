@@ -544,7 +544,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	    	long views =  viewsValues != null ? viewsValues.getLongValue() : 0L;
 
 	    	if(views == 0L && totalTimeSpent > 0L){
-	    		baseCassandraDao.saveLongValue(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
+	    		baseCassandraDao.increamentCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
 	    		views = 1;
 	    	}
 	    	
