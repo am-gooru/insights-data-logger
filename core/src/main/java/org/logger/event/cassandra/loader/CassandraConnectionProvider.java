@@ -97,29 +97,30 @@ public class CassandraConnectionProvider {
                     .getResourceAsStream("/loader.properties"));
             String clusterName = properties.getProperty("cluster.name",
                     "gooruinsights");
-
+            if(cassandraAwsKeyspace == null ){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
-                    .setMaxConnsPerHost(4)
+                    .setMaxConnsPerHost(10)
                     .setSeeds(hosts)
-                    .setLatencyAwareUpdateInterval(10000)
+                    .setInitConnsPerHost(1)
+                    /*.setLatencyAwareUpdateInterval(10000)
                     .setLatencyAwareResetInterval(0)
                     .setLatencyAwareBadnessThreshold(2)
-                    .setLatencyAwareWindowSize(100)
+                    .setLatencyAwareWindowSize(100)*/
                     ;
             
             if (!hosts.startsWith("127.0")) {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
 
-            poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+            //poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
                     .forCluster(clusterName)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
-                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE	))
+                    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
                     .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
@@ -128,17 +129,22 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
-            
-            cassandraAwsKeyspace = this.initializeAwsCassandra();
-            
-            cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
+        	}
+            if(cassandraAwsKeyspace == null ){
+            	cassandraAwsKeyspace = this.initializeAwsCassandra();
+            }
+            if(cassandraNewAwsKeyspace == null ){
+            	cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
+            }
 
             //Elastic search connection provider
-           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
-           TransportClient transportClient = new TransportClient(settings);
-           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
-           client = transportClient;
-           
+            if(client == null) {
+	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+	           TransportClient transportClient = new TransportClient(settings);
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
+	           
+	           client = transportClient;
+            }
            this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);

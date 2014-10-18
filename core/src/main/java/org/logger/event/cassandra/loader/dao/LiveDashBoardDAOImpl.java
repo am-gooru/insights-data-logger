@@ -7,13 +7,11 @@ import java.nio.file.AccessDeniedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
@@ -25,8 +23,6 @@ import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
-import org.logger.event.cassandra.loader.ESIndexices;
-import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
 import org.restlet.resource.ClientResource;
@@ -135,6 +131,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	            				
 	            			}
 	            		} 
+            			}
             		}
                 	try {
                         m.execute();
@@ -142,7 +139,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
                         logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
                     }
             	
-            }
     	}
     }
     

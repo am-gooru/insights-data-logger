@@ -232,7 +232,7 @@ public class EventServiceImpl implements EventService {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
-        		eventObjectValidator.validateEventObject(eventObject);
+        		//eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
         return new ActionResponseDTO<EventObject>(eventObject, errors);
