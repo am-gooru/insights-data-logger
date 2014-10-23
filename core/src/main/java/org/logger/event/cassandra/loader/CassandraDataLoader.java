@@ -85,7 +85,6 @@ import flexjson.JSONSerializer;
 
 @Configuration
 @EnableAsync
-@ComponentScan
 public class CassandraDataLoader  implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
