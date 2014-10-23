@@ -44,7 +44,6 @@ import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
@@ -231,7 +230,6 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
-	@Async
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(
 			EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		

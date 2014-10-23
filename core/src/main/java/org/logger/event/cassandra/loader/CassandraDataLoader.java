@@ -59,12 +59,8 @@ import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -446,7 +442,7 @@ public class CassandraDataLoader  implements Constants {
        }
     }
 
-    @Async
+    
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 
     	Map<String,String> eventMap = new LinkedHashMap<String, String>();
