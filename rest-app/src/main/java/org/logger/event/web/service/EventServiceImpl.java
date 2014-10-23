@@ -77,7 +77,7 @@ public class EventServiceImpl implements EventService {
 	private SimpleDateFormat minuteDateFormatter;
     
     public EventServiceImpl() {
-        dataLoaderService = new CassandraDataLoader();
+        //dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
