@@ -55,16 +55,15 @@ import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
-import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -84,9 +83,9 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
 
-@Component
-@Async
-@Transactional
+@Configuration
+@EnableAsync
+@ComponentScan
 public class CassandraDataLoader  implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
@@ -449,6 +448,7 @@ public class CassandraDataLoader  implements Constants {
        }
     }
 
+    @Async
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 
     	Map<String,String> eventMap = new LinkedHashMap<String, String>();
