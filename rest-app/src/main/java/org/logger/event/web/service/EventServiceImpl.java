@@ -230,6 +230,7 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	@Async
 	public ActionResponseDTO<EventObject> handleEventObjectMessage(
 			EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		

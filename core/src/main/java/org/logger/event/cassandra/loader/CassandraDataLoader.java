@@ -442,7 +442,7 @@ public class CassandraDataLoader  implements Constants {
        }
     }
 
-    
+    @Async
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
 
     	Map<String,String> eventMap = new LinkedHashMap<String, String>();
@@ -493,6 +493,7 @@ public class CassandraDataLoader  implements Constants {
 			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
+			logger.info("Processing event : {} ",eventMap.get("eventName"));
 			long start = System.currentTimeMillis();
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 

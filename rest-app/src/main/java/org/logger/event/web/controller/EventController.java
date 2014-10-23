@@ -142,8 +142,8 @@ public class EventController {
 		{
 			userIp = request.getRemoteAddr();
 		}
-
-		for (JsonElement eventJson : eventJsonArr) {
+		for(int i=0 ; i < eventJsonArr.size() ;i++){
+		//for (JsonElement eventJson : eventJsonArr) {
 			eventData = new EventData();
 			eventObject = new EventObject();
 			eventData.setStartTime(timeStamp);
@@ -152,10 +152,10 @@ public class EventController {
 			eventData.setUserAgent(userAgent);
 			eventData.setUserIp(userIp);
 			eventData.setEventSource(EVENT_SOURCE);
-			eventData.setFields(eventJson.getAsJsonObject().toString());
+			eventData.setFields(eventJsonArr.get(i).getAsJsonObject().toString());
 			eventObject.setStartTime(timeStamp);
 			eventObject.setEndTime(timeStamp);
-			JsonObject eventObj = eventJson.getAsJsonObject();
+			JsonObject eventObj = eventJsonArr.get(i).getAsJsonObject();
 			if(eventObj.get("version") == null){
 				logger.info("Version :{}",eventObj.get("version"));
 				responseDTO = this.createEventData(responseDTO,eventData,eventObj);
@@ -166,7 +166,7 @@ public class EventController {
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				JsonObject jsonObj = eventJson.getAsJsonObject();
+				JsonObject jsonObj = eventJsonArr.get(i).getAsJsonObject();
 				eventObjects.setFields(jsonObj.toString());
 				JSONObject useObj = new JSONObject(eventObjects.getUser());
 				useObj.put("userIp", userIp);
