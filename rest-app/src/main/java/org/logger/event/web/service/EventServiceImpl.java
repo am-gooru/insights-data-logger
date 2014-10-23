@@ -65,7 +65,6 @@ public class EventServiceImpl implements EventService {
 	
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 	
-	@Autowired
     protected CassandraDataLoader dataLoaderService;
     
 	private final CassandraConnectionProvider connectionProvider;
