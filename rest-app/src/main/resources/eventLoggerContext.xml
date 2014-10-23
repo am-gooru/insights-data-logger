@@ -42,7 +42,7 @@
 	
 	<!-- Scans the classpath for annotated components that will be auto-registered as Spring beans.
 	 For example @Controller and @Service. Make sure to set the correct base-package-->
-	<context:component-scan base-package="org.logger.event.web" />
+	<context:component-scan base-package="org.logger.event" />
 	
 	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
