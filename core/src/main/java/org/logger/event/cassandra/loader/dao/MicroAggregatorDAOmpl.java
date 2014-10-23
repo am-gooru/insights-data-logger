@@ -77,6 +77,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
     }
     
+    public MicroAggregatorDAOmpl() {
+    	this(null);
+    	 this.baseCassandraDao = new BaseCassandraRepoImpl(connectionProvider);
+         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+    }
     @Async
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
     	String contentGooruOId = "";
