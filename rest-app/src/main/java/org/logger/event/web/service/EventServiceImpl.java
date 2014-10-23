@@ -67,22 +67,20 @@ public class EventServiceImpl implements EventService {
 	
 	@Autowired
     protected CassandraDataLoader dataLoaderService;
-    
-	private final CassandraConnectionProvider connectionProvider;
-    
+        
 	private EventObjectValidator eventObjectValidator;
     
 	private BaseCassandraRepoImpl baseDao ;
     
 	private SimpleDateFormat minuteDateFormatter;
     
-    public EventServiceImpl() {
+    /*public EventServiceImpl() {
         //dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");    
-    }
+    }*/
 
     @Override
     public ActionResponseDTO<EventData> handleLogMessage(EventData eventData) {
