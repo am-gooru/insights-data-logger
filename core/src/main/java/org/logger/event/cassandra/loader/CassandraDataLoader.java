@@ -493,8 +493,6 @@ public class CassandraDataLoader  implements Constants {
 			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 						
-			logger.info("Processing Event : {} ", eventMap.get("eventName"));
-			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
