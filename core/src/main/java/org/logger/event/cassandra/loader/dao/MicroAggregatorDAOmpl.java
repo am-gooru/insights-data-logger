@@ -47,7 +47,6 @@ import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -57,7 +56,7 @@ import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 
 @Component
-@EnableAsync
+@Async
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO,Constants {
 	
     private static final Logger logger = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
@@ -75,18 +74,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
         this.connectionProvider = connectionProvider;
         this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-        init();
     }
     
-    public MicroAggregatorDAOmpl() {
-    	this(null);
-    	 this.baseCassandraDao = new BaseCassandraRepoImpl(connectionProvider);
-         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-    }
-    private void init() {
-    	this.baseCassandraDao = new BaseCassandraRepoImpl(connectionProvider);
-    	this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-    }
     
     @Async
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
