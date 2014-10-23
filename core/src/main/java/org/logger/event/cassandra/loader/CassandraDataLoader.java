@@ -493,24 +493,16 @@ public class CassandraDataLoader  implements Constants {
 			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
-			logger.info("Processing event : {} ",eventMap.get("eventName"));
-			long start = System.currentTimeMillis();
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
-			long end = System.currentTimeMillis();
 			
-			logger.info("Time taken for real time aggregator : {}",(end-start));
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 				liveAggregator.updateRawData(eventMap);
 			}
 			
-			long startc = System.currentTimeMillis();
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
-			long endc = System.currentTimeMillis();
-			
-			logger.info("Time taken for counters : {}",(endc-startc));
 		
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",e);

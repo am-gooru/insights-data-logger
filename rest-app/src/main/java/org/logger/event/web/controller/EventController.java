@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
@@ -68,7 +67,7 @@ import com.netflix.astyanax.model.Rows;
 
 @Controller
 @RequestMapping(value="/event")
-@EnableAsync
+//@EnableAsync
 public class EventController {
 
 	protected final Logger logger = LoggerFactory 
@@ -142,8 +141,8 @@ public class EventController {
 		{
 			userIp = request.getRemoteAddr();
 		}
-		for(int i=0 ; i < eventJsonArr.size() ;i++){
-		//for (JsonElement eventJson : eventJsonArr) {
+
+		for (JsonElement eventJson : eventJsonArr) {
 			eventData = new EventData();
 			eventObject = new EventObject();
 			eventData.setStartTime(timeStamp);
@@ -152,10 +151,10 @@ public class EventController {
 			eventData.setUserAgent(userAgent);
 			eventData.setUserIp(userIp);
 			eventData.setEventSource(EVENT_SOURCE);
-			eventData.setFields(eventJsonArr.get(i).getAsJsonObject().toString());
+			eventData.setFields(eventJson.getAsJsonObject().toString());
 			eventObject.setStartTime(timeStamp);
 			eventObject.setEndTime(timeStamp);
-			JsonObject eventObj = eventJsonArr.get(i).getAsJsonObject();
+			JsonObject eventObj = eventJson.getAsJsonObject();
 			if(eventObj.get("version") == null){
 				logger.info("Version :{}",eventObj.get("version"));
 				responseDTO = this.createEventData(responseDTO,eventData,eventObj);
@@ -166,7 +165,7 @@ public class EventController {
 				}
 			}else{
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				JsonObject jsonObj = eventJsonArr.get(i).getAsJsonObject();
+				JsonObject jsonObj = eventJson.getAsJsonObject();
 				eventObjects.setFields(jsonObj.toString());
 				JSONObject useObj = new JSONObject(eventObjects.getUser());
 				useObj.put("userIp", userIp);
