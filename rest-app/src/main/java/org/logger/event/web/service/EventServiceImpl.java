@@ -36,7 +36,6 @@ import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
 import org.json.JSONException;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
@@ -61,26 +60,21 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
 @Service
+
 public class EventServiceImpl implements EventService {
 	
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 	
 	@Autowired
     protected CassandraDataLoader dataLoaderService;
-        
+	
+	@Autowired    
 	private EventObjectValidator eventObjectValidator;
     
+	@Autowired
 	private BaseCassandraRepoImpl baseDao ;
     
-	private SimpleDateFormat minuteDateFormatter;
-    
-    /*public EventServiceImpl() {
-        //dataLoaderService = new CassandraDataLoader();
-        this.connectionProvider = dataLoaderService.getConnectionProvider();
-        baseDao = new BaseCassandraRepoImpl(connectionProvider);
-        eventObjectValidator = new EventObjectValidator(null);
-        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");    
-    }*/
+	private SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 
     @Override
     public ActionResponseDTO<EventData> handleLogMessage(EventData eventData) {
