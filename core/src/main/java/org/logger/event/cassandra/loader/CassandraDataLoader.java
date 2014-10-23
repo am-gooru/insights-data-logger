@@ -61,7 +61,9 @@ import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -81,6 +83,8 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
 
+@Component
+@EnableAsync
 public class CassandraDataLoader  implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);

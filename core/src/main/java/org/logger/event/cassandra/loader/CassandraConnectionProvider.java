@@ -97,7 +97,7 @@ public class CassandraConnectionProvider {
                     .getResourceAsStream("/loader.properties"));
             String clusterName = properties.getProperty("cluster.name",
                     "gooruinsights");
-            if(cassandraAwsKeyspace == null ){
+            if(cassandraKeyspace == null ){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
                     .setMaxConnsPerHost(10)
