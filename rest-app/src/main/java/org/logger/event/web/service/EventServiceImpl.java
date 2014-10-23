@@ -44,6 +44,7 @@ import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
@@ -63,12 +64,17 @@ import com.netflix.astyanax.model.Rows;
 public class EventServiceImpl implements EventService {
 	
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
-
+	
+	@Autowired
     protected CassandraDataLoader dataLoaderService;
-    private final CassandraConnectionProvider connectionProvider;
-    private EventObjectValidator eventObjectValidator;
-    private BaseCassandraRepoImpl baseDao ;
-    private SimpleDateFormat minuteDateFormatter;
+    
+	private final CassandraConnectionProvider connectionProvider;
+    
+	private EventObjectValidator eventObjectValidator;
+    
+	private BaseCassandraRepoImpl baseDao ;
+    
+	private SimpleDateFormat minuteDateFormatter;
     
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
