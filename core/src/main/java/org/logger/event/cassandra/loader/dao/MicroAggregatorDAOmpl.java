@@ -47,15 +47,17 @@ import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Row;
-import com.netflix.astyanax.model.Rows;
 
+@Component
+@EnableAsync
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO,Constants {
 	
     private static final Logger logger = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
@@ -114,6 +116,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		logger.info("Time spent for counters : {}",(stop-start));	
     }
     
+    @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws Exception{
     	List<String> pathWays = this.getPathWaysFromCollection(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
