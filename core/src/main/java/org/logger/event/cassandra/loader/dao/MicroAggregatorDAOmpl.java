@@ -137,7 +137,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	if(isStudent){*/
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
-						String classUid = String.valueOf("PARENT~"+localCache.get(pathWay));
+						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
@@ -160,7 +160,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 
-						String classUid = String.valueOf("PARENT~"+localCache.get(pathWay));
+						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
@@ -181,7 +181,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
-						String classUid = String.valueOf("PARENT~"+localCache.get(pathWay));
+						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
@@ -200,7 +200,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if(pathWays != null && pathWays.size() > 0){
 				for(String pathWay : pathWays){
 					
-					String classUid = String.valueOf("PARENT~"+localCache.get(pathWay));
+					String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
 					if(classUid == null){
 						 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
@@ -298,7 +298,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 					*/
 
-					String classUid = String.valueOf("PARENT~"+localCache.get(pathWay));
+					String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
 					if(classUid == null){
 						 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
@@ -308,6 +308,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					if(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
 						isOwner = Boolean.valueOf(String.valueOf(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
+						logger.info("From cache isOwner : {}",isOwner);
 					}else{
 						isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 						localCache.put("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID),isOwner,DEFAULTEXPIRETIME);
