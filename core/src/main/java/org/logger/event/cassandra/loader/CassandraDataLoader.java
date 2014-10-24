@@ -532,7 +532,7 @@ public class CassandraDataLoader  implements Constants {
 		
 			long countStop = System.currentTimeMillis();
 			
-			logger.info("counter taken : " + (countStart - countStop));
+			logger.info("counter taken : " + (countStop - countStart));
 			
 			
     	}catch(Exception e){

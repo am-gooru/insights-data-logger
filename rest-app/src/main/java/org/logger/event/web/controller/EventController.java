@@ -37,6 +37,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.cassandra.utils.ExpiringMap;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -598,5 +599,12 @@ public class EventController {
             e.printStackTrace();
     }
 		return false;
+	}
+	public static void main(String args[]) throws InterruptedException{
+		ExpiringMap<String, String> map2=new ExpiringMap<String, String>(1000);
+		map2.put("daniel", "tesst", 15000);
+		System.out.println("map : "  + map2.get("daniel"));
+	Thread.sleep(2000);
+		System.out.println("map 2: "  + map2.get("daniel"));
 	}
 }
