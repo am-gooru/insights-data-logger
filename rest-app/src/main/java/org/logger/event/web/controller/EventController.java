@@ -604,14 +604,15 @@ public class EventController {
 		ExpiringMap<String, String> map2=new ExpiringMap<String, String>(1000);
 		long start = System.currentTimeMillis();
 		
-		for(int i =0 ; i < 1000000 ; i++){
-			map2.put("daniel"+i, "tesst"+i, 15000);
+		for(int i =0 ; i < 10 ; i++){
+			map2.put("daniel"+i, "tesst"+i, 150000);
 		}
 		
 		long stop = System.currentTimeMillis();
 		System.out.println("time taken " + (stop-start));
-		System.out.println("map : "  + map2.get("daniel990999"));
-	Thread.sleep(2000);
-		System.out.println("map 2: "  + map2.get("daniel999999"));
+		System.out.println("map : "  + map2.size());
+		map2.reset();
+		System.out.println("map : "  + map2.size());
+		System.out.println("map : "  + map2.get("daniel3"));
 	}
 }

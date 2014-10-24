@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.cassandra.utils.ExpiringMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -131,6 +132,10 @@ public class CassandraDataLoader  implements Constants {
     public static  Map<String,String> taxonomyCodeType;
     
     public static  Map<String,String> resourceCodeType;
+  
+    private ExpiringMap<String, Object> localClassCache;
+    
+    private long DEFAULTEXPIRETIME = 1500000;
     
     /**
      * Get Kafka properties from Environment
@@ -215,7 +220,8 @@ public class CassandraDataLoader  implements Constants {
         for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
         	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
         }
-      
+        localClassCache = new ExpiringMap<String, Object>(1000);
+        
         resourceCodeType = new LinkedHashMap<String, String>();
         
         ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), ColumnFamily.DIMRESOURCE.getColumnFamily(),0);
@@ -449,8 +455,8 @@ public class CassandraDataLoader  implements Constants {
     	String aggregatorJson = null;
     	
     	try {
-    		long startDe = System.currentTimeMillis();
-	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
+
+    		eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
 
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
@@ -460,14 +466,10 @@ public class CassandraDataLoader  implements Constants {
 				//this.saveActivityInIndex(eventObject.getFields());
 				
 			}
-	    	long stopDe = System.currentTimeMillis();
-	    	logger.info("Deserialization time :" + (stopDe - startDe));
 	    	
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
 	    	
 	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
-	    	long stopAPI = System.currentTimeMillis();
-	    	logger.info("API validate time :" + (stopAPI - stopDe));
 	    	
 	    	if(aggregatorJson == null || aggregatorJson.isEmpty()){
 	    	
@@ -2441,10 +2443,16 @@ public class CassandraDataLoader  implements Constants {
     	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
+					 if(localClassCache.get("ORG~"+userUid) != null){
+						 organizationUid = String.valueOf(localClassCache.get("ORG~"+userUid));
+					 }else{
 					 Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid,0);
 	   					for(Row<String, String> userDetail : userDetails){
 	   						organizationUid = userDetail.getColumns().getStringValue("organization_uid", null);
+	   						localClassCache.put("ORG~"+userUid,organizationUid,DEFAULTEXPIRETIME);
 	   					}
+	   					
+				 	}
 					 eventObject.setOrganizationUid(organizationUid);
 			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
 			    	 sessionObj.put("organizationUId", organizationUid);
