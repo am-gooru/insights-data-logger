@@ -129,7 +129,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     final Thread realTimeThread = new Thread(new Runnable() {
 	  	@Override
 	  	public void run(){
-	  	  try{
+	  	try{
+	  		logger.info("Processer events : " + eventMap.get("eventName"));
+	  		
 	    	if(localCache.size() > 500000){
 	    		localCache.reset();
 	    	}

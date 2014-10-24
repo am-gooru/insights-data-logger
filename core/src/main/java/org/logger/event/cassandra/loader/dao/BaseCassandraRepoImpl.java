@@ -1159,8 +1159,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		Rows<String, String>  result = null;
     	try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn("gooru_uid").equals().value(key)
 					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid)
+					.addExpression().whereColumn("gooru_uid").equals().value(key)
 					.addExpression().whereColumn("is_group_owner").equals().value(1)
 					.execute().getResult();
 	} catch (ConnectionException e) {
@@ -1183,12 +1183,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	try {
     		 result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     		 	.searchWithIndex()
-				.addExpression()
-				.whereColumn("classpage_gooru_oid")
-				.equals().value(classPageGooruOid)
-				.addExpression()
-				.whereColumn("gooru_uid")
-				.equals().value(key)
+				.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid)
+				.addExpression().whereColumn("gooru_uid").equals().value(key)
+				.addExpression().whereColumn("is_group_owner").equals().value(0)
 				.execute().getResult();
 		} catch (ConnectionException e) {
 			if(retryCount < 6){

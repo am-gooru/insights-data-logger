@@ -508,6 +508,8 @@ public class CassandraDataLoader  implements Constants {
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
 			
+			logger.info("Incoming events : " + eventMap.get("eventName"));
+			
 			long timlinStop = System.currentTimeMillis();
 			
 			logger.info("save event detail : " + (timlinStop - eventStop));
