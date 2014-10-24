@@ -449,6 +449,7 @@ public class CassandraDataLoader  implements Constants {
     	String aggregatorJson = null;
     	
     	try {
+    		long startDe = System.currentTimeMillis();
 	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
 
 	    	if (eventObject.getFields() != null) {
@@ -459,30 +460,44 @@ public class CassandraDataLoader  implements Constants {
 				//this.saveActivityInIndex(eventObject.getFields());
 				
 			}
-
+	    	long stopDe = System.currentTimeMillis();
+	    	logger.info("Deserialization time :" + (stopDe - startDe));
+	    	
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
 	    	
 	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
+	    	long stopAPI = System.currentTimeMillis();
+	    	logger.info("API validate time :" + (stopAPI - stopDe));
 	    	
-	    	Map<String,Object> records = new HashMap<String, Object>();
-	    	records.put("event_name", eventMap.get("eventName"));
-	    	records.put("api_key",apiKey);
-	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records,0);
-
-	    	if(eventId == null || eventId.isEmpty()){
-	    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-	    		records.put("event_id", uuid.toString());
-	    		String key = apiKey +SEPERATOR+uuid.toString();
-				 baseDao.saveBulkList(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
-			 }		
+	    	if(aggregatorJson == null || aggregatorJson.isEmpty()){
 	    	
+	    		Map<String,Object> records = new HashMap<String, Object>();
+		    	records.put("event_name", eventMap.get("eventName"));
+		    	records.put("api_key",apiKey);
+		    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records,0);
+		    	
+		    	if(eventId == null || eventId.isEmpty()){
+		    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+		    		records.put("event_id", uuid.toString());
+		    		String key = apiKey +SEPERATOR+uuid.toString();
+		    		baseDao.saveBulkList(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
+		    	}
+			 
+	    	}		
+	    	
+	    	/*to be re-enabled
 	    	updateEventObjectCompletion(eventObject);
+	    	*/
 	    	
+	    	long eventS = System.currentTimeMillis();
 			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
 			 
 			if (eventKeyUUID == null) {
 			    return;
 			}
+			long eventStop = System.currentTimeMillis();
+			
+			logger.info("save event detail : " + (eventStop - eventS));
 			
 			Date eventDateTime = new Date(eventObject.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
@@ -491,6 +506,10 @@ public class CassandraDataLoader  implements Constants {
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
 			
+			long timlinStop = System.currentTimeMillis();
+			
+			logger.info("save event detail : " + (timlinStop - eventStop));
+			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
@@ -498,12 +517,24 @@ public class CassandraDataLoader  implements Constants {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 			
+			long aggStop = System.currentTimeMillis();
+			
+			logger.info("real time aggregator taken : " + (aggStop - timlinStop));
+			
+			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 				liveAggregator.updateRawData(eventMap);
 			}
 			
+			long countStart = System.currentTimeMillis();
+			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
 		
+			long countStop = System.currentTimeMillis();
+			
+			logger.info("counter taken : " + (countStart - countStop));
+			
+			
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",e);
 			if (eventObject.getFields() != null) {
