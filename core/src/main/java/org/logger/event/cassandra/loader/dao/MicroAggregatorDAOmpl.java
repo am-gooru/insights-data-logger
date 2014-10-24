@@ -907,10 +907,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for(String pathwayId : parentIds){
 			String type = null;
 
-			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
+/*			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
 			
 			type = resourcesDetail.getStringValue("type_name", null);
-
+*/
+			if(localCache.get("TYPE~"+pathwayId) !=null){
+    			type = String.valueOf(localCache.get("TYPE~"+pathwayId));
+    		}else{
+    			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
+			
+				type = resourcesDetail.getStringValue("type_name", null);
+				
+				localCache.put("TYPE~"+pathwayId,type,DEFAULTEXPIRETIME);
+			}
+			
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				pathwayIds.add(pathwayId);
 			}
@@ -971,10 +981,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
     		String type = null;
     		
-    		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
+    		/*ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
 			
 			type = resourcesDetail.getStringValue("type_name", null);
+			*/
+    		if(localCache.get("TYPE~"+eventMap.get(PARENTGOORUOID)) !=null){
+    			type = String.valueOf(localCache.get("TYPE~"+eventMap.get(PARENTGOORUOID)));
+    		}else{
+    			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
 			
+				type = resourcesDetail.getStringValue("type_name", null);
+				
+				localCache.put("TYPE~"+eventMap.get(PARENTGOORUOID),type,DEFAULTEXPIRETIME);
+			}
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				classPages.add(eventMap.get(PARENTGOORUOID));
 			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -995,10 +1014,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			        		}
 			    		}else{
 			        		String type = null;
-			        		
+		/*	        		
 			        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventDetail.getStringValue(PARENT_GOORU_OID, null),0);
+			        		type = resourcesDetail.getStringValue("type_name", null);
+		*/	    			
+			        		if(localCache.get("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null)) !=null){
+			        			type = String.valueOf(localCache.get("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null)));
+			        		}else{
+			        			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventDetail.getStringValue(PARENT_GOORU_OID, null),0);
 			    			
-			    			type = resourcesDetail.getStringValue("type_name", null);
+			    				type = resourcesDetail.getStringValue("type_name", null);
+			    				
+			    				localCache.put("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null),type,DEFAULTEXPIRETIME);
+			    			}
+			        		
 			    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 			    				classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -1032,11 +1061,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				    		}else{
 
 				        		String type = null;
-				        		
-				        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + C.getStringValue(PARENT_GOORU_OID, null),0);
+				        		if(localCache.get("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null)) !=null){
+				        			type = String.valueOf(localCache.get("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null)));
+				        		}else{
+				        			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + C.getStringValue(PARENT_GOORU_OID, null),0);
 				    			
-				    			type = resourcesDetail.getStringValue("type_name", null);
-				    			
+				    				type = resourcesDetail.getStringValue("type_name", null);
+				    				
+				    				localCache.put("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null),type,DEFAULTEXPIRETIME);
+				    			}
 				    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				    				classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
 				    			}else{
