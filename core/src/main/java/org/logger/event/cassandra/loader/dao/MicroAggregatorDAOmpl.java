@@ -137,9 +137,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	if(isStudent){*/
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
-						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
+						
+						String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
+						
+						logger.info("From Cache Class: " + classUid);
+						
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+							 logger.info("From Lookup Class : " + classUid);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
 						}
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
@@ -159,10 +164,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
-
-						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
+						String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
+						logger.info("From Cache Class: " + classUid);
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+							 logger.info("From Lookup Class : " + classUid);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
 						}
 						
@@ -181,9 +187,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        
 	        	if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
-						String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
+						String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
+						
+						logger.info("From Cache Class: " + classUid);
+
 						if(classUid == null){
 							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+							 logger.info("From Lookup Class : " + classUid);
 							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
 						}
 						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
@@ -200,9 +210,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if(pathWays != null && pathWays.size() > 0){
 				for(String pathWay : pathWays){
 					
-					String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
+					String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
+					
+					logger.info("From Cache Class: " + classUid);
+
 					if(classUid == null){
 						 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+						 logger.info("From Lookup Class : " + classUid);
 						 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
 					}
 					
@@ -298,9 +312,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 					*/
 
-					String classUid = String.valueOf(localCache.get("PARENT~"+pathWay));
+					String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
+					
+					logger.info("From Cache Class: " + classUid);
+
 					if(classUid == null){
 						 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+						 logger.info("From Lookup Class : " + classUid);
 						 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
 					}
 					
