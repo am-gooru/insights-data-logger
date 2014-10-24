@@ -217,18 +217,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.info("isOwner : {}",isOwner);
 					
 					if(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-						isOwner = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
+						isStudent = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
 					}else{
 						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-						
+
 						int retryCount = 1;
-				        while (retryCount < 6 && !isStudent) {
+						
+						while(!isStudent && retryCount < 6) {
 				        	Thread.sleep(1000);
 				        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 				        	logger.info("retrying to check if a student : {}",retryCount);
 				            retryCount++;
 				        }
-				        localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID));
+				        localCache.put("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID),isStudent,DEFAULTEXPIRETIME);
 					}
 					logger.info("isStudent : {}",isStudent);
 					
@@ -314,18 +315,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.info("isOwner : {}",isOwner);
 					
 					if(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-						isOwner = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
+						isStudent = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
 					}else{
 						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 						
 						int retryCount = 1;
-				        while (retryCount < 6 && !isStudent) {
+				        while (!isStudent && retryCount < 6) {
 				        	Thread.sleep(1000);
 				        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 				        	logger.info("retrying to check if a student : {}",retryCount);
 				            retryCount++;
 				        }
-				        localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID));
+				        localCache.put("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID),isStudent,DEFAULTEXPIRETIME);
 					}
 
 					logger.info("isStudent : {}",isStudent);
