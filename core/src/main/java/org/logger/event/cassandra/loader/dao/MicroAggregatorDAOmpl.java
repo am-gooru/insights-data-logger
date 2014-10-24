@@ -70,7 +70,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
     private ExpiringMap<String, Object> localCache;
     
-    private long DEFAULTEXPIRETIME = 15000;
+    private long DEFAULTEXPIRETIME = 1500000;
     
     public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
