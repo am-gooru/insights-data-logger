@@ -110,36 +110,42 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     
-    public void callCountersV2(Map<String,String> eventMap) {
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	if((eventMap.containsKey(EVENTNAME))) {
-            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
-            for(int i=0 ; i < eventKeys.size() ; i++ ){
-            	String columnName = eventKeys.getColumnByIndex(i).getName();
-            	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-        		String key = this.formOrginalKey(columnName, eventMap);
-        		for(String value : columnValue.split(",")){
-            		String orginalColumn = this.formOrginalKey(value, eventMap);
-	            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-	            			if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
-	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
-	            			}else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
-	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
-	            			}else if(orginalColumn.startsWith("sum"+SEPERATOR)){
-	            				String[] rowKey = orginalColumn.split("~");
-	            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
-	            				
-	            			}
-	            		} 
-            			}
-            		}
-                	try {
-                        m.execute();
-                    } catch (ConnectionException e) {
-                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
-                    }
-            	
-    	}
+    public void callCountersV2(final Map<String,String> eventMap) {
+        final Thread counterThread = new Thread(new Runnable() {
+    	  	@Override
+    	  	public void run(){
+					MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			    	if((eventMap.containsKey(EVENTNAME))) {
+			            eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
+			            for(int i=0 ; i < eventKeys.size() ; i++ ){
+			            	String columnName = eventKeys.getColumnByIndex(i).getName();
+			            	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+			        		String key = formOrginalKey(columnName, eventMap);
+			        		for(String value : columnValue.split(",")){
+			            		String orginalColumn = formOrginalKey(value, eventMap);
+				            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
+				            			if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
+				            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
+				            			}else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
+				            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
+				            			}else if(orginalColumn.startsWith("sum"+SEPERATOR)){
+				            				String[] rowKey = orginalColumn.split("~");
+				            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
+				            				
+				            			}
+				            		} 
+			            			}
+			            		}
+			                	try {
+			                        m.execute();
+			                    } catch (ConnectionException e) {
+			                        logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+			                    }
+			    	}
+    	  	}
+    	});
+        counterThread.setDaemon(true);
+        counterThread.start();
     }
     
     @Async
@@ -377,19 +383,26 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
         }
 	}
 	
-	public void addContentForPostViews(Map<String,String> eventMap){
-		String dateKey = minDateFormatter.format(new Date()).toString();
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		
-		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
-		
-		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey,eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000,m);
-		
-		try {
-            m.execute();
-        } catch (ConnectionException e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
+	public void addContentForPostViews(final Map<String,String> eventMap){
+		final Thread viewsThread = new Thread(new Runnable() {
+    	  	@Override
+    	  	public void run(){
+				String dateKey = minDateFormatter.format(new Date()).toString();
+				MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+				
+				logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
+				
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey,eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000,m);
+				
+				try {
+		            m.execute();
+		        } catch (ConnectionException e) {
+		            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		        }
+    	  	}
+		});
+		viewsThread.setDaemon(true);
+		viewsThread.start();
 	}
 	
 	public void watchApplicationSession() throws ParseException{

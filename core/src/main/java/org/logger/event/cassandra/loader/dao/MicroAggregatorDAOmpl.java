@@ -130,7 +130,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	  	@Override
 	  	public void run(){
 	  	try{
-	  		logger.info("Processer events : " + eventMap.get("eventName"));
 	  		
 	    	if(localCache.size() > 500000){
 	    		localCache.reset();
@@ -1195,15 +1194,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 	
-	public void updateRawData(Map<String,String> eventMap){
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CCV1.getName())){
-			baseCassandraDao.saveStringValue(ColumnFamily.COLLECTION.getColumnFamily(), eventMap.get(CONTENTID), CONTENT_ID, eventMap.get(CONTENTID));
-			baseCassandraDao.updateCollectionItem(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap);
-		}
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLUAV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLPCV1.getName())){
-			baseCassandraDao.updateClasspage(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap);
-		}
-		
+	public void updateRawData(final Map<String,String> eventMap){
+		 final Thread updateRawThread = new Thread(new Runnable() {
+		    	@Override
+		    	public void run(){
+					if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CCV1.getName())){
+						baseCassandraDao.saveStringValue(ColumnFamily.COLLECTION.getColumnFamily(), eventMap.get(CONTENTID), CONTENT_ID, eventMap.get(CONTENTID));
+						baseCassandraDao.updateCollectionItem(ColumnFamily.COLLECTIONITEM.getColumnFamily(),eventMap);
+					}
+					if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLUAV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CLPCV1.getName())){
+						baseCassandraDao.updateClasspage(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap);
+					}
+		    	}
+		 });
+		 updateRawThread.setDaemon(true);
+		 updateRawThread.start();
 	}
 
 	//to be removed 

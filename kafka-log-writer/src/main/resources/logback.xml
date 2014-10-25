@@ -35,7 +35,7 @@
 		<param name="File" value="logs/event_logs/event-logger-default.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>event-logger-default.%d{yyyy-MM-dd}.%A.log</fileNamePattern>
+			<fileNamePattern>event-logger-default.%d{yyyy-MM-dd}.log</fileNamePattern>
 
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -50,7 +50,7 @@
 		<param name="File" value="logs/event_api_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/event_api_logs/activity.%d{yyyy-MM-dd}.%A.log</fileNamePattern>
+			<fileNamePattern>logs/event_api_logs/activity.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
@@ -69,7 +69,7 @@
 		<param name="File" value="logs/event_api_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/event_api_logs/activity-error.%d{yyyy-MM-dd}.%A.log</fileNamePattern>
+			<fileNamePattern>logs/event_api_logs/activity-error.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>

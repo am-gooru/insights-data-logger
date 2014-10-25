@@ -486,20 +486,13 @@ public class CassandraDataLoader  implements Constants {
 		    	}
 			 
 	    	}		
-	    	
-	    	/*to be re-enabled
 	    	updateEventObjectCompletion(eventObject);
-	    	*/
-	    	
-	    	long eventS = System.currentTimeMillis();
-			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
+
+	    	String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
 			 
 			if (eventKeyUUID == null) {
 			    return;
 			}
-			long eventStop = System.currentTimeMillis();
-			
-			logger.info("save event detail : " + (eventStop - eventS));
 			
 			Date eventDateTime = new Date(eventObject.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
@@ -508,12 +501,6 @@ public class CassandraDataLoader  implements Constants {
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			}
 			
-			logger.info("Incoming events : " + eventMap.get("eventName"));
-			
-			long timlinStop = System.currentTimeMillis();
-			
-			logger.info("save event detail : " + (timlinStop - eventStop));
-			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
@@ -521,23 +508,12 @@ public class CassandraDataLoader  implements Constants {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 			
-			long aggStop = System.currentTimeMillis();
-			
-			logger.info("real time aggregator taken : " + (aggStop - timlinStop));
-			
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
 				liveAggregator.updateRawData(eventMap);
 			}
 			
-			long countStart = System.currentTimeMillis();
-			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
-		
-			long countStop = System.currentTimeMillis();
-			
-			logger.info("counter taken : " + (countStop - countStart));
-			
 			
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",e);
