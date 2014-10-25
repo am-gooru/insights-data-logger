@@ -126,9 +126,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     @Async
     public void realTimeMetrics(final Map<String,String> eventMap,final String aggregatorJson) throws Exception{
     	
-    final Thread realTimeThread = new Thread(new Runnable() {
+/*    final Thread realTimeThread = new Thread(new Runnable() {
 	  	@Override
-	  	public void run(){
+	  	public void run(){*/
 	  	try{
 	  		logger.info("Processer events : " + eventMap.get("eventName"));
 	  		
@@ -408,11 +408,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				e.printStackTrace();
 			}
 			
-	  	  }
+	  /*	  }
     	});
     
     	realTimeThread.setDaemon(true);
-    	realTimeThread.start();
+    	realTimeThread.start();*/
     
      }
 
@@ -766,6 +766,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long score =  0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				collectionStatus = "completed";
 				 score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
