@@ -489,6 +489,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long score =  0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				collectionStatus = "completed";
 				 score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
