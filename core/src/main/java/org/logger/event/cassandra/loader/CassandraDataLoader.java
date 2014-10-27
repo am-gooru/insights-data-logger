@@ -822,8 +822,14 @@ public class CassandraDataLoader  implements Constants {
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
-	    		this.readEventAndIndex(eventUUID);
-	    		
+	    		int threadCount = readEventAndIndex(eventUUID);
+	    		if(threadCount > 100){
+	    			try {
+						Thread.sleep(10000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+	    		}
 /*		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
 		    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
 		    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
@@ -849,7 +855,7 @@ public class CassandraDataLoader  implements Constants {
     	logger.info("Indexing completed..........");
     }
 
-    public void readEventAndIndex(final ColumnList<String> eventUUID){
+    public int  readEventAndIndex(final ColumnList<String> eventUUID){
     	final Thread counterThread = new Thread(new Runnable() {
     	  	@Override
     	  	public void run(){
@@ -864,6 +870,7 @@ public class CassandraDataLoader  implements Constants {
 
     	counterThread.setDaemon(true);
     	counterThread.start();
+    	return counterThread.activeCount();
 
     }
     public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
