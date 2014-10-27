@@ -822,13 +822,14 @@ public class CassandraDataLoader  implements Constants {
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 
-		    	Collection<String> eventDetailkeys = new ArrayList<String>();
-		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	    		this.readEventAndIndex(eventUUID);
+	    		
+/*		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
 		    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
 		    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
 		    		this.saveActivityInIndex(event.getStringValue("fields", null));
 		    	}
-
+*/
 	    	}
 	    	if(isSchduler){
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+startDate);
@@ -848,6 +849,23 @@ public class CassandraDataLoader  implements Constants {
     	logger.info("Indexing completed..........");
     }
 
+    public void readEventAndIndex(final ColumnList<String> eventUUID){
+    	final Thread counterThread = new Thread(new Runnable() {
+    	  	@Override
+    	  	public void run(){
+    	  		
+    	  		for(int i = 0 ; i < eventUUID.size() ; i++) {
+    	    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
+    	    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
+    	    		saveActivityInIndex(event.getStringValue("fields", null));
+    	    	}
+    	  	}
+    	});
+
+    	counterThread.setDaemon(true);
+    	counterThread.start();
+
+    }
     public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
