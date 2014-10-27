@@ -1222,17 +1222,19 @@ public class CassandraDataLoader  implements Constants {
     public Map<String, Object> getUserInfo(Map<String,Object> eventMap , String gooruUId){
     	Collection<String> user = new ArrayList<String>();
     	user.add(gooruUId);
-    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user,0);
-    	for (Row<String, String> row : eventDetailsNew) {
-    		ColumnList<String> userInfo = row.getColumns();
-    		for(int i = 0 ; i < userInfo.size() ; i++) {
-    			String columnName = userInfo.getColumnByIndex(i).getName();
-    			String value = userInfo.getColumnByIndex(i).getStringValue();
+    	ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), gooruUId,0);
+    	//for (Row<String, String> row : eventDetailsNew) {
+    		//ColumnList<String> userInfo = row.getColumns();
+    	if(eventDetailsNew != null){
+    		for(int i = 0 ; i < eventDetailsNew.size() ; i++) {
+    			String columnName = eventDetailsNew.getColumnByIndex(i).getName();
+    			String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
     			if(value != null){
     				eventMap.put(columnName, value);
     			}
     		}
-    	}
+    		}
+    	//}
 		return eventMap;
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
