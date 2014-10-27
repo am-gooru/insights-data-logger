@@ -305,15 +305,33 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		Date lastDate = null;
+		Date currDate = null;		
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
 		if(status.equalsIgnoreCase("completed")){
 			try {
-				dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
+				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
+				currDate = minuteDateFormatter.parse(currentTime);
+				
+				if((lastDate.getTime() < currDate.getTime())){					
+					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
+				}else{
+					logger.info("Waiting to time complete...");
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}else{
 			logger.info("Indexing is in-progress.....");
+
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value",0).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~max~count", "constant_value",0).getStringValue();
+
+			if(Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+ (Integer.valueOf(lastCheckedCount) + 1));
+			}else{
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value","completed");
+			}
 		}
 	}
 }
