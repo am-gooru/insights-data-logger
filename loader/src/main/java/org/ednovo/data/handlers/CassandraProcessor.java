@@ -116,9 +116,6 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         		if(methodName.equalsIgnoreCase("catalog")){        			
         			dataLoader.catalogMigration(startTime, endTime, eventName);
         		}
-        		if(methodName.equalsIgnoreCase("counter")){        			
-        			dataLoader.catalogMigration(startTime, endTime, eventName);
-        		}
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
