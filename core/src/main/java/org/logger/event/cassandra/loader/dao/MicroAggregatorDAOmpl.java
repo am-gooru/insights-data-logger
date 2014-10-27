@@ -251,6 +251,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 		if(keysList != null && keysList.size() > 0 ){
+			/*for(String localKey : keysList){
+				boolean rowStatus = baseCassandraDao.isRowKeyExists(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
+				logger.info("Checking Key : "+ localKey + " - isEmpty? :" + rowStatus + "\n");
+			}*/
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
 			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
@@ -490,7 +494,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 				try {
-					Thread.sleep(500);
+					Thread.sleep(1500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
