@@ -824,18 +824,22 @@ public class CassandraDataLoader  implements Constants {
 
 		    	Collection<String> eventDetailkeys = new ArrayList<String>();
 		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+/*					String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
 		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
 		    		eventDetailkeys.add(eventDetailUUID);
+		    		
+*/		    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
+		    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
+		    		this.saveActivityInIndex(event.getStringValue("fields", null));
 		    	}
 		    	
-		    	//Read all records from Event Detail
+		    	/*//Read all records from Event Detail
 		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
 		    	
 		    	for (Row<String, String> row : eventDetailsNew) {
 		    		//logger.info("Fields : " + row.getColumns().getStringValue("fields", null));
-		    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
-		    	}
+		    		 this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+		    	}*/
 	    	}
 	    	if(isSchduler){
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+startDate);
