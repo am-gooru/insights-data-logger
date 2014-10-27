@@ -479,7 +479,7 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.updateRawData(eventMap);
 			}
 			
-			liveDashBoardDAOImpl.callCountersV2(eventMap);
+			//liveDashBoardDAOImpl.callCountersV2(eventMap);
 			
 			if(eventObject.getFields() != null) {
 				microAggregator.sendEventForAggregation(eventObject.getFields());
@@ -803,6 +803,57 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+	    	}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	}
+	    
+    }
+
+    public void migrateDataToCounter(String startTime , String endTime,String customEventName,String apiKey) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
+    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	Collection<String> eventDetailkeys = new ArrayList<String>();
+	    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+	    		eventDetailkeys.add(eventDetailUUID);
+	    	}
+	    	
+	    	//Read all records from Event Detail
+	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
+	    	
+	    	
+	    	for (Row<String, String> row : eventDetailsNew) {
+    				EventObject eventObjects = new Gson().fromJson(row.getColumns().getStringValue("fields", null), EventObject.class);
+	    		try {
+					this.handleEventObjectMessage(eventObjects);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));
