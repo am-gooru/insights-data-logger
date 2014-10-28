@@ -267,13 +267,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						
 						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 							
-							int retryCount = 1;
+						/*	int retryCount = 1;
 					        while (!isStudent && retryCount < 2) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student 2 : {}",retryCount);
 					            retryCount++;
-					        }
+					        }*/
 	
 						logger.info("isStudent : {}",isStudent);
 					
