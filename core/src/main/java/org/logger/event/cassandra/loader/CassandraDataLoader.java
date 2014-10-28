@@ -806,7 +806,7 @@ public class CassandraDataLoader  implements Constants {
     	}
     	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
     	//for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateFormatter.format(startDate);
+    		String currentDate = dateFormatter.format(new Date(startDate));
     		int currentHour = new Date(startDate).getHours();
     		int currentMinute = new Date(startDate).getMinutes();
     		
@@ -848,7 +848,7 @@ public class CassandraDataLoader  implements Constants {
 	    	Date incrementedTime =cal.getTime(); 
 	    	//startDate = Long.parseLong(dateFormatter.format(incrementedTime));
 	    	startDate = incrementedTime.getTime();
-	    	logger.info("Incremented Time"+ new Date(startDate));
+	    	logger.info("Incremented Time"+ dateFormatter.format(new Date(startDate)));
 	    }
 	    
     	if(isSchduler){
