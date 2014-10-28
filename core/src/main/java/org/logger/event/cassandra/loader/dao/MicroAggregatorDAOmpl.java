@@ -142,17 +142,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		        	if(pathWays != null && pathWays.size() > 0){
 						for(String pathWay : pathWays){
 							String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-							logger.info("Fetch classUid : {} ",classUid);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-							
-							logger.info("Session Key-1 : {} ",classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-							logger.info("Session Key-2 : {} ",classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						}
 					}
 		        	//}
 		        }
-		        logger.info("Session Key-1 : {} ",eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 			}
 			
@@ -208,7 +203,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	
 						int retryCount = 1;
 							
-						while(!isStudent && retryCount < 6) {
+						while(!isStudent && retryCount < 2) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student 1 : {}",retryCount);
@@ -273,7 +268,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 							
 							int retryCount = 1;
-					        while (!isStudent && retryCount < 6) {
+					        while (!isStudent && retryCount < 2) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student 2 : {}",retryCount);
