@@ -26,6 +26,7 @@ package org.logger.event.web.service;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +74,9 @@ public class EventServiceImpl implements EventService {
 	private BaseCassandraRepoImpl baseDao ;
     
 	private SimpleDateFormat minuteDateFormatter;
-    
+	
+	Calendar cal = Calendar.getInstance();
+	
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
@@ -305,12 +308,17 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
-
 		if(status.equalsIgnoreCase("completed")){
 			try {
-					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
+				cal.setTime(minuteDateFormatter.parse(""+currentTime));
+				cal.add(Calendar.DATE, 1);
+				Date incrementedTime =cal.getTime(); 
+				long nextDay = Long.parseLong(minuteDateFormatter.format(incrementedTime));
+
+				logger.info("lastUpadatedTime : " + lastUpadatedTime + " - nextDay" + nextDay);
+				
+				dataLoaderService.updateStagingES(lastUpadatedTime, ""+nextDay, null,true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
