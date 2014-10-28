@@ -194,6 +194,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						
+						logger.info("pathWay 1 : " + pathWay);
+						
 						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						
 						boolean isOwner = true;
@@ -209,7 +211,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						while(!isStudent && retryCount < 6) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-					        	logger.info("retrying to check if a student : {}",retryCount);
+					        	logger.info("retrying to check if a student 1 : {}",retryCount);
 					            retryCount++;
 						}
 						
@@ -258,28 +260,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						
-						/*String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+						logger.info("pathWay 2 : " + pathWay);
 						
-						boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-						
-						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-						
-						int retryCount = 1;
-				        while (retryCount < 6 && !isStudent) {
-				        	Thread.sleep(1000);
-				        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-				        	logger.info("retrying to check if a student : {}",retryCount);
-				            retryCount++;
-				        }
-				        
-				        
-				    	String classUid = String.valueOf(localCache.get(pathWay));
-						if(classUid == null){
-							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-							 localCache.put(pathWay, classUid,DEFAULTEXPIRETIME);
-						}
-						*/
-	
 						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						
 						boolean isOwner = true;
@@ -294,7 +276,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					        while (!isStudent && retryCount < 6) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-					        	logger.info("retrying to check if a student : {}",retryCount);
+					        	logger.info("retrying to check if a student 2 : {}",retryCount);
 					            retryCount++;
 					        }
 	
