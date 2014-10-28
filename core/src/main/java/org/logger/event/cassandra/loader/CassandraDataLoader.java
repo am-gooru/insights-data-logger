@@ -806,7 +806,7 @@ public class CassandraDataLoader  implements Constants {
     	}
     	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
     	//for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(startDate);
+    		String currentDate = dateFormatter.format(startDate);
     		int currentHour = new Date(startDate).getHours();
     		int currentMinute = new Date(startDate).getMinutes();
     		
