@@ -807,15 +807,16 @@ public class CassandraDataLoader  implements Constants {
     	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
     	//for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateFormatter.format(new Date(startDate));
+    		logger.info("Porcessing Date : {}" , currentDate);
+    		
     		int currentHour = new Date(startDate).getHours();
     		int currentMinute = new Date(startDate).getMinutes();
     		
-    		logger.info("Porcessing Date : {}" , currentDate);
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
+   		 		timeLineKey = currentDate.toString();
    		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 		timeLineKey = currentDate.toString()+"~"+customEventName;
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
@@ -843,11 +844,12 @@ public class CassandraDataLoader  implements Constants {
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
 	    	}
 	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
+	    	//cal.setTime(dateFormatter.parse(""+startDate));
+	    	//cal.add(Calendar.MINUTE, 1);
+	    	//Date incrementedTime =cal.getTime(); 
 	    	//startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    	startDate = incrementedTime.getTime();
+	    	//startDate = incrementedTime.getTime();
+	    	startDate = new Date(startDate).getTime() + 60000;
 	    	logger.info("Incremented Time"+ dateFormatter.format(new Date(startDate)));
 	    }
 	    
