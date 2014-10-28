@@ -68,16 +68,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     private BaseCassandraRepoImpl baseCassandraDao;
 
-    private ExpiringMap<String, Object> localCache;
-    
-    private long DEFAULTEXPIRETIME = 1500000;
-    
     public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
         this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
-        localCache = new ExpiringMap<String, Object>(1000);
     }
     
     
@@ -130,10 +125,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	  	@Override
 	  	public void run(){
 	  	try{
-	  		
-	    	if(localCache.size() > 500000){
-	    		localCache.reset();
-	    	}
 	    	
 	    	List<String> pathWays = getPathWaysFromCollection(eventMap);
 	    	String key = eventMap.get(CONTENTGOORUOID);
@@ -150,20 +141,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		        	if(isStudent){*/
 		        	if(pathWays != null && pathWays.size() > 0){
 						for(String pathWay : pathWays){
-							
-							String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
-							
-							if(classUid == null){
-								 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-								 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
-							}
+							String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
+							logger.info("Fetch classUid : {} ",classUid);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 							
+							logger.info("Session Key-1 : {} ",classUid+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+							logger.info("Session Key-2 : {} ",classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 						}
 					}
 		        	//}
 		        }
+		        logger.info("Session Key-1 : {} ",eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 			}
 			
@@ -174,12 +163,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 		        	if(pathWays != null && pathWays.size() > 0){
 						for(String pathWay : pathWays){
-							String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
-							if(classUid == null){
-								 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-								 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
-							}
-							
+							String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 						}
@@ -195,12 +179,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		        
 		        	if(pathWays != null && pathWays.size() > 0){
 						for(String pathWay : pathWays){
-							String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
-							
-							if(classUid == null){
-								 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-								 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
-							}
+							String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 							baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 						}
@@ -215,38 +194,25 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						
-						String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
-						
-						if(classUid == null){
-							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
-						}
+						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						
 						boolean isOwner = true;
 						
-						if(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-							isOwner = Boolean.valueOf(String.valueOf(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
-						}else{
-							isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-							localCache.put("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID),isOwner,DEFAULTEXPIRETIME);
-						}
+						isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
+
 						logger.info("isOwner : {}",isOwner);
 						
-						if(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-							isStudent = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
-						}else{
-							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
+						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 	
-							int retryCount = 1;
+						int retryCount = 1;
 							
-							while(!isStudent && retryCount < 6) {
+						while(!isStudent && retryCount < 6) {
 					        	Thread.sleep(1000);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student : {}",retryCount);
 					            retryCount++;
-					        }
-					        localCache.put("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID),isStudent,DEFAULTEXPIRETIME);
 						}
+						
 						logger.info("isStudent : {}",isStudent);
 						
 						eventMap.put(CLASSPAGEGOORUOID, classUid);
@@ -314,28 +280,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 						*/
 	
-						String classUid = localCache.get("PARENT~"+pathWay) != null ? String.valueOf(localCache.get("PARENT~"+pathWay)) : null;
-						
-						if(classUid == null){
-							 classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-							 localCache.put("PARENT~"+pathWay, classUid,DEFAULTEXPIRETIME);
-						}
+						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						
 						boolean isOwner = true;
 						
-						if(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-							isOwner = Boolean.valueOf(String.valueOf(localCache.get("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
-						}else{
-							isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
-							localCache.put("OWNER~"+classUid+SEPERATOR+eventMap.get(GOORUID),isOwner,DEFAULTEXPIRETIME);
-						}
+						isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 						
 						logger.info("isOwner : {}",isOwner);
 						
-						if(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID)) != null){
-							isStudent = Boolean.valueOf(String.valueOf(localCache.get("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID))));
-						}else{
-							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
+						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 							
 							int retryCount = 1;
 					        while (!isStudent && retryCount < 6) {
@@ -344,8 +297,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					        	logger.info("retrying to check if a student : {}",retryCount);
 					            retryCount++;
 					        }
-					        localCache.put("STUDENT~"+classUid+SEPERATOR+eventMap.get(GOORUID),isStudent,DEFAULTEXPIRETIME);
-						}
 	
 						logger.info("isStudent : {}",isStudent);
 					
@@ -920,20 +871,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for(String pathwayId : parentIds){
 			String type = null;
 
-/*			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
+			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
 			
 			type = resourcesDetail.getStringValue("type_name", null);
-*/
-			if(localCache.get("TYPE~"+pathwayId) !=null){
-    			type = String.valueOf(localCache.get("TYPE~"+pathwayId));
-    		}else{
-    			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + pathwayId,0);
-			
-				type = resourcesDetail.getStringValue("type_name", null);
-				
-				localCache.put("TYPE~"+pathwayId,type,DEFAULTEXPIRETIME);
-			}
-			
+
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				pathwayIds.add(pathwayId);
 			}
@@ -947,10 +888,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long totalQuestion = 0L;
 		long oeQuestion = 0L;
 		long updatedQuestionCount = 0L;
-
-		if(localCache.get("QNCOUNT~"+contentGooruOId) != null){
-			return Long.valueOf(""+localCache.get("QNCOUNT~"+contentGooruOId));
-		}
 		
 		questionLists = baseCassandraDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), contentGooruOId,0);
 			
@@ -960,8 +897,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					updatedQuestionCount = totalQuestion - oeQuestion;
 			}
 			
-			localCache.put("QNCOUNT~"+contentGooruOId,updatedQuestionCount,DEFAULTEXPIRETIME);
-			
     	return updatedQuestionCount;
 	}
 	
@@ -969,16 +904,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		
 		ColumnList<String>  result = null;
 		
-		if(localCache.get(columnName+SEPERATOR+currentSession) != null){
-			return Boolean.valueOf(String.valueOf(localCache.get(columnName+SEPERATOR+currentSession)));
-		}
 			result = baseCassandraDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), key,0);
 			String storedSession = result.getStringValue(columnName, null);
 			if (storedSession != null && !storedSession.equalsIgnoreCase(currentSession)) {
-				localCache.put(columnName+SEPERATOR+currentSession,true,DEFAULTEXPIRETIME);
 				return true;
 	    	}	
-			localCache.put(columnName+SEPERATOR+currentSession,false,DEFAULTEXPIRETIME);
 			return false;
 				
 	}
@@ -994,19 +924,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
     		String type = null;
     		
-    		/*ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
+    		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
 			
 			type = resourcesDetail.getStringValue("type_name", null);
-			*/
-    		if(localCache.get("TYPE~"+eventMap.get(PARENTGOORUOID)) !=null){
-    			type = String.valueOf(localCache.get("TYPE~"+eventMap.get(PARENTGOORUOID)));
-    		}else{
-    			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventMap.get(PARENTGOORUOID),0);
 			
-				type = resourcesDetail.getStringValue("type_name", null);
-				
-				localCache.put("TYPE~"+eventMap.get(PARENTGOORUOID),type,DEFAULTEXPIRETIME);
-			}
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				classPages.add(eventMap.get(PARENTGOORUOID));
 			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -1027,20 +948,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			        		}
 			    		}else{
 			        		String type = null;
-		/*	        		
+			        		
 			        		ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventDetail.getStringValue(PARENT_GOORU_OID, null),0);
 			        		type = resourcesDetail.getStringValue("type_name", null);
-		*/	    			
-			        		if(localCache.get("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null)) !=null){
-			        			type = String.valueOf(localCache.get("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null)));
-			        		}else{
-			        			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + eventDetail.getStringValue(PARENT_GOORU_OID, null),0);
 			    			
-			    				type = resourcesDetail.getStringValue("type_name", null);
-			    				
-			    				localCache.put("TYPE~"+eventDetail.getStringValue(PARENT_GOORU_OID, null),type,DEFAULTEXPIRETIME);
-			    			}
-			        		
 			    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 			    				classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
 			    			}else if(type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())){
@@ -1074,15 +985,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				    		}else{
 
 				        		String type = null;
-				        		if(localCache.get("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null)) !=null){
-				        			type = String.valueOf(localCache.get("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null)));
-				        		}else{
+				        		
 				        			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + C.getStringValue(PARENT_GOORU_OID, null),0);
 				    			
 				    				type = resourcesDetail.getStringValue("type_name", null);
 				    				
-				    				localCache.put("TYPE~"+C.getStringValue(PARENT_GOORU_OID, null),type,DEFAULTEXPIRETIME);
-				    			}
 				    			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				    				classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
 				    			}else{
