@@ -804,12 +804,13 @@ public class CassandraDataLoader  implements Constants {
     	if(isSchduler){
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
     	}
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
+    	//for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+    		String currentDate = dateIdFormatter.format(startDate);
     		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
     		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
     		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
+    		logger.info("Porcessing Date : {}" , currentDate);
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
    		 		timeLineKey = startDate.toString();
@@ -845,7 +846,9 @@ public class CassandraDataLoader  implements Constants {
 	    	cal.setTime(dateFormatter.parse(""+startDate));
 	    	cal.add(Calendar.MINUTE, 1);
 	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	//startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	startDate = incrementedTime.getTime();
+	    	logger.info("Incremented Time"+ dateFormatter.format(startDate));
 	    }
 	    
     	if(isSchduler){
