@@ -799,18 +799,14 @@ public class CassandraDataLoader  implements Constants {
     
     public void updateStagingES(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
+
     	if(isSchduler){
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
     	}
+    	
     	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
-    	//for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
     		String currentDate = dateFormatter.format(new Date(startDate));
     		logger.info("Porcessing Date : {}" , currentDate);
-    		
-    		int currentHour = new Date(startDate).getHours();
-    		int currentMinute = new Date(startDate).getMinutes();
     		
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
@@ -832,23 +828,12 @@ public class CassandraDataLoader  implements Constants {
 						e.printStackTrace();
 					}
 	    		}
-/*		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
-		    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
-		    		this.saveActivityInIndex(event.getStringValue("fields", null));
-		    	}
-*/
 	    	}
 	    	if(isSchduler){
-	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+startDate);
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+currentDate);
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
 	    	}
 	    	//Incrementing time - one minute
-	    	//cal.setTime(dateFormatter.parse(""+startDate));
-	    	//cal.add(Calendar.MINUTE, 1);
-	    	//Date incrementedTime =cal.getTime(); 
-	    	//startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    	//startDate = incrementedTime.getTime();
 	    	startDate = new Date(startDate).getTime() + 60000;
 	    	logger.info("Incremented Time"+ dateFormatter.format(new Date(startDate)));
 	    }
@@ -866,8 +851,8 @@ public class CassandraDataLoader  implements Constants {
     	  	public void run(){
     	  		
     	  		for(int i = 0 ; i < eventUUID.size() ; i++) {
-    	    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
-    	    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
+/*    	    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
+*/    	    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
     	    		saveActivityInIndex(event.getStringValue("fields", null));
     	    	}
     	  	}
