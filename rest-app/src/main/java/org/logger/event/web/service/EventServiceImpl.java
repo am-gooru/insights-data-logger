@@ -305,19 +305,12 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		Date lastDate = null;
-		Date currDate = null;		
+		logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
+
 		if(status.equalsIgnoreCase("completed")){
 			try {
-				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
-				currDate = minuteDateFormatter.parse(currentTime);
-				
-				if((lastDate.getTime() < currDate.getTime())){					
 					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
-				}else{
-					logger.info("Waiting to time complete...");
-				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
