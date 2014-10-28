@@ -54,7 +54,7 @@
 
        <bean id="updateEventEsJobTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
            <property name="jobDetail" ref="updateEventEsJob" />
-           <property name="repeatInterval" value="3000" />
+           <property name="repeatInterval" value="30000" />
            <property name="startDelay" value="1000" />
        </bean>
        	
