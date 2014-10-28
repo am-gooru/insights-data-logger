@@ -190,8 +190,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						
-						logger.info("pathWay 1 : " + pathWay);
-						
 						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
 						
 						boolean isOwner = true;
@@ -205,8 +203,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						int retryCount = 1;
 							
 						while(!isStudent && retryCount < 3) {
-					        	Thread.sleep(1000);
-					        	sleepTime = (sleepTime * retryCount);
+					        	Thread.sleep(500);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student 1 : {}",retryCount);
 					            retryCount++;
@@ -271,8 +268,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							
 							int retryCount = 1;
 					        while (!isStudent && retryCount < 3) {
-					        	Thread.sleep(1000);
-					        	sleepTime = (sleepTime * retryCount);
+					        	Thread.sleep(500);
 					        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classUid,0);
 					        	logger.info("retrying to check if a student 2 : {}",retryCount);
 					            retryCount++;
@@ -566,7 +562,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	}
 	        	if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 	        		try {
-						Thread.sleep(sleepTime);
+						Thread.sleep(1000);
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
 					}
