@@ -762,7 +762,7 @@ public class CassandraDataLoader implements Constants {
 		    	
 		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
 		    	
-		    if(eventDetailsRow != null && eventDetailsRow.getColumnByName("event_name") == null) {
+		    if(eventDetailsRow != null && eventDetailsRow.getColumnByName("event_name") != null) {
 		    	
 	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
 	    			if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
