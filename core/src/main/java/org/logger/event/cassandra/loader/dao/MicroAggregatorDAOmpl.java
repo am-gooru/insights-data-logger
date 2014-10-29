@@ -233,8 +233,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 		}
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			if(keysList != null && keysList.size() > 0 ){
-				migrateRow(keysList);
+					migrateRow(keysList);
+				}
 			}
         }
     	});
