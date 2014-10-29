@@ -268,7 +268,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						|| aggregatorRow.getColumnByIndex(i).getName().endsWith("~tau") || aggregatorRow.getColumnByIndex(i).getName().endsWith("~in-correct") || aggregatorRow.getColumnByIndex(i).getName().endsWith("~correct") || aggregatorRow.getColumnByIndex(i).getName().endsWith("item_sequence")
 						|| aggregatorRow.getColumnByIndex(i).getName().endsWith("status") || aggregatorRow.getColumnByIndex(i).getName().endsWith("item_sequence")
 						|| aggregatorRow.getColumnByIndex(i).getName().endsWith("~attempts"))) {
-    					baseCassandraDao.generateCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, aggregatorRow.getColumnByIndex(i).getName(), aggregatorRow.getColumnByIndex(i).getLongValue(), m);
+    					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, aggregatorRow.getColumnByIndex(i).getName(), aggregatorRow.getColumnByIndex(i).getLongValue(), m);
 				}else {
 						baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, aggregatorRow.getColumnByIndex(i).getName(), aggregatorRow.getColumnByIndex(i).getStringValue(), m);
 				}
