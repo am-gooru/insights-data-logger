@@ -41,7 +41,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.pig.newplan.logical.relational.LOGenerate;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -1402,7 +1401,60 @@ public class CassandraDataLoader implements Constants {
 		}
 	
 	}
-    //Creating staging Events
+	
+	//Migrate live-dashboard
+	public void migrateLiveDashBoard(){
+		try{
+			ColumnList<String> settings = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_live_dashboard", 0);
+			Long resourceCount = Long.parseLong(settings.getStringValue("resource_count", null), 0);
+			Long contentId = Long.parseLong(settings.getStringValue("content_id", null), 0);
+			Long runningStatus = Long.parseLong(settings.getStringValue("running_status", null), 0);
+			if(runningStatus > 0 && resourceCount > 0 && contentId > 0){
+				MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				baseDao.generateNonCounter(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_live_dashboard" , "content_id", "" + (contentId + resourceCount), m);
+				migrateLiveDashBoard(contentId, (contentId + resourceCount));
+			}
+		}
+		catch (Exception e) {
+			logger.info("Error in migrating live dashboard : {}",e);
+		}
+	}
+	
+	@Async
+	public void migrateLiveDashBoard(final Long startValue, final Long endValue){
+		final Thread liveDashboardMigrationThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				try{
+					MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					for(Long contentId = startValue; contentId <= endValue; contentId++){
+						Rows<String, String> resources = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId, 0);
+						String gooruOid = null;
+						if(resources.size() > 0){
+							for(Row<String, String> resource : resources){
+								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
+								ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
+								ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
+								for(int columnIndex = 0 ; columnIndex < counterV1Row.size() ; columnIndex++ ){
+									long balancedData = ((counterV1Row.getColumnByIndex(columnIndex).getLongValue()) - (counterV2Row.getLongValue(counterV1Row.getColumnByIndex(columnIndex).getName(),0L)));
+									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, counterV1Row.getColumnByIndex(columnIndex).getName(), balancedData, m);
+								}
+							}
+						}
+						m.execute();
+					} 
+				} 
+				catch(Exception e){
+					logger.info("Error in migrating live dashboard : {}",e);
+				}
+			}
+		});  
+		liveDashboardMigrationThread.setDaemon(true);
+		liveDashboardMigrationThread.start();
+	}
+	
+	//Creating staging Events
     public HashMap<String, Object> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
     	HashMap<String, Object> stagingEvents = new HashMap<String, Object>();
     	stagingEvents.put("minuteId", minuteId);
