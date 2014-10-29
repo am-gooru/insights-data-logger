@@ -763,7 +763,6 @@ public class CassandraDataLoader implements Constants {
 		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
 		    	
 		    	if(eventDetailsRow == null ||  eventDetailsRow.getColumnByName("event_name") == null) {
-		    		logger.info("No valid event :  {}",eventDetailsRow.getColumnByName("fields").getStringValue());
 		    		return;
 		    	}
 		    	
