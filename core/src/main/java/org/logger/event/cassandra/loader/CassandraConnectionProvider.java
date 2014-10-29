@@ -75,7 +75,7 @@ public class CassandraConnectionProvider {
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
         INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
-        AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
+        AWS_CASSANDRA_IP = "54.193.233.64";
         AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
         
         String esClusterName = "";

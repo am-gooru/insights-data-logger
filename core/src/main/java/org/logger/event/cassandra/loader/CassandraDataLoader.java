@@ -427,31 +427,8 @@ public class CassandraDataLoader implements Constants {
     	try {
 	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
 
-	    	if (eventObject.getFields() != null) {
-				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
-				//kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
-				activityLogger.info(eventObject.getFields());
-				//Save Activity in ElasticSearch
-				//this.saveActivityInIndex(eventObject.getFields());
-				
-			}
-
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
-	    	
-	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
-	    	
-	    	Map<String,Object> records = new HashMap<String, Object>();
-	    	records.put("event_name", eventMap.get("eventName"));
-	    	records.put("api_key",apiKey);
-	    	Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
-
-	    	if(eventId == null || eventId.isEmpty()){
-	    		UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-	    		records.put("event_id", uuid.toString());
-	    		String key = apiKey +SEPERATOR+uuid.toString();
-				 baseDao.saveBulkList(ColumnFamily.DIMEVENTS.getColumnFamily(),key,records);
-			 }		
-	    	
+	    		    	
 	    	updateEventObjectCompletion(eventObject);
 	    	
 			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
@@ -474,55 +451,12 @@ public class CassandraDataLoader implements Constants {
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
-		  
-			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-				liveAggregator.updateRawData(eventMap);
-			}
-			
-			liveDashBoardDAOImpl.callCountersV2(eventMap);
-			
-			if(eventObject.getFields() != null) {
-				microAggregator.sendEventForAggregation(eventObject.getFields());
-			}
-		
+				
     	}catch(Exception e){
-    		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
-    		activityErrorLog.info(eventObject.getFields());
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
 
-    	try {
-
-			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
-			}
-			
-			
-			/*
-			 * To be Re-enable 
-			 * 
-
-			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
-	
-			liveDashBoardDAOImpl.addApplicationSession(eventMap);
-	
-			liveDashBoardDAOImpl.saveGeoLocations(eventMap);
-			
-
-			if(pushingEvents.contains(eventMap.get("eventName"))){
-				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);
-			}
-	
-			if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
-				liveDashBoardDAOImpl.pushEventForAtmosphereProgress(atmosphereEndPoint, eventMap);
-			}
-			
-			*/
-	
-    	}catch(Exception e){
-    		logger.info("Exception in handleEventObjectHandler Post Process : {} ",e);
-    	}
-   
+    
     }
     /**
      * 
@@ -803,6 +737,69 @@ public class CassandraDataLoader implements Constants {
 	    	
 	    	for (Row<String, String> row : eventDetailsNew) {
 	    		this.saveActivityInIndex(row.getColumns().getStringValue("fields", null));
+	    	}
+	    	//Incrementing time - one minute
+	    	cal.setTime(dateFormatter.parse(""+startDate));
+	    	cal.add(Calendar.MINUTE, 1);
+	    	Date incrementedTime =cal.getTime(); 
+	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+	    	}
+	    
+    }
+
+    public void eventMigration(String startTime , String endTime,String customEventName) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
+    	Calendar cal = Calendar.getInstance();
+    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
+
+    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
+    		
+    		logger.info("Porcessing Date : {}" , startDate.toString());
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = startDate.toString();
+   		 	} else {
+   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	try{
+		    	MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    	
+		    	logger.info("Event Id " + eventDetailUUID) ;
+		    	
+		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
+		    	
+	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
+	    			if ((eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("end_time"))) {
+	    				baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
+					}else {
+						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getStringValue(), m);
+					}
+	    		}
+	    		
+	    		String aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name"));
+	    		
+	    		logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name")) ;
+	    		
+	    		/*	if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+	    			EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
+	    			this.handleEventObjectMessage(eventObjects);
+	    		}*/
+
+	    	 }
+		    	m.execute();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
 	    	}
 	    	//Incrementing time - one minute
 	    	cal.setTime(dateFormatter.parse(""+startDate));

@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
+import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
@@ -133,6 +134,40 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	ColumnList<String> result = null;
     	try {
               result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (ConnectionException e) {
+        	if(retryCount < 6){
+        		retryCount++;
+        		return readWithKey(cfName,key,retryCount);
+        	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
+        		e.printStackTrace();
+        	}
+        }
+    	
+    	return result;
+    }
+
+    public ColumnList<String> readWithKey(String CassandraVersion,String cfName,String key,int retryCount){
+        
+    	ColumnList<String> result = null;
+    	
+    	Keyspace keyspace = null;
+    	if(CassandraVersion == null){
+    		keyspace = getKeyspace();
+    	}
+    	if(CassandraVersion.equalsIgnoreCase("v2")){
+    		keyspace = getAwsKeyspace();
+    	}else{
+    		keyspace = getKeyspace(); 
+    	}
+    	try {
+              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
                     .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .execute()
@@ -633,11 +668,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         if(value.getClass().getSimpleName().equalsIgnoreCase("String")){        		
     		m.putColumnIfNotNull(columnName, String.valueOf(value), null);
     	}
+        if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){     
+        	m.putColumnIfNotNull(columnName,Long.valueOf(String.valueOf(value)));
+        }
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
     		m.putColumnIfNotNull(columnName, Integer.valueOf(String.valueOf(value)));
-    	}
-    	if(value.getClass().getSimpleName().equalsIgnoreCase("Long")){     
-    		m.putColumnIfNotNull(columnName,Long.valueOf(String.valueOf(value)));
     	}
     	if(value.getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
     		m.putColumnIfNotNull(columnName, Boolean.valueOf(String.valueOf(value)));
