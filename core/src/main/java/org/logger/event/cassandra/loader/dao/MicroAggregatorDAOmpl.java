@@ -245,6 +245,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     public void migrateRow(List<String> keysList){
     		
     	for(String localKey : keysList){
+    		logger.info("Writing Key : " + localKey);
     		MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     		ColumnList<String> counterV1Row = baseCassandraDao.readWithKey("v1",ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
     		ColumnList<String> counterV2Row = baseCassandraDao.readWithKey("v2",ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);

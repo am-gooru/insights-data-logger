@@ -770,14 +770,16 @@ public class CassandraDataLoader implements Constants {
 					}
 	    		}
 	    		
-	    		String aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
+	    		String aggregatorJson = null;
+	    		if(eventDetailsRow.getColumnByName("event_name").getStringValue() != null){
+	    			aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
+	    			logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name").getStringValue()) ;
+	    		}
 	    		
-	    		logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name").getStringValue()) ;
-	    		
-	    		/*	if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+	    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 	    			EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
 	    			this.handleEventObjectMessage(eventObjects);
-	    		}*/
+	    		}
 
 	    	 }
 		    	m.execute();
