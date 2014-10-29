@@ -428,24 +428,7 @@ public class CassandraDataLoader implements Constants {
 	    	eventMap = JSONDeserializer.deserializeEventObject(eventObject);    	
 
 	    	eventMap = this.formatEventMap(eventObject, eventMap);
-	    		    	
-	    	updateEventObjectCompletion(eventObject);
-	    	
-			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(),null,eventObject);
-			 
-			if (eventKeyUUID == null) {
-			    return;
-			}
-			
-			Date eventDateTime = new Date(eventObject.getStartTime());
-			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-	
-			if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
-			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
-			}
-						
-			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
-			
+									
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
@@ -780,16 +763,16 @@ public class CassandraDataLoader implements Constants {
 		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
 		    	
 	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
-	    			if ((eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(i).getName().equalsIgnoreCase("end_time"))) {
+	    			if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
 	    				baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
 					}else {
 						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getStringValue(), m);
 					}
 	    		}
 	    		
-	    		String aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name"));
+	    		String aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
 	    		
-	    		logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name")) ;
+	    		logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name").getStringValue()) ;
 	    		
 	    		/*	if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 	    			EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
