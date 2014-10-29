@@ -562,9 +562,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public void saveStringValue(String cfName, String key,String columnName,String value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-
-        m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
-
+        if(columnName != null){
+        	m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
+        }
         try {
             m.execute();
         } catch (ConnectionException e) {
