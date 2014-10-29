@@ -762,6 +762,11 @@ public class CassandraDataLoader implements Constants {
 		    	
 		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
 		    	
+		    	if(eventDetailsRow == null ||  eventDetailsRow.getColumnByName("event_name") == null) {
+		    		logger.info("No valid event :  {}",eventDetailsRow.getColumnByName("fields").getStringValue());
+		    		return;
+		    	}
+		    	
 	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
 	    			if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
 	    				baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
