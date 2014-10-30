@@ -2059,6 +2059,7 @@ public class CassandraDataLoader implements Constants {
 			ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 			long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
 			baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
+			m.execute();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
