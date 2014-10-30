@@ -289,25 +289,28 @@ public class EventServiceImpl implements EventService {
         String currentTime = minuteDateFormatter.format(new Date()).toString();
         logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
         if(!lastUpadatedTime.equalsIgnoreCase(currentTime) && Long.parseLong(lastUpadatedTime) <= Long.parseLong(currentTime)){
-        	for (Long startDate = Long.parseLong(lastUpadatedTime) ; startDate <= Long.parseLong(currentTime);) {
-        		logger.info("Processing Date : {}" , startDate.toString());
-        		try {
+        	try {
+        	   for (Long startDate = minuteDateFormatter.parse(lastUpadatedTime).getTime() ; startDate < minuteDateFormatter.parse(currentTime).getTime();) {
+
+        		   String currentDate = minuteDateFormatter.format(new Date(startDate));
+                   logger.info("Processing Date : {}" , currentDate);
+
 	        	/*
 					dataLoaderService.eventMigration(null, null, null,true);
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}*/	
-        			//Incrementing time - one minute
-		    	cal.setTime(minuteDateFormatter.parse(""+startDate));
-		    	cal.add(Calendar.MINUTE, 1);
-		    	Date incrementedTime =cal.getTime(); 
-		    	startDate = Long.parseLong(minuteDateFormatter.format(incrementedTime));
-        	}catch(Exception e){
-        			
+                 //Incrementing time - one minute
+                   startDate = new Date(startDate).getTime() + 60000;
         	}
         	
-        	}
-        	logger.info("completed..");
+        	}catch(Exception e){
+        		e.printStackTrace();
+           	}
+           	
+        	logger.info("completed...");
+        }else{
+        	logger.info("waitingg...");
         }
 		
 	}
