@@ -790,7 +790,7 @@ public class CassandraDataLoader implements Constants {
 	    		e.printStackTrace();
 	    	}
 	    	//Incrementing time - one minute
-            startDate = new Date(currentDate).getTime() + 60000;
+            startDate = new Date(startDate).getTime() + 60000;
             
 		    if(isSchduler){
 		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+currentDate);
