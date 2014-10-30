@@ -114,7 +114,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long stop = System.currentTimeMillis();
 		logger.info("Time spent for counters : {}",(stop-start));	
     }
-    @Async
+    
     public void realTimeMetrics(final Map<String,String> eventMap,final String aggregatorJson) throws Exception{
     	final Thread migrationThread = new Thread(new Runnable(){
         	@Override
@@ -133,7 +133,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 	        	baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);	        		
 	        }
-			baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+	        logger.info("Micro key : "+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+	        baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
@@ -146,6 +147,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 	        	}
 	        }
+	        logger.info("Micro key : "+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 			baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
