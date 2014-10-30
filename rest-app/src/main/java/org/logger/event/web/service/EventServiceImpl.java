@@ -287,7 +287,7 @@ public class EventServiceImpl implements EventService {
 	public void eventMigration() {		
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", "constant_value",0).getStringValue();
         String currentTime = minuteDateFormatter.format(new Date()).toString();
-        String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
+        String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", "constant_value",0).getStringValue();
         logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
         if(status.equalsIgnoreCase("completed") && !lastUpadatedTime.equalsIgnoreCase(currentTime) && Long.parseLong(lastUpadatedTime) <= Long.parseLong(currentTime)){
         	try{
