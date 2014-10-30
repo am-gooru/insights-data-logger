@@ -1406,9 +1406,9 @@ public class CassandraDataLoader implements Constants {
 	public void migrateLiveDashBoard(){
 		try{
 			ColumnList<String> settings = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_live_dashboard", 0);
-			Long resourceCount = Long.valueOf(settings.getStringValue("max_count", null), 0);
-			Long indexedCount = Long.valueOf(settings.getStringValue("indexed_count", null), 0);
-			Long runningStatus = Long.valueOf(settings.getStringValue("running_status", null), 0);
+			Long resourceCount = Long.valueOf(settings.getStringValue("max_count", null));
+			Long indexedCount = Long.valueOf(settings.getStringValue("indexed_count", null));
+			Long runningStatus = Long.valueOf(settings.getStringValue("running_status", null));
 			logger.info("resourceCount : " + resourceCount + "indexedCount : " + indexedCount);
 			if(runningStatus > 0){
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_live_dashboard" , "indexed_count", "" + (indexedCount + resourceCount));
