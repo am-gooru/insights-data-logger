@@ -131,9 +131,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        	baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);	        		
+	        	baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);	        		
 	        }
-			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+			baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
@@ -142,11 +142,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 	        	if(classPages != null && classPages.size() > 0){
 					for(String classPage : classPages){
-						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 					}
 	        	}
 	        }
-			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+			baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
 		/*Maintain session - END */
@@ -171,11 +171,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					
-					if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
+					//if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
+					if(!isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
 					
 				}
@@ -183,11 +184,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				keysList.add(ALLSESSION+key);
 				keysList.add(ALLSESSION+key+SEPERATOR+eventMap.get(GOORUID));
 				keysList.add(eventMap.get(SESSION)+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-				baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-				if(!isRowAvailable(FIRSTSESSION+key, eventMap.get(GOORUID),eventMap.get(SESSION))){
+				baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+				//if(!isRowAvailable(FIRSTSESSION+key, eventMap.get(GOORUID),eventMap.get(SESSION))){
 					keysList.add(FIRSTSESSION+key+SEPERATOR+eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-				}
+					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+				//}
 		}
 
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
@@ -206,21 +207,22 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
-					if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
+					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
+					//if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
+					if(!isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-						baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
+						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					}
 				}
 			}
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID));
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-				baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
-				if(!isRowAvailable(FIRSTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION))){
+				baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
+				//if(!isRowAvailable(FIRSTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION))){
 					keysList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION));
-				}
+					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION));
+				//}
 			
 			
 		}

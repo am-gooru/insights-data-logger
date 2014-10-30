@@ -1406,14 +1406,14 @@ public class CassandraDataLoader implements Constants {
 	public void migrateLiveDashBoard(){
 		try{
 			ColumnList<String> settings = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_live_dashboard", 0);
-			Long resourceCount = Long.parseLong(settings.getStringValue("resource_count", null), 0);
-			Long contentId = Long.parseLong(settings.getStringValue("content_id", null), 0);
-			Long runningStatus = Long.parseLong(settings.getStringValue("running_status", null), 0);
-			if(runningStatus > 0 && resourceCount > 0 && contentId > 0){
-				MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-				baseDao.generateNonCounter(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_live_dashboard" , "content_id", "" + (contentId + resourceCount), m);
-				logger.info("Started migration from contentId: {}", contentId);
-				migrateLiveDashBoard(contentId, (contentId + resourceCount));
+			Long resourceCount = Long.valueOf(settings.getStringValue("max_count", null), 0);
+			Long indexedCount = Long.valueOf(settings.getStringValue("indexed_count", null), 0);
+			Long runningStatus = Long.valueOf(settings.getStringValue("running_status", null), 0);
+			logger.info("resourceCount : " + resourceCount + "indexedCount : " + indexedCount);
+			if(runningStatus > 0){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_live_dashboard" , "indexed_count", "" + (indexedCount + resourceCount));
+				logger.info("Started migration from contentId: {}", indexedCount);
+				migrateLiveDashBoard(indexedCount, (indexedCount + resourceCount));
 			}
 		}
 		catch (Exception e) {
