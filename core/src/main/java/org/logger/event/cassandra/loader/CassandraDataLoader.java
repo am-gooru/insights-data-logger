@@ -740,9 +740,9 @@ public class CassandraDataLoader implements Constants {
             logger.info("Processing Date : {}" , currentDate);
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
+   		 		timeLineKey = currentDate.toString();
    		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
+   		 		timeLineKey = currentDate.toString()+"~"+customEventName;
    		 	}
    		 	
    		 	//Read Event Time Line for event keys and create as a Collection
@@ -790,10 +790,10 @@ public class CassandraDataLoader implements Constants {
 	    		e.printStackTrace();
 	    	}
 	    	//Incrementing time - one minute
-            startDate = new Date(startDate).getTime() + 60000;
+            startDate = new Date(currentDate).getTime() + 60000;
             
 		    if(isSchduler){
-		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+startDate);
+		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+currentDate);
 		    }
 	    }
     	if(isSchduler){
