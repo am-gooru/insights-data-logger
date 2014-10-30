@@ -359,11 +359,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	}
 				if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 					String	collectionStatus = "completed";
-					try {
+					/*try {
 						Thread.sleep(500);
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
-					}
+					}*/
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus, m);
 				}
 	        }
