@@ -553,6 +553,11 @@ public class EventController {
 
 	}
 	
+	public void migrateLiveDashBoard(){
+		logger.info("live dashboard migration .....");
+		eventService.migrateLiveDashBoard();
+	}
+	
 	public boolean validateSchedular(){
 		
 		try {

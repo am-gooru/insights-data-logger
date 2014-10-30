@@ -270,4 +270,9 @@ public class EventServiceImpl implements EventService {
 	public void clearCacher(){
 		dataLoaderService.clearCache();
 	}
+
+	@Override
+	public void migrateLiveDashBoard() {
+		dataLoaderService.migrateLiveDashBoard();
+	}
 }

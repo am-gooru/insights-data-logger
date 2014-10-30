@@ -91,10 +91,8 @@
            <property name="startDelay" value="1000" />
        </bean>
        
-       <bean id="cassandraDataLoader" class="org.logger.event.cassandra.loader.CassandraDataLoader" />
-	
 		<bean id="liveDashboardMigrationJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-           <property name="targetObject" ref="cassandraDataLoader" />
+           <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="migrateLiveDashBoard" />
        </bean>
 

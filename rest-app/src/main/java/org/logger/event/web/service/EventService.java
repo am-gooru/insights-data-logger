@@ -64,6 +64,7 @@ public interface EventService {
 	
 	boolean validateSchedular(String ipAddress);
 
+	void migrateLiveDashBoard();
 	void postMigration(String start,String Stop,String param);
 	
 	void postStatMigration(String start,String Stop,String param);
