@@ -729,12 +729,15 @@ public class CassandraDataLoader implements Constants {
 	    
     }
 
-    public void eventMigration(String startTime , String endTime,String customEventName) throws ParseException {
+    public void eventMigration(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
     	Calendar cal = Calendar.getInstance();
+    	if(isSchduler){
+    		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"in-progress");
+    	}
     	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-
+    		
     		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
     		
     		logger.info("Porcessing Date : {}" , startDate.toString());
@@ -794,8 +797,14 @@ public class CassandraDataLoader implements Constants {
 	    	cal.add(Calendar.MINUTE, 1);
 	    	Date incrementedTime =cal.getTime(); 
 	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+		    if(isSchduler){
+		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+startDate);
+		    }
 	    	}
 	    
+    	if(isSchduler){
+    		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"completed");
+    	}
     }
     
     @Async

@@ -60,16 +60,20 @@ public interface EventService {
 
 	void executeForEveryMinute(String startTime, String endTime);
 	
+	void eventMigration();
+	
 	boolean createEvent(String eventName,String apiKey);
 	
 	boolean validateSchedular(String ipAddress);
 
 	void migrateLiveDashBoard();
+	
 	void postMigration(String start,String Stop,String param);
 	
 	void postStatMigration(String start,String Stop,String param);
 	
 	void catalogMigration(String start,String Stop,String param);
+	
 	void balanceStatDataUpdate();
 	
 	public void clearCacher();

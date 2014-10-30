@@ -474,6 +474,9 @@ public class EventController {
 		
 	}
 	
+	public void eventMigration(){
+		eventService.eventMigration();
+	}
 	public void watchSession() {
 		if (!validateSchedular()) {
 			return;

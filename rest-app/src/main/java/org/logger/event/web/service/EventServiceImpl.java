@@ -24,7 +24,11 @@
 package org.logger.event.web.service;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,12 +70,15 @@ public class EventServiceImpl implements EventService {
     private final CassandraConnectionProvider connectionProvider;
     private EventObjectValidator eventObjectValidator;
     private BaseCassandraRepoImpl baseDao ;
-
+    private SimpleDateFormat minuteDateFormatter;
+    Calendar cal = Calendar.getInstance();
+    
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
+        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
         
     }
 
@@ -274,5 +281,34 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void migrateLiveDashBoard() {
 		dataLoaderService.migrateLiveDashBoard();
+	}
+
+	@Override
+	public void eventMigration() {		
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", "constant_value",0).getStringValue();
+        String currentTime = minuteDateFormatter.format(new Date()).toString();
+        logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
+        if(!lastUpadatedTime.equalsIgnoreCase(currentTime) && Long.parseLong(lastUpadatedTime) <= Long.parseLong(currentTime)){
+        	for (Long startDate = Long.parseLong(lastUpadatedTime) ; startDate <= Long.parseLong(currentTime);) {
+        		logger.info("Processing Date : {}" , startDate.toString());
+        		try {
+	        	/*
+					dataLoaderService.eventMigration(null, null, null,true);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}*/	
+        			//Incrementing time - one minute
+		    	cal.setTime(minuteDateFormatter.parse(""+startDate));
+		    	cal.add(Calendar.MINUTE, 1);
+		    	Date incrementedTime =cal.getTime(); 
+		    	startDate = Long.parseLong(minuteDateFormatter.format(incrementedTime));
+        	}catch(Exception e){
+        			
+        	}
+        	
+        	}
+        	logger.info("completed..");
+        }
+		
 	}
 }
