@@ -434,6 +434,7 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
+				logger.info("live dashboard" + eventMap.get(CONTENTGOORUOID));
 				balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
 			}	
     	}catch(Exception e){
@@ -2058,6 +2059,9 @@ public class CassandraDataLoader implements Constants {
 			ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 			ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 			long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
+			
+			logger.info("Writing into counter coulmnfamily : " + gooruOid + " - balancedData" + balancedData);
+			
 			baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
 			m.execute();
 		} catch (Exception e) {
