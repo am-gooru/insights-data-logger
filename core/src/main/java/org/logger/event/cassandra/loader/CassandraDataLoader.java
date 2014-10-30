@@ -1152,7 +1152,7 @@ public class CassandraDataLoader  implements Constants {
 	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
 	    			            
 	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
-	    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
+	    			            	eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
 	    			            }
 	
 	    			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
@@ -1884,9 +1884,40 @@ public class CassandraDataLoader  implements Constants {
 	    	logger.info("vlue size : {} ",vluesList.size());
 	    	
 	    	if(vluesList != null && vluesList.size() > 0){
-	    		resourceMap.put("viewsCount",vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L );
-	    		resourceMap.put("totalTimespent",vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L );
-	    		resourceMap.put("avgTimespent",vluesList.getColumnByName("avg_time_spent~total") != null ?vluesList.getColumnByName("avg_time_spent~total").getLongValue() : 0L );
+	    		
+	    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
+	    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
+	    		resourceMap.put("viewsCount",views);
+	    		resourceMap.put("totalTimespent",totalTimespent);
+	    		resourceMap.put("avgTimespent",views != 0L ? (totalTimespent/views) : 0L );
+	    		
+	    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
+	    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
+	    		resourceMap.put("ratingsCount",ratings);
+	    		resourceMap.put("sumOfRatings",sumOfRatings);
+	    		resourceMap.put("avgRating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
+	    		
+	    		
+	    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
+	    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
+	    		resourceMap.put("reactionsCount",ratings);
+	    		resourceMap.put("sumOfreactionType",sumOfreactionType);
+	    		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
+	    		
+	    		
+	    		resourceMap.put("countOfRating5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
+	    		resourceMap.put("countOfRating4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
+	    		resourceMap.put("countOfRating3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
+	    		resourceMap.put("countOfRating2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
+	    		resourceMap.put("countOfRating1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
+	    		
+	    		resourceMap.put("countOfICanExplain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
+	    		resourceMap.put("countOfINeedHelp",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
+	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
+	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
+	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
+	    		
+	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
 	    	}
 	    	
 	    	if(questionList != null && questionList.size() > 0){
