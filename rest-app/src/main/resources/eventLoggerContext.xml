@@ -112,7 +112,7 @@
                  <ref bean="minuteRunner" />
                  <ref bean="watchSessionDetails" />
                  <ref bean="migrationJobDetails" />
-                 <ref bean="liveDashboardMigrationJob"
+                 <ref bean="liveDashboardMigrationJob"/>
               </list>
            </property>
            <property name="triggers">
@@ -121,7 +121,7 @@
                  <ref bean="thirdSimpleTrigger" />
                  <ref bean="watchSessionTrigger" />
                  <ref bean="migrationJobTrigger" />
-                 <ref bean="liveDashboardMigrationTrigger"></ref>
+                 <ref bean="liveDashboardMigrationTrigger"/>
               </list>
            </property>
        </bean>
