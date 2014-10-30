@@ -434,7 +434,6 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
-				logger.info("live dashboard" + eventMap.get(CONTENTGOORUOID));
 				balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
 			}	
     	}catch(Exception e){
@@ -777,7 +776,6 @@ public class CassandraDataLoader implements Constants {
 	    		String aggregatorJson = null;
 	    		if(eventDetailsRow.getColumnByName("event_name").getStringValue() != null){
 	    			aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
-	    			logger.info("Event Name " + eventDetailsRow.getColumnByName("event_name").getStringValue()) ;
 	    		}
 	    		
 	    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
@@ -2054,20 +2052,17 @@ public class CassandraDataLoader implements Constants {
  	final Thread migrationThread = new Thread(new Runnable(){
         	@Override
         	public void run(){
- 		try {
-			MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-			ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
-			ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
-			long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
-			
-			logger.info("Writing into counter coulmnfamily : " + gooruOid + " - balancedData" + balancedData);
-			
-			baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
-			m.execute();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-        	}
+	 		try {
+				MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
+				ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
+				long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
+				m.execute();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+        }
         });
  		migrationThread.setDaemon(true);
  		migrationThread.start();
