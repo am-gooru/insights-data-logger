@@ -1412,6 +1412,7 @@ public class CassandraDataLoader implements Constants {
 			if(runningStatus > 0 && resourceCount > 0 && contentId > 0){
 				MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 				baseDao.generateNonCounter(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_live_dashboard" , "content_id", "" + (contentId + resourceCount), m);
+				logger.info("Started migration from contentId: {}", contentId);
 				migrateLiveDashBoard(contentId, (contentId + resourceCount));
 			}
 		}
@@ -1434,6 +1435,7 @@ public class CassandraDataLoader implements Constants {
 						if(resources.size() > 0){
 							for(Row<String, String> resource : resources){
 								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
+								logger.info("Started migration from resource: ==>> ", gooruOid);
 								ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
 								ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
 								for(int columnIndex = 0 ; columnIndex < counterV1Row.size() ; columnIndex++ ){
@@ -1443,6 +1445,7 @@ public class CassandraDataLoader implements Constants {
 							}
 						}
 						m.execute();
+						logger.info("Migrated resource: ===>>>  ", gooruOid);
 					} 
 				} 
 				catch(Exception e){
