@@ -730,17 +730,14 @@ public class CassandraDataLoader implements Constants {
     }
 
     public void eventMigration(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
+
     	if(isSchduler){
     		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"in-progress");
     	}
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
+    	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
+
+  		   String currentDate = minuteDateFormatter.format(new Date(startDate));
+            logger.info("Processing Date : {}" , currentDate);
    		 	String timeLineKey = null;   		 	
    		 	if(customEventName == null || customEventName  == "") {
    		 		timeLineKey = startDate.toString();
@@ -793,15 +790,12 @@ public class CassandraDataLoader implements Constants {
 	    		e.printStackTrace();
 	    	}
 	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
+            startDate = new Date(startDate).getTime() + 60000;
+            
 		    if(isSchduler){
 		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+startDate);
 		    }
-	    	}
-	    
+	    }
     	if(isSchduler){
     		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"completed");
     	}

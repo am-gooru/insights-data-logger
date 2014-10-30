@@ -287,30 +287,25 @@ public class EventServiceImpl implements EventService {
 	public void eventMigration() {		
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", "constant_value",0).getStringValue();
         String currentTime = minuteDateFormatter.format(new Date()).toString();
+        String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
         logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
-        if(!lastUpadatedTime.equalsIgnoreCase(currentTime) && Long.parseLong(lastUpadatedTime) <= Long.parseLong(currentTime)){
-        	try {
-        	   for (Long startDate = minuteDateFormatter.parse(lastUpadatedTime).getTime() ; startDate < minuteDateFormatter.parse(currentTime).getTime();) {
-
-        		   String currentDate = minuteDateFormatter.format(new Date(startDate));
-                   logger.info("Processing Date : {}" , currentDate);
-
-	        	/*
-					dataLoaderService.eventMigration(null, null, null,true);
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}*/	
-                 //Incrementing time - one minute
-                   startDate = new Date(startDate).getTime() + 60000;
-        	}
-        	
-        	}catch(Exception e){
-        		e.printStackTrace();
-           	}
-           	
-        	logger.info("completed...");
+        if(status.equalsIgnoreCase("completed") && !lastUpadatedTime.equalsIgnoreCase(currentTime) && Long.parseLong(lastUpadatedTime) <= Long.parseLong(currentTime)){
+        	try{
+				dataLoaderService.eventMigration(lastUpadatedTime, currentTime, null,true);
+			}catch (ParseException e) {
+			 e.printStackTrace();
+			}
         }else{
-        	logger.info("waitingg...");
+        	logger.info("Waitingg...");
+        	String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~checked~count", "constant_value",0).getStringValue();
+            String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~max~count", "constant_value",0).getStringValue();
+
+            if(Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)){
+                    baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~checked~count", "constant_value", ""+ (Integer.valueOf(lastCheckedCount) + 1));
+            }else{
+                    baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", "constant_value","completed");
+            }
+
         }
 		
 	}
