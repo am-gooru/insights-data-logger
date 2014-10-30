@@ -163,8 +163,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 		
 					int retryCount = 1;
-			        while (retryCount < 6 && !isStudent) {
-			        	Thread.sleep(1000);
+			        while (retryCount < 3 && !isStudent) {
+			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
@@ -208,8 +208,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 
 					int retryCount = 1;
-			        while (retryCount < 6 && !isStudent) {
-			        	Thread.sleep(1000);
+			        while (retryCount < 3 && !isStudent) {
+			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
@@ -251,10 +251,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 		if(keysList != null && keysList.size() > 0 ){
-			/*for(String localKey : keysList){
-				boolean rowStatus = baseCassandraDao.isRowKeyExists(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
-				logger.info("Checking Key : "+ localKey + " - isEmpty? :" + rowStatus + "\n");
-			}*/
+			
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
 			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
