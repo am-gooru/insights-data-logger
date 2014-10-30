@@ -1435,19 +1435,15 @@ public class CassandraDataLoader implements Constants {
 						if(resources.size() > 0){
 							for(Row<String, String> resource : resources){
 								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
-								logger.info("Started migration from resource: ==>> {} ", gooruOid);
 								ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
 								ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
 								for(int columnIndex = 0 ; columnIndex < counterV1Row.size() ; columnIndex++ ){
 									long balancedData = ((counterV1Row.getColumnByIndex(columnIndex).getLongValue()) - (counterV2Row.getLongValue(counterV1Row.getColumnByIndex(columnIndex).getName(),0L)));
-									logger.info("Counter 1 column name : " + counterV1Row.getColumnByIndex(columnIndex).toString() + "Column Value: " + counterV1Row.getColumnByIndex(columnIndex).getLongValue());
-									logger.info("Counter 2 column name : " + counterV2Row.getColumnByIndex(columnIndex).toString() + "Column Value: " + counterV2Row.getColumnByIndex(columnIndex).getLongValue());
-									logger.info("Balanced count: {}", balancedData);
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, counterV1Row.getColumnByIndex(columnIndex).getName(), balancedData, m);
 								}
 							}
+							m.execute();
 						}
-						m.execute();
 						logger.info("Migrated resource: ===>>> {} ", gooruOid);
 					} 
 				} 
