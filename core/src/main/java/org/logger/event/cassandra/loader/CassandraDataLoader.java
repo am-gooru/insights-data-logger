@@ -1435,16 +1435,16 @@ public class CassandraDataLoader implements Constants {
 						if(resources.size() > 0){
 							for(Row<String, String> resource : resources){
 								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
-								ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
-								ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "all~" + gooruOid, 0);
+								ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, 0);
+								ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, 0);
 								for(int columnIndex = 0 ; columnIndex < counterV1Row.size() ; columnIndex++ ){
 									long balancedData = ((counterV1Row.getColumnByIndex(columnIndex).getLongValue()) - (counterV2Row.getLongValue(counterV1Row.getColumnByIndex(columnIndex).getName(),0L)));
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, counterV1Row.getColumnByIndex(columnIndex).getName(), balancedData, m);
 								}
+								logger.info("Migrated resource: ===>>> {} ", gooruOid);
 							}
 							m.execute();
 						}
-						logger.info("Migrated resource: ===>>> {} ", gooruOid);
 					} 
 				} 
 				catch(Exception e){
