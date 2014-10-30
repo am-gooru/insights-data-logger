@@ -91,6 +91,20 @@
            <property name="startDelay" value="1000" />
        </bean>
        
+       <bean id="cassandraDataLoader" class="org.logger.event.cassandra.loader.CassandraDataLoader" />
+	
+		<bean id="liveDashboardMigrationJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="cassandraDataLoader" />
+           <property name="targetMethod" value="migrateLiveDashBoard" />
+       </bean>
+
+       <bean id="liveDashboardMigrationTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="liveDashboardMigrationJob" />
+           <property name="repeatInterval" value="2000" />
+           <property name="startDelay" value="1000" />
+       </bean>
+        
+       
         <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
            <property name="jobDetails">
               <list>
@@ -98,6 +112,7 @@
                  <ref bean="minuteRunner" />
                  <ref bean="watchSessionDetails" />
                  <ref bean="migrationJobDetails" />
+                 <ref bean="liveDashboardMigrationJob"
               </list>
            </property>
            <property name="triggers">
@@ -106,6 +121,7 @@
                  <ref bean="thirdSimpleTrigger" />
                  <ref bean="watchSessionTrigger" />
                  <ref bean="migrationJobTrigger" />
+                 <ref bean="liveDashboardMigrationTrigger"></ref>
               </list>
            </property>
        </bean>
