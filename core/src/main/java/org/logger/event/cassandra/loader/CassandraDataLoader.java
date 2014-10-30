@@ -433,7 +433,9 @@ public class CassandraDataLoader implements Constants {
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
-				
+			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
+				balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
+			}	
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
@@ -793,7 +795,7 @@ public class CassandraDataLoader implements Constants {
             startDate = new Date(startDate).getTime() + 60000;
             
 		    if(isSchduler){
-		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+currentDate);
+		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+minuteDateFormatter.format(new Date(startDate)));
 		    }
 	    }
     	if(isSchduler){
@@ -2045,7 +2047,26 @@ public class CassandraDataLoader implements Constants {
    	    	}
        	}
    	}
- 
+
+ 	public void balanceLiveBoardData(final String gooruOid){
+ 		
+ 	final Thread migrationThread = new Thread(new Runnable(){
+        	@Override
+        	public void run(){
+ 		try {
+			MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+			ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
+			ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
+			long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
+			baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        	}
+        });
+ 		migrationThread.setDaemon(true);
+ 		migrationThread.start();
+ 	}
     @Async
     private String updateEvent(EventData eventData) {
     	ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(),eventData.getApiKey(),0);

@@ -633,6 +633,25 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         }
     }
     
+    public void saveLongValue(String CassandraVersion , String cfName, String key,String columnName,long value) {
+    	Keyspace keyspace = null;
+    	if(CassandraVersion.equalsIgnoreCase("v2")){
+    		keyspace = getAwsKeyspace();
+    	}else{
+    		keyspace = getKeyspace();
+    	}
+        MutationBatch m = keyspace.prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE).withRetryPolicy(new ConstantBackoff(2000, 5));
+
+        m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
+
+        try {
+            m.execute();
+        } catch (ConnectionException e) {
+        	logger.info("Exception while write key : " + key + " from Column Family" + cfName);
+        	e.printStackTrace();
+        }
+    }
+    
     public void saveValue(String cfName, String key,String columnName,Object value) {
 
         MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
