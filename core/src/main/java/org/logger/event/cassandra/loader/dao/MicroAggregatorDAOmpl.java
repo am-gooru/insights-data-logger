@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +70,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     private BaseCassandraRepoImpl baseCassandraDao;
     
+    public static  Map<String,Object> cache;
+    
     public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
         this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+        cache = new LinkedHashMap<String, Object>();
     }
     
     @Async
@@ -116,6 +120,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     }
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws Exception{
+    	if(cache.size() > 100000){
+    		cache = new LinkedHashMap<String, Object>();
+    	}
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
@@ -160,16 +167,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					logger.info("isOwner : {}",isOwner);
 					
+					if(cache.containsKey(eventMap.get(GOORUID)+SEPERATOR+classPage)){
+						isStudent = (Boolean) cache.get(eventMap.get(GOORUID)+SEPERATOR+classPage);
+					}else{
+						
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 		
 					int retryCount = 1;
-			        while (retryCount < 3 && !isStudent) {
+			        while (retryCount < 5 && !isStudent) {
 			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
 			        }
-
+			        	cache.put(eventMap.get(GOORUID)+SEPERATOR+classPage,isStudent);
+					}
 					logger.info("isStudent : {}",isStudent);
 					
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
@@ -205,16 +217,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				for(String classPage : classPages){
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 					
+					if(cache.containsKey(eventMap.get(GOORUID)+SEPERATOR+classPage)){
+						isStudent = (Boolean) cache.get(eventMap.get(GOORUID)+SEPERATOR+classPage);
+					}else{
+						
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 
 					int retryCount = 1;
-			        while (retryCount < 3 && !isStudent) {
+			        while (retryCount < 5 && !isStudent) {
 			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
 			        }
-
+			        cache.put(eventMap.get(GOORUID)+SEPERATOR+classPage,isStudent);
+					}
 					logger.info("isStudent : {}",isStudent);
 					
 					if(!isOwner && isStudent){
@@ -359,11 +376,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	}
 				if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 					String	collectionStatus = "completed";
-					/*try {
-						Thread.sleep(500);
+					try {
+						Thread.sleep(200);
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
-					}*/
+					}
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus, m);
 				}
 	        }
