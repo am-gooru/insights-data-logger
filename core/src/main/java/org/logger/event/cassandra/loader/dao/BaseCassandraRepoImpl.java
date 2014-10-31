@@ -1055,6 +1055,37 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         return sb.toString();
     }
 
+    public List<String> getAllLevelParents(String cfName,String Key,int retryCount){
+
+    	Rows<String, String> collectionItem = null;
+    	List<String> parentIds = new ArrayList<String>();
+    	try {
+    		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+    		 	.searchWithIndex()
+    			.addExpression()
+    			.whereColumn("resource_gooru_oid")
+    			.equals()
+    			.value(Key).execute().getResult();
+    	
+    		if(collectionItem != null){
+        		for(Row<String, String> collectionItems : collectionItem){
+        			String parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+        			if(parentId != null){
+        				parentIds.add(parentId);
+        				getAllLevelParents(cfName,parentId,0);
+        			}
+        		 }
+        	}
+    		
+	    	} catch (ConnectionException e) {
+	    		e.printStackTrace();
+	    	}
+	    	
+    		return parentIds; 
+    	}
+
+    
     public List<String> getParentIds(String cfName,String Key,int retryCount){
 
     	Rows<String, String> collectionItem = null;
@@ -1087,6 +1118,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return classPages; 
     	}
 
+    
     public String getParentId(String cfName,String Key , int retryCount){
     	Rows<String, String> collectionItem = null;
     	String parentId = null;
