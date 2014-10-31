@@ -2,9 +2,9 @@ package org.logger.event.cassandra.loader;
 
 public enum ESIndexices {
 	
-	EVENTLOGGERINFO("event_logger_info" , new String[] {"event_detail"}),
+	EVENTLOGGERINFO("activity_catalog" , new String[] {"event_detail"}),
 	
-	CONTENTCATALOGINFO("content_catalog_info" , new String[] {"dim_resource"}),
+	CONTENTCATALOGINFO("content_catalog" , new String[] {"dim_resource"}),
 	
 	USERCATALOG("user_catalog_info" , new String[] {"dim_user"}),
 	
