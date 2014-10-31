@@ -2053,12 +2053,16 @@ public class CassandraDataLoader implements Constants {
         	@Override
         	public void run(){
 	 		try {
-				MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 				ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 				ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
-				long balancedData = ((counterV1Row.getLongValue("count~views", 0L)) - (counterV2Row.getLongValue("count~views",0L)));
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, "count~views", balancedData, m);
-				m.execute();
+				
+				MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+	    		for(int i = 0 ; i < counterV1Row.size() ; i++ ){
+	    			long balancedData = ((counterV1Row.getColumnByIndex(i).getLongValue()) - (counterV2Row.getLongValue(counterV1Row.getColumnByIndex(i).getName(),0L)));
+	    			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, counterV1Row.getColumnByIndex(i).getName(), balancedData, m);
+	    		}
+	    		m.execute();
+	    		
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
