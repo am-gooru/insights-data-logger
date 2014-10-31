@@ -1129,6 +1129,11 @@ public class CassandraDataLoader  implements Constants {
     				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
     				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
     				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+   
+    				    		eventMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+    				    		eventMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+    				    		eventMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+   
     				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
     				    	}
     					}
@@ -1213,6 +1218,11 @@ public class CassandraDataLoader  implements Constants {
 	    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
 	    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
 	    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+	    				    		
+	    				    		eventMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+	    				    		eventMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+	    				    		eventMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+	    				    		
 	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    				    	}
 	    					}
@@ -1249,8 +1259,10 @@ public class CassandraDataLoader  implements Constants {
     			eventMap.put("title", resource.getStringValue("title", null));
     			eventMap.put("description",resource.getStringValue("description", null));
     			eventMap.put("sharing", resource.getStringValue("sharing", null));
-    			eventMap.put("contentType", resource.getStringValue("category", null));
+    			eventMap.put("category", resource.getStringValue("category", null));
+    			eventMap.put("typeName", resource.getStringValue("type_name", null));
     			eventMap.put("license", resource.getStringValue("license_name", null));
+    			eventMap.put("contentOrganizationId", resource.getStringValue("oragnization_uid", null));
     			
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
@@ -1684,7 +1696,7 @@ public class CassandraDataLoader  implements Constants {
 				contentBuilder.field("external_id",userInfos.getColumnByName("external_id").getStringValue());
 			}
 			if(userInfos.getColumnByName("organization_uid") != null){
-				contentBuilder.field("organization_uid",userInfos.getColumnByName("organization_uid").getStringValue());
+				contentBuilder.field("content_organization_uid",userInfos.getColumnByName("organization_uid").getStringValue());
 			}
 			if(userInfos.getColumnByName("import_code") != null){
 				contentBuilder.field("import_code",userInfos.getColumnByName("import_code").getStringValue());
@@ -1791,9 +1803,7 @@ public class CassandraDataLoader  implements Constants {
 		if(columns.getColumnByName("gooru_oid") != null){
 			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
 		}
-		if(columns.getColumnByName("gooru_oid") == null){
-			logger.info( " Columns size "+ columns.size());
-		}
+		
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
 		}
@@ -1841,7 +1851,7 @@ public class CassandraDataLoader  implements Constants {
 			resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue());
 		}*/
 		if(columns.getColumnByName("organization_uid") != null){
-			resourceMap.put("contentOrganizationUid", columns.getColumnByName("organization_uid").getStringValue());
+			resourceMap.put("contentOrganizationId", columns.getColumnByName("organization_uid").getStringValue());
 		}
 		if(columns.getColumnByName("thumbnail") != null){
 			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
@@ -1871,6 +1881,12 @@ public class CassandraDataLoader  implements Constants {
 				resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
 			}
 		}
+		if(columns.getColumnByName("type_name") != null){
+			resourceMap.put("category", columns.getColumnByName("category").getStringValue());
+		}
+		if(columns.getColumnByName("category") != null){
+			resourceMap.put("typeName", columns.getColumnByName("category").getStringValue());
+		}		
 		if(columns.getColumnByName("gooru_oid") != null){
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 
@@ -1924,6 +1940,11 @@ public class CassandraDataLoader  implements Constants {
 	    		resourceMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
 	    		resourceMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
 	    		resourceMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+	    		
+	    		resourceMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+	    		resourceMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+	    		resourceMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+	    		
 	    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    	}
 		}
