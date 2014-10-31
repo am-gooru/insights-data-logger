@@ -49,7 +49,9 @@ public class BaseDAOCassandraImpl {
     
     private Keyspace newAwsKeyspace;
     
-    private Client client;
+    private Client devClient;
+    
+    private Client prodClient;
     
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
     
@@ -95,14 +97,25 @@ public class BaseDAOCassandraImpl {
         return this.newAwsKeyspace;
     }
     
-    public Client getESClient() {
-        if(client == null && this.connectionProvider != null) {
+    public Client getDevESClient() {
+        if(devClient == null && this.connectionProvider != null) {
             try {
-                this.client = this.connectionProvider.getESClient();
+                this.devClient = this.connectionProvider.getDevESClient();
             } catch (IOException ex) {
                 logger.info("Error while initializing elastic search{}", ex);
             }
         }
-        return this.client;
+        return this.devClient;
+    }
+    
+    public Client getProdESClient() {
+        if(prodClient == null && this.connectionProvider != null) {
+            try {
+                this.prodClient = this.connectionProvider.getProdESClient();
+            } catch (IOException ex) {
+                logger.info("Error while initializing elastic search{}", ex);
+            }
+        }
+        return this.prodClient;
     }
 }

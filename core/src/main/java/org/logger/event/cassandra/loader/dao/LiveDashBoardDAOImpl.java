@@ -532,7 +532,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				
 			}
 			
-			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 			
 			} catch (Exception e) {
 				logger.info("Indexing failed",e);

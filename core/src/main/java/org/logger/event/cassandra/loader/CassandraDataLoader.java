@@ -820,22 +820,15 @@ public class CassandraDataLoader  implements Constants {
    		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
    		 	
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
-
-	    		int threadCount = readEventAndIndex(eventUUID);
-	    		if(threadCount > 100){
-	    			try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-	    		}
-	    	}
-	    	if(isSchduler){
-	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+currentDate);
-	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
+	    		readEventAndIndex(eventUUID);
 	    	}
 	    	//Incrementing time - one minute
 	    	startDate = new Date(startDate).getTime() + 60000;
+	    	
+	    	if(isSchduler){
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+dateFormatter.format(new Date(startDate)));
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
+	    	}
 	    }
 	    
     	if(isSchduler){
@@ -845,7 +838,7 @@ public class CassandraDataLoader  implements Constants {
     	logger.info("Indexing completed..........");
     }
 
-    public int  readEventAndIndex(final ColumnList<String> eventUUID){
+    public void  readEventAndIndex(final ColumnList<String> eventUUID){
     	final Thread counterThread = new Thread(new Runnable() {
     	  	@Override
     	  	public void run(){
@@ -860,8 +853,6 @@ public class CassandraDataLoader  implements Constants {
 
     	counterThread.setDaemon(true);
     	counterThread.start();
-    	return counterThread.activeCount();
-
     }
     public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -1737,7 +1728,10 @@ public class CassandraDataLoader  implements Constants {
 	    		}
 	    	}
 		
-			getConnectionProvider().getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
+			getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
+			
+			;
+			getConnectionProvider().getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
 			
     		;
 		}else {
@@ -1772,8 +1766,9 @@ public class CassandraDataLoader  implements Constants {
 	            	}
 	            }
 	    		
-	    		getConnectionProvider().getESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
-				
+	    		getConnectionProvider().getDevESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
+				;
+	    		getConnectionProvider().getProdESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
     	}

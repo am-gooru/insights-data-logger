@@ -63,10 +63,12 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-    private Client client;
+    private Client devClient;
+    private Client prodClient;
     private static String AWS_CASSANDRA_KEYSPACE;
     private static String AWS_CASSANDRA_IP;
-    private static String INSIHGHTS_ES_IP;
+    private static String INSIHGHTS_DEV_ES_IP;
+    private static String INSIHGHTS_PROD_ES_IP;
     
     public void init(Map<String, String> configOptionsMap) {
 
@@ -74,7 +76,8 @@ public class CassandraConnectionProvider {
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
+        INSIHGHTS_DEV_ES_IP   = System.getenv("INSIHGHTS_DEV_ES_IP");
+        INSIHGHTS_PROD_ES_IP   = System.getenv("INSIHGHTS_PROD_ES_IP");
         AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
         AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
         
@@ -103,10 +106,6 @@ public class CassandraConnectionProvider {
                     .setMaxConnsPerHost(10)
                     .setSeeds(hosts)
                     .setInitConnsPerHost(1)
-                    /*.setLatencyAwareUpdateInterval(10000)
-                    .setLatencyAwareResetInterval(0)
-                    .setLatencyAwareBadnessThreshold(2)
-                    .setLatencyAwareWindowSize(100)*/
                     ;
             
             if (!hosts.startsWith("127.0")) {
@@ -138,13 +137,22 @@ public class CassandraConnectionProvider {
             }
 
             //Elastic search connection provider
-            if(client == null) {
+            if(devClient == null) {
 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
 	           TransportClient transportClient = new TransportClient(settings);
-	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_DEV_ES_IP, esPort));
 	           
-	           client = transportClient;
+	           devClient = transportClient;
             }
+            
+            if(prodClient == null) {
+ 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+ 	           TransportClient transportClient = new TransportClient(settings);
+ 	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_PROD_ES_IP, esPort));
+ 	           
+ 	           prodClient = transportClient;
+             }
+            
            this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
@@ -243,12 +251,19 @@ public class CassandraConnectionProvider {
         return cassandraNewAwsKeyspace;
     }
     
-    public Client getESClient() throws IOException{
-    	if (client == null) {
+    public Client getDevESClient() throws IOException{
+    	if (devClient == null) {
             throw new IOException("Elastic Search is not initialized.");
         }
-    	return client;
+    	return devClient;
     }
+    public Client getProdESClient() throws IOException{
+    	if (prodClient == null) {
+            throw new IOException("Elastic Search is not initialized.");
+        }
+    	return devClient;
+    }
+    
     public final void registerIndices() {
 		for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex();
@@ -256,14 +271,22 @@ public class CassandraConnectionProvider {
 				//String setting = EsMappingUtil.getSettingConfig(indexType);
 				String mapping = EsMappingUtil.getMappingConfig(indexType);
 				try {
-					CreateIndexRequestBuilder prepareCreate = this.getESClient().admin().indices().prepareCreate(indexName);
-					//prepareCreate.setSettings(setting);
+					CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
 					prepareCreate.addMapping(indexType, mapping);
 					prepareCreate.execute().actionGet();
-					logger.info("Index created : " + indexName + "\n");
+					logger.info("Dev Index created : " + indexName + "\n");
 				} catch (Exception exception) {
 					logger.info("Already Index availble : " + indexName + "\n");
-					//this.getESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setSource(mapping).setIgnoreConflicts(true).execute().actionGet();
+				}
+			
+				try {
+					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
+					prepareProdCreate.addMapping(indexType, mapping);
+					prepareProdCreate.execute().actionGet();
+					logger.info("Prod Index created : " + indexName + "\n");
+					
+				} catch (Exception exception) {
+					logger.info("Already Index availble : " + indexName + "\n");
 				}
 			}
 		}
