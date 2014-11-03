@@ -1243,7 +1243,7 @@ public class CassandraDataLoader  implements Constants {
     	ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), gooruUId,0);
     	//for (Row<String, String> row : eventDetailsNew) {
     		//ColumnList<String> userInfo = row.getColumns();
-    	if(eventDetailsNew != null){
+    	if(eventDetailsNew != null && eventDetailsNew.size() > 0){
     		for(int i = 0 ; i < eventDetailsNew.size() ; i++) {
     			String columnName = eventDetailsNew.getColumnByIndex(i).getName();
     			String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
@@ -1258,11 +1258,8 @@ public class CassandraDataLoader  implements Constants {
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	
     	Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
-    	JSONArray items = new JSONArray();
-    	for(String item : contentItems){
-    		items.put(item);
-    	}
-    	eventMap.put("contentItems",items);
+    	
+    	eventMap.put("contentItems",contentItems);
     	
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){
