@@ -1261,7 +1261,7 @@ public class CassandraDataLoader  implements Constants {
     	for(String item : contentItems){
     		items.put(item);
     	}
-    	eventMap.put("content_items",items);
+    	eventMap.put("contentItems",items);
     	
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){
@@ -1876,11 +1876,11 @@ public class CassandraDataLoader  implements Constants {
 				resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
 			}
 		}
-		if(columns.getColumnByName("type_name") != null){
+		if(columns.getColumnByName("category") != null){
 			resourceMap.put("category", columns.getColumnByName("category").getStringValue());
 		}
-		if(columns.getColumnByName("category") != null){
-			resourceMap.put("typeName", columns.getColumnByName("category").getStringValue());
+		if(columns.getColumnByName("type_name") != null){
+			resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
 		}		
 		if(columns.getColumnByName("gooru_oid") != null){
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
