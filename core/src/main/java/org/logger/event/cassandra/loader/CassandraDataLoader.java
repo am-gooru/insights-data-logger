@@ -1112,7 +1112,7 @@ public class CassandraDataLoader  implements Constants {
 				JSONObject jsonField = new JSONObject(fields);
 	    			if(jsonField.has("version")){
 	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
+	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);    	
 	    				
 	    				eventMap.put("eventName", eventObjects.getEventName());
 	    		    	eventMap.put("eventId", eventObjects.getEventId());
@@ -1469,7 +1469,6 @@ public class CassandraDataLoader  implements Constants {
     public void catalogMigration(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
-    	//ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -1480,7 +1479,6 @@ public class CassandraDataLoader  implements Constants {
     	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
-    	//String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
     	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
     		long start = System.currentTimeMillis();
@@ -1491,13 +1489,9 @@ public class CassandraDataLoader  implements Constants {
     		totalJobCount = (totalJobCount + 1);
     		String jobId = "job-"+UUID.randomUUID();
     		
-    	/*	baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count", ""+endVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_job_count", ""+totalJobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+jobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "indexed_count", ""+endVal);
-    		//baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
@@ -1514,9 +1508,7 @@ public class CassandraDataLoader  implements Constants {
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
-    			
-    			/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
-    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");*/
+
     			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_time", ""+(totalTime + (stop-start)));
     			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+(jobCount - 1));
     			
