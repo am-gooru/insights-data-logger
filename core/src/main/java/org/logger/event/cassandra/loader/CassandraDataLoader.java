@@ -1469,7 +1469,7 @@ public class CassandraDataLoader  implements Constants {
     public void catalogMigration(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids",0);
+    	//ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -1480,7 +1480,7 @@ public class CassandraDataLoader  implements Constants {
     	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
-    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
+    	//String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
     	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
     		long start = System.currentTimeMillis();
@@ -1497,7 +1497,7 @@ public class CassandraDataLoader  implements Constants {
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "total_job_count", ""+totalJobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+jobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "indexed_count", ""+endVal);
-    		baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
+    		//baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), "job_ids", "job_names", runningJobs+","+jobId);
     		
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
