@@ -519,8 +519,9 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
 	@Async
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
+		XContentBuilder contentBuilder = null;
 		try {
-			XContentBuilder contentBuilder = jsonBuilder().startObject();			
+			jsonBuilder().startObject();			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				String rowKey = null;  				
 				if(beFieldName.containsKey(entry.getKey())){
@@ -532,11 +533,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				
 			}
 			
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			
 			} catch (Exception e) {
-				logger.info("Indexing failed",e);
+				logger.info("Indexing failed in content Builder ",e);	
+			}
+			try{
+				getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			}catch(Exception e){
+				logger.info("Indexing failed in Dev",e);
+				e.printStackTrace();
+			}
+			try{
+				getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			}catch(Exception e){
+				logger.info("Indexing failed in Prod",e);
+				e.printStackTrace();
 			}
 		
 	}

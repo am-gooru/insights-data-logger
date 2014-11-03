@@ -254,15 +254,15 @@ public class CassandraConnectionProvider {
     
     public Client getDevESClient() throws IOException{
     	if (devClient == null) {
-            throw new IOException("Elastic Search is not initialized.");
+            throw new IOException("Dev Elastic Search is not initialized.");
         }
     	return devClient;
     }
     public Client getProdESClient() throws IOException{
     	if (prodClient == null) {
-            throw new IOException("Elastic Search is not initialized.");
+            throw new IOException("Prod Elastic Search is not initialized.");
         }
-    	return devClient;
+    	return prodClient;
     }
     
     public final void registerDevIndices() {
