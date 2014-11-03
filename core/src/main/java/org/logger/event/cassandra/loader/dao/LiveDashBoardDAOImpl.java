@@ -521,7 +521,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		XContentBuilder contentBuilder = null;
 		try {
-			jsonBuilder().startObject();			
+			contentBuilder = jsonBuilder().startObject();			
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 				String rowKey = null;  				
 				if(beFieldName.containsKey(entry.getKey())){
