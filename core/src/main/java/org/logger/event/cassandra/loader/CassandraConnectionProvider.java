@@ -153,7 +153,8 @@ public class CassandraConnectionProvider {
  	           prodClient = transportClient;
              }
             
-           this.registerIndices();
+           this.registerDevIndices();
+           this.registerProdIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
@@ -264,7 +265,7 @@ public class CassandraConnectionProvider {
     	return devClient;
     }
     
-    public final void registerIndices() {
+    public final void registerDevIndices() {
 		for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex();
 			for (String indexType : esIndex.getType()) {
@@ -279,6 +280,16 @@ public class CassandraConnectionProvider {
 					logger.info("Already Index availble : " + indexName + "\n");
 				}
 			
+			
+			}
+		}
+	}
+    public final void registerProdIndices() {
+		for (ESIndexices esIndex : ESIndexices.values()) {
+			String indexName = esIndex.getIndex();
+			for (String indexType : esIndex.getType()) {
+				//String setting = EsMappingUtil.getSettingConfig(indexType);
+				String mapping = EsMappingUtil.getMappingConfig(indexType);
 				try {
 					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
 					prepareProdCreate.addMapping(indexType, mapping);
