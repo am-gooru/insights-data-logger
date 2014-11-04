@@ -76,7 +76,9 @@ public interface EventService {
 	public void clearCacher();
 	
 	public void indexResource(String ids);
-
+	
+	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type);
+	
 	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception;
 	
 	public void indexUser(String ids) throws Exception;

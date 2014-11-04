@@ -300,6 +300,10 @@ public class EventServiceImpl implements EventService {
 		dataLoaderService.indexUser(ids);
 	}
 
+	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
+		dataLoaderService.migrateRow(sourceCluster,targetCluster,cfName,key,columnName,type);
+	}
+	
 	@Override
 	public void indexActivity() {
 	

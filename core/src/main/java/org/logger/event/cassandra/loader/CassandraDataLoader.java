@@ -1619,6 +1619,37 @@ public class CassandraDataLoader  implements Constants {
     	}
     }
     
+    public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
+    	
+    	MutationBatch m = null;
+    	
+    	ColumnList<String> sourceCoulmnList = baseDao.readWithKey(cfName, key,sourceCluster,0);
+    	try{
+	    	if(targetCluster.equalsIgnoreCase("DO")){
+	    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    	}else if(targetCluster.equalsIgnoreCase("AWSV1")){
+	    		m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    	}else if(targetCluster.equalsIgnoreCase("AWSV2")){
+	    		m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	    	}
+	    	
+	    	if(columnName == null){
+	    		for(int i = 0 ;i < sourceCoulmnList.size() ; i++){
+	    			baseDao.generateNonCounter(cfName, key, sourceCoulmnList.getColumnByIndex(i).getName(), sourceCoulmnList.getColumnByIndex(i).getStringValue(), m);
+	    		}
+	    	}else if(columnName != null && type.equalsIgnoreCase("String")) {
+	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getStringValue(), m);
+	    	}else if(columnName != null && type.equalsIgnoreCase("Long")) {
+	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getLongValue(), m);
+	    	}
+	    	
+	    	m.execute();
+	    	
+    	}catch(Exception e){
+    		e.printStackTrace();
+    		logger.info("Error while migration " + e);
+    	}
+    }
     public void indexResourceView(String resourceIds,String type) throws Exception{
     	this.migrateViews(resourceIds,type);
     }

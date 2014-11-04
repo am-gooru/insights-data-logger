@@ -31,13 +31,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.cassandra.utils.ExpiringMap;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -47,7 +48,6 @@ import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -425,6 +425,17 @@ public class EventController {
 		}
 	}
 	
+	@RequestMapping(value = "/migrate/row", method = RequestMethod.POST)
+	public void migrateKey(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "sourceCluster", required = true) String sourceCluster,@RequestParam(value = "key", required = true) String key ,@RequestParam(value = "targetCluster", required = true) String targetCluster,@RequestParam(value = "columnName", required = false) String columnName,@RequestParam(value = "type", required = false) String type, HttpServletResponse response) {
+		try {
+			eventService.migrateRow(sourceCluster, targetCluster, cfName, key, columnName, type);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Migrated successfully!!");
+		} catch (Exception e) {
+			logger.error("Exception :: " + e);
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
+	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
 			@RequestParam(value = "apiKey", required = true) String apiKey,
@@ -601,7 +612,20 @@ public class EventController {
 		return false;
 	}
 	public static void main(String args[]) throws InterruptedException{
-		ExpiringMap<String, String> map2=new ExpiringMap<String, String>(1000);
+
+		Set<Long> items = new HashSet<Long>();
+		
+		try {
+			for(int i =0 ; i < 3 ; i++){
+					items.add(0L);
+			}
+			System.out.print("items : " + items);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	/*	ExpiringMap<String, String> map2=new ExpiringMap<String, String>(1000);
 		long start = System.currentTimeMillis();
 		
 		for(int i =0 ; i < 10 ; i++){
@@ -613,6 +637,6 @@ public class EventController {
 		System.out.println("map : "  + map2.size());
 		map2.reset();
 		System.out.println("map : "  + map2.size());
-		System.out.println("map : "  + map2.get("daniel3"));
+		System.out.println("map : "  + map2.get("daniel3")); */
 	}
 }

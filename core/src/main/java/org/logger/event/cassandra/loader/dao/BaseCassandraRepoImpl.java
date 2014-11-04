@@ -160,8 +160,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	Keyspace keyspace = getKeyspace();
     	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWS")){
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("DO")){
+    		keyspace = getKeyspace();
+    	}
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV1")){
     		keyspace = getAwsKeyspace();
+    	}
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV2")){
+    		keyspace = getNewAwsKeyspace();
     	}
     	
     	try {
