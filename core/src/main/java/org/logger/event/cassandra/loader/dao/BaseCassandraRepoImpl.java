@@ -34,6 +34,7 @@ import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.CqlResult;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
@@ -1243,5 +1244,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	}
     	return false;
 	
+	}
+	
+	public Rows<String, String> basicCQLReadQuery(String cfName,String whereCoumn,String coulmnValue){
+		OperationResult<CqlResult<String, String>> result = null;
+		
+		try {
+			
+		   result = getNewAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
+		      .withCql("SELECT * FROM "+ cfName +" WHERE " +whereCoumn+" ='"+coulmnValue +"';")
+		      .execute();
+
+		} catch (ConnectionException e) {
+			e.printStackTrace();
+		}
+		return result.getResult().getRows();
+		
 	}
 }

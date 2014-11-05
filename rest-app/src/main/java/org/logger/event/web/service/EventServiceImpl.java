@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +58,7 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 @Service
@@ -338,5 +340,18 @@ public class EventServiceImpl implements EventService {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value","completed");
 			}
 		}
+	}
+
+	@Override
+	public Map<String, Object> readUsingCql(String cfName, String whereColumn,String value) {
+		
+		Map<String,Object> resultData = new LinkedHashMap<String, Object>();
+    	Rows<String, String> result = baseDao.basicCQLReadQuery(cfName, whereColumn, value);
+    	for(Row<String, String> row:result){
+    		for(int i = 0 ; i < row.getColumns().size();i++){
+    			resultData.put(row.getColumns().getColumnByIndex(i).getName(), row.getColumns().getColumnByIndex(i).getStringValue());
+    		}
+    	}
+    	 return resultData;
 	}
 }

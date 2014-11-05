@@ -856,6 +856,7 @@ public class CassandraDataLoader  implements Constants {
     	counterThread.setDaemon(true);
     	counterThread.start();
     }
+    
     public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
     	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");

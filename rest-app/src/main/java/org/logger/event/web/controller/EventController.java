@@ -393,6 +393,18 @@ public class EventController {
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
+	@RequestMapping(value = "/read/row", method = RequestMethod.GET)
+	public void reasUsingCql(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "whereColumn", required = true) String whereColumn,@RequestParam(value = "columnValue", required = true) String value,HttpServletResponse response) {
+	
+		
+		JSONObject resultJson = new JSONObject(resultMap);
+
+		try {
+			response.getWriter().write(resultJson.toString());
+		} catch (IOException e) {
+			logger.error("OOPS! Something went wrong", e);
+		}
+	}
 	
 	@RequestMapping(value = "/resource/index/{type}", method = RequestMethod.GET)
 	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids,@RequestParam(value = "resourceType", required = false) String resourceType ,HttpServletResponse response) {
