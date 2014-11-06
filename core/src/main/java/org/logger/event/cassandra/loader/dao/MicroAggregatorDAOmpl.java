@@ -122,6 +122,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     	List<String> classPages = getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
+		List<String> microKeyList = new ArrayList<String>();
 		
 		boolean isStudent = false;
 		
@@ -131,9 +132,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
-	        	baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);	        		
+	        	baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+	        	microKeyList.add(eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 	        }
-	        logger.info("Micro key : "+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+	        microKeyList.add(eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 	        baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
@@ -144,10 +146,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        	if(classPages != null && classPages.size() > 0){
 					for(String classPage : classPages){
 						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+						microKeyList.add(classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 					}
 	        	}
 	        }
-	        logger.info("Micro key : "+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+	        microKeyList.add(eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 			baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 		
@@ -157,38 +160,39 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			questionCountInQuiz = getQuestionCount(eventMap);
 			if(classPages != null && classPages.size() > 0){
 				for(String classPage : classPages){
-					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
+//					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 					
-					logger.info("isOwner : {}",isOwner);
-					
-					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
+	//				isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 
-					logger.info("isStudent : {}",isStudent);
 					
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
-					if(!isOwner && isStudent){
+					//if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+key);
 						keysList.add(ALLSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
-					}
+					//}
 					
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 					logger.info("Recent Key : {} ",eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+					microKeyList.add(RECENTSESSION+classPage+SEPERATOR+key);
 					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 					
 					//if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
-					if(!isOwner && isStudent){
+					//if(!isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
 						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					}
+						microKeyList.add(FIRSTSESSION+classPage+SEPERATOR+key);
+					//}
 					
 				}
 			}
 				keysList.add(ALLSESSION+key);
 				keysList.add(ALLSESSION+key+SEPERATOR+eventMap.get(GOORUID));
 				keysList.add(eventMap.get(SESSION)+SEPERATOR+key+SEPERATOR+eventMap.get(GOORUID));
+				microKeyList.add(RECENTSESSION+key);
 				baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 				//if(!isRowAvailable(FIRSTSESSION+key, eventMap.get(GOORUID),eventMap.get(SESSION))){
 					keysList.add(FIRSTSESSION+key+SEPERATOR+eventMap.get(GOORUID));
+					microKeyList.add(FIRSTSESSION+key);
 					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+key, eventMap.get(GOORUID), eventMap.get(SESSION));
 				//}
 		}
@@ -197,32 +201,34 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			if(classPages != null && classPages.size() > 0){				
 				for(String classPage : classPages){
-					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
+					//boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 					
-					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
+					//isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 
-					logger.info("isStudent : {}",isStudent);
-					
-					if(!isOwner && isStudent){
+					//if(!isOwner && isStudent){
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 						keysList.add(ALLSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					}
+					//}
 
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					microKeyList.add(RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID));
 					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
 					//if(!isRowAvailable(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION)) && !isOwner && isStudent){
-					if(!isOwner && isStudent){
+					//if(!isOwner && isStudent){
 						keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+						microKeyList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key);
 						baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID), eventMap.get(SESSION));
-					}
+					//}
 				}
 			}
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID));
 				keysList.add(ALLSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+				microKeyList.add(RECENTSESSION+eventMap.get(PARENTGOORUOID));
 				baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION));
 				//if(!isRowAvailable(FIRSTSESSION+eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),eventMap.get(SESSION))){
 					keysList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					microKeyList.add(FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+key);
 					baseCassandraDao.saveStringValue("v2",ColumnFamily.MICROAGGREGATION.getColumnFamily(),FIRSTSESSION+eventMap.get(PARENTGOORUOID)+SEPERATOR+key, eventMap.get(GOORUID),eventMap.get(SESSION));
 				//}
 			
@@ -237,17 +243,35 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 		}
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+		/*if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			if(keysList != null && keysList.size() > 0 ){
 					migrateRow(keysList);
 				}
-			}
+			}*/
+		if(microKeyList != null && microKeyList.size() > 0 ){
+			migrateMicroCF(microKeyList);
+		}
+	
         }
     	});
     	migrationThread.setDaemon(true);
     	migrationThread.start();
   }
-    
+    public void migrateMicroCF(List<String> keysList){
+    	for(String localKey : keysList){
+    		try{
+    			logger.info("Migrating Key : " + localKey); 
+			    MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				ColumnList<String> counterV1Row = baseCassandraDao.readWithKey("v1",ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey, 0);
+				for(int i = 0 ; i < counterV1Row.size() ; i++ ){
+					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey, counterV1Row.getColumnByIndex(i).getName(), counterV1Row.getColumnByIndex(i).getStringValue(), m);
+				}
+				m.execute();
+    		}catch(Exception e){
+    			e.printStackTrace();
+    		}
+    	}
+}
     public void migrateRow(List<String> keysList){
     		
     	for(String localKey : keysList){

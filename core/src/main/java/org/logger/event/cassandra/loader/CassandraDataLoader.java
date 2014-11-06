@@ -433,9 +433,12 @@ public class CassandraDataLoader implements Constants {
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
+			/*
+			 * to be re-enable
+			 * 
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
 				balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
-			}	
+			}*/	
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
@@ -1809,7 +1812,9 @@ public class CassandraDataLoader implements Constants {
     	}
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
-    	
+    	/*
+    	 * to be re-enable
+    	 * 	
     	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
@@ -1828,7 +1833,7 @@ public class CassandraDataLoader implements Constants {
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");
 				 }
-			 }
+			 }*/
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
