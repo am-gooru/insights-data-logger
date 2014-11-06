@@ -51,16 +51,12 @@ public class JSONDeserializer {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String,String> map = new HashMap<String,String>();
 		try {
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getUser().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getMetrics().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getUser(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getMetrics(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getPayLoadObject(), new TypeReference<HashMap<String,String>>(){}));
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return (T) map;

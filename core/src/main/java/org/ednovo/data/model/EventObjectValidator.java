@@ -35,12 +35,13 @@ import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 
-
+@Component
 public class EventObjectValidator  {
 
 	private static final Logger logger = LoggerFactory.getLogger(EventObjectValidator.class);
@@ -58,7 +59,7 @@ public class EventObjectValidator  {
 		this.getConnectionProvider().init(null);
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		acceptedFileds = new HashMap<String, String>();
-        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily());
+        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
         for(Row<String, String> row : rows){
         	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
         }

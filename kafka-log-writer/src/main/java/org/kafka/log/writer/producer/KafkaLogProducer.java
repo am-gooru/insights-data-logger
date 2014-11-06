@@ -66,7 +66,6 @@ public class KafkaLogProducer
 	
 		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
-		
 		props.put("metadata.broker.list",kafkaIp + ":" + port);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("request.required.acks", "1");
@@ -77,6 +76,7 @@ public class KafkaLogProducer
 				new ProducerConfig(props));
 		}
 		catch (Exception e) {
+			LOG.info("Error while intializing producer : " + e);
 		}
 	}
 	

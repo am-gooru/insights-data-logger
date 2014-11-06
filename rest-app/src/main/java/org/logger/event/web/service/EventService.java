@@ -57,6 +57,8 @@ public interface EventService {
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 
 	public void watchSession();
+	
+	public void indexActivity();
 
 	void executeForEveryMinute(String startTime, String endTime);
 	
@@ -72,4 +74,16 @@ public interface EventService {
 	void balanceStatDataUpdate();
 	
 	public void clearCacher();
+	
+	public void indexResource(String ids);
+	
+	public Map<String,Object> readUsingCql(String cfName,String whereColumn,String value);
+	
+	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type);
+	
+	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception;
+	
+	public void indexUser(String ids) throws Exception;
+	
+	public void indexResourceViews(String ids,String type) throws Exception;
 }

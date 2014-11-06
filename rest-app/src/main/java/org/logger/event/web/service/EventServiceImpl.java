@@ -24,8 +24,11 @@
 package org.logger.event.web.service;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,24 +58,30 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 @Service
 public class EventServiceImpl implements EventService {
 	
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
-
+	
     protected CassandraDataLoader dataLoaderService;
-    private final CassandraConnectionProvider connectionProvider;
-    private EventObjectValidator eventObjectValidator;
-    private BaseCassandraRepoImpl baseDao ;
-
+    
+	private final CassandraConnectionProvider connectionProvider;
+    
+	private EventObjectValidator eventObjectValidator;
+    
+	private BaseCassandraRepoImpl baseDao ;
+    
+	private SimpleDateFormat minuteDateFormatter;
+    
     public EventServiceImpl() {
         dataLoaderService = new CassandraDataLoader();
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
-        
+        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");    
     }
 
     @Override
@@ -90,7 +99,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public AppDO verifyApiKey(String apiKey) {
-        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey);
+        ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), apiKey,0);
         AppDO appDO = new AppDO();
         appDO.setApiKey(apiKey);
         appDO.setAppName(apiKeyValues.getStringValue("appName", null));
@@ -129,14 +138,14 @@ public class EventServiceImpl implements EventService {
     }
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
-		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey);
+		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventKey,0);
 		return eventColumnList;
 	}
 
 	@Override
 	public Rows<String, String> readLastNevents(String apiKey,
 			Integer rowsToRead) {
-		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
+		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamily.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead,0);
 		return eventRowList;
 	}
 
@@ -144,7 +153,7 @@ public class EventServiceImpl implements EventService {
 	public void updateProdViews() {
 		try {
 			dataLoaderService.callAPIViewCount();
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -170,7 +179,7 @@ public class EventServiceImpl implements EventService {
 		
 		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
 		if((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead);
+			activityJsons = baseDao.readKeyLastNColumns(ColumnFamily.ACTIVITYSTREAM.getColumnFamily(),userUid, eventsToRead,0);
 		}	
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
@@ -229,7 +238,7 @@ public class EventServiceImpl implements EventService {
 		
         Errors errors = validateInsertEventObject(eventObject);        
         if (!errors.hasErrors()) {
-        		eventObjectValidator.validateEventObject(eventObject);
+        		//eventObjectValidator.validateEventObject(eventObject);
 				dataLoaderService.handleEventObjectMessage(eventObject);
         }
         return new ActionResponseDTO<EventObject>(eventObject, errors);
@@ -269,5 +278,80 @@ public class EventServiceImpl implements EventService {
 	}
 	public void clearCacher(){
 		dataLoaderService.clearCache();
+	}
+	public void indexResource(String ids){
+		dataLoaderService.indexResource(ids);
+	}
+	public void indexResourceViews(String ids,String type){
+		try {
+			dataLoaderService.indexResourceView(ids, type);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType){
+		try {
+			dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void indexUser(String ids) throws Exception{
+		dataLoaderService.indexUser(ids);
+	}
+
+	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
+		dataLoaderService.migrateRow(sourceCluster,targetCluster,cfName,key,columnName,type);
+	}
+	
+	@Override
+	public void indexActivity() {
+	
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
+		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
+		Date lastDate = null;
+		Date currDate = null;		
+		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
+		if(status.equalsIgnoreCase("completed")){
+			try {
+				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
+				currDate = minuteDateFormatter.parse(currentTime);
+				
+				if(lastDate.getTime() < currDate.getTime()){					
+					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
+				}else{
+					logger.info("Waiting to time complete...");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}else{
+			logger.info("Indexing is in-progress.....");
+
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value",0).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~max~count", "constant_value",0).getStringValue();
+
+			if(Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)){
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+ (Integer.valueOf(lastCheckedCount) + 1));
+			}else{
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value","completed");
+			}
+		}
+	}
+
+	@Override
+	public Map<String, Object> readUsingCql(String cfName, String whereColumn,String value) {
+		
+		Map<String,Object> resultData = new LinkedHashMap<String, Object>();
+    	Rows<String, String> result = baseDao.basicCQLReadQuery(cfName, whereColumn, value);
+    	for(Row<String, String> row:result){
+    		for(int i = 0 ; i < row.getColumns().size();i++){
+    			resultData.put(row.getColumns().getColumnByIndex(i).getName(), row.getColumns().getColumnByIndex(i).getStringValue());
+    		}
+    	}
+    	 return resultData;
 	}
 }

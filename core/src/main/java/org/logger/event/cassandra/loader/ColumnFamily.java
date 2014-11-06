@@ -30,6 +30,8 @@ public enum ColumnFamily {
 	
 	EVENTFIELDS("event_fields"),
 	
+	TABLEDATATYPES("table_datatypes"),
+	
 	CONFIGSETTINGS("job_config_settings"),
 	
 	REALTIMECONFIG("real_time_operation_config"),
@@ -37,6 +39,8 @@ public enum ColumnFamily {
 	RECENTVIEWEDRESOURCES("recent_viewed_resources"),
 	
 	LIVEDASHBOARD("live_dashboard"),
+	
+	LIVEDASHBOARDTEST("live_dashboard_test"),
 	
 	MICROAGGREGATION("micro_aggregation"),
 	
@@ -59,6 +63,9 @@ public enum ColumnFamily {
 	RESOURCETYPES("resource_type"),
 	
 	CATEGORY("category"),
+	
+	RESOURCE("resource"),
+	
 	;
 	
 	String name;

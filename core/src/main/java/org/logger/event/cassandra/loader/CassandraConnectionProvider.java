@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -58,20 +57,31 @@ public class CassandraConnectionProvider {
 
     private Properties properties;
     private Keyspace cassandraKeyspace;
+    private Keyspace cassandraAwsKeyspace;
+    private Keyspace cassandraNewAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-    private Client client;
+    private Client devClient;
+    private Client prodClient;
+    private static String AWS_CASSANDRA_KEYSPACE;
+    private static String AWS_CASSANDRA_IP;
+    private static String INSIHGHTS_DEV_ES_IP;
+    private static String INSIHGHTS_PROD_ES_IP;
+    
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-
+        INSIHGHTS_DEV_ES_IP   = System.getenv("INSIHGHTS_DEV_ES_IP");
+        INSIHGHTS_PROD_ES_IP   = System.getenv("INSIHGHTS_PROD_ES_IP");
+        AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
+        AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
+        
         String esClusterName = "";
-        String esHost = "162.243.130.94";
         int esPort = 9300;
         try {
 
@@ -90,23 +100,26 @@ public class CassandraConnectionProvider {
                     .getResourceAsStream("/loader.properties"));
             String clusterName = properties.getProperty("cluster.name",
                     "gooruinsights");
-
+            if(cassandraKeyspace == null ){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
-                    .setMaxConnsPerHost(3)
-                    .setSeeds(hosts);
+                    .setMaxConnsPerHost(10)
+                    .setSeeds(hosts)
+                    .setInitConnsPerHost(1)
+                    ;
+            
             if (!hosts.startsWith("127.0")) {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
 
-            poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+            //poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
                     .forCluster(clusterName)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-                    .setDiscoveryType(NodeDiscoveryType.NONE)
-                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
+                    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+                    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
                     .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
@@ -115,46 +128,176 @@ public class CassandraConnectionProvider {
 
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
-            	
-           //Elastic search connection provider
-           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
-           TransportClient transportClient = new TransportClient(settings);
-           transportClient.addTransportAddress(new InetSocketTransportAddress(esHost, esPort));
-           client = transportClient;
-           
-           this.registerIndices();
+        	}
+            if(cassandraAwsKeyspace == null ){
+            	cassandraAwsKeyspace = this.initializeAwsCassandra();
+            }
+            if(cassandraNewAwsKeyspace == null ){
+            	cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
+            }
+
+            //Elastic search connection provider
+            if(devClient == null) {
+	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+	           TransportClient transportClient = new TransportClient(settings);
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_DEV_ES_IP, esPort));
+	           
+	           devClient = transportClient;
+            }
+            
+            if(prodClient == null) {
+ 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+ 	           TransportClient transportClient = new TransportClient(settings);
+ 	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_PROD_ES_IP, esPort));
+ 	           
+ 	           prodClient = transportClient;
+             }
+            
+           this.registerDevIndices();
+           this.registerProdIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
     }
 
-    public Keyspace getKeyspace() throws IOException {
+	public  Keyspace initializeAwsCassandra(){
+	 
+		String awsHosts =  AWS_CASSANDRA_IP;
+		String awsCluster = "gooru-cassandra";
+		String keyspace = AWS_CASSANDRA_KEYSPACE;
+		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
+	    .setPort(9160)
+	    .setMaxConnsPerHost(3)
+	    .setSeeds(awsHosts);
+		
+		if (!awsHosts.startsWith("127.0")) {
+			poolConfig.setLocalDatacenter("us-west");
+		}
+	
+		//poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+	
+		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
+		    .forCluster(awsCluster)
+		    .forKeyspace(keyspace)
+		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+		    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+		    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
+		    .withConnectionPoolConfiguration(poolConfig)
+		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+		    .buildKeyspace(ThriftFamilyFactory.getInstance());
+	
+		context.start();
+		
+		cassandraAwsKeyspace = (Keyspace) context.getClient();
+		
+        logger.info("Initialized connection to AWS Cassandra");
+        
+		return cassandraAwsKeyspace;
+        
+	}    
+
+	public  Keyspace initializeNewAwsCassandra(){
+		 
+		String awsNewHosts =  "54.193.233.64";
+		String awsNewCluster = "gooru-cassandra-prod";
+		String keyspace = CASSANDRA_KEYSPACE;
+		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
+	    .setPort(9160)
+	    .setMaxConnsPerHost(3)
+	    .setSeeds(awsNewHosts);
+		
+		if (!awsNewHosts.startsWith("127.0")) {
+			poolConfig.setLocalDatacenter("us-west");
+		}
+	
+		//poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+	
+		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
+		    .forCluster(awsNewCluster)
+		    .forKeyspace(keyspace)
+		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+		    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+		    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
+		    .withConnectionPoolConfiguration(poolConfig)
+		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+		    .buildKeyspace(ThriftFamilyFactory.getInstance());
+	
+		context.start();
+		
+		cassandraNewAwsKeyspace = (Keyspace) context.getClient();
+		
+        logger.info("Initialized connection to New AWS Cassandra");
+        
+		return cassandraNewAwsKeyspace;
+        
+	}
+	
+	public Keyspace getKeyspace() throws IOException {
         if (cassandraKeyspace == null) {
             throw new IOException("Keyspace not initialized.");
         }
         return cassandraKeyspace;
     }
-    public Client getESClient() throws IOException{
-    	if (client == null) {
-            throw new IOException("Elastic Search is not initialized.");
+    public Keyspace getAwsKeyspace() throws IOException {
+        if (cassandraAwsKeyspace == null) {
+            throw new IOException("Keyspace not initialized.");
         }
-    	return client;
+        return cassandraAwsKeyspace;
     }
-    public final void registerIndices() {
+    
+    public Keyspace getNewAwsKeyspace() throws IOException {
+        if (cassandraNewAwsKeyspace == null) {
+            throw new IOException("New Keyspace not initialized.");
+        }
+        return cassandraNewAwsKeyspace;
+    }
+    
+    public Client getDevESClient() throws IOException{
+    	if (devClient == null) {
+            throw new IOException("Dev Elastic Search is not initialized.");
+        }
+    	return devClient;
+    }
+    public Client getProdESClient() throws IOException{
+    	if (prodClient == null) {
+            throw new IOException("Prod Elastic Search is not initialized.");
+        }
+    	return prodClient;
+    }
+    
+    public final void registerDevIndices() {
 		for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex();
 			for (String indexType : esIndex.getType()) {
 				//String setting = EsMappingUtil.getSettingConfig(indexType);
 				String mapping = EsMappingUtil.getMappingConfig(indexType);
 				try {
-					CreateIndexRequestBuilder prepareCreate = this.getESClient().admin().indices().prepareCreate(indexName);
-					//prepareCreate.setSettings(setting);
+					CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
 					prepareCreate.addMapping(indexType, mapping);
 					prepareCreate.execute().actionGet();
-					logger.info("Index created : " + indexName + "\n");
+					logger.info("Dev Index created : " + indexName + "\n");
 				} catch (Exception exception) {
 					logger.info("Already Index availble : " + indexName + "\n");
-					//this.getESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setSource(mapping).setIgnoreConflicts(true).execute().actionGet();
+				}
+			
+			
+			}
+		}
+	}
+    public final void registerProdIndices() {
+		for (ESIndexices esIndex : ESIndexices.values()) {
+			String indexName = esIndex.getIndex();
+			for (String indexType : esIndex.getType()) {
+				//String setting = EsMappingUtil.getSettingConfig(indexType);
+				String mapping = EsMappingUtil.getMappingConfig(indexType);
+				try {
+					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
+					prepareProdCreate.addMapping(indexType, mapping);
+					prepareProdCreate.execute().actionGet();
+					logger.info("Prod Index created : " + indexName + "\n");
+					
+				} catch (Exception exception) {
+					logger.info("Already Index availble : " + indexName + "\n");
 				}
 			}
 		}

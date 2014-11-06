@@ -45,7 +45,13 @@ public class BaseDAOCassandraImpl {
     
     private Keyspace keyspace;
     
-    private Client client;
+    private Keyspace awsKeyspace;
+    
+    private Keyspace newAwsKeyspace;
+    
+    private Client devClient;
+    
+    private Client prodClient;
     
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
     
@@ -69,14 +75,47 @@ public class BaseDAOCassandraImpl {
         return this.keyspace;
     }
     
-    public Client getESClient() {
-        if(client == null && this.connectionProvider != null) {
+    public Keyspace getAwsKeyspace() {
+        if(awsKeyspace == null && this.connectionProvider != null) {
             try {
-                this.client = this.connectionProvider.getESClient();
+                this.awsKeyspace = this.connectionProvider.getAwsKeyspace();
+            } catch (IOException ex) {
+                logger.info("Error while initializing AWS keyspace{}", ex);
+            }
+        }
+        return this.awsKeyspace;
+    }
+    
+    public Keyspace getNewAwsKeyspace() {
+        if(newAwsKeyspace == null && this.connectionProvider != null) {
+            try {
+                this.newAwsKeyspace = this.connectionProvider.getNewAwsKeyspace();
+            } catch (IOException ex) {
+                logger.info("Error while initializing New AWS keyspace{}", ex);
+            }
+        }
+        return this.newAwsKeyspace;
+    }
+    
+    public Client getDevESClient() {
+        if(devClient == null && this.connectionProvider != null) {
+            try {
+                this.devClient = this.connectionProvider.getDevESClient();
             } catch (IOException ex) {
                 logger.info("Error while initializing elastic search{}", ex);
             }
         }
-        return this.client;
+        return this.devClient;
+    }
+    
+    public Client getProdESClient() {
+        if(prodClient == null && this.connectionProvider != null) {
+            try {
+                this.prodClient = this.connectionProvider.getProdESClient();
+            } catch (IOException ex) {
+                logger.info("Error while initializing elastic search{}", ex);
+            }
+        }
+        return this.prodClient;
     }
 }

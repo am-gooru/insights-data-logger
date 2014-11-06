@@ -42,11 +42,22 @@
 	
 	<!-- Scans the classpath for annotated components that will be auto-registered as Spring beans.
 	 For example @Controller and @Service. Make sure to set the correct base-package-->
-	<context:component-scan base-package="org.logger.event.web" />
+	<context:component-scan base-package="org.logger.event" />
 	
 	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
-	
+
+	<bean id="updateEventEsJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="eventController" />
+           <property name="targetMethod" value="updateEventEs" />
+       </bean>
+
+       <bean id="updateEventEsJobTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="updateEventEsJob" />
+           <property name="repeatInterval" value="30000" />
+           <property name="startDelay" value="1000" />
+       </bean>
+       	
 	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="updateViews" />
@@ -54,7 +65,7 @@
 
        <bean id="secondSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
            <property name="jobDetail" ref="firstTaskJobDetail" />
-           <property name="repeatInterval" value="5000" />
+           <property name="repeatInterval" value="3000" />
            <property name="startDelay" value="1000" />
        </bean>
 
@@ -98,6 +109,7 @@
                  <ref bean="minuteRunner" />
                  <ref bean="watchSessionDetails" />
                  <ref bean="migrationJobDetails" />
+                 <ref bean="updateEventEsJob" />
               </list>
            </property>
            <property name="triggers">
@@ -106,6 +118,7 @@
                  <ref bean="thirdSimpleTrigger" />
                  <ref bean="watchSessionTrigger" />
                  <ref bean="migrationJobTrigger" />
+                 <ref bean="updateEventEsJobTrigger" />
               </list>
            </property>
        </bean>

@@ -111,13 +111,24 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         			dataLoader.updateStaging(startTime, endTime,eventName,apiKey);
         		}
         		if(methodName.equalsIgnoreCase("activity")){        			
-        			dataLoader.updateStagingES(startTime, endTime,eventName,apiKey);
+        			dataLoader.updateStagingES(startTime, endTime,eventName,false);
         		}
         		if(methodName.equalsIgnoreCase("catalog")){        			
         			dataLoader.catalogMigration(startTime, endTime, eventName);
         		}
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
+        		if(methodName.equalsIgnoreCase("counter")){        			
+        			dataLoader.migrateEventsToCounter(startTime, endTime, eventName);
+        		}
+        		if(methodName.equalsIgnoreCase("pathway")){        			
+        			dataLoader.pathWayMigration(startTime, endTime, eventName);
+        		}
+        		if(methodName.equalsIgnoreCase("views")){
+        			dataLoader.viewMigFromEvents(startTime, endTime, eventName);
+        		}
+        		if(methodName.equalsIgnoreCase("resourceMigration")){
+        			dataLoader.MigrateResourceCF(Long.valueOf(startTime), Long.valueOf(endTime));
+        		}
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
         }

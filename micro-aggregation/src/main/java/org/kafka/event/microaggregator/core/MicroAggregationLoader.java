@@ -223,132 +223,137 @@ public class MicroAggregationLoader implements Constants {
 			ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);
 			String fields = activityRow.getStringValue(FIELDS, null);
 
-			if (fields != null) {
-				JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
-				EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
-				rawMap = JSONDeserializer.deserializeEventObject(eventObject);
-			} else {
-				logger.error("Fields is empty or invalid");
-			}
-
-			SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
-			HashMap<String, Object> activityMap = new HashMap<String, Object>();
-			Map<String, Object> eventMap = new HashMap<String, Object>();
-			if (activityRow.getLongValue(END_TIME, null) != null) {
-				endDate = new Date(activityRow.getLongValue(END_TIME, null));
-			} else {
-				endDate = new Date(activityRow.getLongValue(START_TIME, null));
-			}
-			dateId = minuteDateFormatter.format(endDate).toString();
-			Map<String, Object> timeMap = new HashMap<String, Object>();
-
-			// Get userUid
-			if (rawMap != null && rawMap.get("gooruUId") != null) {
-				try {
-					userUid = rawMap.get("gooruUId");
-					userName = dimUser.getUserName(userUid);
-				} catch (ConnectionException e) {
-					logger.info("Error while fetching User uid ");
+			if (activityRow != null & activityRow.size() > 0) {
+				if (fields != null) {
+					JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
+					EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
+					rawMap = JSONDeserializer.deserializeEventObject(eventObject);
+				} else {
+					logger.error("Fields is empty or invalid");
 				}
-			} else if (activityRow.getStringValue("gooru_uid", null) != null) {
-				try {
-					userUid = activityRow.getStringValue("gooru_uid", null);
-					userName = dimUser.getUserName(activityRow.getStringValue("gooru_uid", null));
-				} catch (ConnectionException e) {
-					logger.info("Error while fetching User uid ");
-				}
-			} else if (activityRow.getStringValue("user_id", null) != null) {
-				try {
-					userUid = dimUser.getUserUid(activityRow.getStringValue("user_id", null));
-					userName = dimUser.getUserName(activityRow.getStringValue("user_id", null));
-				} catch (ConnectionException e) {
-					logger.info("Error while fetching User uid ");
-				}
-			}
-			this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
 
-			if (rawMap != null && rawMap.get(APIKEY) != null) {
-				apiKey = rawMap.get(APIKEY);
-			} else if (activityRow.getStringValue(APIKEY, null) != null) {
-				apiKey = activityRow.getStringValue(APIKEY, null);
-			}
-			if (rawMap != null && rawMap.get(CONTENTGOORUOID) != null) {
-				contentGooruId = rawMap.get(CONTENTGOORUOID);
-			} else if (activityRow.getStringValue(CONTENT_GOORU_OID, null) != null) {
-				contentGooruId = activityRow.getStringValue(CONTENT_GOORU_OID, null);
-			}
-			if (rawMap != null && rawMap.get(PARENTGOORUOID) != null) {
-				parentGooruId = rawMap.get(PARENTGOORUOID);
-			} else if (activityRow.getStringValue(PARENT_GOORU_OID, null) != null) {
-				parentGooruId = activityRow.getStringValue(PARENT_GOORU_OID, null);
-			}
-			if (rawMap != null && rawMap.get(ORGANIZATIONUID) != null) {
-				organizationUid = rawMap.get(ORGANIZATIONUID);
-			} else if (activityRow.getStringValue("organization_uid", null) != null) {
-				organizationUid = activityRow.getStringValue("organization_uid", null);
-			}
-			if (rawMap.get(TYPE) != null && (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType))))
-					&& rawMap.get(MODE).equalsIgnoreCase(STUDY) && rawMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)) {
-				if (rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null) {
-					score = rawMap.get(SCORE).toString();
-					eventMap.put("score", score);
-					eventMap.put("session_id", rawMap.get(SESSION).toString());
-					attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS));
-					if (attempStatus.length > 0) {
-						eventMap.put("first_attempt_status", attempStatus[0]);
+				SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
+				HashMap<String, Object> activityMap = new HashMap<String, Object>();
+				Map<String, Object> eventMap = new HashMap<String, Object>();
+				if (activityRow.getLongValue(END_TIME, null) != null) {
+					endDate = new Date(activityRow.getLongValue(END_TIME, null));
+				} else {
+					endDate = new Date(activityRow.getLongValue(START_TIME, null));
+				}
+				dateId = minuteDateFormatter.format(endDate).toString();
+				Map<String, Object> timeMap = new HashMap<String, Object>();
+
+				// Get userUid
+				if (rawMap != null && rawMap.get("gooruUId") != null) {
+					try {
+						userUid = rawMap.get("gooruUId");
+						userName = dimUser.getUserName(userUid);
+					} catch (ConnectionException e) {
+						logger.info("Error while fetching User uid ");
 					}
-					String answerStatus = null;
-					if (attempStatus.length == 0) {
-						answerStatus = LoaderConstants.SKIPPED.getName();
-					} else {
-						if (attempStatus[0] == 1) {
-							answerStatus = LoaderConstants.CORRECT.getName();
-						} else if (attempStatus[0] == 0) {
-							answerStatus = LoaderConstants.INCORRECT.getName();
+				} else if (activityRow.getStringValue("gooru_uid", null) != null) {
+					try {
+						userUid = activityRow.getStringValue("gooru_uid", null);
+						userName = dimUser.getUserName(activityRow.getStringValue("gooru_uid", null));
+					} catch (ConnectionException e) {
+						logger.info("Error while fetching User uid ");
+					}
+				} else if (activityRow.getStringValue("user_id", null) != null) {
+					try {
+						userUid = dimUser.getUserUid(activityRow.getStringValue("user_id", null));
+						userName = dimUser.getUserName(activityRow.getStringValue("user_id", null));
+					} catch (ConnectionException e) {
+						logger.info("Error while fetching User uid ");
+					}
+				}
+				this.updateActivityCompletion(userUid, activityRow, eventId, timeMap);
+
+				if (rawMap != null && rawMap.get(APIKEY) != null) {
+					apiKey = rawMap.get(APIKEY);
+				} else if (activityRow.getStringValue(APIKEY, null) != null) {
+					apiKey = activityRow.getStringValue(APIKEY, null);
+				}
+				if (rawMap != null && rawMap.get(CONTENTGOORUOID) != null) {
+					contentGooruId = rawMap.get(CONTENTGOORUOID);
+				} else if (activityRow.getStringValue(CONTENT_GOORU_OID, null) != null) {
+					contentGooruId = activityRow.getStringValue(CONTENT_GOORU_OID, null);
+				}
+				if (rawMap != null && rawMap.get(PARENTGOORUOID) != null) {
+					parentGooruId = rawMap.get(PARENTGOORUOID);
+				} else if (activityRow.getStringValue(PARENT_GOORU_OID, null) != null) {
+					parentGooruId = activityRow.getStringValue(PARENT_GOORU_OID, null);
+				}
+				if (rawMap != null && rawMap.get(ORGANIZATIONUID) != null) {
+					organizationUid = rawMap.get(ORGANIZATIONUID);
+				} else if (activityRow.getStringValue("organization_uid", null) != null) {
+					organizationUid = activityRow.getStringValue("organization_uid", null);
+				}
+				if (rawMap.get(TYPE) != null
+						&& (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType))))
+						&& rawMap.get(MODE).equalsIgnoreCase(STUDY) && rawMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)) {
+					if (rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null) {
+						score = rawMap.get(SCORE).toString();
+						eventMap.put("score", score);
+						eventMap.put("session_id", rawMap.get(SESSION).toString());
+						attempStatus = TypeConverter.stringToIntArray(rawMap.get(ATTMPTSTATUS));
+						if (attempStatus.length > 0) {
+							eventMap.put("first_attempt_status", attempStatus[0]);
 						}
+						String answerStatus = null;
+						if (attempStatus.length == 0) {
+							answerStatus = LoaderConstants.SKIPPED.getName();
+						} else {
+							if (attempStatus[0] == 1) {
+								answerStatus = LoaderConstants.CORRECT.getName();
+							} else if (attempStatus[0] == 0) {
+								answerStatus = LoaderConstants.INCORRECT.getName();
+							}
+						}
+						eventMap.put("answer_status", answerStatus);
 					}
-					eventMap.put("answer_status", answerStatus);
+				} else if (rawMap.get(TYPE) != null
+						&& (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType))))
+						&& rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
+					if (rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null) {
+						score = rawMap.get(SCORE).toString();
+						eventMap.put("score", score);
+						eventMap.put("session_id", rawMap.get(SESSION).toString());
+					}
 				}
-			} else if (rawMap.get(TYPE) != null
-					&& (rawMap.get(TYPE).equalsIgnoreCase(STOP) || (eventType != null && ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType))))
-					&& rawMap.get(MODE).equalsIgnoreCase(STUDY)) {
-				if (rawMap != null && rawMap.get(SCORE) != null && rawMap.get(SCORE).toString() != null && rawMap.get(SESSION) != null && rawMap.get(SESSION).toString() != null) {
-					score = rawMap.get(SCORE).toString();
-					eventMap.put("score", score);
-					eventMap.put("session_id", rawMap.get(SESSION).toString());
-				}
+				activityMap.put("eventId", eventId);
+				activityMap.put("eventName", activityRow.getStringValue(EVENT_NAME, null));
+				activityMap.put("userUid", userUid);
+				activityMap.put("dateId", dateId);
+				activityMap.put("userName", userName);
+				activityMap.put("apiKey", apiKey);
+				activityMap.put("organizationUid", organizationUid);
+				activityMap.put("existingColumnName", timeMap.get("existingColumnName"));
+
+				eventMap.put("start_time", timeMap.get("startTime"));
+				eventMap.put("end_time", timeMap.get("endTime"));
+				eventMap.put("event_type", timeMap.get("event_type"));
+				eventMap.put("timeSpent", timeMap.get("timeSpent"));
+
+				eventMap.put("user_uid", userUid);
+				eventMap.put("username", userName);
+				eventMap.put("raw_data", activityRow.getStringValue(FIELDS, null));
+				eventMap.put("content_gooru_oid", contentGooruId);
+				eventMap.put("parent_gooru_oid", parentGooruId);
+				eventMap.put("organization_uid", organizationUid);
+				eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
+				eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
+
+				eventMap.put("event_id", eventId);
+				eventMap.put("api_key", apiKey);
+				eventMap.put("organization_uid", organizationUid);
+				eventMap.put("date_time", dateId);
+
+				activityMap.put("activity", new JSONSerializer().serialize(eventMap));
+
+				activityStreamDao.saveActivity(activityMap);
+			} else {
+				logger.info("Entry is not available for this key in EventDetailCF {}", eventId);
 			}
-			activityMap.put("eventId", eventId);
-			activityMap.put("eventName", activityRow.getStringValue(EVENT_NAME, null));
-			activityMap.put("userUid", userUid);
-			activityMap.put("dateId", dateId);
-			activityMap.put("userName", userName);
-			activityMap.put("apiKey", apiKey);
-			activityMap.put("organizationUid", organizationUid);
-			activityMap.put("existingColumnName", timeMap.get("existingColumnName"));
-
-			eventMap.put("start_time", timeMap.get("startTime"));
-			eventMap.put("end_time", timeMap.get("endTime"));
-			eventMap.put("event_type", timeMap.get("event_type"));
-			eventMap.put("timeSpent", timeMap.get("timeSpent"));
-
-			eventMap.put("user_uid", userUid);
-			eventMap.put("username", userName);
-			eventMap.put("raw_data", activityRow.getStringValue(FIELDS, null));
-			eventMap.put("content_gooru_oid", contentGooruId);
-			eventMap.put("parent_gooru_oid", parentGooruId);
-			eventMap.put("organization_uid", organizationUid);
-			eventMap.put("event_name", activityRow.getStringValue(EVENT_NAME, null));
-			eventMap.put("event_value", activityRow.getStringValue(EVENT_VALUE, null));
-
-			eventMap.put("event_id", eventId);
-			eventMap.put("api_key", apiKey);
-			eventMap.put("organization_uid", organizationUid);
-			eventMap.put("date_time", dateId);
-
-			activityMap.put("activity", new JSONSerializer().serialize(eventMap));
-
-			activityStreamDao.saveActivity(activityMap);
 		}
 	}
 
@@ -446,10 +451,11 @@ public class MicroAggregationLoader implements Constants {
 	public CassandraConnectionProvider getConnectionProvider() {
 		return connectionProvider;
 	}
-	 
-	public Map<String,String> getKafkaProperty(String name){
-	     	return kafkaConfigurationCache.get(name);
-	 }
+
+	public Map<String, String> getKafkaProperty(String name) {
+		return kafkaConfigurationCache.get(name);
+	}
+
 	/**
 	 * @param connectionProvider
 	 *            the connectionProvider to set

@@ -46,6 +46,8 @@ public interface Constants {
 	
 	public String CLASSPAGEGOORUOID= "classpageGooruId";
 	
+	public String PATHWAYGOORUOID= "pathwayGooruId";
+	
 	public String VERSION = "version";
 
 	public String EVENTTYPE = "eventType";
@@ -130,6 +132,8 @@ public interface Constants {
 	
 	public String VIEWUPDATEENDPOINT = "viewCountAPI";
 	
+	public String SEARCHINDEXAPI = "searchIndexAPI";
+	
 	public String QUESTION = "question";
 
 	public String ATTMPTTRYSEQ = "attemptTrySequence";
@@ -145,6 +149,8 @@ public interface Constants {
 	public String USERID = "gooru_uid";
 	
 	public String CLASSPAGEID = "classpage_id";
+	
+	public String PATHWAYID = "pathway_id";
 	
 	public String MINUTEDATEFORMATTER = "yyyyMMddkkmm";
 

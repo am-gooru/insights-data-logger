@@ -84,7 +84,12 @@ public class CassandraConnectionProvider {
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
                     .setMaxConnsPerHost(3)
-                    .setSeeds(hosts);
+                    .setSeeds(hosts)
+                    .setLatencyAwareUpdateInterval(10000)
+                    .setLatencyAwareResetInterval(0)
+                    .setLatencyAwareBadnessThreshold(2)
+                    .setLatencyAwareWindowSize(100)
+                    ;
             if (!hosts.startsWith("127.0")) {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
@@ -95,7 +100,7 @@ public class CassandraConnectionProvider {
                     .forCluster(clusterName)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-                    .setDiscoveryType(NodeDiscoveryType.NONE)
+                    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
                     .withConnectionPoolConfiguration(poolConfig)
                     .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())

@@ -27,15 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
-import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +100,7 @@ public class KafkaLogConsumer extends Thread {
 			Map<String, String> messageMap = new HashMap<String, String>();
 			try {
 				messageMap = gson.fromJson(message, messageMap.getClass());
+
 			} catch (Exception e) {
 				LOG.error("Message Consumer Error: " + e.getMessage());
 				continue;
