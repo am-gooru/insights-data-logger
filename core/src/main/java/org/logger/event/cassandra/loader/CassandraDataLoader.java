@@ -1666,7 +1666,7 @@ public class CassandraDataLoader  implements Constants {
 		
 			if(userInfos.getColumnByName("gooru_uid") != null){
 				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
-				contentBuilder.field("gooru_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
+				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
 				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirm_status").getLongValue());
@@ -1735,7 +1735,7 @@ public class CassandraDataLoader  implements Constants {
 				contentBuilder.field("external_id",userInfos.getColumnByName("external_id").getStringValue());
 			}
 			if(userInfos.getColumnByName("organization_uid") != null){
-				contentBuilder.field("content_organization_uid",userInfos.getColumnByName("organization_uid").getStringValue());
+				contentBuilder.field("user_organization_uid",userInfos.getColumnByName("organization_uid").getStringValue());
 			}
 			if(userInfos.getColumnByName("import_code") != null){
 				contentBuilder.field("import_code",userInfos.getColumnByName("import_code").getStringValue());
@@ -1779,7 +1779,7 @@ public class CassandraDataLoader  implements Constants {
 	    		}
 	    	}
 		
-			getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
+	//		getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
 			
 			;
 			getConnectionProvider().getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
