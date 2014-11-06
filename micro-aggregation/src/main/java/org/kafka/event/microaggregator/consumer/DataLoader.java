@@ -37,7 +37,6 @@ public class DataLoader  {
 	private static String KAFKA_AGGREGATOR_TOPIC;
 
     public DataLoader() {
-    	KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
 	}
     
     public static void main(String[] args) throws java.text.ParseException {
@@ -55,7 +54,7 @@ public class DataLoader  {
     	    
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
-    	    	MicroAggregatorConsumer consumerThread = new MicroAggregatorConsumer(KAFKA_AGGREGATOR_TOPIC);
+    	    	MicroAggregatorConsumer consumerThread = new MicroAggregatorConsumer();
     	        consumerThread.start();
     		    return;
     	    }

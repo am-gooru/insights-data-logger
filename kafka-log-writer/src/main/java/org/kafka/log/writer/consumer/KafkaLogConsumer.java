@@ -27,13 +27,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaMessageStream;
+import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.Message;
 
+import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
+import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,82 +44,122 @@ import com.google.gson.Gson;
 
 public class KafkaLogConsumer extends Thread {
 
+	MicroAggregationLoader microAggregationLoader = new MicroAggregationLoader();
 	private final ConsumerConnector consumer;
 	private static String topic;
-	private static String KAFKA_PRODUCER_TYPE;
-	private static String KAFKA_TOPIC;
-	private static String KAFKA_FILE_TOPIC;
-	private static String KAFKA_ZK_PORT;
-	private static String KAFKA_PORT;
-	private static String KAFKA_IP;
+
+	private static String ZOOKEEPER_IP;
+	private static String ZOOKEEPER_PORT;
 	private static String KAFKA_GROUPID;
-	private static String KAFKA_FILE_GROUPID;
+	private static String KAFKA_FILE_TOPIC;
+	private static String KAFKA_FILE_ERROR_TOPIC;
+
 	static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
 	private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
-	
-	public KafkaLogConsumer(String topic)
-	  {
-	    
-		KAFKA_IP = System.getenv("INSIGHTS_KAFKA_LOG_WRITTER_CONSUMER_IP");
-        KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
-        KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
-        KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
-        KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-        KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
-        KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-        KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-        
-        this.topic = KAFKA_FILE_TOPIC;
-        consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
-	  }
+	private static final Logger activityErrorLog = LoggerFactory.getLogger("activityErrorLog");
 
-	  private static ConsumerConfig createConsumerConfig()
-	  {
-	    Properties props = new Properties();
-	    props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-	    props.put("groupid", KAFKA_FILE_GROUPID);
-	    props.put("zk.sessiontimeout.ms", "10000");
-	    props.put("zk.synctime.ms", "200");
-	    props.put("autocommit.interval.ms", "1000");
-	    
-	    LOG.info("Kafka File writer consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+ topic+"::"+KAFKA_FILE_GROUPID);
+	public KafkaLogConsumer() {
+		Map<String, String> kafkaProperty = new HashMap<String, String>();
+		kafkaProperty = microAggregationLoader.getKafkaProperty("kafka~logwritter~consumer");
+		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
+		ZOOKEEPER_PORT = kafkaProperty.get("zookeeper_portno");
+		KAFKA_FILE_TOPIC = kafkaProperty.get("kafka_topic");
+		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+		KAFKA_FILE_ERROR_TOPIC = "error-" + KAFKA_FILE_TOPIC;
+		this.topic = KAFKA_FILE_TOPIC;
 
-	    return new ConsumerConfig(props);
+		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+	}
 
-	  }
-	 
-	  public void run() {
-	    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-	    topicCountMap.put(topic, new Integer(1));
-	    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-	    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
-	    ConsumerIterator<Message> it = stream.iterator();
-	    while(it.hasNext())
-	    {
-	    	String message = ExampleUtils.getMessage(it.next());
-	    	Gson gson = new Gson();
-	    	Map<String, String> messageMap = new HashMap<String, String>();
-	    	try {
-	    		messageMap = gson.fromJson(message, messageMap.getClass());
+	private static ConsumerConfig createConsumerConfig() {
+		Properties props = new Properties();
+
+		props.put("zookeeper.connect", ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT);
+		props.put("group.id", KAFKA_GROUPID);
+		props.put("zookeeper.session.timeout.ms", "1000");
+		props.put("zookeeper.sync.time.ms", "200");
+		props.put("auto.commit.interval.ms", "1000");
+		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+
+		return new ConsumerConfig(props);
+
+	}
+
+	public void run() {
+
+		consumedData();
+	}
+
+	void consumedData() {
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		Integer noOfThread = 1;
+		topicCountMap.put(topic, noOfThread);
+		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+		ConsumerIterator<byte[], byte[]> it = stream.iterator();
+		while (it.hasNext()) {
+			String message = new String(it.next().message());
+			Gson gson = new Gson();
+			Map<String, String> messageMap = new HashMap<String, String>();
+			try {
+				messageMap = gson.fromJson(message, messageMap.getClass());
 			} catch (Exception e) {
-				LOG.error("Message Consumer Error: "+ e.getMessage());
-				continue; 
+				LOG.error("Message Consumer Error: " + e.getMessage());
+				continue;
 			}
-	    	
-	    	//TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-	    	if(messageMap != null)
-	    	{
-	    		String eventJson = (String)messageMap.get("raw");
-	    		
-	    		//Write the consumed JSON to Log file.
-	    		LOG.info("Kafka Consumer Log writer  :\n" + eventJson + "\n");
-	    		activityLogger.info(eventJson);
-	    	}
-	    	else
-	    	{
-	    		LOG.error("Message Consumer Error messageMap : No data found");
-	    		continue;
-	    	}
-	    }
-	  }
+
+			// TODO We're only getting raw data now. We'll have to use the
+			// server IP as well for extra information.
+			if (messageMap != null) {
+				String eventJson = (String) messageMap.get("raw");
+
+				// Write the consumed JSON to Log file.
+				LOG.info("Kafka Consumer Log writer  :\n" + eventJson + "\n");
+				activityLogger.info(eventJson);
+			} else {
+				LOG.error("Message Consumer Error messageMap : No data found");
+				continue;
+			}
+		}
+	}
+
+	void consumedError() {
+		Map<String, Integer> topicErrorCountMap = new HashMap<String, Integer>();
+		Integer noOfThread = 1;
+		topicErrorCountMap.put(KAFKA_FILE_ERROR_TOPIC, new Integer(noOfThread));
+		Map<String, List<KafkaStream<byte[], byte[]>>> consumerErrorMap = consumer.createMessageStreams(topicErrorCountMap);
+		KafkaStream<byte[], byte[]> errStream = consumerErrorMap.get(KAFKA_FILE_ERROR_TOPIC).get(0);
+		ConsumerIterator<byte[], byte[]> itErr = errStream.iterator();
+		while (itErr.hasNext()) {
+			String message = new String(itErr.next().message());
+			Gson gson = new Gson();
+			Map<String, String> messageMap = new HashMap<String, String>();
+			try {
+				messageMap = gson.fromJson(message, messageMap.getClass());
+			} catch (Exception e) {
+				LOG.error("Message Consumer Error: " + e.getMessage());
+				continue;
+			}
+
+			// TODO We're only getting raw data now. We'll have to use the
+			// server IP as well for extra information.
+			if (messageMap != null) {
+				String eventJson = (String) messageMap.get("raw");
+
+				// Write the consumed JSON to Log file.
+				LOG.info("Kafka Error Log writer  :\n" + eventJson + "\n");
+				activityErrorLog.info(eventJson);
+			} else {
+				LOG.error("Message Consumer Error messageMap : No data found");
+				continue;
+			}
+		}
+
+	}
+
+	public static void main(String args[]) {
+		KafkaLogConsumer kafka = new KafkaLogConsumer();
+
+		kafka.run();
+	}
 }

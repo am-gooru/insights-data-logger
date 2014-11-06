@@ -18,6 +18,8 @@ public interface Constants {
 	
 	public String METRICS = "metrics";
 	
+	public String CONFIG_SETTINGS = "config_settings";
+	
 	public String LASTACCESSEDUSERUID = "last~accessed~useruid";
 	
 	public String LASTACCESSEDUSER = "last~accessed~user";

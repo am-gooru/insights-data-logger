@@ -24,6 +24,8 @@ public interface Constants {
 	
 	public String LASTACCESSED = "last~accessed";
 	
+	public String CONFIG_SETTINGS = "config_settings";
+	
 	public String EVENTNAME = "eventName";
 	
 	public String CONTENTGOORUOID = "contentGooruId";

@@ -34,10 +34,8 @@ import org.slf4j.LoggerFactory;
 public class DataLoader  {
 
     static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
-	private static String KAFKA_FILE_TOPIC;
 
     public DataLoader() {
-    	KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
 	}
     
     public static void main(String[] args) throws java.text.ParseException {
@@ -55,7 +53,7 @@ public class DataLoader  {
     	    
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
-    	    	KafkaLogConsumer consumerThread = new KafkaLogConsumer(KAFKA_FILE_TOPIC);
+    	    	KafkaLogConsumer consumerThread = new KafkaLogConsumer();
     	        consumerThread.start();
     		    return;
     	    }
