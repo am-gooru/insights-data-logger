@@ -29,13 +29,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.json.JSONObject;
 import org.kafka.log.writer.consumer.KafkaLogConsumer;
@@ -63,17 +62,14 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
-		this.errorLogTopic = "error"+System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
+		this.errorLogTopic = "error"+topic;
 	
-		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
-		
-		LOG.info("Kafka Erro File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
-		
+		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
+		props.put("metadata.broker.list",kafkaIp + ":" + port);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", kafkaIp + ":" + port);		
-		props.put("producer.type", producerType);
-		props.put("compression.codec", "1");
-		
+		props.put("request.required.acks", "1");
+		props.put("producer.type",producerType);
 		
 		try{
 		producer = new Producer<String, String>(
@@ -103,41 +99,24 @@ public class KafkaLogProducer
 	}
 	
 	 private void sendErrorEvent(String message) {
-         ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
+		 KeyedMessage<String, String> data = new KeyedMessage<String, String>(errorLogTopic,message);
          producer.send(data);
 	 }
 
 	 
 	private void send(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
 		producer.send(data);
 	}
-
-	public static void main(String args[]) {
-		try{
-		CommandLineParser parser = new PosixParser();
-		Options options = new Options();
-		 options.addOption( "kT", "kafkaTopic", true, "topic for the kafka server" );
-	     options.addOption( "mess", "message", true, "message to be passed" );
-	     CommandLine line = parser.parse( options, args );
-	     String topic = "test";
-	     String message = "data";
-	     if(line.hasOption("kT")) {
-             topic = line.getOptionValue( "kT");
-         }
-	     if(line.hasOption("mess")) {
-	    	 message = line.getOptionValue( "mess");
-         }
-	     
-	     KafkaLogProducer kafkaLogProducer = new KafkaLogProducer();
-	     String kafkaIp = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_PRODUCER_IP");
-	     String kafkaPort = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
-	     String kafkaProducerType = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-	    // kafkaIp, String port, String topic, String producerType
-		KafkaLogProducer producer = new KafkaLogProducer(kafkaIp,kafkaPort, topic,kafkaProducerType);
-		producer.sendEventLog(message);
-		}catch(Exception e){
-			e.printStackTrace();
+public static void main(String[] args) throws InterruptedException{
+		int i =0;
+//		KafkaLogProducer kafkaProducer = new KafkaLogProducer("107.170.233.25","9092","test","sync");
+		KafkaLogProducer kafkaProducer = new KafkaLogProducer("107.170.233.25","9092","kafka-logwritter-log","sync");
+		
+		while(i<10){
+		kafkaProducer.send("sended data");
+		Thread.sleep(2000);
+		i++;
 		}
 	}
 }
