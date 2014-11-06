@@ -394,9 +394,9 @@ public class EventController {
 		}
 	}
 	@RequestMapping(value = "/read/row", method = RequestMethod.GET)
-	public void reasUsingCql(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "whereColumn", required = true) String whereColumn,@RequestParam(value = "columnValue", required = true) String value,HttpServletResponse response) {
+	public void readUsingCql(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "whereColumn", required = true) String whereColumn,@RequestParam(value = "columnValue", required = true) String value,HttpServletResponse response) {
 	
-		
+		Map<String, Object> resultMap = eventService.readUsingCql(cfName, whereColumn, value);
 		JSONObject resultJson = new JSONObject(resultMap);
 
 		try {
