@@ -9,14 +9,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -521,6 +524,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		XContentBuilder contentBuilder = null;
 		try {
+				
 				contentBuilder = jsonBuilder().startObject();			
 				for(Map.Entry<String, Object> entry : eventMap.entrySet()){
 					String rowKey = null;  				
@@ -537,6 +541,30 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			
 			indexingProd(indexName, indexType, id, contentBuilder, 0);
 			indexingDev(indexName, indexType, id, contentBuilder, 0);
+	}
+	
+	public void createMapping(Map<String, Object> eventMap, String indexName, String indexType) {
+		XContentBuilder contentBuilder = null;
+		try {
+
+			contentBuilder = XContentFactory.jsonBuilder().startObject().startObject(indexType).startObject("properties");
+			Iterator<Map.Entry<String, Object>> iterator = eventMap.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Entry<String, Object> entry = iterator.next();
+				String rowKey = null;
+				if (beFieldName.containsKey(entry.getKey())) {
+					rowKey = beFieldName.get(entry.getKey());
+				}
+				contentBuilder.startObject(rowKey).field("type", fieldDataTypes.get(rowKey)).field("index", "not_analysed").endObject();
+
+			}
+			contentBuilder.endObject().endObject().endObject();
+		} catch (IOException e) {
+			logger.info("Create Mapping Failed ",e);	
+		}
+
+		getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+
 	}
 	
 	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
