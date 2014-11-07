@@ -473,7 +473,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					.getAllRows()
-					.withColumnRange(new RangeBuilder().setMaxSize(10).build())
+					.withColumnRange(new RangeBuilder().build())
 			        .setExceptionCallback(new ExceptionCallback() {
 			        @Override
 			        public boolean onException(ConnectionException e) {
