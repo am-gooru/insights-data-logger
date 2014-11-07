@@ -1149,7 +1149,7 @@ public class CassandraDataLoader implements Constants {
     		for(long i = startVal ; i < endVal ; i++){
     			m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     			logger.info("collection item Id : "+ i);
-    				resource = baseDao.readIndexedColumn(cfName, "content_id", i,0);
+    				resource = baseDao.readIndexedColumn(cfName, "collection_content_id", i,0);
     				if(resource != null && resource.size() > 0){
     					for(int k = 0 ; i < resource.size() ; k++){
     						for(int l =0 ; l < resource.getRowByIndex(k).getColumns().size() ;l++){
