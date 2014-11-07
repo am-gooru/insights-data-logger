@@ -1171,7 +1171,7 @@ public class CassandraDataLoader implements Constants {
     						
     					}
     				}    			
-    				//m.execute();
+    				m.execute();
     		}
     			long stop = System.currentTimeMillis();
     			
