@@ -62,6 +62,8 @@ public enum ColumnFamily {
 	
 	RESOURCE("resource"),
 	
+	TABLE_DATATYPE("table_datatypes"),
+	
 	;
 	
 	String name;
