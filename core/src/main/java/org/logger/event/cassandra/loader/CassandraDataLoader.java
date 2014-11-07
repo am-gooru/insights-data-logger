@@ -230,7 +230,7 @@ public class CassandraDataLoader implements Constants {
         configuredIp = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"schedular~ip",0).getStringValue("ip_address", null);
         
         tablesDataTypeCache = new HashMap<String, Map<String,String>>();
-        Rows<String, String> tableDataTypeRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
+        Rows<String, String> tableDataTypeRows = baseDao.readAllRows(ColumnFamily.TABLE_DATATYPE.getColumnFamily(),0);
 
         for (Row<String, String> row : tableDataTypeRows) {
         	Map<String,String> columnMap = new HashMap<String, String>();
