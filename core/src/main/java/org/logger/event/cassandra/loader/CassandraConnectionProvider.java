@@ -45,11 +45,17 @@ import org.springframework.stereotype.Repository;
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
 import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
+import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.ConsistencyLevel;
+import com.netflix.astyanax.retry.ConstantBackoff;
+import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
 @Repository
@@ -69,6 +75,7 @@ public class CassandraConnectionProvider {
     private static String AWS_CASSANDRA_IP;
     private static String INSIHGHTS_DEV_ES_IP;
     private static String INSIHGHTS_PROD_ES_IP;
+    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
     
     public void init(Map<String, String> configOptionsMap) {
 
@@ -266,10 +273,11 @@ public class CassandraConnectionProvider {
     }
     
     public final void registerDevIndices() {
-		for (ESIndexices esIndex : ESIndexices.values()) {
-			String indexName = esIndex.getIndex();
+    	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
+		System.out.print("Dev indexingVersion ::::::: " + indexingVersion);
+    	for (ESIndexices esIndex : ESIndexices.values()) {
+			String indexName = esIndex.getIndex()+"_"+indexingVersion;
 			for (String indexType : esIndex.getType()) {
-				//String setting = EsMappingUtil.getSettingConfig(indexType);
 				String mapping = EsMappingUtil.getMappingConfig(indexType);
 				try {
 					CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
@@ -285,10 +293,11 @@ public class CassandraConnectionProvider {
 		}
 	}
     public final void registerProdIndices() {
-		for (ESIndexices esIndex : ESIndexices.values()) {
-			String indexName = esIndex.getIndex();
+    	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
+		System.out.print("Dev indexingVersion ::::::: " + indexingVersion);
+    	for (ESIndexices esIndex : ESIndexices.values()) {
+			String indexName = esIndex.getIndex()+"_"+indexingVersion;
 			for (String indexType : esIndex.getType()) {
-				//String setting = EsMappingUtil.getSettingConfig(indexType);
 				String mapping = EsMappingUtil.getMappingConfig(indexType);
 				try {
 					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
@@ -301,5 +310,32 @@ public class CassandraConnectionProvider {
 				}
 			}
 		}
+	}
+    
+    public ColumnList<String> readWithKey(Keyspace keyspace,String cfName,String key){
+        
+    	ColumnList<String> result = null;
+    	try {
+              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (ConnectionException e) {
+        	e.printStackTrace();
+        }
+    	
+    	return result;
+    }
+    
+    public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
+
+		ColumnFamily<String, String> aggregateColumnFamily;
+
+		aggregateColumnFamily = new ColumnFamily<String, String>(columnFamilyName, StringSerializer.get(), StringSerializer.get());
+
+		return aggregateColumnFamily;
 	}
 }
