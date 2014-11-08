@@ -555,7 +555,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				if (beFieldName.containsKey(entry.getKey())) {
 					rowKey = beFieldName.get(entry.getKey());
 				}
-				contentBuilder.startObject(rowKey).field("type", fieldDataTypes.get(rowKey)).field("index", "not_analysed").endObject();
+				contentBuilder.startObject(rowKey).field("type", beFieldName.containsKey(entry.getKey()) ? beFieldName.get(entry.getKey()) : "String").field("index", "not_analysed").endObject();
 
 			}
 			contentBuilder.endObject().endObject().endObject();
