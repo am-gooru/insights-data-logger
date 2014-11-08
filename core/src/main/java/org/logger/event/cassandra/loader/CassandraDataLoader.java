@@ -1291,7 +1291,7 @@ public class CassandraDataLoader  implements Constants {
     			eventMap.put("category", resource.getStringValue("category", null));
     			eventMap.put("typeName", resource.getStringValue("type_name", null));
     			eventMap.put("license", resource.getStringValue("license_name", null));
-    			eventMap.put("contentOrganizationId", resource.getStringValue("oragnization_uid", null));
+    			eventMap.put("contentOrganizationId", resource.getStringValue("organization_uid", null));
     			
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
