@@ -13,6 +13,10 @@
 "type":"String",
 "index":"not_analyzed"
 },
+"reaction_type":{
+"type":"String",
+"index":"not_analyzed"
+},
 "gooru_oid":{
 "type":"String",
 "index":"not_analyzed"
