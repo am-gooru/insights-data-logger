@@ -132,6 +132,8 @@ public interface Constants {
 	
 	public String VIEWUPDATEENDPOINT = "viewCountAPI";
 	
+	public String INDEXINGVERSION = "index_version";
+	
 	public String SEARCHINDEXAPI = "searchIndexAPI";
 	
 	public String QUESTION = "question";

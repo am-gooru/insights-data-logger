@@ -521,7 +521,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 
 
 	@Async
-	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
+	public void saveInESIndexV1(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		XContentBuilder contentBuilder = null;
 		try {
 				
@@ -543,7 +543,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			indexingDev(indexName, indexType, id, contentBuilder, 0);
 	}
 	
-	public void createMapping(Map<String, Object> eventMap, String indexName, String indexType) {
+	public void saveInESIndex(Map<String, Object> eventMap, String indexName, String indexType,String id) {
 		XContentBuilder contentBuilder = null;
 		try {
 
@@ -563,14 +563,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			logger.info("Create Mapping Failed ",e);	
 		}
 
-		getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+		indexingProd(indexName, indexType, id, contentBuilder, 0);
+		//indexingDev(indexName, indexType, id, contentBuilder, 0);
+		
+		//getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
 
 	}
 	
 	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		
 		try{
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			//getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
 				try {
@@ -590,7 +594,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	public void indexingDev(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			//getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			getDevESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
 				try {
