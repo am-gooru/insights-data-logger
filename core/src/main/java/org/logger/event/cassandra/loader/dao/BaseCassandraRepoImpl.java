@@ -728,7 +728,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
     }
-    public void generateNonCounter(String cfName,String key,String columnName, Integer value ,MutationBatch m) {
+    public void generateNonCounter(String cfName,String key,String columnName, int value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
     }

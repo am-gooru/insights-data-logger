@@ -1152,16 +1152,22 @@ public class CassandraDataLoader implements Constants {
     				resource = baseDao.readIndexedColumn(cfName, "collection_content_id", i,0);
     				if(resource != null && resource.size() > 0){
     					for(int k = 0 ; k < resource.size() ; k++){
+    						logger.info("\n Key : "+ resource.getRowByIndex(k).getKey());
     						for(int l =0 ; l < resource.getRowByIndex(k).getColumns().size() ;l++){
-    							logger.info("\n Key : "+ resource.getRowByIndex(k).getKey());
     							if(columnType.get(resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName().trim()).equalsIgnoreCase("text")){    								
     								baseDao.generateNonCounter(cfName, resource.getRowByIndex(k).getKey(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getStringValue(), m);
+    								
+    								logger.info("\n Column : "+ resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName() + " - value : " + resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getStringValue());
+    								
     							}
     							if(columnType.get(resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName().trim()).equalsIgnoreCase("bigint")){    								
     								baseDao.generateNonCounter(cfName, resource.getRowByIndex(k).getKey(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getLongValue(), m);
+    								
+    								logger.info("\n Column : "+ resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName() + " - value : " + resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getLongValue());
     							}
     							if(columnType.get(resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName().trim()).equalsIgnoreCase("int")){    								
     								baseDao.generateNonCounter(cfName, resource.getRowByIndex(k).getKey(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getIntegerValue(), m);
+    								logger.info("\n Column : "+ resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName() + " - value : " + resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getIntegerValue());
     							}
     						}
     						
