@@ -555,10 +555,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				if (beFieldName.containsKey(entry.getKey())) {
 					rowKey = beFieldName.get(entry.getKey());
 				}
-				contentBuilder.startObject(rowKey).field("type", beFieldName.containsKey(entry.getKey()) ? beFieldName.get(entry.getKey()) : "String").field("index", "not_analysed").endObject();
-
+				if(rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != ""){
+					contentBuilder.startObject(rowKey).field("type", beFieldName.containsKey(entry.getKey()) ? beFieldName.get(entry.getKey()) : "String").field("index", "not_analysed").endObject();
+					contentBuilder.endObject().endObject().endObject();
+				}
 			}
-			contentBuilder.endObject().endObject().endObject();
 		} catch (IOException e) {
 			logger.info("Create Mapping Failed ",e);	
 		}

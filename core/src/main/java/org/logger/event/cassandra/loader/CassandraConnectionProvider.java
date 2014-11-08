@@ -274,7 +274,6 @@ public class CassandraConnectionProvider {
     
     public final void registerDevIndices() {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
-		System.out.print("Dev indexingVersion ::::::: " + indexingVersion);
     	for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex()+"_"+indexingVersion;
 			for (String indexType : esIndex.getType()) {
@@ -294,7 +293,6 @@ public class CassandraConnectionProvider {
 	}
     public final void registerProdIndices() {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
-		System.out.print("Dev indexingVersion ::::::: " + indexingVersion);
     	for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex()+"_"+indexingVersion;
 			for (String indexType : esIndex.getType()) {
