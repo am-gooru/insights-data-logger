@@ -556,8 +556,11 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 					rowKey = beFieldName.get(entry.getKey());
 				}
 				if(rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != ""){
-					contentBuilder.startObject(rowKey).field("type", beFieldName.containsKey(entry.getKey()) ? beFieldName.get(entry.getKey()) : "String").field("index", "not_analysed").endObject();
-					contentBuilder.endObject().endObject().endObject();
+					contentBuilder.startObject(rowKey)
+					.field("type", beFieldName.containsKey(entry.getKey()) ? beFieldName.get(entry.getKey()) : "String")
+					.field("index", "not_analysed")
+					.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"))
+					.endObject();
 				}
 			}
 		} catch (IOException e) {
