@@ -101,6 +101,10 @@
 "type":"long",
 "index":"not_analyzed"
 },
+"text":{
+"type":"String",
+"index":"not_analyzed"
+},
 "context":{
 "type":"String",
 "index":"not_analyzed"
