@@ -1163,10 +1163,6 @@ public class CassandraDataLoader implements Constants {
     							if(columnType.get(resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName().trim()).equalsIgnoreCase("int")){    								
     								baseDao.generateNonCounter(cfName, resource.getRowByIndex(k).getKey(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getIntegerValue(), m);
     							}
-    							if(columnType.get(resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName().trim()).equalsIgnoreCase("int")){    								
-    								baseDao.generateNonCounter(cfName, resource.getRowByIndex(k).getKey(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getName(), resource.getRowByIndex(k).getColumns().getColumnByIndex(l).getIntegerValue(), m);
-    							}
-    							
     						}
     						
     					}
@@ -1189,40 +1185,26 @@ public class CassandraDataLoader implements Constants {
     public void postStatMigration(String startTime , String endTime,String customEventName) {
     	
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings",0);
-    	ColumnList<String> jobIds = baseDao.readWithKey(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids",0);
     	
     	Collection<String> columnList = new ArrayList<String>();
-    	columnList.add("count~views");
-    	columnList.add("count~ratings");
     	
     	long jobCount = Long.valueOf(settings.getColumnByName("running_job_count").getStringValue());
     	long totalJobCount = Long.valueOf(settings.getColumnByName("total_job_count").getStringValue());
     	long maxJobCount = Long.valueOf(settings.getColumnByName("max_job_count").getStringValue());
     	long allowedCount = Long.valueOf(settings.getColumnByName("allowed_count").getStringValue());
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
-    	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
-    	
-    	String runningJobs = jobIds.getColumnByName("job_names").getStringValue();
     		
     	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
-    		long start = System.currentTimeMillis();
     		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
     		long startVal = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     		long endVal = (endIndex + startVal);
     		jobCount = (jobCount + 1);
     		totalJobCount = (totalJobCount + 1);
-    		String jobId = "job-"+UUID.randomUUID();
     		
-			/*baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "start_count", ""+startVal);
-			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "end_count",  ""+endVal);
-			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Inprogress");*/
-			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(),"stat_job_ids", "job_names", runningJobs+","+jobId);
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "total_job_count", ""+totalJobCount);
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "running_job_count", ""+jobCount);
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"stat_job_settings", "indexed_count", ""+endVal);
     		
-    		
-    		JSONArray resourceList = new JSONArray();
     		try {
 	    		for(long i = startVal ; i <= endVal ; i++){
 	    			logger.info("contentId : "+ i);
@@ -1231,8 +1213,6 @@ public class CassandraDataLoader implements Constants {
 	    			if(resource != null && resource.size() > 0){
     					ColumnList<String> columns = resource.getRowByIndex(0).getColumns();
     					
-    					String resourceType = columns.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection") ? "scollection" : "resource";
-
     					gooruOid = columns.getColumnByName("gooru_oid").getStringValue(); 
 	    				
     					logger.info("gooruOid : {}",gooruOid);
@@ -1242,45 +1222,20 @@ public class CassandraDataLoader implements Constants {
 	    					long gooruView = columns.getLongValue("views_count", 0L);
 	    					
 	    					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+gooruOid, columnList,0);
-	    					JSONObject resourceObj = new JSONObject();
-	    					for(Column<String> detail : vluesList) {
-	    						resourceObj.put("gooruOid", gooruOid);
-	    				
-	    						if(detail.getName().contains("views")){
-	    							insightsView = detail.getLongValue();
-	    							long balancedView = (gooruView - insightsView);
-	    							if(balancedView != 0){
-	    								baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, "count~views", balancedView);
-	    							}
-	    							logger.info("Generating resource Object : {}",balancedView);
-	    							resourceObj.put("views", (insightsView + balancedView));
+
+	    							insightsView = vluesList.getLongValue("count~views", 0L);
+	    							if(insightsView < gooruView){
+		    							long balancedView = (gooruView - insightsView);
+		    							if(balancedView != 0){
+		    								baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, "count~views", balancedView);
+		    							}
 	    						}
-	    						
-	    						if(detail.getName().contains("ratings")){
-	    							resourceObj.put("ratings", detail.getLongValue());
-	    						}
-	    						resourceObj.put("resourceType", resourceType);
-	    					}
-	    					resourceList.put(resourceObj);
 	    				}
     				
 	    			}
 	    		}
-	    		try{
-	    			if((resourceList.length() != 0)){
-	    				this.callStatAPI(resourceList, null);
-	    			}
-	    			long stop = System.currentTimeMillis();
-	    			
-	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "job_status", "Completed");
-	    			baseDao.saveStringValue(ColumnFamily.RECENTVIEWEDRESOURCES.getColumnFamily(), jobId, "run_time", (stop-start)+" ms");
-	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "total_time", ""+(totalTime + (stop-start)));
-	    			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "running_job_count", ""+(jobCount - 1));
-	    			
-	    		}catch(Exception e){
-	    			logger.info("Error in search API : {}",e);
-	    		}
 	    		
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat_job_settings", "running_job_count", ""+(jobCount - 1));
     		} catch (Exception e) {
     			logger.info("Something went wrong : {}",e);
     		}
