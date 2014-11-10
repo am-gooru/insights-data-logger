@@ -1512,7 +1512,7 @@ public class CassandraDataLoader  implements Constants {
     
     public void catalogMigration(String startTime , String endTime,String loaderType) {
     	
-    	if(loaderType != null && !loaderType.equalsIgnoreCase("loader")){
+    	if(loaderType == null){
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
@@ -1525,6 +1525,7 @@ public class CassandraDataLoader  implements Constants {
     	long indexedCount = Long.valueOf(settings.getColumnByName("indexed_count").getStringValue());
     	long totalTime = Long.valueOf(settings.getColumnByName("total_time").getStringValue());
     		
+    	
     	if((jobCount < maxJobCount) && (indexedCount < allowedCount) ){
     		long start = System.currentTimeMillis();
     		long endIndex = Long.valueOf(settings.getColumnByName("max_count").getStringValue());
