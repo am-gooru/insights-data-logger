@@ -13,6 +13,10 @@
 "type":"String",
 "index":"not_analyzed"
 },
+"reaction_type":{
+"type":"String",
+"index":"not_analyzed"
+},
 "gooru_oid":{
 "type":"String",
 "index":"not_analyzed"
@@ -99,6 +103,10 @@
 },
 "total_timespent_ms":{
 "type":"long",
+"index":"not_analyzed"
+},
+"text":{
+"type":"String",
 "index":"not_analyzed"
 },
 "context":{
