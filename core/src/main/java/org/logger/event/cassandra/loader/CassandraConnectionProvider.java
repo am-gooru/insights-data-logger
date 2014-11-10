@@ -295,18 +295,18 @@ public class CassandraConnectionProvider {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
     	for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex()+"_"+indexingVersion;
-			for (String indexType : esIndex.getType()) {
-				String mapping = EsMappingUtil.getMappingConfig(indexType);
-				try {
-					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
-					prepareProdCreate.addMapping(indexType, mapping);
-					prepareProdCreate.execute().actionGet();
-					logger.info("Prod Index created : " + indexName + "\n");
-					
+			try {
+				for (String indexType : esIndex.getType()) {
+					String mapping = EsMappingUtil.getMappingConfig(indexType);
+						CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
+						prepareProdCreate.addMapping(indexType, mapping);
+						prepareProdCreate.execute().actionGet();
+						
+				}
+				logger.info("Prod Index created : " + indexName + "\n");
 				} catch (Exception exception) {
 					logger.info("Already Index availble : " + indexName + "\n");
 				}
-			}
 		}
 	}
     
