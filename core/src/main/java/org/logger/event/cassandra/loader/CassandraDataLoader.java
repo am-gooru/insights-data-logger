@@ -1512,7 +1512,7 @@ public class CassandraDataLoader  implements Constants {
     
     public void catalogMigration(String startTime , String endTime,String loaderType) {
     	
-    	if(!loaderType.equalsIgnoreCase("loader")){
+    	if(loaderType != null && !loaderType.equalsIgnoreCase("loader")){
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
