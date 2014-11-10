@@ -350,10 +350,10 @@ public class CassandraDataLoader  implements Constants {
      * 
      * Generate EventData Object 
      */
-    public void handleLogMessage(String fields, Long startTime,
-            String userAgent, String userIp, Long endTime, String apiKey,
+    public void handleLogMessage(String fields, long startTime,
+            String userAgent, String userIp, long endTime, String apiKey,
             String eventName, String gooruOId, String contentId, String query,String gooruUId,String userId,String gooruId,String type,
-            String parentEventId,String context,String reactionType,String organizationUid,Long timeSpentInMs,int[] answerId,int[] attemptStatus,int[] trySequence,String requestMethod, String eventId) {
+            String parentEventId,String context,String reactionType,String organizationUid,long timeSpentInMs,int[] answerId,int[] attemptStatus,int[] trySequence,String requestMethod, String eventId) {
     	EventData eventData = new EventData();
     	eventData.setEventId(eventId);
         eventData.setStartTime(startTime);
@@ -408,8 +408,8 @@ public class CassandraDataLoader  implements Constants {
         
         try {
 	         ColumnList<String> existingRecord = null;
-	         Long startTimeVal = null;
-	         Long endTimeVal = null;
+	         long startTimeVal = 0;
+	         long endTimeVal = 0;
 
 	         if (eventData.getEventId() != null) {
 	        	 existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getEventId(),0);
@@ -420,7 +420,7 @@ public class CassandraDataLoader  implements Constants {
 			         if ("stop".equalsIgnoreCase(eventData.getEventType())) {
 			        	 endTimeVal = existingRecord.getLongValue("end_time", null);
 			         }
-			         if (startTimeVal == null && endTimeVal == null) {
+			         if (startTimeVal == 0 && endTimeVal == 0) {
 			         	// This is a duplicate event. Don't do anything!
 			         	return;
 			         }
@@ -587,9 +587,9 @@ public class CassandraDataLoader  implements Constants {
     
     private void updateEventObjectCompletion(EventObject eventObject) throws ConnectionException {
 
-    	Long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();
+    	long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();
         long timeInMillisecs = 0L;
-        if (endTime != null && startTime != null) {
+        if (endTime != 0 && startTime != 0) {
             timeInMillisecs = endTime - startTime;
         }
         boolean eventComplete = false;
@@ -612,7 +612,7 @@ public class CassandraDataLoader  implements Constants {
 			    eventComplete = true;
 			}
 			// Time taken for the event in milliseconds derived from the start / stop events.
-			if (endTime != null && startTime != null) {
+			if (endTime != 0 && startTime != 0) {
 				timeInMillisecs = endTime - startTime;
 			}
 			if (timeInMillisecs > 1147483647) {
@@ -634,7 +634,7 @@ public class CassandraDataLoader  implements Constants {
         if(!StringUtils.isEmpty(eventObject.getParentEventId())){
         	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventObject.getParentEventId(),0);
         	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
-        		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
+        		long parentStartTime = existingParentRecord.getLongValue("start_time", null);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventObject.getParentEventId(), "end_time", endTime);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventObject.getParentEventId(), "time_spent_in_millis", (endTime-parentStartTime));
         	}
@@ -656,10 +656,10 @@ public class CassandraDataLoader  implements Constants {
     	Calendar cal = Calendar.getInstance();
     	
     	String dateId = null;
-    	Long weekId = null;
-    	Long monthId = null;
+    	long weekId = 0;
+    	long monthId = 0;
     	String eventId = null;
-    	Long yearId = null;
+    	long yearId = 0;
     	String processingDate = null;
     	
     	//Get all the event name and store for Caching
@@ -827,7 +827,7 @@ public class CassandraDataLoader  implements Constants {
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
     	}
     	
-    	for (Long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
+    	for (long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
 
     		String currentDate = dateFormatter.format(new Date(startDate));
     		logger.info("Processing Date : {}" , currentDate);
@@ -1305,7 +1305,7 @@ public class CassandraDataLoader  implements Constants {
 				}
 				ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId,0);
 				if(questionCount != null && !questionCount.isEmpty()){
-					Long questionCounts = questionCount.getLongValue("questionCount", 0L);
+					long questionCounts = questionCount.getLongValue("questionCount", 0L);
 					eventMap.put("questionCount", questionCounts);
 					if(questionCounts > 0L){
 						if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
@@ -1336,91 +1336,91 @@ public class CassandraDataLoader  implements Constants {
 
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
-    			Long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
+    			long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
     			if(root == 20000L){
-	    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
-	    			Long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
-	    			if(value != null && value != 0L &&  depth == 1L){    				
+	    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
+	    			long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
+	    			if(value != 0L &&  depth == 1L){    				
 	    				subjectCode.add(value);
 	    			} 
-	    			else if(value != null && depth == 2L){
+	    			else if(depth == 2L){
 	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-	    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-	    			if(subject != null && subject != 0L)
+	    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+	    			if(subject != 0L)
 	    				subjectCode.add(subject);
-	    			if(value != null && value != 0L)
+	    			if(value != 0L)
 	    				courseCode.add(value);
 	    			}
 	    			
-	    			else if(value != null && depth == 3L){
+	    			else if(depth == 3L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-		    			if(subject != null && subject != 0L)
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			if(subject != 0L)
 		    			subjectCode.add(subject);
-		    			if(course != null && course != 0L)
+		    			if(course != 0L)
 	    				courseCode.add(course);
-		    			if(value != null && value != 0L)
+		    			if(value != 0L)
 	    				unitCode.add(value);
 	    			}
-	    			else if(value != null && depth == 4L){
+	    			else if(depth == 4L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
-		    				if(subject != null && subject != 0L)
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    				if(subject != 0L)
 			    			subjectCode.add(subject);	
-		    				if(course != null && course != 0L)
+		    				if(course != 0L)
 		    				courseCode.add(course);
-		    				if(unit != null && unit != 0L)
+		    				if(unit != 0L)
 		    				unitCode.add(unit);
-		    				if(value != null && value != 0L)
+		    				if(value != 0L)
 		    				topicCode.add(value);
 	    			}
-	    			else if(value != null && depth == 5L){
+	    			else if(depth == 5L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
-		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
-		    				if(subject != null && subject != 0L)
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
+		    				if(subject != 0L)
 			    			subjectCode.add(subject);
-			    			if(course != null && course != 0L)
+			    			if(course != 0L)
 		    				courseCode.add(course);
-		    				if(unit != null && unit != 0L)
+		    				if(unit != 0L)
 		    				unitCode.add(unit);
-		    				if(topic != null && topic != 0L)
+		    				if(topic != 0L)
 		    				topicCode.add(topic);
-		    				if(value != null && value != 0L)
+		    				if(value != 0L)
 		    				lessonCode.add(value);
 	    			}
-	    			else if(value != null && depth == 6L){
+	    			else if(depth == 6L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			Long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-		    			Long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-		    			Long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
-		    			Long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
-		    			Long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : 0L;
-		    			if(subject != null && subject != 0L)
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
+		    			long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : 0L;
+		    			if(subject != 0L)
 		    			subjectCode.add(subject);
-		    			if(course != null && course != 0L)
+		    			if(course != 0L)
 	    				courseCode.add(course);
-	    				if(unit != null && unit != 0L)
+	    				if(unit != 0L && unit != 0)
 	    				unitCode.add(unit);
-	    				if(topic != null && topic != 0L)
+	    				if(topic != 0L)
 	    				topicCode.add(topic);
-	    				if(lesson != null && lesson != 0L)
+	    				if(lesson != 0L)
 	    				lessonCode.add(lesson);
-	    				if(value != null && value != 0L)
+	    				if(value != 0L)
 	    				conceptCode.add(value);
 	    			}
-	    			else if(value != null && value != 0L){
+	    			else if(value != 0L){
 	    				taxArray.add(value);
 	    				
 	    			}
     		}else{
-    			Long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
-    			if(value != null && value != 0L){
+    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
+    			if(value != 0L){
     				taxArray.add(value);
     			}
     		}
@@ -2153,7 +2153,7 @@ public class CassandraDataLoader  implements Constants {
 		try{
 		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings",0);
-		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
+		for (long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
 			JSONArray resourceList = new JSONArray();
 			logger.info("Start Date : {} ",String.valueOf(startDate));
 			ColumnList<String> recentReources =  baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+String.valueOf(startDate),0);
@@ -2670,7 +2670,7 @@ public class CassandraDataLoader  implements Constants {
         if(!StringUtils.isEmpty(eventData.getParentEventId())){
         	ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(),eventData.getParentEventId(),0);
         	if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
-        		Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
+        		long parentStartTime = existingParentRecord.getLongValue("start_time", null);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData.getParentEventId(), "end_time", endTime);
         		baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData.getParentEventId(), "time_spent_in_millis", (endTime-parentStartTime));
         		
