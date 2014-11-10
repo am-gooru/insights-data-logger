@@ -1510,8 +1510,9 @@ public class CassandraDataLoader  implements Constants {
 		
     }
     
-    public void catalogMigration(String startTime , String endTime,String customEventName) {
+    public void catalogMigration(String startTime , String endTime,String loaderType) {
     	
+    	if(!loaderType.equalsIgnoreCase("loader")){
     	ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings",0);
     	
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
@@ -1562,7 +1563,27 @@ public class CassandraDataLoader  implements Constants {
     	}else{    		
     		logger.info("Job queue is full! Or Job Reached its allowed end");
     	}
-		
+    	}else{
+    		try{
+    		long startVal = Long.valueOf(startTime);
+    		long endVal = Long.valueOf(endTime);
+    		Rows<String, String> resource = null;
+    		MutationBatch m = null;
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+    		for(long i = startVal ; i < endVal ; i++){
+    			logger.info("contentId : "+ i);
+    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
+    				if(resource != null && resource.size() > 0){
+    					this.getResourceAndIndex(resource);
+    				}
+    			
+    		}
+    			m.execute();
+    		}catch(Exception e){
+    			e.printStackTrace();
+    		}
+    	}
     }
 
     public void MigrateResourceCF(long start,long end) {
