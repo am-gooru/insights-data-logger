@@ -1587,8 +1587,8 @@ public class CassandraDataLoader  implements Constants {
     	}
     }
 
-    public void MigrateSearchCF(long start,long end){
-    	
+    public void MigrateSearchCF(Long start,Long end){
+    	logger.info("Migration started...................");
 		for(long i = start ; i < end ; i++){
 		
 			try {
@@ -1603,7 +1603,7 @@ public class CassandraDataLoader  implements Constants {
 						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
 						if(searchResource != null && searchResource.size() > 0){
 							logger.info("Migrating resource : "+ gooruOid);
-							MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+							MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 							for(int x = 0 ; x < searchResource.size(); x++){
 								
 								if(searchResource.getColumnByIndex(x).getName().equalsIgnoreCase("stas.viewCount")){
