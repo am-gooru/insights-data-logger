@@ -1599,24 +1599,117 @@ public class CassandraDataLoader  implements Constants {
 						String Key = resource.getRowByIndex(a).getKey();
 						ColumnList<String> columns = resource.getRow(Key).getColumns();
 						long viewCount = columns.getLongValue("views_count", 0L);
+						int resourceType = columns.getIntegerValue("resource_type", 0);
 						String gooruOid = columns.getStringValue("gooru_oid", null);
 						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
+						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						if(searchResource != null && searchResource.size() > 0){
 							logger.info("Migrating resource : "+ gooruOid);
-							MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 							for(int x = 0 ; x < searchResource.size(); x++){
-								
-								if(searchResource.getColumnByIndex(x).getName().equalsIgnoreCase("stas.viewCount")){
-									baseDao.generateNonCounter("resource",gooruOid,searchResource.getColumnByIndex(x).getName(), viewCount, m);
-								}else{
+								String columnName = searchResource.getColumnByIndex(x).getName(); 
+								if(columnName.equalsIgnoreCase("stas.viewCount")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, viewCount, m);
+								}else if(columnName.equalsIgnoreCase("statistics.viewsCount")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, viewCount, m);
+								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("lastModified")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getDateValue(), m);
+								}else if(columnName.equalsIgnoreCase("contentId") || columnName.equalsIgnoreCase("statistics.copiedCount") || columnName.equalsIgnoreCase("statistics.copiedLevelCount")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getLongValue(), m);
+								}else if(columnName.equalsIgnoreCase("collaboratorCount") || columnName.equalsIgnoreCase("creator.userId") || columnName.equalsIgnoreCase("frameBreaker") 
+										|| columnName.equalsIgnoreCase("isCanonical")|| columnName.equalsIgnoreCase("numOfPages") || columnName.equalsIgnoreCase("owner.userId") 
+										|| columnName.equalsIgnoreCase("resourceSourceId") || columnName.equalsIgnoreCase("statistics.hasFrameBreakerN") || columnName.equalsIgnoreCase("statistics.hasNoThumbnailN") 
+										|| columnName.equalsIgnoreCase("statistics.statusIsBroken") || columnName.equalsIgnoreCase("statistics.usedInCollectionCountN") 
+										|| columnName.equalsIgnoreCase("statistics.usedInDistCollectionCountN") || columnName.equalsIgnoreCase("statistics.usedInSCollectionCountN") ){
+			
+									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getIntegerValue(), m);
+								}
+								else if(columnName.equalsIgnoreCase("isOer")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, Boolean.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);									
+								}
+								else{
 									baseDao.generateNonCounter("resource",gooruOid,searchResource.getColumnByIndex(x).getName(), searchResource.getColumnByIndex(x).getStringValue(), m);
 								}
+								baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 0, m);
+								baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
+								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
+								
+							}
+									
+						}else{
+							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+							SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+							SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
+							
+							baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 1, m);
+							baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
+							baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
+							
+							if(columns.getColumnByName("title") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"title", columns.getColumnByName("title").getStringValue() , m);
+							}
+							if(columns.getColumnByName("description") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"description", columns.getColumnByName("description").getStringValue() , m);
 							}
 							
-							m.execute();		
-						}else{
+							if(columns.getColumnByName("last_modified") != null){
+							try{
+								baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
+							}catch(Exception e){
+								try{
+									baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
+								}catch(Exception e2){
+									baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
+								}
+							}
+							}
+							if(columns.getColumnByName("created_on") != null){
+							try{
+								baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
+							}catch(Exception e){
+									try{
+										baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()), m);
+									}catch(Exception e2){
+										baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName("last_modified").getStringValue()), m);
+									}
+								}
+							}
+							if(columns.getColumnByName("creator_uid") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"creator.userUid",columns.getColumnByName("creator_uid").getStringValue(), m);
+							}
+							if(columns.getColumnByName("user_uid") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"owner.userUid",columns.getColumnByName("user_uid").getStringValue(), m);
+							}
+							if(columns.getColumnByName("record_source") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"recordSource",columns.getColumnByName("record_source").getStringValue(), m);
+							}
+							if(columns.getColumnByName("sharing") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"sharing",columns.getColumnByName("sharing").getStringValue(), m);
+							}
+
+							if(columns.getColumnByName("organization_uid") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"organization.partyUid",columns.getColumnByName("organization_uid").getStringValue(), m);
+							}
+							if(columns.getColumnByName("thumbnail") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"thumbnail",columns.getColumnByName("thumbnail").getStringValue(), m);
+							}
+							if(columns.getColumnByName("grade") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"grade",columns.getColumnByName("grade").getStringValue(), m);
+							}
+							if(columns.getColumnByName("license_name") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"license.name",columns.getColumnByName("license_name").getStringValue(), m);
+							}
+
+							if(columns.getColumnByName("category") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"category",columns.getColumnByName("category").getStringValue(), m);
+							}
+							if(columns.getColumnByName("type_name") != null){
+								baseDao.generateNonCounter("resource",gooruOid,"resourceType",columns.getColumnByName("type_name").getStringValue(), m);
+							}		
+
+							
 							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
 						}
+						m.execute();
 					}
 				}
 			
