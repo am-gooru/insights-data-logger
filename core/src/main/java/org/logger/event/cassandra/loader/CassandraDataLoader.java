@@ -1606,6 +1606,7 @@ public class CassandraDataLoader  implements Constants {
 							logger.info("Migrating resource : "+ gooruOid);
 							for(int x = 0 ; x < searchResource.size(); x++){
 								String columnName = searchResource.getColumnByIndex(x).getName(); 
+								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 								if(columnName.equalsIgnoreCase("stas.viewCount")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, viewCount, m);
 								}else if(columnName.equalsIgnoreCase("statistics.viewsCount")){
@@ -1704,7 +1705,8 @@ public class CassandraDataLoader  implements Constants {
 							if(columns.getColumnByName("type_name") != null){
 								baseDao.generateNonCounter("resource",gooruOid,"resourceType",columns.getColumnByName("type_name").getStringValue(), m);
 							}		
-
+							baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
+							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", viewCount, m);
 							
 							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
 						}
