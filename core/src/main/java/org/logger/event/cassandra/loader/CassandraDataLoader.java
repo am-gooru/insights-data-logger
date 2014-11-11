@@ -1590,7 +1590,6 @@ public class CassandraDataLoader  implements Constants {
     public void MigrateSearchCF(Long start,Long end){
     	logger.info("Migration started...................");
 		for(long i = start ; i < end ; i++){
-		
 			try {
 			logger.info("contentId : "+ i);
 			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
