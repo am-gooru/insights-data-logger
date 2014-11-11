@@ -155,6 +155,28 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
 
+    public ColumnList<String> readSearchKey(String cfName,String key,int retryCount){
+        
+    	ColumnList<String> result = null;
+    	try {
+              result = getAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (ConnectionException e) {
+        	if(retryCount < 6){
+        		retryCount++;
+        		return readWithKey(cfName,key,retryCount);
+        	}else{
+        		e.printStackTrace();
+        	}
+        }
+    	
+    	return result;
+    }
     public ColumnList<String> readWithKey(String cfName,String key,String keySpaceType,int retryCount){
         
     	ColumnList<String> result = null;

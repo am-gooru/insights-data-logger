@@ -1587,6 +1587,47 @@ public class CassandraDataLoader  implements Constants {
     	}
     }
 
+    public void MigrateSearchCF(long start,long end){
+    	
+		for(long i = start ; i < end ; i++){
+		
+			try {
+			logger.info("contentId : "+ i);
+			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
+				if(resource != null && resource.size() > 0){
+					for(int a = 0 ; a < resource.size(); a++){
+						String Key = resource.getRowByIndex(a).getKey();
+						ColumnList<String> columns = resource.getRow(Key).getColumns();
+						long viewCount = columns.getLongValue("views_count", 0L);
+						String gooruOid = columns.getStringValue("gooru_oid", null);
+						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
+						if(searchResource != null && searchResource.size() > 0){
+							logger.info("Migrating resource : "+ gooruOid);
+							MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+							for(int x = 0 ; x < searchResource.size(); x++){
+								
+								if(searchResource.getColumnByIndex(x).getName().equalsIgnoreCase("stas.viewCount")){
+									baseDao.generateNonCounter("resource",gooruOid,searchResource.getColumnByIndex(x).getName(), viewCount, m);
+								}else{
+									baseDao.generateNonCounter("resource",gooruOid,searchResource.getColumnByIndex(x).getName(), searchResource.getColumnByIndex(x).getStringValue(), m);
+								}
+							}
+							
+							m.execute();		
+						}else{
+							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
+						}
+					}
+				}
+			
+			} catch(Exception e){
+				e.printStackTrace();
+			}
+		
+		}
+    
+    }
+    
     public void MigrateResourceCF(long start,long end) {
     	
 		for(long i = start ; i < end ; i++){
@@ -1973,8 +2014,6 @@ public class CassandraDataLoader  implements Constants {
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 
 	    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(),0);
-	    	
-	    	logger.info("vlue size : {} ",vluesList.size());
 	    	
 	    	if(vluesList != null && vluesList.size() > 0){
 	    		
