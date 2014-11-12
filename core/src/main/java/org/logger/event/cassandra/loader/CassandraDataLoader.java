@@ -1539,18 +1539,28 @@ public class CassandraDataLoader  implements Constants {
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "running_job_count", ""+jobCount);
     		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "cat_job_settings", "indexed_count", ""+endVal);
     		
-    		Rows<String, String> resource = null;
     		MutationBatch m = null;
     		try {
     		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
+    			final long contentId = i;
+    			final Thread indexingThread = new Thread(new Runnable() {
+    	    	  	@Override
+    	    	  	public void run(){
+    	    	  	Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId,0);
     				if(resource != null && resource.size() > 0){
-    					this.getResourceAndIndex(resource);
+    					try {
+							getResourceAndIndex(resource);
+						} catch (ParseException e) {
+							e.printStackTrace();
+						}
     				}
-    			
+    	    	  	}
+    	    	  });
+    			indexingThread.setDaemon(true);
+    			indexingThread.start();
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
@@ -1561,6 +1571,8 @@ public class CassandraDataLoader  implements Constants {
     		} catch (Exception e) {
     			e.printStackTrace();
     		}
+    		
+    		
     	}else{    		
     		logger.info("Job queue is full! Or Job Reached its allowed end");
     	}
@@ -1568,19 +1580,26 @@ public class CassandraDataLoader  implements Constants {
     		try{
     		long startVal = Long.valueOf(startTime);
     		long endVal = Long.valueOf(endTime);
-    		Rows<String, String> resource = null;
-    		MutationBatch m = null;
-    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-    				resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
-    				if(resource != null && resource.size() > 0){
-    					this.getResourceAndIndex(resource);
-    				}
-    			
+	    			final long contentId = i;
+	    			final Thread indexingThread = new Thread(new Runnable() {
+	    	    	  	@Override
+	    	    	  	public void run(){
+	    	    	  		Rows<String, String>  resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId,0);
+	    				if(resource != null && resource.size() > 0){
+	    					try {
+								getResourceAndIndex(resource);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+	    				}
+	    	    	  	}
+	    	    	  	});
+	    			indexingThread.setDaemon(true);
+	    			indexingThread.start();
     		}
-    			m.execute();
+
     		}catch(Exception e){
     			e.printStackTrace();
     		}
