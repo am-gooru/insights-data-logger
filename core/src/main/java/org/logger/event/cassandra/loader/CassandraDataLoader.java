@@ -195,7 +195,7 @@ public class CassandraDataLoader  implements Constants {
     private void init(Map<String, String> configOptionsMap) {
     	
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-        this.dateFormatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+        this.dateFormatter = new SimpleDateFormat("yyyyMMdd");
         
         this.setConnectionProvider(new CassandraConnectionProvider());
         this.getConnectionProvider().init(configOptionsMap);
@@ -1508,6 +1508,37 @@ public class CassandraDataLoader  implements Constants {
     		logger.info("Job queue is full! Or Job Reached its allowed end");
     	}
 		
+    }
+    
+    public void createResourceBucket(String startTime , String endTime){
+		try{
+		long startVal = Long.valueOf(startTime);
+		long endVal = Long.valueOf(endTime);
+		for(long i = startVal ; i < endVal ; i++){
+			logger.info("contentId : "+ i);
+    	    	  	Rows<String, String>  resource = baseDao.readIndexedColumn("AWSV2",ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
+    				if(resource != null && resource.size() > 0){
+    					MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    					try {
+							for(int a = 0 ; a < resource.size(); a++){
+								ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
+									
+									if(columns != null && columns.getColumnByName("gooru_oid") != null && columns.getColumnByName("created_on") != null){
+										logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+										Date createdDate = TypeConverter.stringToAny(columns.getColumnByName("created_on").getStringValue(), "Date") ;
+										baseDao.generateNonCounter(ColumnFamily.RESOURCEBUCKET.getColumnFamily(), dateFormatter.format(createdDate), columns.getColumnByName("gooru_oid").getStringValue(), columns.getColumnByName("gooru_oid").getStringValue(), m);
+									}
+								}
+							m.execute();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+    				}
+		}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	
     }
     
     public void catalogMigration(String startTime , String endTime,String loaderType) {

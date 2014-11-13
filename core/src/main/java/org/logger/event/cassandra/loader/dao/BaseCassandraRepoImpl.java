@@ -363,6 +363,42 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
 
+    public Rows<String, String> readIndexedColumn(String keySpaceType,String cfName,String columnName,long value){
+    	
+    	Keyspace keyspace = getKeyspace();
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("DO")){
+    		keyspace = getKeyspace();
+    	}
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV1")){
+    		keyspace = getAwsKeyspace();
+    	}
+    	
+    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV2")){
+    		keyspace = getNewAwsKeyspace();
+    	}
+    	
+    	
+    	Rows<String, String> result = null;
+    	try{
+    		result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
+			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+		 	.searchWithIndex()
+			.addExpression()
+			.whereColumn(columnName)
+			.equals()
+			.value(value)
+			.execute()
+			.getResult()
+			;
+	    	
+    	} catch(ConnectionException e){
+        		e.printStackTrace();
+    	}
+    	return result;
+    }
+
     public Rows<String, String> readIndexedColumnLastNrows(String cfName ,String columnName,String value, Integer rowsToRead,int retryCount) {
     	
 		Rows<String, String> result = null;
