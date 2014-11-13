@@ -1634,6 +1634,7 @@ public class CassandraDataLoader  implements Constants {
 									}
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
 								}
+								baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
 								baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 0, m);
 								baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
 								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
@@ -1645,6 +1646,7 @@ public class CassandraDataLoader  implements Constants {
 							SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 							SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 							
+							baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
 							baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 1, m);
 							baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
 							baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
