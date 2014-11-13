@@ -1545,11 +1545,7 @@ public class CassandraDataLoader  implements Constants {
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-    			final long contentId = i;
-    			final Thread indexingThread = new Thread(new Runnable() {
-    	    	  	@Override
-    	    	  	public void run(){
-    	    	  	Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId,0);
+    	    	  	Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
     				if(resource != null && resource.size() > 0){
     					try {
 							getResourceAndIndex(resource);
@@ -1557,10 +1553,7 @@ public class CassandraDataLoader  implements Constants {
 							e.printStackTrace();
 						}
     				}
-    	    	  	}
-    	    	  });
-    			indexingThread.setDaemon(true);
-    			indexingThread.start();
+    	    	  	
     		}
     			m.execute();
     			long stop = System.currentTimeMillis();
@@ -1582,11 +1575,7 @@ public class CassandraDataLoader  implements Constants {
     		long endVal = Long.valueOf(endTime);
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
-	    			final long contentId = i;
-	    			final Thread indexingThread = new Thread(new Runnable() {
-	    	    	  	@Override
-	    	    	  	public void run(){
-	    	    	  		Rows<String, String>  resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId,0);
+	    	    	  		Rows<String, String>  resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
 	    				if(resource != null && resource.size() > 0){
 	    					try {
 								getResourceAndIndex(resource);
@@ -1594,10 +1583,6 @@ public class CassandraDataLoader  implements Constants {
 								e.printStackTrace();
 							}
 	    				}
-	    	    	  	}
-	    	    	  	});
-	    			indexingThread.setDaemon(true);
-	    			indexingThread.start();
     		}
 
     		}catch(Exception e){
