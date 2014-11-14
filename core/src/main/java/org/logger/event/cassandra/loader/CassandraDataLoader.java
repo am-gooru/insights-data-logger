@@ -1641,7 +1641,7 @@ public class CassandraDataLoader  implements Constants {
 							logger.info("Migrating resource : "+ gooruOid);
 							for(int x = 0 ; x < searchResource.size(); x++){
 								String columnName = searchResource.getColumnByIndex(x).getName(); 
-								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
+/*								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
 									logger.info("Do Nothing:"+columnName);
 								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("lastModified")){
@@ -1664,16 +1664,17 @@ public class CassandraDataLoader  implements Constants {
 										baseDao.generateNonCounter("resource",gooruOid,columnName+"N", Long.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);
 									}
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
-								}
-								baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
-								baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 0, m);
+								}*/
+								baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
+								baseDao.generateNonCounter("resource",gooruOid,"version", ""+1, m);
+								baseDao.generateNonCounter("resource",gooruOid,"isDeleted", ""+0, m);
 								baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
-								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
-								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", viewCount , m);
+								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", ""+resourceType , m);
+								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", ""+viewCount , m);
 							}
 									
 						}else{
-							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+/*							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 							SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 							SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 							
@@ -1746,7 +1747,7 @@ public class CassandraDataLoader  implements Constants {
 							}		
 							baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", viewCount, m);
-							
+							*/
 							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
 						}
 						m.execute();
