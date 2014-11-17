@@ -274,25 +274,28 @@ public class CassandraConnectionProvider {
     
     public final void registerDevIndices() {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
-    	for (ESIndexices esIndex : ESIndexices.values()) {
-			String indexName = esIndex.getIndex()+"_"+indexingVersion;
-			for (String indexType : esIndex.getType()) {
-				String mapping = EsMappingUtil.getMappingConfig(indexType);
-				try {
-					CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
-					prepareCreate.addMapping(indexType, mapping);
-					prepareCreate.execute().actionGet();
-					logger.info("Dev Index created : " + indexName + "\n");
-				} catch (Exception exception) {
-					logger.info("Already Index availble : " + indexName + "\n");
+    	if(indexingVersion != null){
+	    	for (ESIndexices esIndex : ESIndexices.values()) {
+				String indexName = esIndex.getIndex()+"_"+indexingVersion;
+				for (String indexType : esIndex.getType()) {
+					String mapping = EsMappingUtil.getMappingConfig(indexType);
+					try {
+						CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
+						prepareCreate.addMapping(indexType, mapping);
+						prepareCreate.execute().actionGet();
+						logger.info("Dev Index created : " + indexName + "\n");
+					} catch (Exception exception) {
+						logger.info("Already Index availble : " + indexName + "\n");
+					}
+				
+				
 				}
-			
-			
 			}
-		}
+    	}
 	}
     public final void registerProdIndices() {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
+    	if(indexingVersion != null){
     	for (ESIndexices esIndex : ESIndexices.values()) {
 			String indexName = esIndex.getIndex()+"_"+indexingVersion;
 			for (String indexType : esIndex.getType()) {
@@ -308,7 +311,8 @@ public class CassandraConnectionProvider {
 				}
 			}
 		}
-	}
+    }
+}
     
     public ColumnList<String> readWithKey(Keyspace keyspace,String cfName,String key){
         

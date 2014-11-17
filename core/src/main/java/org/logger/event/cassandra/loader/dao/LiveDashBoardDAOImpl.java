@@ -519,29 +519,6 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		return key != null ? key.substring(1).trim():null;
 	}
 
-
-	@Async
-	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
-		XContentBuilder contentBuilder = null;
-		try {
-				
-				contentBuilder = jsonBuilder().startObject();			
-				for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-					String rowKey = null;  				
-					if(beFieldName.containsKey(entry.getKey())){
-						rowKey = beFieldName.get(entry.getKey());
-					}
-					if(rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != ""){	            	
-		            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
-		            }
-				}
-			} catch (Exception e) {
-				logger.info("Indexing failed in content Builder ",e);	
-			}
-			
-			indexingProd(indexName, indexType, id, contentBuilder, 0);
-			//indexingDev(indexName, indexType, id, contentBuilder, 0);
-	}
 	
 	public void saveInESIndexV2(Map<String, Object> eventMap, String indexName, String indexType,String id) {
 		XContentBuilder contentBuilder = null;
