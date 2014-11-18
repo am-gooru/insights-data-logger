@@ -1349,7 +1349,7 @@ public class CassandraDataLoader  implements Constants {
 									baseDao.generateNonCounter("resource",gooruOid,columnName+"B", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
 								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
 									logger.info("columnName : " + columnName);
-									logger.info("columnValue : " + (Serializer<Object>) new ObjectSerializer());
+									logger.info("columnValue : " + searchResource.getValue(columnName, (Serializer<Object>) new ObjectSerializer(),null));
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getValue(columnName, (Serializer<Object>) new ObjectSerializer(), null), m);									
 								}
 								else{
