@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -29,6 +30,7 @@ import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -154,7 +156,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	return result;
     }
-
+    
     public ColumnList<String> readSearchKey(String cfName,String key,int retryCount){
         
     	ColumnList<String> result = null;
@@ -776,6 +778,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public void generateNonCounter(String cfName,String key,String columnName, String value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
+    }
+    
+    public void generateNonCounter(String cfName,String key,String columnName, Object value ,MutationBatch m) {
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .putColumnIfNotNull(columnName, value, (Serializer<Object>) new ObjectSerializer(), null)
+        ;
     }
     
     public void generateNonCounter(String cfName,String key,String columnName, Date value ,MutationBatch m) {

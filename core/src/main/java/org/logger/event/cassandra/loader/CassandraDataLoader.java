@@ -23,8 +23,6 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,25 +31,24 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.utils.ExpiringMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,12 +71,14 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
+import com.netflix.astyanax.serializers.MapSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
@@ -1328,6 +1327,7 @@ public class CassandraDataLoader  implements Constants {
 						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						if(searchResource != null && searchResource.size() > 0){
 							logger.info("Migrating resource : "+ gooruOid);
+							
 							for(int x = 0 ; x < searchResource.size(); x++){
 								String columnName = searchResource.getColumnByIndex(x).getName(); 
 								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
@@ -1347,6 +1347,8 @@ public class CassandraDataLoader  implements Constants {
 								}
 								else if(columnName.equalsIgnoreCase("isOer")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, Boolean.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);									
+								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getValue(columnName, (Serializer<Object>) new ObjectSerializer(), null), m);									
 								}
 								else{
 									if(columnName.equalsIgnoreCase("statistics.subscriberCount") || columnName.equalsIgnoreCase("statistics.voteDown") || columnName.equalsIgnoreCase("statistics.voteUp")){
