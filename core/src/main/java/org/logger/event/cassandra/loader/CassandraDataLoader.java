@@ -1326,9 +1326,8 @@ public class CassandraDataLoader  implements Constants {
 						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
 						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						if(searchResource != null && searchResource.size() > 0){
-							logger.info("Migrating resource : "+ gooruOid);
-							
 							for(int x = 0 ; x < searchResource.size(); x++){
+								logger.info("Migrating resource : "+ gooruOid);
 								String columnName = searchResource.getColumnByIndex(x).getName(); 
 								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
