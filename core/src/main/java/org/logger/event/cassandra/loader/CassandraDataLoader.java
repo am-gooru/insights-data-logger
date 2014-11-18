@@ -1326,8 +1326,8 @@ public class CassandraDataLoader  implements Constants {
 						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
 						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						if(searchResource != null && searchResource.size() > 0){
+							logger.info("Migrating resource : "+ gooruOid);
 							for(int x = 0 ; x < searchResource.size(); x++){
-								logger.info("Migrating resource : "+ gooruOid);
 								String columnName = searchResource.getColumnByIndex(x).getName(); 
 								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
@@ -1345,9 +1345,9 @@ public class CassandraDataLoader  implements Constants {
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getIntegerValue(), m);
 								}
 								else if(columnName.equalsIgnoreCase("isOer")){
-									baseDao.generateNonCounter("resource",gooruOid,columnName, Boolean.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);									
+									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
+									baseDao.generateNonCounter("resource",gooruOid,columnName+"B", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
 								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
-									
 									logger.info("columnName : " + columnName);
 									logger.info("columnValue : " + (Serializer<Object>) new ObjectSerializer());
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getValue(columnName, (Serializer<Object>) new ObjectSerializer(), null), m);									
