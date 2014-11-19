@@ -1347,17 +1347,13 @@ public class CassandraDataLoader  implements Constants {
 								}
 								else if(columnName.equalsIgnoreCase("isOer")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
-									baseDao.generateNonCounter("resource",gooruOid,columnName+"B", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
+									baseDao.generateNonCounter("resource",gooruOid,columnName+"Boolean", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
 								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
-									logger.info("columnName : " + columnName);
 									ByteBuffer value = searchResource.getByteBufferValue(columnName, null);
 									baseDao.generateNonCounter("resource",gooruOid,columnName, value , m);									
-									logger.info("columnValue : " + value);
-								}
-								else{
-									if(columnName.equalsIgnoreCase("statistics.subscriberCount") || columnName.equalsIgnoreCase("statistics.voteDown") || columnName.equalsIgnoreCase("statistics.voteUp")){
-										baseDao.generateNonCounter("resource",gooruOid,columnName+"N", Long.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);
-									}
+								}else if(columnName.equalsIgnoreCase("statistics.subscriberCount") || columnName.equalsIgnoreCase("statistics.voteDown") || columnName.equalsIgnoreCase("statistics.voteUp")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName+"N", Long.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);
+								}else{
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
 								}
 								baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
@@ -1365,6 +1361,7 @@ public class CassandraDataLoader  implements Constants {
 								baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
 								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
 								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", viewCount , m);
+								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", ""+viewCount , m);
 							}
 									
 						}else{
@@ -1377,6 +1374,7 @@ public class CassandraDataLoader  implements Constants {
 							baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
 							baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
 							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", viewCount , m);
+							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", ""+viewCount , m);
 							
 							if(columns.getColumnByName("title") != null){
 								baseDao.generateNonCounter("resource",gooruOid,"title", columns.getColumnByName("title").getStringValue() , m);
