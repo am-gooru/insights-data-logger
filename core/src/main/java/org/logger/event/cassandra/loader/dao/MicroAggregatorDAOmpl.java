@@ -310,17 +310,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 	
 			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
-				if(pathWays != null && pathWays.size() > 0){
-					for(String pathWay : pathWays){
-						String classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathWay,0);
-						keysList.add(eventMap.get(SESSION)+SEPERATOR+classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-						keysList.add(ALLSESSION+classUid+SEPERATOR+pathWay+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-						
-						keysList.add(eventMap.get(SESSION)+SEPERATOR+classUid+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-						keysList.add(ALLSESSION+classUid+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-						
-					}
+				if(eventMap.containsKey("classId") && eventMap.get("classId") != null && eventMap.containsKey("pathwayId") && eventMap.get("pathwayId") != null){
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(ALLSESSION+eventMap.get("classId")+SEPERATOR+eventMap.containsKey("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				}
+				if(eventMap.containsKey("classId") && eventMap.get("classId") != null ){
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(ALLSESSION+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+				}
+					keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(ALLSESSION+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+						
 			}
 				if(keysList != null && keysList.size() > 0 ){
 					startCounters(eventMap, aggregatorJson, keysList, key);
