@@ -79,7 +79,6 @@ public class CassandraConnectionProvider {
     private static String INSIHGHTS_DEV_ES_IP;
     private static String INSIHGHTS_PROD_ES_IP;
     protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
-    private Keyspace localKeyspace;
     private EntityManager<ResourceCo, String> resourceEntityPersister;
     
     public void init(Map<String, String> configOptionsMap) {
@@ -165,21 +164,9 @@ public class CassandraConnectionProvider {
  	           prodClient = transportClient;
              }
             
-            //local cassandra
-            ConnectionPoolConfigurationImpl localPoolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool").setPort(9160).setMaxConnsPerHost(30).setSeeds("localhost");
-			/*
-			 * if (!hosts.startsWith("127.0")) { searchPoolConfig.setLocalDatacenter("datacenter1"); }
-			 */
 
-			// searchPoolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA. Omit this to use round robin with a token range
-			AstyanaxContext<Keyspace> localContext = new AstyanaxContext.Builder().forCluster("Test Cluster").forKeyspace("gooru_local")
-					.withAstyanaxConfiguration(new AstyanaxConfigurationImpl().setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE).setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
-					.withConnectionPoolConfiguration(localPoolConfig).withConnectionPoolMonitor(new CountingConnectionPoolMonitor()).buildKeyspace(ThriftFamilyFactory.getInstance());
-			localContext.start();
-			localKeyspace = localContext.getClient();
-			
-			if(localKeyspace != null ) {
-				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getLocalKeyspace()).build();
+			if(cassandraNewAwsKeyspace != null ) {
+				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getNewAwsKeyspace()).build();
 			}
           this.registerDevIndices();
            this.registerProdIndices();
@@ -278,14 +265,7 @@ public class CassandraConnectionProvider {
             throw new IOException("New Keyspace not initialized.");
         }
         return cassandraNewAwsKeyspace;
-    }
-    public Keyspace getLocalKeyspace() throws IOException {
-        if (localKeyspace == null) {
-            throw new IOException("Local Keyspace not initialized.");
-        }
-        return localKeyspace;
-    }
-    
+    }    
     public EntityManager<ResourceCo, String> getResourceEntityPersister() throws IOException {
     	if (resourceEntityPersister == null) {
             throw new IOException("Resource Entity is not persisted");

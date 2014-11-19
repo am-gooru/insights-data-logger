@@ -50,7 +50,6 @@ public class BaseDAOCassandraImpl {
     private Keyspace awsKeyspace;
     
     private Keyspace newAwsKeyspace;
-    private Keyspace localKeyspace;
     
     private Client devClient;
     
@@ -122,17 +121,6 @@ public class BaseDAOCassandraImpl {
             }
         }
         return this.prodClient;
-    }
-    
-    public Keyspace getLocalKeyspace() {
-        if(localKeyspace == null && this.connectionProvider != null) {
-            try {
-                this.localKeyspace = this.connectionProvider.getLocalKeyspace();
-            } catch (IOException ex) {
-                logger.info("Error while initializing local keyspace{}", ex);
-            }
-        }
-        return this.localKeyspace;
     }
     
     public EntityManager<ResourceCo, String> getResourceEntityPersister() {

@@ -310,9 +310,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 	
 			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+				
 				if(eventMap.containsKey("classId") && eventMap.get("classId") != null && eventMap.containsKey("pathwayId") && eventMap.get("pathwayId") != null){
+					logger.info("classId : "+eventMap.get("classId"));
+					logger.info("pathwayId : "+eventMap.get("pathwayId"));
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-					keysList.add(ALLSESSION+eventMap.get("classId")+SEPERATOR+eventMap.containsKey("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
+					keysList.add(ALLSESSION+eventMap.get("classId")+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				}
 				if(eventMap.containsKey("classId") && eventMap.get("classId") != null ){
 					keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
@@ -328,7 +331,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					startCounterAggregator(eventMap, aggregatorJson, keysList, key);
 				}
 			}catch(Exception e){
-				logger.info("Exception while real time aggregation :"+ e);
 				e.printStackTrace();
 			}
 			
@@ -716,10 +718,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				String sessionKey = null;
 				String sessionId = null;
 				String newKey = null;
-				if((eventMap.get(CLASSPAGEGOORUOID) != null) && (!eventMap.get(CLASSPAGEGOORUOID).isEmpty())) {
-					sessionKey = "RS"+SEPERATOR+eventMap.get(CLASSPAGEGOORUOID)+SEPERATOR+eventMap.get(PARENTGOORUOID);
-				} else if((eventMap.get(PATHWAYGOORUOID) != null) && (!eventMap.get(PATHWAYGOORUOID).isEmpty())) {
-					sessionKey = "RS"+SEPERATOR+eventMap.get(PATHWAYGOORUOID)+SEPERATOR+eventMap.get(PARENTGOORUOID);
+				if(eventMap.containsKey("classId") && eventMap.get("classId") != null) {
+					sessionKey = "RS"+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENTGOORUOID);
+				} else if(eventMap.containsKey("pathwayId") && eventMap.get("pathwayId") != null) {
+					sessionKey = "RS"+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				}else {
 					sessionKey = "RS"+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				}
