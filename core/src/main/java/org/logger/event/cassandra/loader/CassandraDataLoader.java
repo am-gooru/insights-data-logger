@@ -1329,9 +1329,9 @@ public class CassandraDataLoader  implements Constants {
 						if(searchResource != null && searchResource.size() > 0){
 							logger.info("Migrating resource : "+ gooruOid);
 							for(int x = 0 ; x < searchResource.size(); x++){
-								String columnName = searchResource.getColumnByIndex(x).getName(); 
-								baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
-								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
+								String columnName = searchResource.getColumnByIndex(x).getName();
+								logger.info("index : {} - columnName : ",x,columnName);
+								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("stas.viewsCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
 									logger.info("Do Nothing:"+columnName);
 								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("lastModified")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getDateValue(), m);
