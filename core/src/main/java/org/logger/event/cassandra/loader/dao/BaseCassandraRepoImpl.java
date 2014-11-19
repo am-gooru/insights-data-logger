@@ -1154,7 +1154,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         		for(Row<String, String> collectionItems : collectionItem){
         			String parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
         			if(parentId != null){
-        				parentIds.add(parentId);
+        				parentIds.add(parentId.trim());
         				getAllLevelParents(cfName,parentId,0);
         			}
         		 }

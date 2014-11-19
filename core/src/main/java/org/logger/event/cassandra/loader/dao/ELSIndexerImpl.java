@@ -600,7 +600,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			}
 			
 			indexingProd(indexName, indexType, id, contentBuilder, 0);
-			//indexingDev(indexName, indexType, id, contentBuilder, 0);
+			indexingDev(indexName, indexType, id, contentBuilder, 0);
 	}
 	
 	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
@@ -770,12 +770,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    		}
 	    	}
-		
-	//		connectionProvider.getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
-			
+
+	    	connectionProvider.getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
 			;
-			connectionProvider.getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
-			
+			connectionProvider.getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
