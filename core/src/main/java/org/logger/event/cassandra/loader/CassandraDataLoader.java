@@ -24,6 +24,7 @@
 package org.logger.event.cassandra.loader;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1349,13 +1350,9 @@ public class CassandraDataLoader  implements Constants {
 									baseDao.generateNonCounter("resource",gooruOid,columnName+"B", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
 								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
 									logger.info("columnName : " + columnName);
-									try{
-										Object value = searchResource.getValue(columnName, (Serializer<Object>) new ObjectSerializer(),null);
-										baseDao.generateNonCounter("resource",gooruOid,columnName, value , m);									
+									ByteBuffer value = searchResource.getByteBufferValue(columnName, null);
+									baseDao.generateNonCounter("resource",gooruOid,columnName, value , m);									
 									logger.info("columnValue : " + value);
-									}catch(Exception ew){
-										ew.printStackTrace();
-									}
 								}
 								else{
 									if(columnName.equalsIgnoreCase("statistics.subscriberCount") || columnName.equalsIgnoreCase("statistics.voteDown") || columnName.equalsIgnoreCase("statistics.voteUp")){

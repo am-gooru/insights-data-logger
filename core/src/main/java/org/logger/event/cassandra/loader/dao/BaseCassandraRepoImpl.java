@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.ResourceCo;
@@ -31,7 +31,6 @@ import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
@@ -180,6 +179,24 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     	return result;
     }
+    public ColumnList<String> readSearchKey(String cfName,String key){
+        
+    	ColumnList<String> result = null;
+    	try {
+              result = getAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (ConnectionException e) {
+        		e.printStackTrace();
+        }
+    	
+    	return result;
+    }
+    
     public ColumnList<String> readWithKey(String cfName,String key,String keySpaceType,int retryCount){
         
     	ColumnList<String> result = null;
@@ -781,9 +798,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         .putColumnIfNotNull(columnName, value);
     }
     
-    public void generateNonCounter(String cfName,String key,String columnName, Object value ,MutationBatch m) {
+    public void generateNonCounter(String cfName,String key,String columnName, ByteBuffer value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
-        .putColumnIfNotNull(columnName, value, (Serializer<Object>) new ObjectSerializer(), null)
+        .putColumnIfNotNull(columnName, value, null)
         ;
     }
     
