@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.ResourceCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
@@ -1331,5 +1332,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return result.getResult().getRows();
 		
+	}
+	public void updateResourceEntity(ResourceCo resourceco) {
+		try {
+			getResourceEntityPersister().put(resourceco);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -29,12 +29,14 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.io.IOException;
 
+import org.ednovo.data.model.ResourceCo;
 import org.elasticsearch.client.Client;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.model.ConsistencyLevel;
 
 public class BaseDAOCassandraImpl {
@@ -48,10 +50,13 @@ public class BaseDAOCassandraImpl {
     private Keyspace awsKeyspace;
     
     private Keyspace newAwsKeyspace;
+    private Keyspace localKeyspace;
     
     private Client devClient;
     
     private Client prodClient;
+    
+	private EntityManager<ResourceCo, String> resourceEntityPersister;
     
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
     
@@ -117,5 +122,27 @@ public class BaseDAOCassandraImpl {
             }
         }
         return this.prodClient;
+    }
+    
+    public Keyspace getLocalKeyspace() {
+        if(localKeyspace == null && this.connectionProvider != null) {
+            try {
+                this.localKeyspace = this.connectionProvider.getLocalKeyspace();
+            } catch (IOException ex) {
+                logger.info("Error while initializing local keyspace{}", ex);
+            }
+        }
+        return this.localKeyspace;
+    }
+    
+    public EntityManager<ResourceCo, String> getResourceEntityPersister() {
+        if(resourceEntityPersister == null && this.connectionProvider != null) {
+            try {
+                this.resourceEntityPersister = this.connectionProvider.getResourceEntityPersister();
+            } catch (IOException ex) {
+                logger.info("Error while initializing resource entity persister", ex);
+            }
+        }
+        return this.resourceEntityPersister;
     }
 }
