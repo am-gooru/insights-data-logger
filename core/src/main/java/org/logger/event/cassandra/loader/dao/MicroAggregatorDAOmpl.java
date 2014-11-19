@@ -310,7 +310,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 	
 			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
-				
+				if(eventMap.containsKey(SESSION) && (eventMap.get(SESSION) == null || eventMap.get(SESSION).equalsIgnoreCase("null"))){
+					eventMap.put(SESSION, "AS");
+				}
 				if(eventMap.containsKey("classId") && eventMap.get("classId") != null && eventMap.containsKey("pathwayId") && eventMap.get("pathwayId") != null){
 					logger.info("classId : "+eventMap.get("classId"));
 					logger.info("pathwayId : "+eventMap.get("pathwayId"));
@@ -730,6 +732,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				if((sessionId != null) && (!sessionId.isEmpty())) {
 					newKey = keyValue.replaceFirst("AS~", sessionId+SEPERATOR);
+					logger.info("Feedback KEY :" + newKey);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null, m);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null, m);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,Long.valueOf(eventMap.get(STARTTIME)), m);

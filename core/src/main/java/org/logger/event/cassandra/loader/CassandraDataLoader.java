@@ -489,7 +489,7 @@ public class CassandraDataLoader  implements Constants {
 				//kafkaLogWriter.sendEventLog(eventObject.getFields());
 				activityLogger.info(eventObject.getFields());
 				//Save Activity in ElasticSearch
-				indexer.indexActivity(eventObject.getFields());
+				//indexer.indexActivity(eventObject.getFields());
 				
 			}
 	    	
