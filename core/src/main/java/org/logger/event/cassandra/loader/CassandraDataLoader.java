@@ -489,7 +489,7 @@ public class CassandraDataLoader  implements Constants {
 				//kafkaLogWriter.sendEventLog(eventObject.getFields());
 				activityLogger.info(eventObject.getFields());
 				//Save Activity in ElasticSearch
-				//indexer.indexActivity(eventObject.getFields());
+				indexer.indexActivity(eventObject.getFields());
 				
 			}
 	    	
@@ -1333,7 +1333,6 @@ public class CassandraDataLoader  implements Constants {
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("stas.viewsCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
 									logger.info("Do Nothing:"+columnName);
 								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("lastModified")){
-									logger.info(columnName + ":" + searchResource.getColumnByIndex(x).getDateValue());
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getDateValue(), m);
 								}else if(columnName.equalsIgnoreCase("contentId") || columnName.equalsIgnoreCase("statistics.copiedCount") || columnName.equalsIgnoreCase("statistics.copiedLevelCount")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getLongValue(), m);
