@@ -1197,6 +1197,9 @@ public class CassandraDataLoader  implements Constants {
 	    			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
 	    			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
 	    			            }
+	    			            if(key.equalsIgnoreCase("startTime")){
+	       			            	eventMap.put("eventTime",Long.valueOf(""+jsonField.get(key)));
+	       			            }
 	    			            
 	    			        }
 	    				   if(eventMap.get(CONTENTGOORUOID) != null){
@@ -1222,6 +1225,7 @@ public class CassandraDataLoader  implements Constants {
 	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    				    	}
 	    					}
+	    				
 		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    		     }
 				} catch (Exception e) {
