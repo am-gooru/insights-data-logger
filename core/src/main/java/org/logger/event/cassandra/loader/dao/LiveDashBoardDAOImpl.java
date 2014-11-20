@@ -521,24 +521,58 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();			
-			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				String rowKey = null;  				
-				if(beFieldName.containsKey(entry.getKey())){
-					rowKey = beFieldName.get(entry.getKey());
+				for(Map.Entry<String, Object> entry : eventMap.entrySet()){
+					String rowKey = null;  				
+					if(beFieldName.containsKey(entry.getKey())){
+						rowKey = beFieldName.get(entry.getKey());
+					}
+					if(rowKey != null && entry.getValue() != null){	            	
+		            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
+		            }
 				}
-				if(rowKey != null && entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
-	            }
 				
-			}
-			
-			//getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			
-			} catch (Exception e) {
-				logger.info("Indexing failed",e);
+				indexingProd(indexName, indexType, id, contentBuilder, 0);
+				
+			}catch (Exception e) {
+				logger.info("contentBuilder  failed",e);
 			}
 		
+		
+		
+	}
+	
+	public void indexingProd(String indexName,String indexType, String id,XContentBuilder contentBuilder,int retryCount ){
+		if(retryCount < 6){
+			try{
+				getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			}catch(Exception e){
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				retryCount++;
+				indexingProd(indexName, indexType, id, contentBuilder, retryCount);
+				logger.info("Indexing failed",e);
+			}
+		}
+	}
+	
+	public void indexingDev(String indexName,String indexType, String id,XContentBuilder contentBuilder,int retryCount ){
+		if(retryCount < 6){
+			try{
+				getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			}catch(Exception e){
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				retryCount++;
+				indexingDev(indexName, indexType, id, contentBuilder, retryCount);
+				logger.info("Indexing failed",e);
+			}
+		}
 	}
 	
 	@Async
