@@ -479,27 +479,27 @@ public class EventController {
 	}
 
 	public void updateViews() throws Exception{
-		if (!validateSchedular()) {
+		/*if (!validateSchedular()) {
 			return;
-		}
-		System.out.println("Executing every five mintues");
-		eventService.updateProdViews();
+		}*/
+		//System.out.println("Executing every five mintues");
+		//eventService.updateProdViews();
 	}
 	
 	// scheduled for every 1 minute
 	public void executeForEveryMinute() {
-		if (!validateSchedular()) {
+		/*if (!validateSchedular()) {
 			return;
 		}
-		eventService.executeForEveryMinute(null, null);
-	}
+		//eventService.executeForEveryMinute(null, null);
+*/	}
 	
 	//run micro aggregation for the given time range
 	public void executeForEveryMinute(String startTime,String endTime){
-		if (!validateSchedular()) {
+		/*if (!validateSchedular()) {
 			return;
 		}	
-		eventService.executeForEveryMinute(startTime, endTime);
+		eventService.executeForEveryMinute(startTime, endTime);*/
 	}
 		
 	public void runAggregation(){
@@ -510,8 +510,8 @@ public class EventController {
 		if (!validateSchedular()) {
 			return;
 		}
-		logger.info("watching session");
-		eventService.watchSession();
+		//logger.info("watching session");
+		//eventService.watchSession();
 	}
 
 	public void updateEventEs(){
@@ -522,10 +522,10 @@ public class EventController {
 		/*if(!validateSchedular()){
 			return;
 			}*/
-		logger.info("post migration............");
+		//logger.info("post migration............");
 		//eventService.postMigration(null, null, null);
 		//eventService.postStatMigration(null, null, null);
-		eventService.catalogMigration(null, null, null);
+		//eventService.catalogMigration(null, null, null);
 		//eventService.balanceStatDataUpdate();
 	}
 	

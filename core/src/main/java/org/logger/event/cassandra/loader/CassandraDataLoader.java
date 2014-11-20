@@ -1144,6 +1144,7 @@ public class CassandraDataLoader  implements Constants {
 	    			            
 	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
 	    			            	eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
+	    			            	eventMap.put(CONTENTGOORUOID, String.valueOf(jsonField.get(key)));
 	    			            }
 	
 	    			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
@@ -1208,11 +1209,16 @@ public class CassandraDataLoader  implements Constants {
 	    				   
 	    				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.get(CONTENTGOORUOID) != null){
 	    						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
-	    				    	if(questionList != null && questionList.size() > 0){
-	    				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-	    				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-	    				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+	    						if(questionList != null && questionList.size() > 0){
+	    							eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+	    							eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+	    							eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
 	    				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+	    				    		
+	    				    		eventMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+	    				    		eventMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+	    				    		eventMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+	    				    		
 	    				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    				    	}
 	    					}
@@ -1728,9 +1734,7 @@ public class CassandraDataLoader  implements Constants {
 	    		}
 	    	}
 		
-			getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
-			
-			;
+			//getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet();
 			getConnectionProvider().getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex(), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
 			
     		;
@@ -1876,8 +1880,6 @@ public class CassandraDataLoader  implements Constants {
 
 	    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(),0);
 	    	
-	    	logger.info("vlue size : {} ",vluesList.size());
-	    	
 	    	if(vluesList != null && vluesList.size() > 0){
 	    		
 	    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
@@ -1915,9 +1917,10 @@ public class CassandraDataLoader  implements Constants {
 	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
 	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
 	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
-	    		
+	    		resourceMap.put("copiedCount",vluesList.getColumnByName("copied~count") != null ?vluesList.getColumnByName("copied~count").getLongValue() : 0L );
 	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
 	    	}
+
 	    	
 	    	if(questionList != null && questionList.size() > 0){
 	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);

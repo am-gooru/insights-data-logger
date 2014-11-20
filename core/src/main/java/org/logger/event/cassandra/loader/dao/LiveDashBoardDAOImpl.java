@@ -532,7 +532,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				
 			}
 			
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			//getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 			
 			} catch (Exception e) {
