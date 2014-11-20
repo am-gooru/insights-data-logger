@@ -98,8 +98,6 @@ public class CassandraDataLoader  implements Constants {
     
     private SimpleDateFormat minuteDateFormatter;
     
-    private SimpleDateFormat formatter;
-    
     private SimpleDateFormat dateFormatter;
     
     static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
@@ -200,7 +198,6 @@ public class CassandraDataLoader  implements Constants {
     private void init(Map<String, String> configOptionsMap) {
     	
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-        this.formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
         this.dateFormatter = new SimpleDateFormat("yyyyMMdd");
         
         this.setConnectionProvider(new CassandraConnectionProvider());
@@ -1336,7 +1333,6 @@ public class CassandraDataLoader  implements Constants {
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("stas.viewsCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
 									logger.info("Do Nothing:"+columnName);
 								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("createdOn") || columnName.equalsIgnoreCase("lastModified")){
-									//baseDao.generateNonCounter("resource",gooruOid,columnName, formatter.parse(formatter.format(searchResource.getColumnByIndex(x).getDateValue())), m);
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getDateValue(), m);
 								}else if(columnName.equalsIgnoreCase("contentId") || columnName.equalsIgnoreCase("statistics.copiedCount") || columnName.equalsIgnoreCase("statistics.copiedLevelCount")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getLongValue(), m);
