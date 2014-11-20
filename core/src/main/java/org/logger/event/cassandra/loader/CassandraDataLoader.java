@@ -1335,11 +1335,8 @@ public class CassandraDataLoader  implements Constants {
 								String columnName = searchResource.getColumnByIndex(x).getName();
 								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("stas.viewsCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
 									logger.info("Do Nothing:"+columnName);
-								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("lastModified")){
-									String ss = formatter.format(searchResource.getColumnByIndex(x).getDateValue());
-									Date dd = formatter.parse(ss);
-									logger.info(columnName + ":" + dd);
-									baseDao.generateNonCounter("resource",gooruOid,columnName, dd, m);
+								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("createdOn") || columnName.equalsIgnoreCase("lastModified")){
+									baseDao.generateNonCounter("resource",gooruOid,columnName, formatter.parse(formatter.format(searchResource.getColumnByIndex(x).getDateValue())), m);
 								}else if(columnName.equalsIgnoreCase("contentId") || columnName.equalsIgnoreCase("statistics.copiedCount") || columnName.equalsIgnoreCase("statistics.copiedLevelCount")){
 									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getLongValue(), m);
 								}else if(columnName.equalsIgnoreCase("collaboratorCount") || columnName.equalsIgnoreCase("creator.userId") || columnName.equalsIgnoreCase("frameBreaker") 
