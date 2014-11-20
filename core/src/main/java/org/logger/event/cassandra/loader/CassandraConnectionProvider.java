@@ -261,7 +261,7 @@ public class CassandraConnectionProvider {
     	if (prodClient == null) {
             throw new IOException("Elastic Search is not initialized.");
         }
-    	return devClient;
+    	return prodClient;
     }
     
     public final void registerIndices() {
