@@ -26,6 +26,8 @@ public enum ColumnFamily {
 	
 	DIMRESOURCE("dim_resource"),
 	
+	TABLEDATATYPES("table_datatypes"),
+	
 	STAGING("staging_event_detail"),
 	
 	EVENTFIELDS("event_fields"),

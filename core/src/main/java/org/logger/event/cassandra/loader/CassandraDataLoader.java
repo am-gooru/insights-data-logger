@@ -215,6 +215,13 @@ public class CassandraDataLoader implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics",0);
         statKeys = statMetrics.getColumnNames();
         
+        resourceCodeType = new LinkedHashMap<String, String>();
+        
+        ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), ColumnFamily.DIMRESOURCE.getColumnFamily(),0);
+        for(int i = 0 ; i < resourceCodeTypeList.size() ; i++) {
+                resourceCodeType.put(resourceCodeTypeList.getColumnByIndex(i).getName(), resourceCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : licenseRows) {
