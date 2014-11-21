@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,6 +154,30 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
 
+    public ColumnList<String> readSearchKey(String cfName,String key,int retryCount){
+        
+    	ColumnList<String> result = null;
+    	try {
+              result = getAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+                    .getKey(key)
+                    .execute()
+                    .getResult()
+                    ;
+
+        } catch (ConnectionException e) {
+        	if(retryCount < 6){
+        		retryCount++;
+        		return readWithKey(cfName,key,retryCount);
+        	}else{
+        		logger.info("Exception while read key : " + key + " from Column Family" + cfName);
+        		e.printStackTrace();
+        	}
+        }
+    	
+    	return result;
+    }
+    
     public ColumnList<String> readWithKey(String CassandraVersion,String cfName,String key,int retryCount){
         
     	ColumnList<String> result = null;
@@ -720,6 +745,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     
     public void generateNonCounter(String cfName,String key,String columnName, String value ,MutationBatch m) {
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .putColumnIfNotNull(columnName, value);
+    }
+    
+    public void generateNonCounter(String cfName,String key,String columnName, Date value ,MutationBatch m) {
+        m.withRow(this.accessColumnFamily(cfName), key)
+        .putColumnIfNotNull(columnName, value);
+    }
+    
+    public void generateNonCounter(String cfName,String key,String columnName, ByteBuffer value ,MutationBatch m) {
         m.withRow(this.accessColumnFamily(cfName), key)
         .putColumnIfNotNull(columnName, value);
     }

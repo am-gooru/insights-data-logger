@@ -59,6 +59,7 @@ public class CassandraConnectionProvider {
     private Properties properties;
     private static Keyspace cassandraKeyspace;
     private static Keyspace cassandraAwsKeyspace;
+    private static Keyspace cassandraNewAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
@@ -137,15 +138,18 @@ public class CassandraConnectionProvider {
             if(cassandraAwsKeyspace == null){
             cassandraAwsKeyspace = this.initializeAwsCassandra();
             }
-            
-            if(client == null){
+            if(cassandraNewAwsKeyspace == null){
+                cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
+            }
+                
+           /* if(client == null){
             //Elastic search connection provider
            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
            TransportClient transportClient = new TransportClient(settings);
            transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
            client = transportClient;
             }
-           this.registerIndices();
+           this.registerIndices();*/
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
@@ -155,6 +159,42 @@ public class CassandraConnectionProvider {
 	 
 		String awsHosts =  AWS_CASSANDRA_IP;
 		String awsCluster = "gooru-cassandra";
+		String keyspace = AWS_CASSANDRA_KEYSPACE;
+		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
+	    .setPort(9160)
+	    .setMaxConnsPerHost(3)
+	    .setSeeds(awsHosts);
+		
+		if (!awsHosts.startsWith("127.0")) {
+			poolConfig.setLocalDatacenter("us-west");
+		}
+	
+		//poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
+	
+		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
+		    .forCluster(awsCluster)
+		    .forKeyspace("gooru_dev")
+		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+		    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+            .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
+		    .withConnectionPoolConfiguration(poolConfig)
+		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+		    .buildKeyspace(ThriftFamilyFactory.getInstance());
+	
+		context.start();
+		
+		cassandraAwsKeyspace = (Keyspace) context.getClient();
+		
+        logger.info("Initialized connection to AWS Cassandra");
+        
+		return cassandraAwsKeyspace;
+        
+	}    
+
+	public  Keyspace initializeNewAwsCassandra(){
+		 
+		String awsHosts =  AWS_CASSANDRA_IP;
+		String awsCluster = "gooru-cassandra-prod";
 		String keyspace = AWS_CASSANDRA_KEYSPACE;
 		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
 	    .setPort(9160)
@@ -183,10 +223,10 @@ public class CassandraConnectionProvider {
 		
         logger.info("Initialized connection to AWS Cassandra");
         
-		return cassandraAwsKeyspace;
+		return cassandraNewAwsKeyspace;
         
-	}    
-    public Keyspace getKeyspace() throws IOException {
+	}
+	public Keyspace getKeyspace() throws IOException {
         if (cassandraKeyspace == null) {
             throw new IOException("Keyspace not initialized.");
         }
@@ -197,6 +237,12 @@ public class CassandraConnectionProvider {
             throw new IOException("Keyspace not initialized.");
         }
         return cassandraAwsKeyspace;
+    }
+    public Keyspace getNewAwsKeyspace() throws IOException {
+        if (cassandraNewAwsKeyspace == null) {
+            throw new IOException("Keyspace not initialized.");
+        }
+        return cassandraNewAwsKeyspace;
     }
     public Client getESClient() throws IOException{
     	if (client == null) {
