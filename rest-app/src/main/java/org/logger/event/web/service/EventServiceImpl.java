@@ -335,4 +335,9 @@ public class EventServiceImpl implements EventService {
 			}
 		}
 	}
+
+	@Override
+	public void indexEvents(String ids) throws Exception {
+		dataLoaderService.indexEvent(ids);		
+	}
 }

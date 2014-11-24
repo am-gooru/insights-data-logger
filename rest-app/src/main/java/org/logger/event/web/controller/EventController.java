@@ -403,6 +403,10 @@ public class EventController {
 			if(indexType.equalsIgnoreCase("user")){
 				eventService.indexUser(ids);
 			}
+			if(indexType.equalsIgnoreCase("event")){
+				eventService.indexUser(ids);
+			}
+			
 			if(indexType.equalsIgnoreCase("views")){
 				eventService.indexResourceViews(ids, resourceType);
 			}

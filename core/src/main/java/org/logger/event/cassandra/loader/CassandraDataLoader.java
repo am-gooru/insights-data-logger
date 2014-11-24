@@ -1610,6 +1610,17 @@ public class CassandraDataLoader  implements Constants {
     	}
     }
     
+    public void indexEvent(String ids) throws Exception{
+    	for(String eventId : ids.split(",")){
+    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);
+    		if(event.size() > 0){    			
+    			saveActivityInIndex(event.getStringValue("fields", null));
+    		}else{
+    			logger.info("No event found : " + eventId);
+    		}
+    	}
+    }
+    
     public void indexResourceView(String resourceIds,String type) throws Exception{
     	this.migrateViews(resourceIds,type);
     }
