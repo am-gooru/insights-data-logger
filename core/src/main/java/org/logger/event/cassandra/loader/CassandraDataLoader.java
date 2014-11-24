@@ -1477,10 +1477,11 @@ public class CassandraDataLoader implements Constants {
 						for(int j = 0 ; j < columns.size() ; j++){
 							
 							Object value = null;
+							
 							String columnNameType = resourceCodeType.get(columns.getColumnByIndex(j).getName());
 
 							if(columnNameType == null){
-								value = columns.getColumnByIndex(j).getStringValue();
+								logger.info("Do nothing..");
 							}
 							else if(columnNameType.equalsIgnoreCase("String")){
 			            		value = columns.getColumnByIndex(j).getStringValue();
@@ -1497,8 +1498,9 @@ public class CassandraDataLoader implements Constants {
 			            	else{
 			            		value = columns.getColumnByIndex(j).getStringValue();
 			            	}
-							
-			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
+							if(value != null){
+								baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
+							}
 			            
 						}
 						m.execute();		
