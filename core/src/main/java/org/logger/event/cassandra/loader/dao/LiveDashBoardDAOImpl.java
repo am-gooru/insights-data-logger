@@ -110,7 +110,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     @Async
-    public void callCountersV2(Map<String,String> eventMap) { MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
+    public void callCountersV2(Map<String,String> eventMap) { 
+    MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
     if((eventMap.containsKey(EVENTNAME))) {
         eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
         for(int i=0 ; i < eventKeys.size() ; i++ ){
@@ -128,17 +129,18 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
                                             String[] rowKey = orginalColumn.split("~");
                                             baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
 
-                                    }
+                                 }
                             }
-                    }
-                    try {
-                    m.execute();
+                    	}
+        			
+        			}
+        
+                try {
+                    m.executeAsync();
                 } catch (ConnectionException e) {
                     logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
                 }
-
-        }
-    }
+    	}
 }
     
     public String getBrowser(String userAgent) {
@@ -238,7 +240,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     	    baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
     	}    	
     	try {
-            m.execute();
+            m.executeAsync();
         } catch (Exception e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
@@ -337,7 +339,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		
 		try {
-            m.execute();
+            m.executeAsync();
         } catch (Exception e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }
@@ -424,7 +426,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		}
 		
 		try {
-            m.execute();
+            m.executeAsync();
         } catch (ConnectionException e) {
             logger.info("updateCounter => Error while inserting to cassandra {} ", e);
         }

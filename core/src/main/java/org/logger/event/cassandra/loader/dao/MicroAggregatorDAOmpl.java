@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +70,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     private BaseCassandraRepoImpl baseCassandraDao;
     
+    public static  Map<String,Object> cache;
+    
     public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
         super(connectionProvider);
         this.connectionProvider = connectionProvider;
         this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
         this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+        cache = new LinkedHashMap<String, Object>();
     }
     
     @Async
@@ -116,6 +120,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     }
     @Async
     public void realTimeMetrics(Map<String,String> eventMap,String aggregatorJson) throws Exception{
+    	if(cache.size() > 100000){
+    		cache = new LinkedHashMap<String, Object>();
+    	}
     	List<String> classPages = this.getClassPages(eventMap);
     	String key = eventMap.get(CONTENTGOORUOID);
 		List<String> keysList = new ArrayList<String>();
@@ -160,16 +167,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					logger.info("isOwner : {}",isOwner);
 					
+					if(cache.containsKey(eventMap.get(GOORUID)+SEPERATOR+classPage)){
+						isStudent = (Boolean) cache.get(eventMap.get(GOORUID)+SEPERATOR+classPage);
+					}else{
+						
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 		
 					int retryCount = 1;
-			        while (retryCount < 6 && !isStudent) {
-			        	Thread.sleep(1000);
+			        while (retryCount < 5 && !isStudent) {
+			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
 			        }
-
+			        	cache.put(eventMap.get(GOORUID)+SEPERATOR+classPage,isStudent);
+					}
 					logger.info("isStudent : {}",isStudent);
 					
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
@@ -205,16 +217,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				for(String classPage : classPages){
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 					
+					if(cache.containsKey(eventMap.get(GOORUID)+SEPERATOR+classPage)){
+						isStudent = (Boolean) cache.get(eventMap.get(GOORUID)+SEPERATOR+classPage);
+					}else{
+						
 					isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 
 					int retryCount = 1;
-			        while (retryCount < 6 && !isStudent) {
-			        	Thread.sleep(1000);
+			        while (retryCount < 5 && !isStudent) {
+			        	Thread.sleep(500);
 			        	isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),classPage,0);
 			        	logger.info("retrying to check if a student : {}",retryCount);
 			            retryCount++;
 			        }
-
+			        cache.put(eventMap.get(GOORUID)+SEPERATOR+classPage,isStudent);
+					}
 					logger.info("isStudent : {}",isStudent);
 					
 					if(!isOwner && isStudent){
@@ -251,6 +268,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 		if(keysList != null && keysList.size() > 0 ){
+			
 			this.startCounters(eventMap, aggregatorJson, keysList, key);
 			this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
 			this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
@@ -264,7 +282,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     	Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
     	
     	for (Entry entry : entrySet) {
-
         	Set<Map.Entry<String, Object>> entrySets = m1.entrySet();
         	Map<String, Object> e = (Map<String, Object>) m1.get(entry.getKey());
 	        for(String localKey : keysList){
@@ -357,6 +374,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		               }
 	                        
 	        	}
+				if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+					String	collectionStatus = "completed";
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+"completion_progress",collectionStatus, m);
+				}
 	        }
     	}
     	try {
@@ -490,7 +516,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long score =  0L;
 			String collectionStatus = "in-progress";
 			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
-				collectionStatus = "completed";
 				 score = eventMap.get(SCORE) != null ? Long.parseLong(eventMap.get(SCORE).toString()) : 0L; 
 				if(questionCountInQuiz != 0L){
 					scoreInPercentage = ((score * 100/questionCountInQuiz));
@@ -545,7 +570,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	    	long views =  viewsValues != null ? viewsValues.getLongValue() : 0L;
 
 	    	if(views == 0L && totalTimeSpent > 0L){
-	    		baseCassandraDao.saveLongValue(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
+	    		baseCassandraDao.increamentCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),keyValue, eventMap.get(PARENTGOORUOID)+SEPERATOR+LoaderConstants.TOTALVIEWS.getName(),1L);
 	    		views = 1;
 	    	}
 	    	

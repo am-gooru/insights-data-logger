@@ -79,12 +79,16 @@ import flexjson.JSONSerializer;
 public class CassandraDataLoader implements Constants {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
+
+    private static final Logger activityErrorLog = LoggerFactory.getLogger("activityErrorLog");
+
+    private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
     
     private Keyspace cassandraKeyspace;
     
     private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
     
-    private static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_ONE;
+    private static final ConsistencyLevel WRITE_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
    
     private SimpleDateFormat minuteDateFormatter;
     
@@ -442,6 +446,8 @@ public class CassandraDataLoader implements Constants {
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
+				//kafkaLogWriter.sendEventLog(eventObject.getFields(),KafkaTopic);
+				activityLogger.info(eventObject.getFields());
 				//Save Activity in ElasticSearch
 				//this.saveActivityInIndex(eventObject.getFields());
 				
@@ -498,6 +504,8 @@ public class CassandraDataLoader implements Constants {
 		
     	}catch(Exception e){
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+    		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
+    		activityErrorLog.info(eventObject.getFields());
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
 
@@ -507,16 +515,17 @@ public class CassandraDataLoader implements Constants {
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 			}
 			
+			
+			/*
+			 * To be Re-enable 
+			 * 
+
 			liveDashBoardDAOImpl.findDifferenceInCount(eventMap);
 	
 			liveDashBoardDAOImpl.addApplicationSession(eventMap);
 	
 			liveDashBoardDAOImpl.saveGeoLocations(eventMap);
 			
-			
-			/*
-			 * To be Re-enable 
-			 * 
 
 			if(pushingEvents.contains(eventMap.get("eventName"))){
 				liveDashBoardDAOImpl.pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap);

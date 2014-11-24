@@ -105,7 +105,7 @@ public class CassandraConnectionProvider {
                     .setSocketTimeout(30000)
 					.setMaxTimeoutWhenExhausted(2000)
 					.setMaxConnsPerHost(10)
-					.setInitConnsPerHost(3)
+					.setInitConnsPerHost(1)
 					/*.setLatencyAwareUpdateInterval(10000)
                     .setLatencyAwareResetInterval(0)
                     .setLatencyAwareBadnessThreshold(2)
@@ -125,8 +125,8 @@ public class CassandraConnectionProvider {
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
-                    //.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-                    .withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
+                    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+                    //.withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
 
             context.start();
