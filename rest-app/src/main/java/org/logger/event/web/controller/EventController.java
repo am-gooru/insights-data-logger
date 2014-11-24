@@ -404,7 +404,7 @@ public class EventController {
 				eventService.indexUser(ids);
 			}
 			if(indexType.equalsIgnoreCase("event")){
-				eventService.indexUser(ids);
+				eventService.indexEvents(ids);
 			}
 			
 			if(indexType.equalsIgnoreCase("views")){
