@@ -249,4 +249,6 @@ public interface Constants {
 	public String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
 	
 	public String ACTIVEPLAYS = "active~content~plays";
+	
+	public String CONFIG_SETTINGS = "config_settings";
 }

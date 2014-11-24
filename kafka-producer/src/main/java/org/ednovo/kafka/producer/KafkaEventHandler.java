@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.json.JSONObject;
@@ -54,8 +54,11 @@ public class KafkaEventHandler {
 
 	public void init(String ip, String port, String topic) {
 		this.topic = topic;
+		props.put("metadata.broker.list", ip + ":" + port);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", ip + ":" + port);
+		props.put("request.required.acks", "1");
+		 props.put("retry.backoff.ms","1000");
+		props.put("producer.type", "sync");
 
 		try {
 			producer = new Producer<String, String>(new ProducerConfig(props));
@@ -74,7 +77,7 @@ public class KafkaEventHandler {
 	}
 
 	private void send(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
 		producer.send(data);
 	}
 

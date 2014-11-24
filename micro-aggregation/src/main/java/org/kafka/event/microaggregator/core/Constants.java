@@ -234,6 +234,8 @@ public interface Constants {
 	
 	public String AVOID_SPECIAL_CHARACTER ="[^a-zA-Z0-9]";
 	
+	public String CONFIG_SETTINGS = "config_settings";
+	
 	
 	public enum sortType{
 		

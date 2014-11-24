@@ -29,13 +29,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.json.JSONObject;
 import org.kafka.log.writer.consumer.KafkaLogConsumer;
@@ -63,16 +62,14 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
-		this.errorLogTopic = "error"+System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-	
-		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		this.errorLogTopic = "error"+topic;
 		
-		LOG.info("Kafka Erro File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
-		
+		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
+		props.put("metadata.broker.list",kafkaIp + ":" + port);
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", kafkaIp + ":" + port);		
-		props.put("producer.type", producerType);
-		props.put("compression.codec", "1");
+		props.put("request.required.acks", "1");
+		props.put("producer.type",producerType);
 		
 		
 		try{
@@ -84,39 +81,34 @@ public class KafkaLogProducer
 		}
 	}
 	
-	public void sendEventLog(String eventLog,String Ktopic) {
-		Map<String, String> message = new HashMap<String, String>();
-		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-		message.put("raw", new String(eventLog));
-		
-		String messageAsJson = new JSONObject(message).toString();
-		send(messageAsJson,Ktopic);
-	}
+	public void sendEventLog(String eventLog) {
+	Map<String, String> message = new HashMap<String, String>();
+	message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+	message.put("raw", new String(eventLog));
 	
-	/*public void sendErrorEventLog(String eventLog) {
-        Map<String, String> message = new HashMap<String, String>();
-        message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-        message.put("raw", new String(eventLog));
+	String messageAsJson = new JSONObject(message).toString();
+	send(messageAsJson);
+}
 
-        String messageAsJson = new JSONObject(message).toString();
-        sendErrorEvent(messageAsJson);
-	}
-	
-	 private void sendErrorEvent(String message) {
-         ProducerData<String, String> data = new ProducerData<String, String>(errorLogTopic, message);
-         producer.send(data);
-	 }
-*/
-	 
-	private void send(String message,String Ktopic) {
-		ProducerData<String, String> data = new ProducerData<String, String>(Ktopic, message);
-		LOG.info("Kafka Log write message : " + message);
-		try{			
-			producer.send(data);
-		}catch(Exception e){
-			LOG.info("Error while pushing logs to topic : " + e);
-		}
-	}
+public void sendErrorEventLog(String eventLog) {
+    Map<String, String> message = new HashMap<String, String>();
+    message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+    message.put("raw", new String(eventLog));
+
+    String messageAsJson = new JSONObject(message).toString();
+    sendErrorEvent(messageAsJson);
+}
+
+ private void sendErrorEvent(String message) {
+	 KeyedMessage<String, String> data = new KeyedMessage<String, String>(errorLogTopic,message);
+     producer.send(data);
+ }
+
+ 
+private void send(String message) {
+	KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
+	producer.send(data);
+}
 
 	public static void main(String args[]) {
 		try{
@@ -140,7 +132,7 @@ public class KafkaLogProducer
 	     String kafkaProducerType = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
 	    // kafkaIp, String port, String topic, String producerType
 		KafkaLogProducer producer = new KafkaLogProducer(kafkaIp,kafkaPort, topic,kafkaProducerType);
-		producer.sendEventLog(message,"test");
+		producer.sendEventLog(message);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
