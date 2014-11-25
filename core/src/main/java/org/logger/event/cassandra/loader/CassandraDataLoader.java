@@ -822,13 +822,13 @@ public class CassandraDataLoader  implements Constants {
 	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
 	    		readEventAndIndex(eventUUID);
 	    	}
-	    	//Incrementing time - one minute
-	    	startDate = new Date(startDate).getTime() + 60000;
-	    	
 	    	if(isSchduler){
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+dateFormatter.format(new Date(startDate)));
 	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
 	    	}
+	    	//Incrementing time - one minute
+	    	startDate = new Date(startDate).getTime() + 60000;
+	    	
 	    }
 	    
     	if(isSchduler){
@@ -1133,6 +1133,15 @@ public class CassandraDataLoader  implements Constants {
     				    	}
     					}
 	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    	    		
+	    				String aggregatorJson = cache.get(eventMap.get("eventName"));
+	    				
+	    				if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+	    					if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
+	    						indexResource(String.valueOf(eventMap.get(CONTENTGOORUOID)));
+	    					}
+	    				}		 	
+
 	    			} 
 	    			else{
 	    				   Iterator<?> keys = jsonField.keys();
@@ -1227,6 +1236,12 @@ public class CassandraDataLoader  implements Constants {
 	    					}
 	    				
 		    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+		    	    		String aggregatorJson = cache.get(eventMap.get(EVENTNAME));
+		    	    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+		    					if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
+		    						indexResource(String.valueOf(eventMap.get(CONTENTGOORUOID)));
+		    					}
+		    				}		 	
 	    		     }
 				} catch (Exception e) {
 					logger.info("Error while Migration : {} ",e);
