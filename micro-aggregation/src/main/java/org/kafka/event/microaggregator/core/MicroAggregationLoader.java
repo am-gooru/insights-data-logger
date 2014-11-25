@@ -153,6 +153,9 @@ public class MicroAggregationLoader implements Constants{
         this.aggregationDAO = new AggregationDAOImpl(getConnectionProvider()); 
         this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
+        if (kafkaConfigurationCache == null) {
+			activateKafkaCache(aggregationDAO);
+		}
 
     }
     
@@ -437,6 +440,23 @@ public class MicroAggregationLoader implements Constants{
     
     public Map<String, String> getKafkaProperty(String name) {
 		return kafkaConfigurationCache.get(name);
+	}
+    
+	public void activateKafkaCache(AggregationDAOImpl aggregationDAO) {
+		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
+		Set<String> rowKeyProperties = new HashSet<String>();
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~microaggregator~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~producer");
+		Rows<String, String> result = aggregationDAO.readRows(CONFIG_SETTINGS, rowKeyProperties, new ArrayList<String>()).getResult();
+		for (Row<String, String> row : result) {
+			Map<String, String> properties = new HashMap<String, String>();
+			for (Column<String> column : row.getColumns()) {
+				properties.put(column.getName(), column.getStringValue());
+			}
+			kafkaConfigurationCache.put(row.getKey(), properties);
+		}
 	}
     
 }
