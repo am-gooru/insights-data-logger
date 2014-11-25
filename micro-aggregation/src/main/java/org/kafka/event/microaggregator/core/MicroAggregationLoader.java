@@ -114,11 +114,11 @@ public class MicroAggregationLoader implements Constants{
         
         kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 		Set<String> rowKeyProperties = new HashSet<String>();
-		rowKeyProperties.add("kafka~microaggregator~producer");
-		rowKeyProperties.add("kafka~microaggregator~consumer");
-		rowKeyProperties.add("kafka~microaggregator~producer");
-		rowKeyProperties.add("kafka~logwritter~consumer");
-		rowKeyProperties.add("kafka~logwritter~producer");
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~microaggregator~consumer");
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~logwritter~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~producer");
 		Rows<String, String> result = aggregationDAO.readRows(CONFIG_SETTINGS, rowKeyProperties, new ArrayList<String>()).getResult();
 		for (Row<String, String> row : result) {
 			Map<String, String> properties = new HashMap<String, String>();

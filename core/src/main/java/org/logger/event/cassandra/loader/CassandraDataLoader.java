@@ -139,32 +139,32 @@ public class CassandraDataLoader implements Constants {
         
         //micro Aggregator producer IP
         //micro Aggregator producer IP
-        String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("kafka~microaggregator~producer").get("kafka_ip");
-        String KAFKA_AGGREGATOR_PORT = getKafkaProperty("kafka~microaggregator~producer").get("kafka_portno");
-        String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("kafka~microaggregator~producer").get("kafka_topic");
-        String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("kafka~microaggregator~producer").get("kafka_producertype");
+        String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_ip");
+        String KAFKA_AGGREGATOR_PORT = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_portno");
+        String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_topic");
+        String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_producertype");
 
         //Log Writter producer IP
-        String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("kafka~logwritter~producer").get("kafka_ip");
-        String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("kafka~logwritter~producer").get("kafka_portno");
-        String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("kafka~logwritter~producer").get("kafka_topic");
-        String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("kafka~logwritter~producer").get("kafka_producertype");
+        String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_ip");
+        String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_portno");
+        String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_topic");
+        String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_producertype");
         kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT,  KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
         microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);    }
 
     public CassandraDataLoader(Map<String, String> configOptionsMap) {
         init(configOptionsMap);
         //micro Aggregator producer IP
-        String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("kafka~microaggregator~producer").get("kafka_ip");
-        String KAFKA_AGGREGATOR_PORT = getKafkaProperty("kafka~microaggregator~producer").get("kafka_portno");
-        String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("kafka~microaggregator~producer").get("kafka_topic");
-        String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("kafka~microaggregator~producer").get("kafka_producertype");
+        String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_ip");
+        String KAFKA_AGGREGATOR_PORT = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_portno");
+        String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_topic");
+        String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_producertype");
 
         //Log Writter producer IP
-        String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("kafka~logwritter~producer").get("kafka_ip");
-        String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("kafka~logwritter~producer").get("kafka_portno");
-        String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("kafka~logwritter~producer").get("kafka_topic");
-        String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("kafka~logwritter~producer").get("kafka_producertype");
+        String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_ip");
+        String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_portno");
+        String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_topic");
+        String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_producertype");
         
         microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
         kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT,  KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
@@ -233,7 +233,7 @@ public class CassandraDataLoader implements Constants {
         if(kafkaConfigurationCache == null){
         	
             kafkaConfigurationCache = new HashMap<String,Map<String,String>>();
-            String[] kafkaMessager =new String[]{"kafka~consumer","kafka~logwritter~producer","kafka~logwritter~consumer","kafka~microaggregator~producer","kafka~microaggregator~consumer"};
+            String[] kafkaMessager =new String[]{"v2~kafka~consumer","v2~kafka~logwritter~producer","v2~kafka~logwritter~consumer","v2~kafka~microaggregator~producer","v2~kafka~microaggregator~consumer"};
             Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
             for(Row<String,String> row : result){
             	Map<String,String> properties = new HashMap<String, String>();

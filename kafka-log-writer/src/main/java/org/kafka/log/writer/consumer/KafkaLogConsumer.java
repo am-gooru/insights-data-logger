@@ -59,7 +59,7 @@ public class KafkaLogConsumer extends Thread {
 
 	public KafkaLogConsumer() {
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
-		kafkaProperty = microAggregationLoader.getKafkaProperty("kafka~logwritter~consumer");
+		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~logwritter~consumer");
 		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
 		ZOOKEEPER_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_FILE_TOPIC = kafkaProperty.get("kafka_topic");

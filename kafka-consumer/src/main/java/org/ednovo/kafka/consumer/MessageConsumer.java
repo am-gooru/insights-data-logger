@@ -71,7 +71,7 @@ public class MessageConsumer extends Thread
   public MessageConsumer(DataProcessor insertRowForLogDB)
   {
 	  Map<String, String> kafkaProperty = new HashMap<String, String>();
-		kafkaProperty = cassandraDataLoader.getKafkaProperty("kafka~consumer");
+		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
 		ZK_IP = kafkaProperty.get("zookeeper_ip");
 		ZK_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");

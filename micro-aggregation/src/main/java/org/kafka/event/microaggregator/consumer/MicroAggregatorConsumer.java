@@ -59,7 +59,7 @@ public MicroAggregatorConsumer() {
 
 	Map<String,String> kafkaProperty = new HashMap<String, String>();
 	microAggregationLoader = new MicroAggregationLoader(null);
-	kafkaProperty =  microAggregationLoader.getKafkaProperty("kafka~microaggregator~consumer");
+	kafkaProperty =  microAggregationLoader.getKafkaProperty("v2~kafka~microaggregator~consumer");
 	ZK_IP = kafkaProperty.get("zookeeper_ip");
 	ZK_PORT = kafkaProperty.get("zookeeper_portno");
 	KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
