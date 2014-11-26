@@ -1276,6 +1276,13 @@ public class CassandraDataLoader  implements Constants {
     			eventMap.put("sharing", resource.getStringValue("sharing", null));
     			eventMap.put("contentType", resource.getStringValue("category", null));
     			eventMap.put("license", resource.getStringValue("license_name", null));
+
+    			if(resource.getColumnByName("instructional_id") != null){
+    				eventMap.put("instructionalId", resource.getColumnByName("instructional_id").getLongValue());
+    			}
+    			if(resource.getColumnByName("resource_format_id") != null){
+    				eventMap.put("resourceFormatId", resource.getColumnByName("resource_format_id").getLongValue());
+    			}
     			
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
@@ -1879,6 +1886,15 @@ public class CassandraDataLoader  implements Constants {
 		}
 		if(columns.getColumnByName("thumbnail") != null){
 			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
+		}
+		if(columns.getColumnByName("thumbnail") != null){
+			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
+		}
+		if(columns.getColumnByName("instructional_id") != null){
+			resourceMap.put("instructionalId", columns.getColumnByName("instructional_id").getLongValue());
+		}
+		if(columns.getColumnByName("resource_format_id") != null){
+			resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
 		}
 		if(columns.getColumnByName("grade") != null){
 			JSONArray gradeArray = new JSONArray();
