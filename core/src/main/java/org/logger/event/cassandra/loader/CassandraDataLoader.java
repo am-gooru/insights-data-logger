@@ -1370,7 +1370,7 @@ public class CassandraDataLoader implements Constants {
 								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", ""+viewCount , m);
 							}
 									
-						}else{
+						}else{/*
 							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 							SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 							SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
@@ -1446,7 +1446,7 @@ public class CassandraDataLoader implements Constants {
 							baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
 							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", viewCount, m);
 							
-							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
+						*/	logger.info("Resource NOT FOUND in search: "+ gooruOid);	
 						}
 						m.execute();
 					}
