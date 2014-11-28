@@ -362,9 +362,9 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
-	public void readIndex() {
+	public void readIndex(String dataSource) {
 		try {
-			dataLoaderService.readIndex();
+			dataLoaderService.readIndex(dataSource);
 		} catch (ElasticsearchIllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (ElasticsearchException e) {

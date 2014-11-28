@@ -1544,23 +1544,46 @@ public class CassandraDataLoader  implements Constants {
     	}
     }
     @Async
-    public void readIndex() throws ElasticsearchIllegalArgumentException, ElasticsearchException, IOException {   	
+    public void readIndex(String dataSource) throws ElasticsearchIllegalArgumentException, ElasticsearchException, IOException {   	
     	MatchAllQueryBuilder query = QueryBuilders.matchAllQuery();
-    	SearchResponse scrollResp = connectionProvider.getDevESClient().prepareSearch(ESIndexices.USERCATALOG.getIndex()) .setTypes(IndexType.DIMUSER.getIndexType()).setSearchType(SearchType.SCAN.toString()) .setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet(); 
+    	String indexName = null;
+    	String[] indexTypes = null;
+    	if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.CONTENT.index.getIndex();
+    		indexTypes = ESDataSource.CONTENT.index.getType(); 
+    	} else if(ESDataSource.ACTIVITY.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.ACTIVITY.index.getIndex();
+    		indexTypes = ESDataSource.ACTIVITY.index.getType();     		
+    	} else if(ESDataSource.USERDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.USERDATA.index.getIndex();
+    		indexTypes = ESDataSource.USERDATA.index.getType();         		
+    	} else if(ESDataSource.TAXONOMYDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.TAXONOMYDATA.index.getIndex();
+    		indexTypes = ESDataSource.TAXONOMYDATA.index.getType();         		
+    	} else {
+    		indexName = ESDataSource.CONTENT.index.getIndex();
+    		indexTypes = ESDataSource.CONTENT.index.getType();     		
+    	}
+    	SearchResponse scrollResp = connectionProvider.getDevESClient().prepareSearch(indexName).setTypes(indexTypes).setSearchType(SearchType.SCAN).setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet();
     	Long total = 0L;
-    	  while (true) { 
-    		  scrollResp = connectionProvider.getDevESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
-    		  total = total + scrollResp.getHits().getHits().length;
-    	      System.out.println("Total record count: " + total); 
-    		for (SearchHit hit : scrollResp.getHits()) { 
-    			String id = hit.id();
-    			System.out.println(id);
-    			
-    		} // Break condition: No hits are returned 
-    		if (scrollResp.getHits().getHits().length == 0) { 
-    			System.out.println("All records are fetched"); 
-    			break; 
-    		} 
+
+    	  while (true) {
+	    		  try {
+		    		  scrollResp = connectionProvider.getDevESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
+		    		  total = total + scrollResp.getHits().getHits().length;
+		    	      System.out.println("Total record count: " + total); 
+		    		for (SearchHit hit : scrollResp.getHits()) { 
+		    			String id = hit.id();
+		    			System.out.println(id);
+
+		    		} // Break condition: No hits are returned 
+		    		if (scrollResp.getHits().getHits().length == 0) { 
+		    			System.out.println("All records are fetched"); 
+		    			break; 
+		    		} 
+    		  } catch(Exception e) {
+    			  System.out.println("Invalid index/type");
+    		  }
     	  }    	
     }
 

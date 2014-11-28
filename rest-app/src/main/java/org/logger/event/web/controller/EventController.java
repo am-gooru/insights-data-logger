@@ -394,9 +394,9 @@ public class EventController {
 		}
 	}
 	@RequestMapping(value = "/read/row", method = RequestMethod.GET)
-	public void readUsingCql(HttpServletRequest request,HttpServletResponse response) {
+	public void readUsingCql(HttpServletRequest request,@RequestParam(value="dataSource",required=true) String dataSource,HttpServletResponse response) {
 	
-		eventService.readIndex();
+		eventService.readIndex(dataSource);
 		logger.info("startedd...");
 	}
 	

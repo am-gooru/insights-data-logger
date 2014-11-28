@@ -75,7 +75,7 @@ public interface EventService {
 	
 	public void clearCacher();
 	
-	public void readIndex();
+	public void readIndex(String dataSource);
 	
 	public void indexResource(String ids);
 	
