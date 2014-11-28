@@ -394,16 +394,10 @@ public class EventController {
 		}
 	}
 	@RequestMapping(value = "/read/row", method = RequestMethod.GET)
-	public void readUsingCql(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "whereColumn", required = true) String whereColumn,@RequestParam(value = "columnValue", required = true) String value,HttpServletResponse response) {
+	public void readUsingCql(HttpServletRequest request,HttpServletResponse response) {
 	
-		Map<String, Object> resultMap = eventService.readUsingCql(cfName, whereColumn, value);
-		JSONObject resultJson = new JSONObject(resultMap);
-
-		try {
-			response.getWriter().write(resultJson.toString());
-		} catch (IOException e) {
-			logger.error("OOPS! Something went wrong", e);
-		}
+		eventService.readIndex();
+		logger.info("startedd...");
 	}
 	
 	@RequestMapping(value = "/resource/index/{type}", method = RequestMethod.GET)
@@ -414,6 +408,9 @@ public class EventController {
 			}
 			if(indexType.equalsIgnoreCase("user")){
 				eventService.indexUser(ids);
+			}
+			if(indexType.equalsIgnoreCase("event")){
+				eventService.indexEvent(ids);
 			}
 			if(indexType.equalsIgnoreCase("views")){
 				eventService.indexResourceViews(ids, resourceType);

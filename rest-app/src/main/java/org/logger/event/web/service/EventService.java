@@ -75,6 +75,8 @@ public interface EventService {
 	
 	public void clearCacher();
 	
+	public void readIndex();
+	
 	public void indexResource(String ids);
 	
 	public Map<String,Object> readUsingCql(String cfName,String whereColumn,String value);
@@ -84,6 +86,8 @@ public interface EventService {
 	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType) throws Exception;
 	
 	public void indexUser(String ids) throws Exception;
+	
+	public void indexEvent(String ids) throws Exception;
 	
 	public void indexResourceViews(String ids,String type) throws Exception;
 }

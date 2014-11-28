@@ -36,6 +36,8 @@ import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
@@ -302,6 +304,10 @@ public class EventServiceImpl implements EventService {
 		dataLoaderService.indexUser(ids);
 	}
 
+	public void indexEvent(String ids) throws Exception{
+		dataLoaderService.indexEvent(ids);
+	}
+
 	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
 		dataLoaderService.migrateRow(sourceCluster,targetCluster,cfName,key,columnName,type);
 	}
@@ -353,5 +359,20 @@ public class EventServiceImpl implements EventService {
     		}
     	}
     	 return resultData;
+	}
+
+	@Override
+	public void readIndex() {
+		try {
+			dataLoaderService.readIndex();
+		} catch (ElasticsearchIllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (ElasticsearchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

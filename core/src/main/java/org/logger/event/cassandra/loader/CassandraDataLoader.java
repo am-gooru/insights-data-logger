@@ -37,19 +37,25 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.utils.ExpiringMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -72,14 +78,12 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
-import com.netflix.astyanax.serializers.MapSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
@@ -1529,7 +1533,37 @@ public class CassandraDataLoader  implements Constants {
     		indexer.getUserAndIndex(userId);
     	}
     }
-    
+    public void indexEvent(String ids) throws Exception{
+    	for(String eventId : ids.split(",")){
+    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);
+    		if(event.size() > 0){
+    			indexer.indexActivity(event.getStringValue("fields", null));
+    		}else{
+    			logger.info("Invalid event id:" + eventId);
+    		}
+    	}
+    }
+    @Async
+    public void readIndex() throws ElasticsearchIllegalArgumentException, ElasticsearchException, IOException {   	
+    	MatchAllQueryBuilder query = QueryBuilders.matchAllQuery();
+    	SearchResponse scrollResp = connectionProvider.getDevESClient().prepareSearch(ESIndexices.USERCATALOG.getIndex()) .setTypes(IndexType.DIMUSER.getIndexType()).setSearchType(SearchType.SCAN.toString()) .setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet(); 
+    	Long total = 0L;
+    	  while (true) { 
+    		  scrollResp = connectionProvider.getDevESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
+    		  total = total + scrollResp.getHits().getHits().length;
+    	      System.out.println("Total record count: " + total); 
+    		for (SearchHit hit : scrollResp.getHits()) { 
+    			String id = hit.id();
+    			System.out.println(id);
+    			
+    		} // Break condition: No hits are returned 
+    		if (scrollResp.getHits().getHits().length == 0) { 
+    			System.out.println("All records are fetched"); 
+    			break; 
+    		} 
+    	  }    	
+    }
+
     public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
     	
     	MutationBatch m = null;
