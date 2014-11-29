@@ -1831,6 +1831,27 @@ public class CassandraDataLoader implements Constants {
     	}
     }
 
+    @Async
+    public void migrateCF(String cfName){
+    	Rows<String, String> cfData = baseDao.readAllRows(cfName, 0);
+    	
+    	for (Row<String, String> row : cfData) {
+    		MutationBatch m = null;
+			try {
+				m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				String Key = row.getKey();
+				logger.info("Key" + Key);
+	        	for(Column<String> columns:row.getColumns()){
+	        			baseDao.generateNonCounter(cfName, Key, columns.getName(), columns.getStringValue(), m);
+	        	}
+	        	m.execute();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+        
+		}
+    }
+
     private void updateEventCompletion(EventData eventData) throws ConnectionException {
 
     	Long endTime = eventData.getEndTime(), startTime = eventData.getStartTime();

@@ -392,6 +392,17 @@ public class EventController {
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
+
+	@RequestMapping(value = "/migrate/cf", method = RequestMethod.GET)
+	public void migrateCF(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,HttpServletResponse response) {
+		try {
+			eventService.migrateCF(cfName);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
+
 	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
