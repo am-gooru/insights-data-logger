@@ -1575,7 +1575,16 @@ public class CassandraDataLoader  implements Constants {
 		    		for (SearchHit hit : scrollResp.getHits()) { 
 		    			String id = hit.id();
 		    			System.out.println(id);
-
+		    			if(ESDataSource.ACTIVITY.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexEvent(id);	//	Event Logger Info
+		    			} else if(ESDataSource.USERDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexUser(id);	// User Catalog Info
+		    			} /*else if(ESDataSource.TAXONOMYDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				indexer.indexTaxonomy(sourceCf, id, String.valueOf(ESDataSource.TAXONOMYDATA.index.getIndex()), String.valueOf(ESDataSource.TAXONOMYDATA.index.getType()));
+		    			}*/ else if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexResource(id);	// Content Catalog Info
+		    			}
+		    			
 		    		} // Break condition: No hits are returned 
 		    		if (scrollResp.getHits().getHits().length == 0) { 
 		    			System.out.println("All records are fetched"); 
