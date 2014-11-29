@@ -104,7 +104,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
        		return;
         	}
 
-       	eventObjectValidator.validateEventObject(eventObject);
+//       	eventObjectValidator.validateEventObject(eventObject);
         	dataLoader.handleEventObjectMessage(eventObject);
         }
 	}
