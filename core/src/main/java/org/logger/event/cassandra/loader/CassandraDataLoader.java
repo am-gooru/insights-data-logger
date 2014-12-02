@@ -1659,6 +1659,41 @@ public class CassandraDataLoader  implements Constants {
 			if(userInfos.getColumnByName("gooru_uid") != null){
 				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
 				contentBuilder.field("gooru_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
+		    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),userInfos.getColumnByName("gooru_uid").getStringValue(),0);
+		    	
+		    	if(vluesList != null && vluesList.size() > 0){
+		    		
+		    		
+		    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
+		    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
+		    		contentBuilder.field("count~ratings",ratings);
+		    		contentBuilder.field("sum~rate",sumOfRatings);
+		    		contentBuilder.field("avg_rating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
+		    		
+		    		
+		    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
+		    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
+		    		contentBuilder.field("count~reactions",ratings);
+		    		contentBuilder.field("sum~reactionType",sumOfreactionType);
+		    		contentBuilder.field("avg_reaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
+		    		
+		    		
+		    		contentBuilder.field("count~5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
+		    		contentBuilder.field("count~4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
+		    		contentBuilder.field("count~3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
+		    		contentBuilder.field("count~2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
+		    		contentBuilder.field("count~1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
+		    		
+		    		contentBuilder.field("count~i-can-explain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
+		    		contentBuilder.field("count~i-need-help",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
+		    		contentBuilder.field("count~i-donot-understand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
+		    		contentBuilder.field("count~meh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
+		    		contentBuilder.field("count~i-can-understand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
+		    		contentBuilder.field("copied~count",vluesList.getColumnByName("copied~count") != null ?vluesList.getColumnByName("copied~count").getLongValue() : 0L );
+		    		contentBuilder.field("count~share",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
+		    		contentBuilder.field("count~comment",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
+		    		contentBuilder.field("count~review",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
+		    	}
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
 				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirm_status").getLongValue());
@@ -1965,6 +2000,8 @@ public class CassandraDataLoader  implements Constants {
 	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
 	    		resourceMap.put("copiedCount",vluesList.getColumnByName("copied~count") != null ?vluesList.getColumnByName("copied~count").getLongValue() : 0L );
 	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
+	    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
+	    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
 	    	}
 
 	    	
