@@ -1783,10 +1783,10 @@ public class CassandraDataLoader  implements Constants {
 		
 	}
     
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+    public void indexTaxonomy(String keys) throws Exception{
     	
-    	for(String id : key.split(",")){
-    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
+    	for(String id : keys.split(",")){
+    		ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.TAXONOMYCODE.getColumnFamily(), id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
 	            for(int i = 0 ; i < sourceValues.size() ; i++) {
@@ -1807,9 +1807,9 @@ public class CassandraDataLoader  implements Constants {
 	            	}
 	            }
 	    		
-	    		getConnectionProvider().getDevESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
+	    		getConnectionProvider().getDevESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex(), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 				;
-	    		getConnectionProvider().getProdESClient().prepareIndex(targetIndex, targetType, id).setSource(contentBuilder).execute().actionGet()
+	    		getConnectionProvider().getProdESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex(), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
     	}
