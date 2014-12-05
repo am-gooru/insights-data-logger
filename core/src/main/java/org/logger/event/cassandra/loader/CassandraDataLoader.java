@@ -1693,6 +1693,7 @@ public class CassandraDataLoader  implements Constants {
 		    		contentBuilder.field("count~share",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
 		    		contentBuilder.field("count~comment",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
 		    		contentBuilder.field("count~review",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
+		    		contentBuilder.field("count~resourceAdded",vluesList.getColumnByName("count~collection.resource~add") != null ?vluesList.getColumnByName("count~collection.resource~add").getLongValue() : 0L );
 		    	}
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
