@@ -1999,7 +1999,7 @@ public class CassandraDataLoader  implements Constants {
 	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
 	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
 	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
-	    		resourceMap.put("copiedCount",vluesList.getColumnByName("count~copied") != null ?vluesList.getColumnByName("count~copied").getLongValue() : 0L );
+	    		resourceMap.put("copyCount",vluesList.getColumnByName("count~copy") != null ?vluesList.getColumnByName("count~copy").getLongValue() : 0L );
 	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
 	    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
 	    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
