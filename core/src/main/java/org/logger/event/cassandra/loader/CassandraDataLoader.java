@@ -1971,8 +1971,8 @@ public class CassandraDataLoader  implements Constants {
 	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", totalTimespent);
 	    		}
 	    		if(views == 0L && totalTimespent > 0L ){
-	    			totalTimespent = 0L;
 	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (totalTimespent * -1));
+	    			totalTimespent = 0L;
 	    		}
 	    		resourceMap.put("viewsCount",views);
 	    		resourceMap.put("totalTimespent",totalTimespent);
