@@ -1110,7 +1110,7 @@ public class CassandraDataLoader  implements Constants {
 				JSONObject jsonField = new JSONObject(fields);
 	    			if(jsonField.has("version")){
 	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-	    				if(eventObjects.getEventName().equalsIgnoreCase("create-session")){
+	    				if(!eventObjects.getEventName().equalsIgnoreCase("create-session")){
 	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);    	
 	    				
 	    				eventMap.put("eventName", eventObjects.getEventName());
