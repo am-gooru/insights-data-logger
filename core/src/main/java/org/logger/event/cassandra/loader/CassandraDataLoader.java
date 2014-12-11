@@ -1539,10 +1539,9 @@ public class CassandraDataLoader implements Constants {
 					for(Column<String> detail : vluesList) {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
-						ColumnList<String> resource2 = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
-						logger.info("resourceType : " + resource2.getColumnByName("resourceType"));
-;		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
+						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
+						logger.info("resourceType : " + resource.getColumnByName("resourceType").getStringValue());
+;		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
 		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
 		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
@@ -1562,7 +1561,6 @@ public class CassandraDataLoader implements Constants {
 									}
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCount")){										
 										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"stas.viewsCount",detail.getLongValue(),m2);
-										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
 									}
 								}
 							}
@@ -1629,7 +1627,7 @@ public class CassandraDataLoader implements Constants {
     		HttpResponse response = httpClient.execute(postRequest);
 	 		logger.info("Status : {} ",response.getStatusLine().getStatusCode());
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
-	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
+	 		if (response.getStatusLine().getStatusCode() != 200) {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
