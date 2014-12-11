@@ -1512,7 +1512,7 @@ public class CassandraDataLoader implements Constants {
 			int indexedCount = 0;
 			int indexedLimit = 2;
 			int allowedLimit = 0;
-		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		//MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
@@ -1540,7 +1540,9 @@ public class CassandraDataLoader implements Constants {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
-		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
+						ColumnList<String> resource2 = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
+						logger.info("resourceType : " + resource2.getColumnByName("resourceType"));
+;		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
 		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
 		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
@@ -1554,12 +1556,12 @@ public class CassandraDataLoader implements Constants {
 						for(String column : statKeys){
 							if(detail.getName().equals(column)){
 								if(statMetrics.getStringValue(column, null) != null){
-									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
+									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m2);
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")){
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m);
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m2);
 									}
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCount")){										
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"stas.viewsCount",detail.getLongValue(),m);
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"stas.viewsCount",detail.getLongValue(),m2);
 										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
 									}
 								}
@@ -1570,7 +1572,7 @@ public class CassandraDataLoader implements Constants {
 				}
 			}
 		if(indexCollectionType != null || indexResourceType != null){
-			m.execute();
+//			m.execute();
 			m2.execute();
 			int indexingStatus = 0;
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
