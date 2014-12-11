@@ -1559,8 +1559,8 @@ public class CassandraDataLoader implements Constants {
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")){
 										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m2);
 									}
-									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCount")){										
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"stas.viewsCount",detail.getLongValue(),m2);
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")){										
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.viewsCount",""+detail.getLongValue(),m2);
 									}
 								}
 							}
