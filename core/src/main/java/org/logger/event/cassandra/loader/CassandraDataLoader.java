@@ -1135,13 +1135,18 @@ public class CassandraDataLoader  implements Constants {
     					}
 	    	    		liveDashBoardDAOImpl.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex(), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    	    		
-	    				String aggregatorJson = cache.get(eventMap.get("eventName"));
+//	    				String aggregatorJson = cache.get(eventMap.get("eventName"));
 	    				
-	    				if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-	    					if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
-	    						indexResource(String.valueOf(eventMap.get(CONTENTGOORUOID)));
-	    					}
-	    				}		 	
+                        if(String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("collection.play") ||
+                                String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("resource.play") ||
+                                String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("collection.resource.play") ||
+                                String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("reaction.create") ||
+                                String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("item.rate") ||
+                                String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("item.flag")) {
+		                        if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
+		                                indexResource(String.valueOf(eventMap.get(CONTENTGOORUOID)));
+		                        }
+                        }
 	    				}
 	    			} 
 	    			else{
