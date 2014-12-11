@@ -1540,7 +1540,7 @@ public class CassandraDataLoader implements Constants {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
-		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
+		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
 		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
 		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
@@ -1555,7 +1555,11 @@ public class CassandraDataLoader implements Constants {
 							if(detail.getName().equals(column)){
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
-									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){										
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")){
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m);
+									}
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCount")){										
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"stas.viewsCount",detail.getLongValue(),m);
 										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
 									}
 								}
