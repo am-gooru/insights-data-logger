@@ -1877,110 +1877,114 @@ public class CassandraDataLoader  implements Constants {
 
     private boolean getRecordsToProcess(Date rowValues,JSONArray resourceList,String indexLabelLimit) throws Exception{
   	  
-  		  	String indexCollectionType = null;
-  			String indexResourceType = null;
-  			String IndexingStatus = null;
-  			String resourceIds = "";
-  			String collectionIds = "";
-  			int indexedCount = 0;
-  			int indexedLimit = 2;
-  			int allowedLimit = 0;
-  		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-  		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-  		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-  		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
-  		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-  		/*if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
-  		 rowValues = new Date(rowValues.getTime() + 60000);
-  		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-  		}*/
-  		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
+	  	String indexCollectionType = null;
+		String indexResourceType = null;
+		String IndexingStatus = null;
+		String resourceIds = "";
+		String collectionIds = "";
+		int indexedCount = 0;
+		int indexedLimit = 2;
+		int allowedLimit = 0;
+	//MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+	MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+	ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+	ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
+	indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
+	/*if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
+	 rowValues = new Date(rowValues.getTime() + 60000);
+	 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+	}*/
+	logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 
-  		if(contents.size() > 0 ){
-  			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
-  			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
-  			allowedLimit = (indexedCount + indexedLimit);
-  			if(allowedLimit > contents.size() ){
-  				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
-  			}
-  			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
-  			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
-  			if(IndexingStatus.equalsIgnoreCase("completed")){
-  				for(int i = indexedCount ; i < allowedLimit ; i++) {
-  					indexedCount = i;
-  					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
-  					for(Column<String> detail : vluesList) {
-  						JSONObject resourceObj = new JSONObject();
-  						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-  						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
-  		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
-  		    				indexCollectionType = "scollection";
-  		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
-  		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
-  		    				}
-  						}else{
-  							indexResourceType = "resource";
-  							if(!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())){
-  								resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
-  							}
-  						}
-  						for(String column : statKeys){
-  							if(detail.getName().equals(column)){
-  								if(statMetrics.getStringValue(column, null) != null){
-  									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
-  									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){										
-  										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
-  									}
-  								}
-  							}
-  						}
-  					
-  					}
-  				}
-  			}
-  		if(indexCollectionType != null || indexResourceType != null){
-  			m.execute();
-  			m2.execute();
-  			int indexingStatus = 0;
-  			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
-  			if(indexCollectionType != null){
-  				indexingStatus  = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1), rowValues);
-  			}
-  			if(indexResourceType != null){
-  				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
-  			}
-  			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount++),86400);
+	if(contents.size() > 0 ){
+		ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
+		indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
+		allowedLimit = (indexedCount + indexedLimit);
+		if(allowedLimit > contents.size() ){
+			allowedLimit = indexedCount + (contents.size() - indexedCount) ;
+		}
+		ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
+		IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
+		if(IndexingStatus.equalsIgnoreCase("completed")){
+			for(int i = indexedCount ; i < allowedLimit ; i++) {
+				indexedCount = i;
+				ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
+				for(Column<String> detail : vluesList) {
+					JSONObject resourceObj = new JSONObject();
+					resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+					ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
+					logger.info("resourceType : " + resource.getColumnByName("resourceType").getStringValue());
+;		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
+	    				indexCollectionType = "scollection";
+	    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
+	    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
+	    				}
+					}else{
+						indexResourceType = "resource";
+						if(!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())){
+							resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
+						}
+					}
+					for(String column : statKeys){
+						if(detail.getName().equals(column)){
+							if(statMetrics.getStringValue(column, null) != null){
+								baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m2);
+								if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")){
+									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m2);
+								}
+								if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")){										
+									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.viewsCount",""+detail.getLongValue(),m2);
+								}
+							}
+						}
+					}
+				
+				}
+			}
+		}
+	if(indexCollectionType != null || indexResourceType != null){
+//		m.execute();
+		m2.execute();
+		int indexingStatus = 0;
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
+		if(indexCollectionType != null){
+			indexingStatus  = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1), rowValues);
+		}
+		if(indexResourceType != null){
+			indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
+		}
+		baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount++),86400);
 
-  			if(indexingStatus == 200 || indexingStatus == 404){
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
-  				return true;
-  			}else{
-  				logger.info("Statistical data update failed");
-  				return false;
-  			}
-  		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
-  			ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~limit",0);
-  			String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULTCOLUMN, "0") : "0";
-  			
-  			ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~count",0);
-  			String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULTCOLUMN, "0") : "0";
-  			
-  			if(Integer.valueOf(count) > Integer.valueOf(limit)){
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
-  			}else{
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, ""+(Integer.valueOf(count)+1));
-  			}
-  	 		logger.info("Waiting for indexing"+ (Integer.valueOf(count)+1));
-  	 		return false;
-  		}
-  	}else{
-  		logger.info("No content is viewed");
-  		return true;
-  	}
-  	return false;
-  }
+		if(indexingStatus == 200 || indexingStatus == 404){
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
+			return true;
+		}else{
+			logger.info("Statistical data update failed");
+			return false;
+		}
+	}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
+		ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~limit",0);
+		String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULTCOLUMN, "0") : "0";
+		
+		ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~count",0);
+		String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULTCOLUMN, "0") : "0";
+		
+		if(Integer.valueOf(count) > Integer.valueOf(limit)){
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
+		}else{
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, ""+(Integer.valueOf(count)+1));
+		}
+ 		logger.info("Waiting for indexing"+ (Integer.valueOf(count)+1));
+ 		return false;
+	}
+}else{
+	logger.info("No content is viewed");
+	return true;
+}
+return false;
+}
    
   /*
    * rowValues can be null
