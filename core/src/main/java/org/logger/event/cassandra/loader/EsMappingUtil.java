@@ -26,12 +26,9 @@ public class EsMappingUtil {
 	public static String getConfig(String indexType,
 			String configFile) {
 		String content = null;
-		String settingsPath = "/insights-data-logger/config/index/" + indexType + "/_" + configFile + ".json";
-		
-		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath().toString();
-		String filePath = s+settingsPath;
-		System.out.print("Current Location : " + s);
+		String settingsPath = "/home/gooruapp/insights-data-logger/config/index/" + indexType + "/_" + configFile + ".json";		
+		String filePath = settingsPath;
+		System.out.print("Current Location : " + filePath);
 		File file = new File(filePath);		
 		try {
 			System.out.print("File Locations : " + file.getAbsolutePath());

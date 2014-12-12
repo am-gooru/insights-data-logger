@@ -261,6 +261,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     			eventMap.put("license", resource.getStringValue("license_name", null));
     			eventMap.put("contentOrganizationId", resource.getStringValue("organization_uid", null));
     			
+    			if(resource.getColumnByName("instructional_id") != null){
+    				eventMap.put("instructionalId", resource.getColumnByName("instructional_id").getLongValue());
+    				}
+    			if(resource.getColumnByName("resource_format_id") != null){
+    				eventMap.put("resourceFormatId", resource.getColumnByName("resource_format_id").getLongValue());
+    			}
+    				
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
 						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
@@ -481,6 +488,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("thumbnail") != null){
 			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 		}
+		if(columns.getColumnByName("instructional_id") != null){
+			resourceMap.put("instructionalId", columns.getColumnByName("instructional_id").getLongValue());
+			}
+			if(columns.getColumnByName("resource_format_id") != null){
+			resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
+			}
 		if(columns.getColumnByName("grade") != null){
 			JSONArray gradeArray = new JSONArray();
 			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
@@ -554,8 +567,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
 	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
 	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
-	    		resourceMap.put("copiedCount",vluesList.getColumnByName("copied~count") != null ?vluesList.getColumnByName("copied~count").getLongValue() : 0L );
+	    		resourceMap.put("copyCount",vluesList.getColumnByName("count~copy") != null ?vluesList.getColumnByName("count~copy").getLongValue() : 0L );
 	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
+	    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
+	    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
 	    	}
 	    	
 	    	if(questionList != null && questionList.size() > 0){
@@ -599,36 +614,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				logger.info("Indexing failed in content Builder ",e);	
 			}
 			
-			indexingProd(indexName, indexType, id, contentBuilder, 0);
-			indexingDev(indexName, indexType, id, contentBuilder, 0);
+			indexingES(indexName, indexType, id, contentBuilder, 0);
 	}
 	
-	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
-		
-		try{
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
-		}catch(Exception e){
-			if(retryCount < 6){
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				logger.info("Retrying count: {}  ",retryCount);
-    			retryCount++;
-    			indexingProd(indexName, indexType, id, contentBuilder, retryCount);
-        	}else{
-        		logger.info("Indexing failed in Prod : {} ",e);
-        		e.printStackTrace();
-        	}
-		}
-	}
 	
-	public void indexingDev(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
+	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getDevESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
 				try {
@@ -638,7 +630,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				}
 				logger.info("Retrying count: {}  ",retryCount);
 				retryCount++;
-    			indexingDev(indexName, indexType, id, contentBuilder, retryCount);
+    			indexingES(indexName, indexType, id, contentBuilder, retryCount);
         	}else{
         		logger.info("Indexing failed in Prod : {} ",e);
         		e.printStackTrace();
@@ -771,9 +763,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    		}
 	    	}
 
-	    	connectionProvider.getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
-			;
-			connectionProvider.getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
@@ -804,9 +794,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	            	}
 	            }
 	    		
-	    		connectionProvider.getDevESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
-				;
-	    		connectionProvider.getProdESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
+	    		connectionProvider.getESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
     	}

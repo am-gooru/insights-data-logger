@@ -72,8 +72,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-    private Client devClient;
-    private Client prodClient;
+    private Client esClient;
     private static String AWS_CASSANDRA_KEYSPACE;
     private static String AWS_CASSANDRA_IP;
     private static String INSIHGHTS_DEV_ES_IP;
@@ -148,28 +147,18 @@ public class CassandraConnectionProvider {
             }
 
             //Elastic search connection provider
-            if(devClient == null) {
+            if(esClient == null) {
 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
 	           TransportClient transportClient = new TransportClient(settings);
 	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_DEV_ES_IP, esPort));
 	           
-	           devClient = transportClient;
+	           esClient = transportClient;
             }
-            
-            if(prodClient == null) {
- 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
- 	           TransportClient transportClient = new TransportClient(settings);
- 	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_PROD_ES_IP, esPort));
- 	           
- 	           prodClient = transportClient;
-             }
-            
 
 			if(cassandraNewAwsKeyspace != null ) {
 				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getNewAwsKeyspace()).build();
 			}
-          this.registerDevIndices();
-           this.registerProdIndices();
+          this.registerEsIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
@@ -273,20 +262,15 @@ public class CassandraConnectionProvider {
     	return resourceEntityPersister;
     }
     
-    public Client getDevESClient() throws IOException{
-    	if (devClient == null) {
+    public Client getESClient() throws IOException{
+    	if (esClient == null) {
             throw new IOException("Dev Elastic Search is not initialized.");
         }
-    	return devClient;
-    }
-    public Client getProdESClient() throws IOException{
-    	if (prodClient == null) {
-            throw new IOException("Prod Elastic Search is not initialized.");
-        }
-    	return prodClient;
+    	return esClient;
     }
     
-    public final void registerDevIndices() {
+    
+    public final void registerEsIndices() {
     	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
     	if(indexingVersion != null){
 	    	for (ESIndexices esIndex : ESIndexices.values()) {
@@ -294,10 +278,10 @@ public class CassandraConnectionProvider {
 				for (String indexType : esIndex.getType()) {
 					String mapping = EsMappingUtil.getMappingConfig(indexType);
 					try {
-						CreateIndexRequestBuilder prepareCreate = this.getDevESClient().admin().indices().prepareCreate(indexName);
+						CreateIndexRequestBuilder prepareCreate = this.getESClient().admin().indices().prepareCreate(indexName);
 						prepareCreate.addMapping(indexType, mapping);
 						prepareCreate.execute().actionGet();
-						logger.info("Dev Index created : " + indexName + "\n");
+						logger.info("Index created : " + indexName + "\n");
 					} catch (Exception exception) {
 						logger.info("Already Index availble : " + indexName + "\n");
 					}
@@ -307,27 +291,7 @@ public class CassandraConnectionProvider {
 			}
     	}
 	}
-    public final void registerProdIndices() {
-    	String indexingVersion = readWithKey(cassandraKeyspace, org.logger.event.cassandra.loader.ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index_version").getStringValue("constant_value", "v1");
-    	if(indexingVersion != null){
-    	for (ESIndexices esIndex : ESIndexices.values()) {
-			String indexName = esIndex.getIndex()+"_"+indexingVersion;
-			for (String indexType : esIndex.getType()) {
-				String mapping = EsMappingUtil.getMappingConfig(indexType);
-				try {
-					CreateIndexRequestBuilder prepareProdCreate = this.getProdESClient().admin().indices().prepareCreate(indexName);
-					prepareProdCreate.addMapping(indexType, mapping);
-					prepareProdCreate.execute().actionGet();
-					logger.info("Prod Index created : " + indexName + "\n");
-					
-				} catch (Exception exception) {
-					logger.info("Already Index availble : " + indexName + "\n");
-				}
-			}
-		}
-    }
-}
-    
+       
     public ColumnList<String> readWithKey(Keyspace keyspace,String cfName,String key){
         
     	ColumnList<String> result = null;

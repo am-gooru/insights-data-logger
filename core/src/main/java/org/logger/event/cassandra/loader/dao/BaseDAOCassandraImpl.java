@@ -51,9 +51,8 @@ public class BaseDAOCassandraImpl {
     
     private Keyspace newAwsKeyspace;
     
-    private Client devClient;
+    private Client esClient;
     
-    private Client prodClient;
     
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
     
@@ -101,26 +100,15 @@ public class BaseDAOCassandraImpl {
         return this.newAwsKeyspace;
     }
     
-    public Client getDevESClient() {
-        if(devClient == null && this.connectionProvider != null) {
+    public Client getESClient() {
+        if(esClient == null && this.connectionProvider != null) {
             try {
-                this.devClient = this.connectionProvider.getDevESClient();
+                this.esClient = this.connectionProvider.getESClient();
             } catch (IOException ex) {
                 logger.info("Error while initializing elastic search{}", ex);
             }
         }
-        return this.devClient;
-    }
-    
-    public Client getProdESClient() {
-        if(prodClient == null && this.connectionProvider != null) {
-            try {
-                this.prodClient = this.connectionProvider.getProdESClient();
-            } catch (IOException ex) {
-                logger.info("Error while initializing elastic search{}", ex);
-            }
-        }
-        return this.prodClient;
+        return this.esClient;
     }
     
     public EntityManager<ResourceCo, String> getResourceEntityPersister() {

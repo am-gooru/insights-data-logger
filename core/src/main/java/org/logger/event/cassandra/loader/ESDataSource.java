@@ -18,19 +18,10 @@ public enum ESDataSource {
 		public String getDataSource() {
 			return dataSource;
 		}
-
-/*		public void setDataSource(String dataSource) {
-			this.dataSource = dataSource;
-		}
-*/
 		public ESIndexices getIndex() {
 			return index;
 		}
-
-/*		public void setIndex(ESIndexices index) {
-			this.index = index;
-		}
-*/		
+		
 		
 }
 

@@ -1564,12 +1564,12 @@ public class CassandraDataLoader  implements Constants {
     		indexName = ESDataSource.CONTENT.index.getIndex();
     		indexTypes = ESDataSource.CONTENT.index.getType();     		
     	}
-    	SearchResponse scrollResp = connectionProvider.getDevESClient().prepareSearch(indexName).setTypes(indexTypes).setSearchType(SearchType.SCAN).setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet();
+    	SearchResponse scrollResp = connectionProvider.getESClient().prepareSearch(indexName).setTypes(indexTypes).setSearchType(SearchType.SCAN).setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet();
     	Long total = 0L;
 
     	  while (true) {
 	    		  try {
-		    		  scrollResp = connectionProvider.getDevESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
+		    		  scrollResp = connectionProvider.getESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
 		    		  total = total + scrollResp.getHits().getHits().length;
 		    	      System.out.println("Total record count: " + total); 
 		    		for (SearchHit hit : scrollResp.getHits()) { 
@@ -1579,9 +1579,7 @@ public class CassandraDataLoader  implements Constants {
 		    				this.indexEvent(id);	//	Event Logger Info
 		    			} else if(ESDataSource.USERDATA.getDataSource().equalsIgnoreCase(dataSource)) {
 		    				this.indexUser(id);	// User Catalog Info
-		    			} /*else if(ESDataSource.TAXONOMYDATA.getDataSource().equalsIgnoreCase(dataSource)) {
-		    				indexer.indexTaxonomy(sourceCf, id, String.valueOf(ESDataSource.TAXONOMYDATA.index.getIndex()), String.valueOf(ESDataSource.TAXONOMYDATA.index.getType()));
-		    			}*/ else if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
+		    			}else if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
 		    				this.indexResource(id);	// Content Catalog Info
 		    			}
 		    			
