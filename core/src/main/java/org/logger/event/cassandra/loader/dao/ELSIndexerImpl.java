@@ -433,7 +433,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			return;
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
-			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue());
+			Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
+			resourceMap.put("contentItems",contentItems);
+	    	
 		}
 		
 		if(columns.getColumnByName("title") != null){
