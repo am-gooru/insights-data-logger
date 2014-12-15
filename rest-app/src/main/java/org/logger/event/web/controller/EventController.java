@@ -561,6 +561,11 @@ public class EventController {
 		eventService.migrateLiveDashBoard();
 	}
 	
+	public void migrateVTLiveDashboard() {
+		logger.info("live dashboard view and timespent migration .....");
+		eventService.migrateVTLiveDashBoard();		
+	}
+	
 	public boolean validateSchedular(){
 		
 		try {

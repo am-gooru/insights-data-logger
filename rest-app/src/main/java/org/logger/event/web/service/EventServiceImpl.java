@@ -284,6 +284,11 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	public void migrateVTLiveDashBoard() {
+		dataLoaderService.migrateViewsTimespendLiveDashBoard();
+	}
+	
+	@Override
 	public void eventMigration() {		
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", "constant_value",0).getStringValue();
         String currentTime = minuteDateFormatter.format(new Date()).toString();

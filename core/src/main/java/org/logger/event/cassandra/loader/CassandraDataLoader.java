@@ -1571,6 +1571,71 @@ public class CassandraDataLoader implements Constants {
 		liveDashboardMigrationThread.start();
 	}
 	
+	
+	//Migrate live-dashboard - timespent and views
+	public void migrateViewsTimespendLiveDashBoard(){
+		try{
+			ColumnList<String> settings = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", 0);
+			Long resourceCount = Long.valueOf(settings.getStringValue("resource_count", null));
+			Long maximumCount = Long.valueOf(settings.getStringValue("max_count", null));
+			Long indexedCount = Long.valueOf(settings.getStringValue("indexed_count", null));
+			Long runningStatus = Long.valueOf(settings.getStringValue("running_status", null));
+			logger.info("resourceCountVT : " + resourceCount + "indexedCountVT : " + indexedCount + "maxCountVT : " + maximumCount);
+			if(runningStatus > 0){
+				if(indexedCount == maximumCount) {
+					baseDao.saveLongValue("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", "running_status", 1);
+				}
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_ts_views_live_dashboard" , "indexed_count", "" + (indexedCount + resourceCount));
+				logger.info("Started migration from contentId: {}", indexedCount);
+				migrateViewsTimespendLiveDashBoard(indexedCount, (indexedCount + resourceCount));
+			}
+		}
+		catch (Exception e) {
+			logger.info("Error in migrating live dashboard : {}",e);
+		}
+	}
+	
+	
+	
+	@Async
+	public void migrateViewsTimespendLiveDashBoard(final Long startValue, final Long endValue){
+		final Thread liveDashboardVTMigrationThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				try{
+					MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					for(Long contentId = startValue; contentId <= endValue; contentId++){
+						Rows<String, String> resources = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId, 0);
+						String gooruOid = null;
+						Long viewCount = 0L;
+						Long timeSpent = 0L;
+						Long avgTimeSpent = 0L;
+						if(resources.size() > 0){
+							for(Row<String, String> resource : resources){
+								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
+								ColumnList<String> counterV1Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, 0);
+								timeSpent = counterV1Row.getColumnByName("time_spent~total").getLongValue();
+								viewCount = counterV1Row.getColumnByName("count~views").getLongValue();
+								avgTimeSpent = timeSpent/viewCount;
+				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.totalTimeSpent", timeSpent);
+				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.viewsCountN", viewCount);
+				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.averageTimeSpent", avgTimeSpent);
+								logger.info("Migrated resource VT: ===>>> {} ", gooruOid);
+							}
+							m.execute();
+						}
+					} 
+				} 
+				catch(Exception e){
+					logger.info("Error in migrating live dashboard : {}",e);
+				}
+			}
+		});  
+		liveDashboardVTMigrationThread.setDaemon(true);
+		liveDashboardVTMigrationThread.start();
+	}
+	
 	//Creating staging Events
     public HashMap<String, Object> createStageEvents(String minuteId,String hourId,String dateId,String eventId ,String userUid,ColumnList<String> eventDetails ,String eventDetailUUID) {
     	HashMap<String, Object> stagingEvents = new HashMap<String, Object>();

@@ -68,6 +68,8 @@ public interface EventService {
 
 	void migrateLiveDashBoard();
 	
+	void migrateVTLiveDashBoard();
+	
 	void postMigration(String start,String Stop,String param);
 	
 	void postStatMigration(String start,String Stop,String param);

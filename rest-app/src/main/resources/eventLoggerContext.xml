@@ -101,6 +101,17 @@
            <property name="repeatInterval" value="2000" />
            <property name="startDelay" value="1000" />
        </bean>
+       
+  		<bean id="liveDashboardVTMigrationJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+           <property name="targetObject" ref="eventController" />
+           <property name="targetMethod" value="migrateVTLiveDashboard" />
+       </bean>
+
+       <bean id="liveDashboardVTMigrationTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+           <property name="jobDetail" ref="liveDashboardVTMigrationJob" />
+           <property name="repeatInterval" value="2000" />
+           <property name="startDelay" value="1000" />
+       </bean>
         
         <bean id="eventMigrationJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
@@ -122,6 +133,7 @@
                  <ref bean="watchSessionDetails" />
                  <ref bean="migrationJobDetails" />
                  <ref bean="liveDashboardMigrationJob"/>
+                 <ref bean="liveDashboardVTMigrationJob"/>
                  <ref bean="eventMigrationJob"/>
               </list>
            </property>
@@ -132,6 +144,7 @@
                  <ref bean="watchSessionTrigger" />
                  <ref bean="migrationJobTrigger" />
                  <ref bean="liveDashboardMigrationTrigger"/>
+                 <ref bean="liveDashboardVTMigrationTrigger"/>
                  <ref bean="eventMigrationTrigger"/>
               </list>
            </property>
