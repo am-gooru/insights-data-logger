@@ -12,12 +12,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
@@ -311,16 +311,16 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 
     	for (Row<String, String> row : eventDetailsNew) {
     		ColumnList<String> userInfo = row.getColumns();
-    			long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : null;
+    			long root = userInfo.getColumnByName("root_node_id") != null ? userInfo.getColumnByName("root_node_id").getLongValue() : 0L;
     			if(root == 20000L){
-	    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : null;
-	    			long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : null;
+	    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
+	    			long depth = userInfo.getColumnByName("depth") != null ?  userInfo.getColumnByName("depth").getLongValue() : 0L;
 	    			if(value != 0L &&  depth == 1L){    				
 	    				subjectCode.add(value);
 	    			} 
 	    			else if(depth == 2L){
 	    			ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-	    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : null;
+	    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 	    			if(subject != 0L)
 	    				subjectCode.add(subject);
 	    			if(value != 0L)
@@ -329,8 +329,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			
 	    			else if(depth == 3L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : null;
-		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : null;
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 		    			if(subject != 0L)
 		    			subjectCode.add(subject);
 		    			if(course != 0L)
@@ -340,9 +340,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    			else if(depth == 4L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : null;
-		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : null;
-		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : null;
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
 		    				if(subject != 0L)
 			    			subjectCode.add(subject);	
 		    				if(course != 0L)
@@ -354,10 +354,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    			else if(depth == 5L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : null;
-		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : null;
-		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : null;
-		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : null;
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
 		    				if(subject != 0L)
 			    			subjectCode.add(subject);
 			    			if(course != 0L)
@@ -371,11 +371,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    			else if(depth == 6L){
 	    				ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value),0);
-		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : null;
-		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : null;
-		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : null;
-		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : null;
-		    			long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : null;
+		    			long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
+		    			long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
+		    			long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
+		    			long topic = columns.getColumnByName("topic_code_id") != null ? columns.getColumnByName("topic_code_id").getLongValue() : 0L;
+		    			long lesson = columns.getColumnByName("lesson_code_id") != null ? columns.getColumnByName("lesson_code_id").getLongValue() : 0L;
 		    			if(subject != 0L)
 		    			subjectCode.add(subject);
 		    			if(course != 0L)
@@ -394,30 +394,40 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    				
 	    			}
     		}else{
-    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : null;
+    			long value = userInfo.getColumnByName("code_id") != null ?userInfo.getColumnByName("code_id").getLongValue() : 0L;
     			if(value != 0L){
     				taxArray.add(value);
     			}
     		}
     	}
     		if(subjectCode != null && !subjectCode.isEmpty())
-    		eventMap.put("subject", subjectCode);
+    		eventMap.put("subject", removeZeroFromSet(subjectCode));
     		if(courseCode != null && !courseCode.isEmpty())
-    		eventMap.put("course", courseCode);
+    		eventMap.put("course", removeZeroFromSet(courseCode));
     		if(unitCode != null && !unitCode.isEmpty())
-    		eventMap.put("unit", unitCode);
+    		eventMap.put("unit", removeZeroFromSet(unitCode));
     		if(topicCode != null && !topicCode.isEmpty())
-    		eventMap.put("topic", topicCode);
+    		eventMap.put("topic", removeZeroFromSet(topicCode));
     		if(lessonCode != null && !lessonCode.isEmpty())
-    		eventMap.put("lesson", lessonCode);
+    		eventMap.put("lesson", removeZeroFromSet(lessonCode));
     		if(conceptCode != null && !conceptCode.isEmpty())
-    		eventMap.put("concept", conceptCode);
+    		eventMap.put("concept", removeZeroFromSet(conceptCode));
     		if(taxArray != null && !taxArray.isEmpty())
-    		eventMap.put("standards", taxArray);
+    		eventMap.put("standards", removeZeroFromSet(taxArray));
     	
     	return eventMap;
     }
     
+    private Set<?> removeZeroFromSet(Set<?> values){
+    	if(!values.isEmpty()){
+	    	Set<Object> newValue = new TreeSet<Object>();
+    		for(Object value:values){
+    			newValue.add(value);
+	    	}
+    		return newValue;
+    	}
+    	return new TreeSet<Object>();
+    }
     public void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
