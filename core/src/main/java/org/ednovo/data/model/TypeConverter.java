@@ -119,7 +119,7 @@ public class TypeConverter {
 
 					for (int i = 0; i < items.length; i++) {
 						try {
-							results[i] = items[i];
+							results[i] = items[i].trim();
 						} catch (Exception nfe) {
 						};
 					}
