@@ -422,7 +422,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     	if(!values.isEmpty()){
 	    	Set<Object> newValue = new TreeSet<Object>();
     		for(Object value:values){
-    			newValue.add(value);
+    			if(!value.equals(0L)){
+    				newValue.add(value);
+    			}
 	    	}
     		return newValue;
     	}
