@@ -9,7 +9,7 @@
 "type":"String",
 "index":"not_analyzed"
 },
-"user_uid":{
+"gooru_uid":{
 "type":"String",
 "index":"not_analyzed"
 },
@@ -17,7 +17,7 @@
 "type":"String",
 "index":"not_analyzed"
 },
-"gooru_oid":{
+"content_gooru_id":{
 "type":"String",
 "index":"not_analyzed"
 },
@@ -221,6 +221,11 @@
 "index":"not_analyzed"
 },
 "event_time":{
+"format":"date_time",
+"type":"date",
+"index":"not_analyzed"
+},
+"created_on":{
 "format":"date_time",
 "type":"date",
 "index":"not_analyzed"

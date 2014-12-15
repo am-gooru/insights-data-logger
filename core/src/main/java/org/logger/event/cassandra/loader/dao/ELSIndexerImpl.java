@@ -139,9 +139,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			            
 	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
 	    			            
-	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+	    			         /*   if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
 	    			            	eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
-	    			            }
+	    			            }*/
 	
 	    			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
 	    			            	eventMap.put("eventName", "reaction.create");
