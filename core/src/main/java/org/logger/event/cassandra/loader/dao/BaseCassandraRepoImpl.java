@@ -1170,7 +1170,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	
     		if(collectionItem != null){
         		for(Row<String, String> collectionItems : collectionItem){
-        			String parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+        			String parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue().trim();
         			if(parentId != null){
         				parentIds.add(parentId.trim());
         				getAllLevelParents(cfName,parentId,0);
@@ -1211,7 +1211,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		for(Row<String, String> collectionItems : collectionItem){
     			parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
     			if(parentId != null){
-    				classPages.add(parentId);
+    				classPages.add(parentId.trim());
     			}
     		 }
     	}
