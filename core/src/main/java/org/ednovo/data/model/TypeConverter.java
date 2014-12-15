@@ -55,35 +55,35 @@ public class TypeConverter {
 	public static <T> T stringToAny(String value , String type){
 		Object result = null;
 			if(value != null && type != null){
-				if(type.equals("Long")){
+				if(type.equalsIgnoreCase("Long")){
 					try{
 						result = Long.valueOf(value.trim());
 					}catch(NumberFormatException nfel){
 						result = 0L;
 						return (T) result;
 					}
-				}else if(type.equals("Double")){
+				}else if(type.equalsIgnoreCase("Double")){
 					try{
 						result = Double.valueOf(value.trim());
 					}catch(NumberFormatException nfel){
 						result = 0.0;
 						return (T) result;
 					}
-				}else if(type.equals("Integer")){
+				}else if(type.equalsIgnoreCase("Integer")){
 					try{
 						result = Integer.valueOf(value.trim());
 					}catch(NumberFormatException nfel){
 						result = 0;
 						return (T) result;
 					}
-				}else if(type.equals("JSONObject")){
+				}else if(type.equalsIgnoreCase("JSONObject")){
 					try {
 						result = new JSONObject(value.trim());
 					} catch (JSONException e) {
 						System.out.print("Unable to convert to JSONObject");
 						return (T) new JSONObject();
 					}
-				}else if(type.equals("Date")){
+				}else if(type.equalsIgnoreCase("Date")){
 					//accepting timestamp
 				 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 					SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -111,7 +111,7 @@ public class TypeConverter {
 						}
 					}
 
-				}else if(type.equals("Boolean")){
+				}else if(type.equalsIgnoreCase("Boolean")){
 						result = Boolean.valueOf(value.trim());
 				}
 				else if(type.equals("String")){
@@ -133,7 +133,7 @@ public class TypeConverter {
 					}
 					result =  results;
 				}
-				else if(type.equals("StringArray")){
+				else if(type.equalsIgnoreCase("StringArray")){
 
 					String[] items = value.trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
 
@@ -147,7 +147,7 @@ public class TypeConverter {
 					}
 					result =  results;
 				}
-				else if(type.equals("JSONArray")){
+				else if(type.equalsIgnoreCase("JSONArray")){
 					try {
 						result =  new JSONArray(value);
 					} catch (JSONException e) {
