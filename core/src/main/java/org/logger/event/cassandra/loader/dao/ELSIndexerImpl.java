@@ -247,7 +247,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	
-    	Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
+    	Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),gooruOId, 0);
     	if(!contentItems.isEmpty()){
     		eventMap.put("contentItems",contentItems);
     	}
@@ -434,7 +434,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
 			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue());
-			Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
+			Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),columns.getColumnByName("gooru_oid").getStringValue(), 0);
 			if(!contentItems.isEmpty()){
 				resourceMap.put("contentItems",contentItems);
 			}
@@ -500,11 +500,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
 			}
 		if(columns.getColumnByName("grade") != null){
-			JSONArray gradeArray = new JSONArray();
+			Set<String> gradeArray = new HashSet<String>(); 
 			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
-				gradeArray.put(gradeId);	
+				gradeArray.add(gradeId);	
 			}
-			resourceMap.put("grade", gradeArray);
+			if(gradeArray != null && gradeArray.isEmpty() ){
+				resourceMap.put("grade", gradeArray);
+			}
 		}
 		if(columns.getColumnByName("license_name") != null){
 			//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
