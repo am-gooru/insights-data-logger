@@ -1583,7 +1583,7 @@ public class CassandraDataLoader implements Constants {
 			logger.info("resourceCountVT : " + resourceCount + "indexedCountVT : " + indexedCount + "maxCountVT : " + maximumCount);
 			if(runningStatus > 0){
 				if(indexedCount == maximumCount) {
-					baseDao.saveLongValue("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", "running_status", 1);
+					baseDao.saveLongValue("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", "running_status", 0);
 				}
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_ts_views_live_dashboard" , "indexed_count", "" + (indexedCount + resourceCount));
 				logger.info("Started migration from contentId: {}", indexedCount);
