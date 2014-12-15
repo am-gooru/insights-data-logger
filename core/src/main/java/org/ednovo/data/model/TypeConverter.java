@@ -128,7 +128,7 @@ public class TypeConverter {
 								results[i] = Integer.parseInt(items[i].trim());
 							}
 						} catch (NumberFormatException nfe) {
-							nfe.printStackTrace();
+							//nfe.printStackTrace();
 						};
 					}
 					result =  results;
