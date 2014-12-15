@@ -401,35 +401,24 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     		}
     	}
     		if(subjectCode != null && !subjectCode.isEmpty())
-    		eventMap.put("subject", removeZeroFromSet(subjectCode));
+    		eventMap.put("subject", subjectCode);
     		if(courseCode != null && !courseCode.isEmpty())
-    		eventMap.put("course", removeZeroFromSet(courseCode));
+    		eventMap.put("course", courseCode);
     		if(unitCode != null && !unitCode.isEmpty())
-    		eventMap.put("unit", removeZeroFromSet(unitCode));
+    		eventMap.put("unit", unitCode);
     		if(topicCode != null && !topicCode.isEmpty())
-    		eventMap.put("topic", removeZeroFromSet(topicCode));
+    		eventMap.put("topic", topicCode);
     		if(lessonCode != null && !lessonCode.isEmpty())
-    		eventMap.put("lesson", removeZeroFromSet(lessonCode));
+    		eventMap.put("lesson", lessonCode);
     		if(conceptCode != null && !conceptCode.isEmpty())
-    		eventMap.put("concept", removeZeroFromSet(conceptCode));
+    		eventMap.put("concept", conceptCode);
     		if(taxArray != null && !taxArray.isEmpty())
-    		eventMap.put("standards", removeZeroFromSet(taxArray));
+    		eventMap.put("standards", taxArray);
     	
     	return eventMap;
     }
     
-    private Set<?> removeZeroFromSet(Set<?> values){
-    	if(!values.isEmpty()){
-	    	Set<Object> newValue = new TreeSet<Object>();
-    		for(Object value:values){
-    			if(!value.equals(0L)){
-    				newValue.add(value);
-    			}
-	    	}
-    		return newValue;
-    	}
-    	return new TreeSet<Object>();
-    }
+
     public void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");

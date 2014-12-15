@@ -106,8 +106,12 @@ public class TypeConverter {
 
 					for (int i = 0; i < items.length; i++) {
 						try {
-							results[i] = Integer.parseInt(items[i]);
-						} catch (NumberFormatException nfe) {};
+							if(Integer.parseInt(items[i]) != 0){
+								results[i] = Integer.parseInt(items[i]);
+							}
+						} catch (NumberFormatException nfe) {
+							nfe.printStackTrace();
+						};
 					}
 					result =  results;
 				}
