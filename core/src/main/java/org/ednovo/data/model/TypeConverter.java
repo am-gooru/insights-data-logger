@@ -124,7 +124,7 @@ public class TypeConverter {
 
 					for (int i = 0; i < items.length; i++) {
 						try {
-							if(Integer.parseInt(items[i].trim()) != 0){
+							if(!items[i].trim().isEmpty() && Integer.parseInt(items[i].trim()) != 0){
 								results[i] = Integer.parseInt(items[i].trim());
 							}
 						} catch (NumberFormatException nfe) {
