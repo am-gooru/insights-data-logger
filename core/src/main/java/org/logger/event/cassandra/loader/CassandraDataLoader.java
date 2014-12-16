@@ -1972,10 +1972,10 @@ public class CassandraDataLoader  implements Constants {
 	    		
 	    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
 	    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
-	    		if(views > 0 && totalTimespent == 0L ){
+	    		/*if(views > 0 && totalTimespent == 0L ){
 	    			totalTimespent = (views * 180000);
 	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", totalTimespent);
-	    		}
+	    		}*/
 	    		if(views == 0L && totalTimespent > 0L ){
 	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", (totalTimespent * -1));
 	    			totalTimespent = 0L;
