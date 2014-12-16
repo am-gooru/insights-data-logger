@@ -1611,16 +1611,20 @@ public class CassandraDataLoader implements Constants {
 						Long viewCount = 0L;
 						Long timeSpent = 0L;
 						Long avgTimeSpent = 0L;
+
 						if(resources.size() > 0){
 							for(Row<String, String> resource : resources){
 								gooruOid = resource.getColumns().getColumnByName("gooru_oid").getStringValue();
 								ColumnList<String> counterV1Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + gooruOid, 0);
 								timeSpent = counterV1Row.getColumnByName("time_spent~total").getLongValue();
 								viewCount = counterV1Row.getColumnByName("count~views").getLongValue();
-								avgTimeSpent = timeSpent/viewCount;
-				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.totalTimeSpent", timeSpent);
-				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.viewsCountN", viewCount);
-				        		baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.averageTimeSpent", avgTimeSpent);
+								if((viewCount > 0L) && (timeSpent > 0L)) {
+									avgTimeSpent = timeSpent/viewCount;
+									baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.totalTimeSpent", timeSpent);
+									baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.viewsCountN", viewCount);
+									baseDao.saveLongValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.averageTimeSpent", avgTimeSpent);
+									baseDao.saveStringValue("v2",ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, "statistics.viewsCount", viewCount.toString());
+								}
 								logger.info("Migrated resource VT: ===>>> {} ", gooruOid);
 							}
 							m.execute();
