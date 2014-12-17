@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -441,7 +442,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			}
 	    	
 		}
-		
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
 		}
@@ -628,6 +628,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	
 	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
+			contentBuilder.field("index_updated_ime", new Date());
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
@@ -655,7 +656,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(userInfos != null & userInfos.size() > 0){
 			
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-		
+			
+			
 			if(userInfos.getColumnByName("gooru_uid") != null){
 				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
 				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
@@ -770,7 +772,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    		}
 	    	}
-
+	    	contentBuilder.field("index_updated_ime", new Date());
 			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
@@ -801,7 +803,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
 	            	}
 	            }
-	    		
+	            contentBuilder.field("index_updated_ime", new Date());
 	    		connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
