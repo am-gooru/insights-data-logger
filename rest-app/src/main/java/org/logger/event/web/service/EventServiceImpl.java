@@ -281,33 +281,26 @@ public class EventServiceImpl implements EventService {
 	public void clearCacher(){
 		dataLoaderService.clearCache();
 	}
-	public void indexResource(String ids){
-		dataLoaderService.indexResource(ids);
-	}
-	public void indexResourceViews(String ids,String type){
+	
+	public void index(String ids,String indexType){
 		try {
-			dataLoaderService.indexResourceView(ids, type);
+			if(indexType.equalsIgnoreCase("resource")){
+				dataLoaderService.indexResource(ids);
+			}
+			if(indexType.equalsIgnoreCase("user")){
+				dataLoaderService.indexUser(ids);
+			}
+			if(indexType.equalsIgnoreCase("event")){
+				dataLoaderService.indexEvent(ids);
+			}
+			if(indexType.equalsIgnoreCase("code")){
+				dataLoaderService.indexTaxonomy(ids);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType){
-		try {
-			dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void indexUser(String ids) throws Exception{
-		dataLoaderService.indexUser(ids);
-	}
-
-	public void indexEvent(String ids) throws Exception{
-		dataLoaderService.indexEvent(ids);
-	}
-
 	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
 		dataLoaderService.migrateRow(sourceCluster,targetCluster,cfName,key,columnName,type);
 	}

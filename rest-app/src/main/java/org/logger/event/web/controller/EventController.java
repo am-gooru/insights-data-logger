@@ -400,39 +400,12 @@ public class EventController {
 		logger.info("startedd...");
 	}
 	
-	@RequestMapping(value = "/resource/index/{type}", method = RequestMethod.GET)
+	@RequestMapping(value = "/index/{type}", method = RequestMethod.GET)
 	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids,@RequestParam(value = "resourceType", required = false) String resourceType ,HttpServletResponse response) {
-		try {
-			if(indexType.equalsIgnoreCase("resource")){
-				eventService.indexResource(ids);
-			}
-			if(indexType.equalsIgnoreCase("user")){
-				eventService.indexUser(ids);
-			}
-			if(indexType.equalsIgnoreCase("event")){
-				eventService.indexEvent(ids);
-			}
-			if(indexType.equalsIgnoreCase("views")){
-				eventService.indexResourceViews(ids, resourceType);
-			}
-			
+			eventService.index(ids,indexType);
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
-		} catch (Exception e) {
-			logger.info("Exception : " + e);
-			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
-		}
 	}
 	
-	@RequestMapping(value = "/index/any", method = RequestMethod.GET)
-	public void indexAnyCf(HttpServletRequest request,@RequestParam(value = "sourceCf", required = true) String sourceCf,@RequestParam(value = "key", required = true) String key ,@RequestParam(value = "targetIndex", required = true) String targetIndex,@RequestParam(value = "targetType", required = true) String targetType, HttpServletResponse response) {
-		try {
-			eventService.indexAnyCf(sourceCf,key,targetIndex,targetType);
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
-		} catch (Exception e) {
-			logger.error("Exception :: " + e);
-			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
-		}
-	}
 	
 	@RequestMapping(value = "/migrate/row", method = RequestMethod.POST)
 	public void migrateKey(HttpServletRequest request,@RequestParam(value = "cfName", required = true) String cfName,@RequestParam(value = "sourceCluster", required = true) String sourceCluster,@RequestParam(value = "key", required = true) String key ,@RequestParam(value = "targetCluster", required = true) String targetCluster,@RequestParam(value = "columnName", required = false) String columnName,@RequestParam(value = "type", required = false) String type, HttpServletResponse response) {
