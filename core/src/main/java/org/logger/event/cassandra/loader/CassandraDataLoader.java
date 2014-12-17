@@ -1575,16 +1575,16 @@ public class CassandraDataLoader implements Constants {
 	//Migrate live-dashboard - timespent and views
 	public void migrateViewsTimespendLiveDashBoard(){
 		try{
-			ColumnList<String> settings = baseDao.readWithKey("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", 0);
+			ColumnList<String> settings = baseDao.readWithKey("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", 0);
 			Long resourceCount = Long.valueOf(settings.getStringValue("resource_count", null));
 			Long maximumCount = Long.valueOf(settings.getStringValue("max_count", null));
 			Long indexedCount = Long.valueOf(settings.getStringValue("indexed_count", null));
+			if(indexedCount.equals(maximumCount)) {
+				baseDao.saveLongValue("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", "running_status", 0);
+			}
 			Long runningStatus = Long.valueOf(settings.getStringValue("running_status", null));
 			logger.info("resourceCountVT : " + resourceCount + "indexedCountVT : " + indexedCount + "maxCountVT : " + maximumCount);
 			if(runningStatus > 0){
-				if(indexedCount == maximumCount) {
-					baseDao.saveLongValue("v1",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "migrate_ts_views_live_dashboard", "running_status", 0);
-				}
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"migrate_ts_views_live_dashboard" , "indexed_count", "" + (indexedCount + resourceCount));
 				logger.info("Started migration from contentId: {}", indexedCount);
 				migrateViewsTimespendLiveDashBoard(indexedCount, (indexedCount + resourceCount));
