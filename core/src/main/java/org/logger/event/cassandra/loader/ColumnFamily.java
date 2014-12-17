@@ -22,6 +22,8 @@ public enum ColumnFamily {
 	
 	EXTRACTEDCODE("extracted_code"),
 	
+	TAXONOMYCODE("taxonomy_code"),
+	
 	DIMCONTENTCLASSIFICATION("dim_content_classification"),
 	
 	DIMRESOURCE("dim_resource"),

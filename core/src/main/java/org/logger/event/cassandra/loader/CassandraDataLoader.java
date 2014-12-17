@@ -940,45 +940,6 @@ public class CassandraDataLoader  implements Constants {
 	    }
 	    
     }
-    public void migrateViews(String resourceIds ,String resourceType) throws Exception{
-    	
-    	boolean proceed = false;
-    	String ids = "";
-    	
-    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-
-    	for(String id : resourceIds.split(",")){
-    		
-    	ids += ","+id;
-		logger.info("type : {} ",resourceType);
-		logger.info("id : {} ",id);
-		ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
-		ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
-		long insightsView = 0L;
-		long gooruView = 0L;
-		if(insightsData != null){
-			insightsView =   insightsData.getLongValue("count~views", 0L);
-		}
-		logger.info("insightsView : {} ",insightsView);
-		if(gooruData != null){
-			gooruView =  gooruData.getLongValue("views_count", 0L);
-		}
-		logger.info("gooruView : {} ",gooruView);
-		long balancedView = (gooruView - insightsView);
-		logger.info("Insights update views : {} ", (insightsView + balancedView) );
-		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-	
-		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
-		proceed = true;
-    		
-    	}
-    	if(proceed){
-    		m2.execute();
-    		m.execute();
-    		this.callIndexingAPI(resourceType, ids.substring(1),null);
-    	}
-    }
     
     public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -1625,16 +1586,10 @@ public class CassandraDataLoader  implements Constants {
     		logger.info("Error while migration " + e);
     	}
     }
-    public void indexResourceView(String resourceIds,String type) throws Exception{
-    	this.migrateViews(resourceIds,type);
-    }
     
     
-    
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
-    	
-    	indexer.indexTaxonomy(sourceCf, key, targetIndex, targetType);
-    	
+    public void indexTaxonomy(String key) throws Exception{
+    	indexer.indexTaxonomy(key);
     }
    
     public void postStatMigration(String startTime , String endTime,String customEventName) {

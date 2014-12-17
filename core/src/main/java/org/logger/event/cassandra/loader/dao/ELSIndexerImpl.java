@@ -778,10 +778,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		}	
 			
 	}
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+    public void indexTaxonomy(String key) throws Exception{
     	
     	for(String id : key.split(",")){
-    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
+    		ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.TAXONOMYCODE.getColumnFamily(), id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
 	            for(int i = 0 ; i < sourceValues.size() ; i++) {
@@ -802,7 +802,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	            	}
 	            }
 	    		
-	    		connectionProvider.getESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
+	    		connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
     	}
