@@ -885,61 +885,6 @@ public class CassandraDataLoader  implements Constants {
     	counterThread.start();
     }
     
-    public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
-    	String resourceType = "resource";
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
-    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
-    		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
-   		 	String timeLineKey = null;   		 	
-   		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
-   		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
-   		 	}
-   		 	if(customEventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-   		 	resourceType = "scollection";
-   		 	}
-   		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
-   		 	String ids = "";
-	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
-
-		    	Collection<String> eventDetailkeys = new ArrayList<String>();
-		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
-		    		eventDetailkeys.add(eventDetailUUID);
-		    	}
-		    	
-		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
-		    	for (Row<String, String> row : eventDetailsNew) {
-
-		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
-		    		
-		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
-		    		
-		    		if(id != null){
-		    			ids += ","+id;
-		    		}
-					
-		    	}
-		    	this.migrateViews(ids.substring(1),resourceType);
-	    	}
-	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    }
-	    
-    }
     
     public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
