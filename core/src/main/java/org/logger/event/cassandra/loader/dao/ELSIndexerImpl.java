@@ -628,7 +628,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	
 	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
-			contentBuilder.field("index_updated_ime", new Date());
+			contentBuilder.field("index_updated_time", new Date());
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
@@ -772,7 +772,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    		}
 	    	}
-	    	contentBuilder.field("index_updated_ime", new Date());
+	    	contentBuilder.field("index_updated_time", new Date());
 			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
@@ -803,7 +803,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
 	            	}
 	            }
-	            contentBuilder.field("index_updated_ime", new Date());
+	            contentBuilder.field("index_updated_time", new Date());
 	    		connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
