@@ -490,12 +490,6 @@ public class CassandraDataLoader implements Constants {
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
-		  
-			Map<String, Object> eventObjectMap = new HashMap<String, Object>();
-			eventObjectMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
-			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-				liveAggregator.updateRawData(this.formatEventObjectMap(eventObject, eventObjectMap));
-			}
 			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
 			
@@ -503,6 +497,12 @@ public class CassandraDataLoader implements Constants {
 				microAggregator.sendEventForAggregation(eventObject.getFields());
 			}
 		
+			Map<String, Object> eventObjectMap = new HashMap<String, Object>();
+			eventObjectMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
+			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
+				liveAggregator.updateRawData(this.formatEventObjectMap(eventObject, eventObjectMap));
+			}
+			
     	}catch(Exception e){
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
     		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);

@@ -961,11 +961,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					for (Map<String, Object> collectionItem : collectionItemList) {
 						Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 						Map<String, Object> collectionItemResourceMap = (Map<String, Object>) collectionItem.get("resource");
-						collectionItemMap.put("resourceGooruOid", eventMap.get(CONTENTGOORUOID));
-						collectionItemMap.put("collectionGooruOid", eventMap.get(PARENTGOORUOID));
+						collectionItemMap.put("resourceGooruOid", (collectionItemResourceMap.containsKey("gooruOid") ? collectionItemResourceMap.get("gooruOid").toString() : null));
+						collectionItemMap.put("collectionGooruOid", eventMap.get(CONTENTGOORUOID));
 						if (eventMap.containsKey(PARENTCONTENTID) && eventMap.containsKey(CONTENTID)) {
 							collectionItemMap.put("collectionContentId", Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
-							collectionItemMap.put("resourceContentId", Long.valueOf(eventMap.get(CONTENTID).toString()));
+							//collectionItemMap.put("resourceContentId", Long.valueOf(eventMap.get(CONTENTID).toString()));
 						}
 						collectionItemMap.put(COLLECTIONITEMID, (collectionItem.containsKey(COLLECTIONITEMID) ? collectionItem.get(COLLECTIONITEMID).toString() : null));
 						collectionItemMap.put("collectionItemType", (collectionItem.containsKey(ITEMTYPE) ? collectionItem.get(ITEMTYPE).toString() : null));
