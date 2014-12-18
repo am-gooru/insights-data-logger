@@ -1540,7 +1540,6 @@ public class CassandraDataLoader implements Constants {
 						JSONObject resourceObj = new JSONObject();
 						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
 						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
-						logger.info("resourceType : " + resource.getColumnByName("resourceType").getStringValue());
 ;		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 		    				indexCollectionType = "scollection";
 		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
@@ -1556,7 +1555,7 @@ public class CassandraDataLoader implements Constants {
 							if(detail.getName().equals(column)){
 								if(statMetrics.getStringValue(column, null) != null){
 									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m2);
-									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")){
+									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")&& vluesList.getLongValue("count~views", 0L) != 0L){
 										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m2);
 									}
 									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")){										
