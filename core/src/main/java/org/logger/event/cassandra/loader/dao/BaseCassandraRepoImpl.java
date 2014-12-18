@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,8 @@ import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.ResourceCo;
+import org.ednovo.data.model.UserCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
@@ -1124,5 +1127,170 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	}
     	return false;
 	
+	}
+	
+	public void updateResourceEntity(ResourceCo resourceco) {
+		try {
+			getResourceEntityPersister().put(resourceco);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public void updateUserEntity(UserCo userCo) {
+		try {
+			getUserEntityPersister().put(userCo);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
+
+		MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionGooruOid") + SEPERATOR + eventMap.get("questionGooruOid") + SEPERATOR + eventMap.get("sequence"))
+				.putColumnIfNotNull("collection_gooru_oid", eventMap.get("collectionGooruOid").toString())
+				.putColumnIfNotNull("question_id", ((eventMap.containsKey("questionId") && eventMap.get("questionId") != null) ? Long.valueOf(eventMap.get("questionId").toString()) : null))
+				.putColumnIfNotNull("answer_id", ((eventMap.containsKey("answerId") && eventMap.get("answerId") != null) ? Long.valueOf(eventMap.get("answerId").toString()) : null))
+				.putColumnIfNotNull("answer_text", ((eventMap.containsKey("answerText") && eventMap.get("answerText") != null) ? eventMap.get("answerText").toString() : null))
+				.putColumnIfNotNull("is_correct", ((eventMap.containsKey("isCorrect") && eventMap.get("isCorrect") != null) ? Integer.valueOf(eventMap.get("isCorrect").toString()) : null))
+				.putColumnIfNotNull("type_name", ((eventMap.containsKey("typeName") && eventMap.get("typeName") != null) ? eventMap.get("typeName").toString() : null))
+				.putColumnIfNotNull("answer_hint", ((eventMap.containsKey("answerHint") && eventMap.get("answerHint") != null) ? eventMap.get("answerHint").toString() : null))
+				.putColumnIfNotNull("answer_explanation", ((eventMap.containsKey("answerExplanation") && eventMap.get("answerExplanation") != null) ? eventMap.get("answerExplanation").toString() : null))
+				.putColumnIfNotNull("question_gooru_oid", ((eventMap.containsKey("questionGooruOid") && eventMap.get("questionGooruOid") != null) ? eventMap.get("questionGooruOid").toString() : null))
+				.putColumnIfNotNull("question_type",((eventMap.containsKey("questionType") && eventMap.get("questionType") != null) ?  eventMap.get("questionType").toString() : null))
+				.putColumnIfNotNull("sequence", ((eventMap.containsKey("sequence") && eventMap.get("sequence") != null) ? Integer.valueOf(eventMap.get("sequence").toString()) : null));
+		try {
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("Error while inserting to assessmet_answer from event - ", e);
+		}
+	}
+	
+	public void updateCollection(String cfName, Map<String, Object> eventMap) {
+		if (eventMap.containsKey("collectionGooruOid") && eventMap.get("collectionGooruOid") != null) {
+			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionGooruOid").toString())
+					.putColumnIfNotNull("gooru_oid", eventMap.get("collectionGooruOid").toString())
+					.putColumnIfNotNull("content_id", (eventMap.get("collectionContentId") != null ? Long.valueOf(eventMap.get("collectionContentId").toString()) : null))
+					.putColumnIfNotNull("collection_type", (eventMap.get("collectionType") != null ? eventMap.get("collectionType").toString() : null))
+					.putColumnIfNotNull("grade", (eventMap.get("collectionGrade") != null ? eventMap.get("collectionGrade").toString() : null))
+					.putColumnIfNotNull("goals", eventMap.get("collectionGoals") != null ? eventMap.get("collectionGoals").toString() : null)
+					.putColumnIfNotNull("ideas", eventMap.get("ideas") != null ? eventMap.get("ideas").toString() : null)
+					.putColumnIfNotNull("performance_tasks", eventMap.get("performanceTasks") != null ? eventMap.get("performanceTasks").toString() : null)
+					.putColumnIfNotNull("language", eventMap.get("language") != null ? eventMap.get("language").toString() : null)
+					.putColumnIfNotNull("key_points", eventMap.get("keyPoints") != null ? eventMap.get("keyPoints").toString() : null)
+					.putColumnIfNotNull("notes", eventMap.get("notes") != null ? eventMap.get("notes").toString() : null)
+					.putColumnIfNotNull("language_objective", eventMap.get("languageObjective") != null ? eventMap.get("languageObjective").toString() : null)
+					.putColumnIfNotNull("network", eventMap.get("network") != null ? eventMap.get("network").toString() : null)
+					.putColumnIfNotNull("mail_notification", (eventMap.get("mailNotification") != null && Boolean.valueOf(eventMap.get("mailNotification").toString())) ? true : false)
+					.putColumnIfNotNull("build_type_id", eventMap.get("buildTypeId") != null ? eventMap.get("buildTypeId").toString() : null)
+					.putColumnIfNotNull("narration_link", eventMap.get("narrationLink") != null ? eventMap.get("narrationLink").toString() : null)
+					.putColumnIfNotNull("estimated_time", eventMap.get("estimatedTime") != null ? eventMap.get("estimatedTime").toString() : null);
+			try {
+				m.execute();
+			} catch (ConnectionException e) {
+				logger.info("Error while inserting to collection CF from event - ", e);
+			}
+		}
+	}
+	
+	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
+		if (eventMap.containsKey("collectionItemId") && eventMap.get("collectionItemId") != null) {
+			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionItemId").toString())
+					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : null)
+					.putColumnIfNotNull("item_type", (eventMap.get("collectionItemType") != null ? eventMap.get("collectionItemType").toString() : null))
+					.putColumnIfNotNull("resource_content_id", eventMap.get("resourceContentId") != null ? Long.valueOf(eventMap.get("resourceContentId").toString()) : null)
+					.putColumnIfNotNull("collection_gooru_oid", eventMap.get("collectionGooruOid") != null ? eventMap.get("collectionGooruOid").toString() : null)
+					.putColumnIfNotNull("resource_gooru_oid", eventMap.get("resourceGooruOid") != null ? eventMap.get("resourceGooruOid").toString() : null)
+					.putColumnIfNotNull("item_sequence", eventMap.get("collectionItemSequence") != null ? Integer.valueOf(eventMap.get("collectionItemSequence").toString()) : null)
+					.putColumnIfNotNull("collection_item_id", eventMap.get("collectionItemId") != null ? eventMap.get("collectionItemId").toString() : null)
+					.putColumnIfNotNull("collection_content_id", eventMap.get("collectionContentId") != null ? Long.valueOf(eventMap.get("collectionContentId").toString()) : null)
+					.putColumnIfNotNull("question_type", eventMap.get("collectionItemQuestionType") != null ? eventMap.get("collectionItemQuestionType").toString() : null)
+					.putColumnIfNotNull("minimum_score", eventMap.get("collectionItemMinimumScore") != null ? eventMap.get("collectionItemMinimumScore").toString() : null)
+					.putColumnIfNotNull("narration", eventMap.get("collectionItemNarration") != null ? eventMap.get("collectionItemNarration").toString() : null)
+					.putColumnIfNotNull("estimated_time", eventMap.get("collectionItemEstimatedTime") != null ? eventMap.get("collectionItemEstimatedTime").toString() : null)
+					.putColumnIfNotNull("start", eventMap.get("collectionItemStart") != null ? eventMap.get("collectionItemStart").toString() : null)
+					.putColumnIfNotNull("stop", eventMap.get("collectionItemStop") != null ? eventMap.get("collectionItemStop").toString() : null)
+					.putColumnIfNotNull("narration_type", eventMap.get("collectionItemNarrationType") != null ? eventMap.get("collectionItemNarrationType").toString() : null)
+					.putColumnIfNotNull("planned_end_date", eventMap.get("collectionItemPlannedEndDate") != null ? new Timestamp(Long.valueOf(eventMap.get("collectionItemPlannedEndDate").toString())) : null)
+					.putColumnIfNotNull("association_date", eventMap.get("collectionItemAssociationDate") != null ? new Timestamp(Long.valueOf(eventMap.get("collectionItemAssociationDate").toString())) : null)
+					.putColumnIfNotNull("associated_by_uid", eventMap.get("collectionItemAssociatedByUid") != null ? eventMap.get("collectionItemAssociatedByUid").toString() : null)
+					.putColumnIfNotNull("is_required", eventMap.get("collectionItemIsRequired") != null ? Integer.valueOf(eventMap.get("collectionItemIsRequired").toString()) : null);			
+			try {
+				m.execute();
+			} catch (ConnectionException e) {
+				logger.info("Error while inserting to Collection Item CF from event - ", e);
+			}
+		}
+	}
+	
+	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
+		if (eventMap.get("classId") != null && eventMap.get("groupUid") != null && eventMap.get("userUid") != null) {
+			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get("classId").toString()+SEPERATOR+eventMap.get("groupUid").toString()+SEPERATOR+eventMap.get("userUid").toString())
+					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : 0)
+					.putColumnIfNotNull("classpage_content_id", eventMap.get("contentId") != null ? Long.valueOf(eventMap.get("contentId").toString()) : null)
+					.putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get("classId") != null ? eventMap.get("classId").toString() : null)
+					.putColumnIfNotNull("username", eventMap.get("username") != null ? eventMap.get("username").toString() : null)
+					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get("groupUid") != null ? eventMap.get("groupUid").toString() : null)
+					.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get("organizationUId") != null ? eventMap.get("organizationUId").toString() : null)
+					.putColumnIfNotNull("user_group_type", eventMap.get("userGroupType") != null ? eventMap.get("userGroupType").toString() : null)
+					.putColumnIfNotNull("active_flag", eventMap.get("activeFlag") != null ? Integer.valueOf(eventMap.get("activeFlag").toString()) : null)
+					.putColumnIfNotNull(USER_GROUP_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null)
+					.putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null)
+					.putColumnIfNotNull(USERID, eventMap.get("userUid") != null ? eventMap.get("userUid").toString() : null)
+					.putColumnIfNotNull("is_group_owner", eventMap.get("isGroupOwner") != null ? Integer.valueOf(eventMap.get("isGroupOwner").toString()) : null);
+			try {
+				m.execute();
+			} catch (ConnectionException e) {
+				logger.info("Error while inserting to Classpage CF from event - ", e);
+			}
+		}
+	}
+	
+	public void updateUserCF(String cfName, Map<String, Object> eventMap) {
+		if (eventMap.get("gooruUId") != null) {
+			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get("gooruUId").toString())
+					.putColumnIfNotNull("gooru_uid", eventMap.get("gooruUId") != null ? eventMap.get("gooruUId").toString() : null)
+					.putColumnIfNotNull("firstname", eventMap.get("firstname") != null ? eventMap.get("firstname").toString() : null)
+					.putColumnIfNotNull("lastname", eventMap.get("lastname") != null ? eventMap.get("lastname").toString() : null)
+					.putColumnIfNotNull("username", eventMap.get("username") != null ? eventMap.get("username").toString() : null)
+					.putColumnIfNotNull("role_id", eventMap.get("roleId") != null ? eventMap.get("roleId").toString() : null)
+					.putColumnIfNotNull("account_uid", eventMap.get("accountUid") != null ? eventMap.get("accountUid").toString() : null)
+					.putColumnIfNotNull("active", eventMap.get("active") != null ? eventMap.get("active").toString() : null)
+					.putColumnIfNotNull("security_group_uid", eventMap.get("securityGroupUid") != null ? eventMap.get("securityGroupUid").toString() : null)
+					.putColumnIfNotNull("register_token", eventMap.get("registerToken") != null ? eventMap.get("registerToken").toString() : null)
+					.putColumnIfNotNull("confirm_status", eventMap.get("confirmStatus") != null ? eventMap.get("confirmStatus").toString() : null)
+					.putColumnIfNotNull("mail_status", eventMap.get("mailStatus") != null ? eventMap.get("mailStatus").toString() : null)
+					.putColumnIfNotNull("parent_uid", eventMap.get("parentUid") != null ? eventMap.get("parentUid").toString() : null)
+					.putColumnIfNotNull("account_type_id", eventMap.get("accountTypeId") != null ? Long.valueOf(eventMap.get("accountTypeId").toString()) : null)
+					.putColumnIfNotNull("organization_uid", eventMap.get("organizationUId") != null ? eventMap.get("organizationUId").toString() : null)
+					.putColumnIfNotNull("view_flag", eventMap.get("viewFlag") != null ? Long.valueOf(eventMap.get("viewFlag").toString()) : null)
+					.putColumnIfNotNull("is_deleted", eventMap.get("isDeleted") != null ? Integer.valueOf(eventMap.get("isDeleted").toString()) : null)
+					.putColumnIfNotNull("registered_on", eventMap.get("registeredOn") != null ? eventMap.get("registeredOn").toString() : null)
+					.putColumnIfNotNull("external_id", eventMap.get("externalId") != null ? eventMap.get("externalId").toString() : null)
+					.putColumnIfNotNull("last_login", eventMap.get("lastLogin") != null ? eventMap.get("lastLogin").toString() : null)
+					.putColumnIfNotNull("account_created_type", eventMap.get("accountCreatedType") != null ? eventMap.get("accountCreatedType").toString() : null)
+					.putColumnIfNotNull("login_type", eventMap.get("loginType") != null ? eventMap.get("loginType").toString() : null)
+
+					.putColumnIfNotNull("user_group_uid", eventMap.get("userGroupUid") != null ? eventMap.get("userGroupUid").toString() : null)
+					.putColumnIfNotNull("added_by_system", eventMap.get("addedBySystem") != null ? eventMap.get("addedBySystem").toString() : null)
+					.putColumnIfNotNull("primary_organization_uid", eventMap.get("primaryOrganizationUid") != null ? eventMap.get("primaryOrganizationUid").toString() : null)
+					.putColumnIfNotNull("reference_uid", eventMap.get("referenceUid") != null ? eventMap.get("referenceUid").toString() : null)
+					.putColumnIfNotNull("identity_id", eventMap.get("identityId") != null ? eventMap.get("identityId").toString() : null)
+					.putColumnIfNotNull("idp_id", eventMap.get("idpId") != null ? eventMap.get("idpId").toString() : null)
+					.putColumnIfNotNull("deactivated_on", eventMap.get("deactivatedOn") != null ? eventMap.get("deactivatedOn").toString() : null)
+					.putColumnIfNotNull("import_code", eventMap.get("importCode") != null ? eventMap.get("importCode").toString() : null)
+					.putColumnIfNotNull("parent_id", eventMap.get("parentId") != null ? eventMap.get("parentId").toString() : null)
+
+					;
+			try {
+				m.execute();
+			} catch (ConnectionException e) {
+				logger.info("Error while inserting to Classpage CF from event - ", e);
+			}
+		}
 	}
 }

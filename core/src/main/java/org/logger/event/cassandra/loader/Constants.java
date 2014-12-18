@@ -251,4 +251,12 @@ public interface Constants {
 	public String ACTIVEPLAYS = "active~content~plays";
 	
 	public String CONFIG_SETTINGS = "config_settings";
+	
+	public String DATA = "data";
+	
+	public String SYSTEM = "System";
+	
+	public String NAME = "name";
+	
+	public String EDIT = "edit";
 }

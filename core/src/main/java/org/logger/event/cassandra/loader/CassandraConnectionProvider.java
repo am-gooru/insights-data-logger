@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.ednovo.data.model.ResourceCo;
+import org.ednovo.data.model.UserCo;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -50,6 +52,8 @@ import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
 import com.netflix.astyanax.connectionpool.impl.Slf4jConnectionPoolMonitorImpl;
 import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
+import com.netflix.astyanax.entitystore.DefaultEntityManager;
+import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
@@ -67,6 +71,8 @@ public class CassandraConnectionProvider {
     private static String AWS_CASSANDRA_KEYSPACE;
     private static String AWS_CASSANDRA_IP;
     private static String INSIHGHTS_ES_IP;
+	private EntityManager<ResourceCo, String> resourceEntityPersister;
+	private EntityManager<UserCo, String> userEntityPersister;
     
     public void init(Map<String, String> configOptionsMap) {
 
@@ -137,6 +143,10 @@ public class CassandraConnectionProvider {
             if(cassandraAwsKeyspace == null){
             cassandraAwsKeyspace = this.initializeAwsCassandra();
             }
+            if(cassandraAwsKeyspace != null ) {
+				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getAwsKeyspace()).build();
+				userEntityPersister = new DefaultEntityManager.Builder<UserCo, String>().withEntityType(UserCo.class).withKeyspace(getAwsKeyspace()).build();
+			}
             
             if(client == null){
             //Elastic search connection provider
@@ -197,6 +207,18 @@ public class CassandraConnectionProvider {
             throw new IOException("Keyspace not initialized.");
         }
         return cassandraAwsKeyspace;
+    }
+    public EntityManager<ResourceCo, String> getResourceEntityPersister() throws IOException {
+    	if (resourceEntityPersister == null) {
+            throw new IOException("Resource Entity is not persisted");
+        }
+    	return resourceEntityPersister;
+    }
+    public EntityManager<UserCo, String> getUserEntityPersister() throws IOException {
+    	if (userEntityPersister == null) {
+            throw new IOException("User Entity is not persisted");
+        }
+    	return userEntityPersister;
     }
     public Client getESClient() throws IOException{
     	if (client == null) {

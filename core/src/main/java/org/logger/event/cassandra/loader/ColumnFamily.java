@@ -62,6 +62,10 @@ public enum ColumnFamily {
 	
 	RESOURCE("resource"),
 	
+	ASSESSMENTANSWER("assessment_answer"),
+	
+	USER("user"),
+	
 	;
 	
 	String name;

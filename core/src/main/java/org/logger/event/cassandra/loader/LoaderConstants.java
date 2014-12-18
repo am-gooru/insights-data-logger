@@ -136,6 +136,18 @@ public enum LoaderConstants {
 	RUFB("resource.user.feedback"),
 	
 	CLASSPAGE("classpage"),
+	
+	SCITEMCREATE("item.create"),
+	
+	SCITEMEDIT("item.edit"),
+	
+	SCITEMDELETE("item.delete"),
+	
+	REGISTERUSER("user.register"),
+	
+	PROFILEACTION("profile.action"),
+	
+	CPUSERREMOVE("classpage.user.remove")
     
     ;
 	

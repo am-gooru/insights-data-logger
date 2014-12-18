@@ -41,7 +41,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.pig.newplan.logical.relational.LOGenerate;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -492,8 +491,10 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
 		  
+			Map<String, Object> eventObjectMap = new HashMap<String, Object>();
+			eventObjectMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)){
-				liveAggregator.updateRawData(eventMap);
+				liveAggregator.updateRawData(this.formatEventObjectMap(eventObject, eventObjectMap));
 			}
 			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
@@ -1779,13 +1780,17 @@ public class CassandraDataLoader implements Constants {
     	
     	String userUid = null;
     	String organizationUid = DEFAULT_ORGANIZATION_UID;
+    	if(eventMap.containsKey("parentGooruId") && eventMap.get("parentGooruId") != null){
     	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+    	}
     	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
     	if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
     		eventObject.setParentEventId(eventMap.get("parentEventId"));
     	}
     	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
-    	eventObject.setEventType(eventMap.get("type"));
+    	if(eventMap.containsKey("type") && eventMap.get("type") != null){
+    		eventObject.setEventType(eventMap.get("type"));
+    	}
     	
     	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
 				 try {
@@ -1812,6 +1817,49 @@ public class CassandraDataLoader implements Constants {
     	
     	return eventMap;
     }
+    
+    private Map<String, Object> formatEventObjectMap(EventObject eventObject, Map<String, Object> eventMap) {
+    	
+    	String userUid = null;
+    	String organizationUid = DEFAULT_ORGANIZATION_UID;
+    	if(eventMap.containsKey("parentGooruId") && eventMap.get("parentGooruId") != null){
+    	eventObject.setParentGooruId(eventMap.get("parentGooruId").toString());
+    	}
+    	eventObject.setContentGooruId(eventMap.get("contentGooruId").toString());
+    	if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
+    		eventObject.setParentEventId(eventMap.get("parentEventId").toString());
+    	}
+    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs").toString()));
+    	if(eventMap.containsKey("type") && eventMap.get("type") != null){
+    	eventObject.setEventType(eventMap.get("type").toString());
+    	}
+    	
+    	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").toString().isEmpty())) {
+				 try {
+					 userUid = eventMap.get("gooruUId").toString();
+					 Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid,0);
+	   					for(Row<String, String> userDetail : userDetails){
+	   						organizationUid = userDetail.getColumns().getStringValue("organization_uid", null);
+	   					}
+					 eventObject.setOrganizationUid(organizationUid);
+			    	 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+			    	 sessionObj.put("organizationUId", organizationUid);
+			    	 eventObject.setSession(sessionObj.toString());
+			    	 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
+			    	 fieldsObj.put("session", sessionObj.toString());
+			    	 eventObject.setFields(fieldsObj.toString());
+			    	 eventMap.put("organizationUId", organizationUid);
+				 } catch (Exception e) {
+						logger.info("Error while fetching User uid ");
+				 }
+			 }
+    	eventMap.put("eventName", eventObject.getEventName());
+    	eventMap.put("eventId", eventObject.getEventId());
+    	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+    	
+    	return eventMap;
+    }
+
 
     private void getAndSetAnswerStatus(EventData eventData){
     	if(eventData.getEventName().equalsIgnoreCase(LoaderConstants.CQRPD.getName()) || eventData.getEventName().equalsIgnoreCase(LoaderConstants.QPD.getName())){
