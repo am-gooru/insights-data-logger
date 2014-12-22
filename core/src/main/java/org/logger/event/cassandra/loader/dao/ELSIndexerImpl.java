@@ -19,6 +19,7 @@ import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
@@ -99,11 +100,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 
 	public void indexActivity(String fields){
     	if(fields != null){
-			try {
-				JSONObject jsonField = new JSONObject(fields);
+				JSONObject jsonField = null;
+				try {
+					jsonField = new JSONObject(fields);
+				} catch (JSONException e1) {
+					try {
+						jsonField = new JSONObject(fields.substring(14).trim());
+					} catch (JSONException e2) {
+						logger.info("field : " + fields);
+						e2.printStackTrace();
+					}
+				}
 	    			if(jsonField.has("version")){
 	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);    	
+	    				Map<String, Object> eventMap = new HashMap<String, Object>();
+						try {
+							eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}    	
 	    				
 	    				eventMap.put("eventName", eventObjects.getEventName());
 	    		    	eventMap.put("eventId", eventObjects.getEventId());
@@ -133,6 +148,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    			} 
 	    			else{
+	    				try{
 	    				   Iterator<?> keys = jsonField.keys();
 	    				   Map<String,Object> eventMap = new HashMap<String, Object>();
 	    				   while( keys.hasNext() ){
@@ -220,10 +236,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    				    	}
 	    					}
 		    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    				}catch(Exception e3){
+	    					e3.printStackTrace();
+	    				}
 	    		     }
-				} catch (Exception e) {
-					logger.info("Error while Migration : {} ",e);
-				}
+				
 				}
 		
     }
