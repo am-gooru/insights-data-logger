@@ -114,7 +114,7 @@ public class TypeConverter {
 				}else if(type.equalsIgnoreCase("Boolean")){
 						result = Boolean.valueOf(value.trim());
 				}
-				else if(type.equals("String")){
+				else if(type.equalsIgnoreCase("String")){
 					result = value.trim();
 				}else if(type.equals("IntegerArray")){
 
