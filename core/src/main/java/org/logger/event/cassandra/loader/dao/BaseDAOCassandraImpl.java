@@ -51,9 +51,7 @@ public class BaseDAOCassandraImpl {
     private CassandraConnectionProvider connectionProvider;
     
     private Keyspace keyspace;
-    
-    private Keyspace awsKeyspace;
-    
+        
     private Client client;
     
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
@@ -82,16 +80,6 @@ public class BaseDAOCassandraImpl {
         return this.keyspace;
     }
     
-    public Keyspace getAwsKeyspace() {
-        if(awsKeyspace == null && this.connectionProvider != null) {
-            try {
-                this.awsKeyspace = this.connectionProvider.getAwsKeyspace();
-            } catch (IOException ex) {
-                logger.info("Error while initializing AWS keyspace{}", ex);
-            }
-        }
-        return this.awsKeyspace;
-    }
     public Client getESClient() {
         if(client == null && this.connectionProvider != null) {
             try {

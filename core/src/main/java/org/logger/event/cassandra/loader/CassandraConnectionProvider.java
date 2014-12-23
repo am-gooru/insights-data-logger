@@ -62,15 +62,13 @@ public class CassandraConnectionProvider {
 
     private Properties properties;
     private static Keyspace cassandraKeyspace;
-    private static Keyspace cassandraAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
-    private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
     private Client client;
-    private static String AWS_CASSANDRA_KEYSPACE;
-    private static String AWS_CASSANDRA_IP;
+    private static String CASSANDRA_CLUSTER;
     private static String INSIHGHTS_ES_IP;
+    private static String ES_CLUSTER;
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
 	private EntityManager<UserCo, String> userEntityPersister;
     
@@ -78,13 +76,18 @@ public class CassandraConnectionProvider {
 
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
-        CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
         INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
-        AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
-        AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
+        CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
+        ES_CLUSTER = System.getenv("ES_CLUSTER");;
         
-        String esClusterName = "";
+        if(CASSANDRA_CLUSTER == null){
+        	CASSANDRA_CLUSTER = "gooru-cassandra";
+        }
+        
+        if(ES_CLUSTER == null){
+        	ES_CLUSTER = "gooru-es";
+        }
         int esPort = 9300;
         try {
 
@@ -112,27 +115,21 @@ public class CassandraConnectionProvider {
 					.setMaxTimeoutWhenExhausted(2000)
 					.setMaxConnsPerHost(10)
 					.setInitConnsPerHost(1)
-					/*.setLatencyAwareUpdateInterval(10000)
-                    .setLatencyAwareResetInterval(0)
-                    .setLatencyAwareBadnessThreshold(2)
-                    .setLatencyAwareWindowSize(100)*/
+					
                     ;
             
             if (!hosts.startsWith("127.0")) {
                 poolConfig.setLocalDatacenter("datacenter1");
             }
 
-            //poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
-
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-                    .forCluster(clusterName)
+                    .forCluster(CASSANDRA_CLUSTER)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
                     .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-                    //.withConnectionPoolMonitor(new Slf4jConnectionPoolMonitorImpl())
                     .buildKeyspace(ThriftFamilyFactory.getInstance());
 
             context.start();
@@ -140,74 +137,34 @@ public class CassandraConnectionProvider {
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
             }
-            if(cassandraAwsKeyspace == null){
-            cassandraAwsKeyspace = this.initializeAwsCassandra();
-            }
-            if(cassandraAwsKeyspace != null ) {
-				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getAwsKeyspace()).build();
-				userEntityPersister = new DefaultEntityManager.Builder<UserCo, String>().withEntityType(UserCo.class).withKeyspace(getAwsKeyspace()).build();
+
+            if(cassandraKeyspace != null ) {
+				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getKeyspace()).build();
+				userEntityPersister = new DefaultEntityManager.Builder<UserCo, String>().withEntityType(UserCo.class).withKeyspace(getKeyspace()).build();
 			}
             
             if(client == null){
-            //Elastic search connection provider
-           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
-           TransportClient transportClient = new TransportClient(settings);
-           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
-           client = transportClient;
+               //Elastic search connection provider
+	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
+	           TransportClient transportClient = new TransportClient(settings);
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
+	           client = transportClient;
             }
+            
            this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
     }
 
-	public  Keyspace initializeAwsCassandra(){
-	 
-		String awsHosts =  AWS_CASSANDRA_IP;
-		String awsCluster = "gooru-cassandra";
-		String keyspace = AWS_CASSANDRA_KEYSPACE;
-		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
-	    .setPort(9160)
-	    .setMaxConnsPerHost(3)
-	    .setSeeds(awsHosts);
-		
-		if (!awsHosts.startsWith("127.0")) {
-			poolConfig.setLocalDatacenter("us-west");
-		}
-	
-		poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
-	
-		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-		    .forCluster(awsCluster)
-		    .forKeyspace(keyspace)
-		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-		    .setDiscoveryType(NodeDiscoveryType.NONE)
-		    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
-		    .withConnectionPoolConfiguration(poolConfig)
-		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-		    .buildKeyspace(ThriftFamilyFactory.getInstance());
-	
-		context.start();
-		
-		cassandraAwsKeyspace = (Keyspace) context.getClient();
-		
-        logger.info("Initialized connection to AWS Cassandra");
-        
-		return cassandraAwsKeyspace;
-        
-	}    
+	   
     public Keyspace getKeyspace() throws IOException {
         if (cassandraKeyspace == null) {
             throw new IOException("Keyspace not initialized.");
         }
         return cassandraKeyspace;
     }
-    public Keyspace getAwsKeyspace() throws IOException {
-        if (cassandraAwsKeyspace == null) {
-            throw new IOException("Keyspace not initialized.");
-        }
-        return cassandraAwsKeyspace;
-    }
+    
     public EntityManager<ResourceCo, String> getResourceEntityPersister() throws IOException {
     	if (resourceEntityPersister == null) {
             throw new IOException("Resource Entity is not persisted");

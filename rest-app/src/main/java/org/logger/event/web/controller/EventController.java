@@ -486,22 +486,11 @@ public class EventController {
 	}
 	
 	public void watchSession() {
-		if (!validateSchedular()) {
-			return;
-		}
-		logger.info("watching session");
-		eventService.watchSession();
+
 	}
 
 	public void postMigration(){
-		/*if(!validateSchedular()){
-			return;
-			}*/
-//		logger.info("post migration............");
-		//eventService.postMigration(null, null, null);
-		//eventService.postStatMigration(null, null, null);
-	//	eventService.catalogMigration(null, null, null);
-		//eventService.balanceStatDataUpdate();
+
 	}
 	
 	@SuppressWarnings("unchecked")
