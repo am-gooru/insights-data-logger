@@ -146,6 +146,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     				    	}
     					}
 	    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+	    	    			logger.info("Indexing resources");
+	    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
+	    	    		}
 	    			} 
 	    			else{
 	    				try{
@@ -236,6 +240,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    				    	}
 	    					}
 		    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+		    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+		    	    			logger.info("Indexing resources");
+		    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
+		    	    		}
 	    				}catch(Exception e3){
 	    					e3.printStackTrace();
 	    				}
@@ -244,6 +252,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				}
 		
     }
+	
+	public void indexResource(String ids){
+    	Collection<String> idList = new ArrayList<String>();
+    	for(String id : ids.split(",")){
+    		idList.add("GLP~" + id);
+    	}
+    	logger.info("resource id : {}",idList);
+    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
+    	try {
+    		if(resource != null && resource.size() > 0){
+    			this.getResourceAndIndex(resource);
+    		}else {
+    			throw new AccessDeniedException("Invalid Id!!");
+    		}
+		} catch (Exception e) {
+			logger.info("indexing failed .. :{}",e);
+		}
+    }
+    
 
     public Map<String, Object> getUserInfo(Map<String,Object> eventMap , String gooruUId){
     	Collection<String> user = new ArrayList<String>();
