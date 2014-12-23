@@ -111,7 +111,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     
     @Async
     public void callCountersV2(Map<String,String> eventMap) { 
-    MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(CONSISTENCY_LEVEL_ONE);
+    MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     if((eventMap.containsKey(EVENTNAME))) {
         eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
         for(int i=0 ; i < eventKeys.size() ; i++ ){
@@ -220,7 +220,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
     	
     	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
     	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
     		Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME),0);
@@ -299,7 +299,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 		int expireTime = 3600;
 		int contentExpireTime = 600;
 		
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
 			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 		}else{
@@ -348,7 +348,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	@Async
 	public void addContentForPostViews(Map<String,String> eventMap){
 		String dateKey = minDateFormatter.format(new Date()).toString();
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		
 		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
 		
@@ -363,7 +363,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	
 	public void watchApplicationSession() throws ParseException{
 	
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		long allUserSessionCounts = 0L;
 		long anonymousSessionCounts = 0L;
 		long loggedUserSessionCounts = 0L;
@@ -545,7 +545,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	@Async
 	public void saveInStaging(Map<String,Object> eventMap) {
 		try {
-			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL); 
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
 			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamily.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
 			String rowKey = null;
 			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
