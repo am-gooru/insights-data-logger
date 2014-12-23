@@ -1146,7 +1146,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
 
-		MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 		m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionGooruOid") + SEPERATOR + eventMap.get("questionGooruOid") + SEPERATOR + eventMap.get("sequence"))
 				.putColumnIfNotNull("collection_gooru_oid", eventMap.get("collectionGooruOid").toString())
 				.putColumnIfNotNull("question_id", ((eventMap.containsKey("questionId") && eventMap.get("questionId") != null) ? Long.valueOf(eventMap.get("questionId").toString()) : null))
@@ -1168,7 +1168,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateCollection(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey("collectionGooruOid") && eventMap.get("collectionGooruOid") != null) {
-			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionGooruOid").toString())
 					.putColumnIfNotNull("gooru_oid", eventMap.get("collectionGooruOid").toString())
 					.putColumnIfNotNull("content_id", (eventMap.get("collectionContentId") != null ? Long.valueOf(eventMap.get("collectionContentId").toString()) : null))
@@ -1196,7 +1196,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey("collectionItemId") && eventMap.get("collectionItemId") != null) {
-			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			m.withRow(this.accessColumnFamily(cfName), eventMap.get("collectionItemId").toString())
 					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : null)
 					.putColumnIfNotNull("item_type", (eventMap.get("collectionItemType") != null ? eventMap.get("collectionItemType").toString() : null))
@@ -1227,7 +1227,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.get("classId") != null && eventMap.get("groupUid") != null && eventMap.get("userUid") != null) {
-			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			m.withRow(this.accessColumnFamily(cfName), eventMap.get("classId").toString()+SEPERATOR+eventMap.get("groupUid").toString()+SEPERATOR+eventMap.get("userUid").toString())
 					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : 0)
 					.putColumnIfNotNull("classpage_content_id", eventMap.get("contentId") != null ? Long.valueOf(eventMap.get("contentId").toString()) : null)
@@ -1251,7 +1251,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public void updateUserCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.get("gooruUId") != null) {
-			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			m.withRow(this.accessColumnFamily(cfName), eventMap.get("gooruUId").toString())
 					.putColumnIfNotNull("gooru_uid", eventMap.get("gooruUId") != null ? eventMap.get("gooruUId").toString() : null)
 					.putColumnIfNotNull("firstname", eventMap.get("firstname") != null ? eventMap.get("firstname").toString() : null)

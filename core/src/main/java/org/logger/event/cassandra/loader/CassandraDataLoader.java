@@ -1889,7 +1889,7 @@ public class CassandraDataLoader implements Constants {
     	for (Row<String, String> row : cfData) {
     		MutationBatch m = null;
 			try {
-				m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 				String Key = row.getKey();
 				logger.info("Key" + Key);
 	        	for(Column<String> columns:row.getColumns()){
