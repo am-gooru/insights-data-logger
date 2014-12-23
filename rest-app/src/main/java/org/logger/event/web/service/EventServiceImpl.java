@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
@@ -83,7 +84,8 @@ public class EventServiceImpl implements EventService {
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
-        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");    
+        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+        minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     @Override
@@ -310,7 +312,6 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
 		Date lastDate = null;
 		Date currDate = null;		
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
@@ -318,6 +319,8 @@ public class EventServiceImpl implements EventService {
 			try {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 				currDate = minuteDateFormatter.parse(currentTime);
+				
+				logger.info("lastUpadatedTime: " + lastDate + " - currentTime: " + currDate);
 				
 				if(lastDate.getTime() < currDate.getTime()){					
 					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
