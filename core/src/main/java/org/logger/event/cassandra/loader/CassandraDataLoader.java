@@ -1117,7 +1117,7 @@ public class CassandraDataLoader  implements Constants {
 			logger.info("contentId : "+ i);
     	    	  	Rows<String, String>  resource = baseDao.readIndexedColumn("AWSV2",ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
     				if(resource != null && resource.size() > 0){
-    					MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+    					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     					try {
 							for(int a = 0 ; a < resource.size(); a++){
 								ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
@@ -1235,7 +1235,7 @@ public class CassandraDataLoader  implements Constants {
 						long resourceType = columns.getLongValue("resource_type", 0L);
 						String gooruOid = columns.getStringValue("gooru_oid", null);
 						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
-						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+						MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						if(searchResource != null && searchResource.size() > 0){
 							logger.info("Migrating resource : "+ gooruOid);
 							for(int x = 0 ; x < searchResource.size(); x++){
@@ -1373,7 +1373,7 @@ public class CassandraDataLoader  implements Constants {
 			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
 				if(resource != null && resource.size() > 0){
 					for(int a = 0 ; a < resource.size(); a++){
-						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+						MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 						String Key = resource.getRowByIndex(a).getKey();
 						ColumnListMutation<String> cm = m.withRow(baseDao.accessColumnFamily(ColumnFamily.DIMRESOURCE.getColumnFamily()), Key);
 						ColumnList<String> columns = resource.getRow(Key).getColumns();
@@ -1502,34 +1502,6 @@ public class CassandraDataLoader  implements Constants {
 
     public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
     	
-    	MutationBatch m = null;
-    	
-    	ColumnList<String> sourceCoulmnList = baseDao.readWithKey(cfName, key,sourceCluster,0);
-    	try{
-	    	if(targetCluster.equalsIgnoreCase("DO")){
-	    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}else if(targetCluster.equalsIgnoreCase("AWSV1")){
-	    		m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}else if(targetCluster.equalsIgnoreCase("AWSV2")){
-	    		m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}
-	    	
-	    	if(columnName == null){
-	    		for(int i = 0 ;i < sourceCoulmnList.size() ; i++){
-	    			baseDao.generateNonCounter(cfName, key, sourceCoulmnList.getColumnByIndex(i).getName(), sourceCoulmnList.getColumnByIndex(i).getStringValue(), m);
-	    		}
-	    	}else if(columnName != null && type.equalsIgnoreCase("String")) {
-	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getStringValue(), m);
-	    	}else if(columnName != null && type.equalsIgnoreCase("Long")) {
-	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getLongValue(), m);
-	    	}
-	    	
-	    	m.execute();
-	    	
-    	}catch(Exception e){
-    		e.printStackTrace();
-    		logger.info("Error while migration " + e);
-    	}
     }
     
     

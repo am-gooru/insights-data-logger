@@ -66,17 +66,14 @@ public class CassandraConnectionProvider {
 
     private Properties properties;
     private Keyspace cassandraKeyspace;
-    private Keyspace cassandraAwsKeyspace;
     private Keyspace cassandraNewAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
-    private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-    private Client esClient;
-    private static String AWS_CASSANDRA_KEYSPACE;
-    private static String AWS_CASSANDRA_IP;
-    private static String INSIHGHTS_DEV_ES_IP;
-    private static String INSIHGHTS_PROD_ES_IP;
+    private static String CASSANDRA_CLUSTER;
+    private static String ES_CLUSTER;
+    private Client client;
+    private static String INSIHGHTS_ES_IP;
     protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
     private EntityManager<ResourceCo, String> resourceEntityPersister;
     
@@ -84,15 +81,11 @@ public class CassandraConnectionProvider {
 
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
-        CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-        INSIHGHTS_DEV_ES_IP   = System.getenv("INSIHGHTS_DEV_ES_IP");
-        INSIHGHTS_PROD_ES_IP   = System.getenv("INSIHGHTS_PROD_ES_IP");
-        AWS_CASSANDRA_IP = System.getenv("AWS_CASSANDRA_IP");
-        AWS_CASSANDRA_KEYSPACE = System.getenv("AWS_CASSANDRA_KEYSPACE");
+        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_DEV_ES_IP");
+        CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
+        ES_CLUSTER = System.getenv("ES_CLUSTER");
         
-        String esClusterName = "";
-        int esPort = 9300;
         try {
 
             logger.info("Loading cassandra properties");
@@ -105,11 +98,11 @@ public class CassandraConnectionProvider {
                 keyspace = StringUtils.defaultIfEmpty(
                         configOptionsMap.get("keyspace"), keyspace);
             }
-
-            properties.load(CassandraDataLoader.class
-                    .getResourceAsStream("/loader.properties"));
-            String clusterName = properties.getProperty("cluster.name",
-                    "gooruinsights");
+            logger.info("CASSANDRA_IP:"+CASSANDRA_IP);
+            logger.info("CASSANDRA_KEYSPACE:"+CASSANDRA_KEYSPACE);
+            logger.info("CASSANDRA_CLUSTER:"+CASSANDRA_CLUSTER);
+            logger.info("INSIHGHTS_ES_IP"+INSIHGHTS_ES_IP);
+            
             if(cassandraKeyspace == null ){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
@@ -125,7 +118,7 @@ public class CassandraConnectionProvider {
             //poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-                    .forCluster(clusterName)
+                    .forCluster(CASSANDRA_CLUSTER)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
@@ -139,24 +132,19 @@ public class CassandraConnectionProvider {
             cassandraKeyspace = (Keyspace) context.getClient();
             logger.info("Initialized connection to Cassandra");
         	}
-            if(cassandraAwsKeyspace == null ){
-            	cassandraAwsKeyspace = this.initializeAwsCassandra();
-            }
-            if(cassandraNewAwsKeyspace == null ){
-            	cassandraNewAwsKeyspace = this.initializeNewAwsCassandra();
-            }
+            
 
             //Elastic search connection provider
-            if(esClient == null) {
-	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", esClusterName).put("client.transport.sniff", true).build();
+            if(client == null) {
+	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
 	           TransportClient transportClient = new TransportClient(settings);
-	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_DEV_ES_IP, esPort));
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, 9300));
 	           
-	           esClient = transportClient;
+	           client = transportClient;
             }
 
 			if(cassandraNewAwsKeyspace != null ) {
-				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getNewAwsKeyspace()).build();
+				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getKeyspace()).build();
 			}
           this.registerEsIndices();
         } catch (IOException e) {
@@ -164,77 +152,7 @@ public class CassandraConnectionProvider {
         }
     }
 
-	public  Keyspace initializeAwsCassandra(){
-	 
-		String awsHosts =  AWS_CASSANDRA_IP;
-		String awsCluster = "gooru-cassandra";
-		String keyspace = AWS_CASSANDRA_KEYSPACE;
-		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
-	    .setPort(9160)
-	    .setMaxConnsPerHost(3)
-	    .setSeeds(awsHosts);
-		
-		if (!awsHosts.startsWith("127.0")) {
-			poolConfig.setLocalDatacenter("us-west");
-		}
-	
-		//poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
-	
-		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-		    .forCluster(awsCluster)
-		    .forKeyspace(keyspace)
-		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-		    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
-		    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
-		    .withConnectionPoolConfiguration(poolConfig)
-		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-		    .buildKeyspace(ThriftFamilyFactory.getInstance());
-	
-		context.start();
-		
-		cassandraAwsKeyspace = (Keyspace) context.getClient();
-		
-        logger.info("Initialized connection to AWS Cassandra");
-        
-		return cassandraAwsKeyspace;
-        
-	}    
 
-	public  Keyspace initializeNewAwsCassandra(){
-		 
-		String awsNewHosts =  "54.193.233.64";
-		String awsNewCluster = "gooru-cassandra-prod";
-		String keyspace = CASSANDRA_KEYSPACE;
-		ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
-	    .setPort(9160)
-	    .setMaxConnsPerHost(3)
-	    .setSeeds(awsNewHosts);
-		
-		if (!awsNewHosts.startsWith("127.0")) {
-			poolConfig.setLocalDatacenter("us-west");
-		}
-	
-		//poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
-	
-		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-		    .forCluster(awsNewCluster)
-		    .forKeyspace(keyspace)
-		    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-		    .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
-		    .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
-		    .withConnectionPoolConfiguration(poolConfig)
-		    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-		    .buildKeyspace(ThriftFamilyFactory.getInstance());
-	
-		context.start();
-		
-		cassandraNewAwsKeyspace = (Keyspace) context.getClient();
-		
-        logger.info("Initialized connection to New AWS Cassandra");
-        
-		return cassandraNewAwsKeyspace;
-        
-	}
 	
 	public Keyspace getKeyspace() throws IOException {
         if (cassandraKeyspace == null) {
@@ -242,19 +160,7 @@ public class CassandraConnectionProvider {
         }
         return cassandraKeyspace;
     }
-    public Keyspace getAwsKeyspace() throws IOException {
-        if (cassandraAwsKeyspace == null) {
-            throw new IOException("Keyspace not initialized.");
-        }
-        return cassandraAwsKeyspace;
-    }
-    
-    public Keyspace getNewAwsKeyspace() throws IOException {
-        if (cassandraNewAwsKeyspace == null) {
-            throw new IOException("New Keyspace not initialized.");
-        }
-        return cassandraNewAwsKeyspace;
-    }    
+
     public EntityManager<ResourceCo, String> getResourceEntityPersister() throws IOException {
     	if (resourceEntityPersister == null) {
             throw new IOException("Resource Entity is not persisted");
@@ -263,10 +169,10 @@ public class CassandraConnectionProvider {
     }
     
     public Client getESClient() throws IOException{
-    	if (esClient == null) {
+    	if (client == null) {
             throw new IOException("Dev Elastic Search is not initialized.");
         }
-    	return esClient;
+    	return client;
     }
     
     
