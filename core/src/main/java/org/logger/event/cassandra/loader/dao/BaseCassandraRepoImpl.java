@@ -1217,19 +1217,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
 	
 	public Rows<String, String> basicCQLReadQuery(String cfName,String whereCoumn,String coulmnValue){
-		OperationResult<CqlResult<String, String>> result = null;
-		
-		try {
-			
-		   result = getNewAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL)
-		      .withCql("SELECT * FROM "+ cfName +" WHERE " +whereCoumn+" ='"+coulmnValue +"';")
-		      .execute();
-
-		} catch (ConnectionException e) {
-			e.printStackTrace();
-		}
-		return result.getResult().getRows();
-		
+		return null;
 	}
 	public void updateResourceEntity(ResourceCo resourceco) {
 		try {
