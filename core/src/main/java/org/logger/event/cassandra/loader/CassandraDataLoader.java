@@ -1093,7 +1093,7 @@ public class CassandraDataLoader implements Constants {
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
     		try {
-    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
@@ -1163,7 +1163,7 @@ public class CassandraDataLoader implements Constants {
     		Rows<String, String> resource = null;
     		MutationBatch m = null;
     		try {
-    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
     		for(long i = startVal ; i < endVal ; i++){
     			logger.info("contentId : "+ i);
@@ -1379,7 +1379,7 @@ public class CassandraDataLoader implements Constants {
     	}
 		Calendar cal = Calendar.getInstance();
 		try{
-		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> settings = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "bal_stat_job_settings",0);
 		for (Long startDate = Long.parseLong(settings.getStringValue("last_updated_time", null)) ; startDate <= Long.parseLong(minuteDateFormatter.format(new Date()));) {
 			JSONArray resourceList = new JSONArray();
@@ -1511,8 +1511,8 @@ public class CassandraDataLoader implements Constants {
 			int indexedCount = 0;
 			int indexedLimit = 2;
 			int allowedLimit = 0;
-		//MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		//MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
 		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
 		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
@@ -1887,7 +1887,7 @@ public class CassandraDataLoader implements Constants {
     	for (Row<String, String> row : cfData) {
     		MutationBatch m = null;
 			try {
-				m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 				String Key = row.getKey();
 				logger.info("Key" + Key);
 	        	for(Column<String> columns:row.getColumns()){
