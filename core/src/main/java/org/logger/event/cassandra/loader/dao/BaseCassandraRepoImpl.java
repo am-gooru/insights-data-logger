@@ -187,7 +187,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     		keyspace = getKeyspace();
     	}
     	if(CassandraVersion.equalsIgnoreCase("v2")){
-    		keyspace = getAwsKeyspace();
+    		keyspace = getNewAwsKeyspace();
     	}else{
     		keyspace = getKeyspace(); 
     	}
