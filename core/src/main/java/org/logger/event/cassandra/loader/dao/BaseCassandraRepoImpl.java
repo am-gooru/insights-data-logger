@@ -157,83 +157,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
     
-    public ColumnList<String> readSearchKey(String cfName,String key,int retryCount){
-        
-    	ColumnList<String> result = null;
-    	try {
-              result = getAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
-                    .getKey(key)
-                    .execute()
-                    .getResult()
-                    ;
-
-        } catch (ConnectionException e) {
-        	if(retryCount < 6){
-        		retryCount++;
-        		return readWithKey(cfName,key,retryCount);
-        	}else{
-        		e.printStackTrace();
-        	}
-        }
-    	
-    	return result;
-    }
-    public ColumnList<String> readSearchKey(String cfName,String key){
-        
-    	ColumnList<String> result = null;
-    	try {
-              result = getAwsKeyspace().prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
-                    .getKey(key)
-                    .execute()
-                    .getResult()
-                    ;
-
-        } catch (ConnectionException e) {
-        		e.printStackTrace();
-        }
-    	
-    	return result;
-    }
-    
-    public ColumnList<String> readWithKey(String cfName,String key,String keySpaceType,int retryCount){
-        
-    	ColumnList<String> result = null;
-    	
-    	Keyspace keyspace = getKeyspace();
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("DO")){
-    		keyspace = getKeyspace();
-    	}
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV1")){
-    		keyspace = getAwsKeyspace();
-    	}
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV2")){
-    		keyspace = getNewAwsKeyspace();
-    	}
-    	
-    	try {
-              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
-                    .getKey(key)
-                    .execute()
-                    .getResult()
-                    ;
-
-        } catch (ConnectionException e) {
-        	if(retryCount < 6){
-        		retryCount++;
-        		return readWithKey(cfName,key,keySpaceType,retryCount);
-        	}else{
-        		e.printStackTrace();
-        	}
-        }
-    	
-    	return result;
-    }
     public Rows<String, String> readWithKeyList(String cfName,Collection<String> key,int retryCount){
         
     	Rows<String, String> result = null;
@@ -257,36 +180,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	return result;
     }
 
-    public Rows<String, String> readWithKeyList(String cfName,Collection<String> key,String keySpaceType,int retryCount){
-        
-    	Rows<String, String> result = null;
-    	
-    	Keyspace keyspace = getKeyspace();
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWS")){
-    		keyspace = getAwsKeyspace();
-    	}
-    	
-    	
-    	try {
-              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
-                    .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
-                    .getKeySlice(key)
-                    .execute()
-                    .getResult()
-                    ;
-
-        } catch (ConnectionException e) {
-        	if(retryCount < 6){
-        		retryCount++;
-        		return readWithKeyList(cfName,key,keySpaceType,retryCount);
-        	}else{
-        		e.printStackTrace();
-        	}
-        }
-    	
-    	return result;
-    }
     
     public Rows<String, String> readCommaKeyList(String cfName,String... key){
 
@@ -386,19 +279,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     public Rows<String, String> readIndexedColumn(String keySpaceType,String cfName,String columnName,long value){
     	
     	Keyspace keyspace = getKeyspace();
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("DO")){
-    		keyspace = getKeyspace();
-    	}
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV1")){
-    		keyspace = getAwsKeyspace();
-    	}
-    	
-    	if(keySpaceType != null && keySpaceType.equalsIgnoreCase("AWSV2")){
-    		keyspace = getNewAwsKeyspace();
-    	}
-    	
     	
     	Rows<String, String> result = null;
     	try{
