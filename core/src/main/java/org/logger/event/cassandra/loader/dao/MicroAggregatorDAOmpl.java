@@ -233,7 +233,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     	for(String localKey : keysList){
     		try{
     			logger.info("Migrating Key : " + localKey); 
-			    MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+			    MutationBatch m = getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 				ColumnList<String> counterV1Row = baseCassandraDao.readWithKey("v1",ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey, 0);
 				for(int i = 0 ; i < counterV1Row.size() ; i++ ){
 					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey, counterV1Row.getColumnByIndex(i).getName(), counterV1Row.getColumnByIndex(i).getStringValue(), m);
@@ -248,7 +248,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     		
     	for(String localKey : keysList){
     		logger.info("Writing Key : " + localKey);
-    		MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    		MutationBatch m = getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     		ColumnList<String> counterV1Row = baseCassandraDao.readWithKey("v1",ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
     		ColumnList<String> counterV2Row = baseCassandraDao.readWithKey("v2",ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
     		for(int i = 0 ; i < counterV1Row.size() ; i++ ){

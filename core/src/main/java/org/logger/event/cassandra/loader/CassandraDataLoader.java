@@ -459,10 +459,14 @@ public class CassandraDataLoader implements Constants {
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
 				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
 			}
-			 
-			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName"))){
-				balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
-			}
+			
+			if(String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("collection.play") ||
+                    String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("resource.play") ||
+                    String.valueOf(eventMap.get("eventName")).equalsIgnoreCase("collection.resource.play")){
+                            if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
+                            	balanceLiveBoardData(eventMap.get(CONTENTGOORUOID));
+                            }
+            }
     	}catch(Exception e){
 			logger.info("Writing error log : {} ",eventObject.getEventId());
     	}
@@ -1543,7 +1547,7 @@ public class CassandraDataLoader implements Constants {
 			@Override
 			public void run() {
 				try{
-					MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 					for(Long contentId = startValue; contentId <= endValue; contentId++){
 						Rows<String, String> resources = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", contentId, 0);
 						String gooruOid = null;
@@ -2237,7 +2241,7 @@ public class CassandraDataLoader implements Constants {
 				ColumnList<String> counterV1Row = baseDao.readWithKey("v1",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 				ColumnList<String> counterV2Row = baseDao.readWithKey("v2",ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, 0);
 				
-				MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 	    		for(int i = 0 ; i < counterV1Row.size() ; i++ ){
 	    			long balancedData = ((counterV1Row.getColumnByIndex(i).getLongValue()) - (counterV2Row.getLongValue(counterV1Row.getColumnByIndex(i).getName(),0L)));
 	    			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+gooruOid, counterV1Row.getColumnByIndex(i).getName(), balancedData, m);
