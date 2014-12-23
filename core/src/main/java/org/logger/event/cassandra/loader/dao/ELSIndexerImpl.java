@@ -256,7 +256,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     	for(String id : ids.split(",")){
     		idList.add("GLP~" + id);
     	}
-    	logger.info("resource id : {}",idList);
+    	logger.info("Indexing resources : {}",idList);
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
     	try {
     		if(resource != null && resource.size() > 0){
@@ -477,7 +477,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			return;
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
-			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue());
 			Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),columns.getColumnByName("gooru_oid").getStringValue(), 0);
 			if(!contentItems.isEmpty()){
 				resourceMap.put("contentItems",contentItems);
