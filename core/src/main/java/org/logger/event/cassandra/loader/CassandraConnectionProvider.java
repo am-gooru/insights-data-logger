@@ -89,27 +89,16 @@ public class CassandraConnectionProvider {
         if(ES_CLUSTER == null){
         	ES_CLUSTER = "gooru-es";
         }
-        int esPort = 9300;
-        try {
 
+        try {
             logger.info("Loading cassandra properties");
             String hosts = CASSANDRA_IP;
             String keyspace = CASSANDRA_KEYSPACE;
-
-            if (configOptionsMap != null) {
-                hosts = StringUtils.defaultIfEmpty(
-                        configOptionsMap.get("hosts"), hosts);
-                keyspace = StringUtils.defaultIfEmpty(
-                        configOptionsMap.get("keyspace"), keyspace);
-            }
             
             logger.info("CASSANDRA_CLUSTER" + CASSANDRA_CLUSTER);
+            logger.info("CASSANDRA_KEYSPACE" + keyspace);
+            logger.info("CASSANDRA_IP" + hosts);
             
-            properties.load(CassandraDataLoader.class
-                    .getResourceAsStream("/loader.properties"));
-            String clusterName = properties.getProperty("cluster.name",
-                    "gooruinsights");
-
             if(cassandraKeyspace == null){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
                     .setPort(9160)
@@ -122,7 +111,7 @@ public class CassandraConnectionProvider {
                     ;
             
             if (!hosts.startsWith("127.0")) {
-                poolConfig.setLocalDatacenter("us-west");
+                poolConfig.setLocalDatacenter("datacenter1");
             }
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
@@ -150,7 +139,7 @@ public class CassandraConnectionProvider {
                //Elastic search connection provider
 	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
 	           TransportClient transportClient = new TransportClient(settings);
-	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, esPort));
+	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, 9300));
 	           client = transportClient;
             }
             
