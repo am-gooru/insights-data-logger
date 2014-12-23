@@ -82,7 +82,7 @@ public class CassandraConnectionProvider {
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_DEV_ES_IP");
+        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
         ES_CLUSTER = System.getenv("ES_CLUSTER");
         
