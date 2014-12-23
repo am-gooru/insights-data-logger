@@ -147,7 +147,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     					}
 	    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
-	    	    			logger.info("Indexing resources");
 	    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
 	    	    		}
 	    			} 
@@ -241,7 +240,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    					}
 		    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 		    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
-		    	    			logger.info("Indexing resources");
 		    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
 		    	    		}
 	    				}catch(Exception e3){

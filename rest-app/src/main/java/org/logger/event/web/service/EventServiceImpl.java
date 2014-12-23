@@ -312,6 +312,7 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;		
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
@@ -320,7 +321,6 @@ public class EventServiceImpl implements EventService {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 				currDate = minuteDateFormatter.parse(currentTime);
 				
-				logger.info("lastUpadatedTime: " + lastDate + " - currentTime: " + currDate);
 				
 				if(lastDate.getTime() < currDate.getTime()){					
 					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
