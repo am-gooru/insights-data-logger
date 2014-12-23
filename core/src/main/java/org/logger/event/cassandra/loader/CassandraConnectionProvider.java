@@ -81,6 +81,7 @@ public class CassandraConnectionProvider {
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
         ES_CLUSTER = System.getenv("ES_CLUSTER");;
         
+       
         if(CASSANDRA_CLUSTER == null){
         	CASSANDRA_CLUSTER = "gooru-cassandra";
         }
@@ -101,7 +102,9 @@ public class CassandraConnectionProvider {
                 keyspace = StringUtils.defaultIfEmpty(
                         configOptionsMap.get("keyspace"), keyspace);
             }
-
+            
+            logger.info("CASSANDRA_CLUSTER" + CASSANDRA_CLUSTER);
+            
             properties.load(CassandraDataLoader.class
                     .getResourceAsStream("/loader.properties"));
             String clusterName = properties.getProperty("cluster.name",
@@ -119,7 +122,7 @@ public class CassandraConnectionProvider {
                     ;
             
             if (!hosts.startsWith("127.0")) {
-                poolConfig.setLocalDatacenter("datacenter1");
+                poolConfig.setLocalDatacenter("us-west");
             }
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
