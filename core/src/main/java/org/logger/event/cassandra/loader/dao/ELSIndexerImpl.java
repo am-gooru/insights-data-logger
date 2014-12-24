@@ -707,7 +707,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			
 			
 			if(userInfos.getColumnByName("gooru_uid") != null){
-				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
 				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
 				Map<String,Object> userMap = new HashMap<String, Object>();
 				this.getLiveCounterData("all~"+userInfos.getColumnByName("gooru_uid").getStringValue(), userMap);
@@ -715,8 +714,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 					String rowKey = null;  				
 					if(beFieldName.containsKey(entry.getKey())){
 						rowKey = beFieldName.get(entry.getKey());
+						contentBuilder.field(rowKey,entry.getValue());
 					}
-					contentBuilder.field(rowKey,entry.getValue());
 				}
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
