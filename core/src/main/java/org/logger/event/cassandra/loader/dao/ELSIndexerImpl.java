@@ -629,7 +629,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     		
     		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
     		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
-    		resourceMap.put("reactionsCount",ratings);
+    		resourceMap.put("reactionsCount",reactions);
     		resourceMap.put("sumOfreactionType",sumOfreactionType);
     		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
     		
@@ -698,14 +698,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 
 
     public void getUserAndIndex(String userId) throws Exception{
-    	logger.info("user id : "+ userId);
 		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId,0);
 		
 		if(userInfos != null & userInfos.size() > 0){
-			
+			logger.info("INdexing user : "+ userId);			
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			
-			
 			if(userInfos.getColumnByName("gooru_uid") != null){
 				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
 				Map<String,Object> userMap = new HashMap<String, Object>();
