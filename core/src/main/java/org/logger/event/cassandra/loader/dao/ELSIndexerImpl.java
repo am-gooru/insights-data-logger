@@ -577,50 +577,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("gooru_oid") != null){
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 
-	    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(),0);
-	    	
-	    	if(vluesList != null && vluesList.size() > 0){
-	    		
-	    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
-	    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
-	    		if(views > 0 && totalTimespent == 0L ){
-	    			totalTimespent = (views * 180000);
-	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", totalTimespent);
-	    		}
-	    		resourceMap.put("viewsCount",views);
-	    		resourceMap.put("totalTimespent",totalTimespent);
-	    		resourceMap.put("avgTimespent",views != 0L ? (totalTimespent/views) : 0L );
-	    		
-	    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
-	    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
-	    		resourceMap.put("ratingsCount",ratings);
-	    		resourceMap.put("sumOfRatings",sumOfRatings);
-	    		resourceMap.put("avgRating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
-	    		
-	    		
-	    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
-	    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
-	    		resourceMap.put("reactionsCount",ratings);
-	    		resourceMap.put("sumOfreactionType",sumOfreactionType);
-	    		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
-	    		
-	    		
-	    		resourceMap.put("countOfRating5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
-	    		
-	    		resourceMap.put("countOfICanExplain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
-	    		resourceMap.put("countOfINeedHelp",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
-	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
-	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
-	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
-	    		resourceMap.put("copyCount",vluesList.getColumnByName("count~copy") != null ?vluesList.getColumnByName("count~copy").getLongValue() : 0L );
-	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
-	    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
-	    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
-	    	}
+			this.getLiveCounterData("all~"+columns.getColumnByName("gooru_oid").getStringValue(), resourceMap);
 	    	
 	    	if(questionList != null && questionList.size() > 0){
 	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
@@ -643,6 +600,50 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
 		}
 		}
+    }
+    
+    private Map<String,Object> getLiveCounterData(String key,Map<String,Object> resourceMap){
+    	
+    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key,0);
+    	
+    	if(vluesList != null && vluesList.size() > 0){
+    		
+    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
+    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
+
+    		resourceMap.put("viewsCount",views);
+    		resourceMap.put("totalTimespent",totalTimespent);
+    		resourceMap.put("avgTimespent",views != 0L ? (totalTimespent/views) : 0L );
+    		
+    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
+    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
+    		resourceMap.put("ratingsCount",ratings);
+    		resourceMap.put("sumOfRatings",sumOfRatings);
+    		resourceMap.put("avgRating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
+    		
+    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
+    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
+    		resourceMap.put("reactionsCount",ratings);
+    		resourceMap.put("sumOfreactionType",sumOfreactionType);
+    		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
+    		
+    		resourceMap.put("countOfRating5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
+    		resourceMap.put("countOfRating4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
+    		resourceMap.put("countOfRating3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
+    		resourceMap.put("countOfRating2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
+    		resourceMap.put("countOfRating1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
+    		
+    		resourceMap.put("countOfICanExplain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
+    		resourceMap.put("countOfINeedHelp",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
+    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
+    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
+    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
+    		resourceMap.put("copyCount",vluesList.getColumnByName("count~copy") != null ?vluesList.getColumnByName("count~copy").getLongValue() : 0L );
+    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
+    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
+    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
+    	}
+    	return resourceMap;
     }
     
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
@@ -702,6 +703,15 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			if(userInfos.getColumnByName("gooru_uid") != null){
 				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
 				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
+				Map<String,Object> userMap = new HashMap<String, Object>();
+				this.getLiveCounterData("all~"+userInfos.getColumnByName("gooru_uid").getStringValue(), userMap);
+				for(Map.Entry<String, Object> entry : userMap.entrySet()){
+					String rowKey = null;  				
+					if(beFieldName.containsKey(entry.getKey())){
+						rowKey = beFieldName.get(entry.getKey());
+					}
+					contentBuilder.field(rowKey,entry.getValue());
+				}
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
 				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirm_status").getLongValue());
