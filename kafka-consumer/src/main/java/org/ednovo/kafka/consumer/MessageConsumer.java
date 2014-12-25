@@ -84,10 +84,30 @@ public class MessageConsumer extends Thread
     
   }
 
-  private static ConsumerConfig createConsumerConfig()
-  {
+  public static String buildEndPoint(String ip, String portNo){
+		
+		StringBuffer stringBuffer  = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for( int count = 0; count<ips.length; count++){
+			
+			if(stringBuffer.length() > 0){
+				stringBuffer.append(",");
+			}
+			
+			if(count < ports.length){
+				stringBuffer.append(ips[count]+":"+ports[count]);
+			}else{
+				stringBuffer.append(ips[count]+":"+ports[0]);
+			}
+		}
+		return stringBuffer.toString();
+	}
+  
+  private static ConsumerConfig createConsumerConfig(){
+	  
 	  Properties props = new Properties();
-		props.put("zookeeper.connect", ZK_IP + ":" + ZK_PORT);
+		props.put("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
 		props.put("group.id", KAFKA_GROUPID);
 		props.put("zookeeper.session.timeout.ms", "1000");
 		props.put("zookeeper.sync.time.ms", "200");

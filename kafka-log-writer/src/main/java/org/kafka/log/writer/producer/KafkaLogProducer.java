@@ -66,7 +66,7 @@ public class KafkaLogProducer
 		
 		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
-		props.put("metadata.broker.list",kafkaIp + ":" + port);
+		props.put("metadata.broker.list",KafkaLogProducer.buildEndPoint(kafkaIp, port));
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("request.required.acks", "1");
 		props.put("producer.type",producerType);
@@ -81,6 +81,26 @@ public class KafkaLogProducer
 		}
 	}
 	
+	 public static String buildEndPoint(String ip, String portNo){
+			
+			StringBuffer stringBuffer  = new StringBuffer();
+			String[] ips = ip.split(",");
+			String[] ports = portNo.split(",");
+			for( int count = 0; count<ips.length; count++){
+				
+				if(stringBuffer.length() > 0){
+					stringBuffer.append(",");
+				}
+				
+				if(count < ports.length){
+					stringBuffer.append(ips[count]+":"+ports[count]);
+				}else{
+					stringBuffer.append(ips[count]+":"+ports[0]);
+				}
+			}
+			return stringBuffer.toString();
+		}
+	 
 	public void sendEventLog(String eventLog) {
 	Map<String, String> message = new HashMap<String, String>();
 	message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));

@@ -60,7 +60,7 @@ public class MicroAggregatorProducer
 		this.topic = topic;
 		LOG.info("Kafka micro aggregator producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		
-		props.put("metadata.broker.list",kafkaIp + ":" + port);
+		props.put("metadata.broker.list",MicroAggregatorProducer.buildEndPoint(kafkaIp, port));
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
 		props.put("request.required.acks", "1");
 		props.put("producer.type",producerType);
@@ -71,6 +71,26 @@ public class MicroAggregatorProducer
 		}
 		catch (Exception e) {
 		}
+	}
+	
+	public static String buildEndPoint(String ip, String portNo){
+		
+		StringBuffer stringBuffer  = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for( int count = 0; count<ips.length; count++){
+			
+			if(stringBuffer.length() > 0){
+				stringBuffer.append(",");
+			}
+			
+			if(count < ports.length){
+				stringBuffer.append(ips[count]+":"+ports[count]);
+			}else{
+				stringBuffer.append(ips[count]+":"+ports[0]);
+			}
+		}
+		return stringBuffer.toString();
 	}
 	
 	public void sendEventForAggregation(String eventLog) {
