@@ -225,6 +225,13 @@
 "type":"date",
 "index":"not_analyzed"
 },
+"resource_format":{
+"type":"String",
+"index":"not_analyzed"
+},"instructional":{
+"type":"String",
+"index":"not_analyzed"
+},
 "created_on":{
 "format":"date_time",
 "type":"date",

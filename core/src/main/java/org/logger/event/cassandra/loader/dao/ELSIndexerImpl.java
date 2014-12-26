@@ -579,7 +579,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		}
 		if(columns.getColumnByName("type_name") != null){
 			resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
-		}		
+		}
+		if(columns.getColumnByName("resource_format") != null){
+			resourceMap.put("resourceFormat", columns.getColumnByName("resource_format").getStringValue());
+		}
+		if(columns.getColumnByName("instructional") != null){
+			resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
+		}
 		if(columns.getColumnByName("gooru_oid") != null){
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 
