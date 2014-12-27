@@ -124,8 +124,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		logger.info("Time spent for counters : {}",(stop-start));	
     }
     @Async
-    public <T> void realTimeMetrics(Map<String, T> eventMaps,String aggregatorJson) throws Exception{
-    	Map<String,String> eventMap = (Map<String, String>) eventMaps;
+    public void realTimeMetrics(Map<String, String> eventMap,String aggregatorJson) throws Exception{
     	if(cache.size() > 100000){
     		cache = new LinkedHashMap<String, Object>();
     	}
@@ -410,7 +409,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	        for(String localKey : keysList){
 	        	if(e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)){
 	        		if(!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE)) &&!(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP)) && !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-		        			baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
+		        			logger.info("e.get(AGGMODE).toString() ==>"+e.get(AGGMODE).toString());
+		        			logger.info("Val ==>"+eventMap.get(e.get(AGGMODE)));
+	        			baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(),localKey,key+SEPERATOR+entry.getKey(),e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()),m);
 				}	
 	        		
 	        		if(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){

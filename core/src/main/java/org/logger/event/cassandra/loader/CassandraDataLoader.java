@@ -435,11 +435,13 @@ public class CassandraDataLoader implements Constants {
 
     public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception{
     	Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
+    	Map<String, String> eventMap2 = new LinkedHashMap<String, String>();
+    	
     	String aggregatorJson = null;
     	
     	try {
 	    	eventMap = JSONDeserializer.deserializeEventObjectv2(eventObject);    	
-
+	    	 eventMap2 = JSONDeserializer.deserializeEventObject(eventObject);
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
@@ -451,7 +453,7 @@ public class CassandraDataLoader implements Constants {
 			}
 
 	    	eventMap = (Map<String, Object>)this.formatEventObjectMap(eventObject, eventMap);
-	    	
+	    	eventMap2 = this.formatEventMap(eventObject, eventMap2);
 	    	String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
 	    	
 	    	Map<String,Object> records = new HashMap<String, Object>();
@@ -486,7 +488,7 @@ public class CassandraDataLoader implements Constants {
 			aggregatorJson = cache.get(eventMap.get("eventName").toString());
 			
 			if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-				liveAggregator.realTimeMetrics(eventMap, aggregatorJson);	
+				liveAggregator.realTimeMetrics(eventMap2, aggregatorJson);	
 			}
 			
 			liveDashBoardDAOImpl.callCountersV2(eventMap);
@@ -1772,6 +1774,44 @@ public class CassandraDataLoader implements Constants {
 		return false;
 	}
     
+	 private Map<String,String> formatEventMap(EventObject eventObject,Map<String,String> eventMap){
+
+	        String userUid = null;
+	        String organizationUid = DEFAULT_ORGANIZATION_UID;
+	        eventObject.setParentGooruId(eventMap.get("parentGooruId"));
+	        eventObject.setContentGooruId(eventMap.get("contentGooruId"));
+	        if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
+	                eventObject.setParentEventId(eventMap.get("parentEventId"));
+	        }
+	        eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+	        eventObject.setEventType(eventMap.get("type"));
+
+	        if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
+	                                 try {
+	                                         userUid = eventMap.get("gooruUId");
+	                                         Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid,0);
+	                                                for(Row<String, String> userDetail : userDetails){
+	                                                        organizationUid = userDetail.getColumns().getStringValue("organization_uid", null);
+	                                                }
+	                                         eventObject.setOrganizationUid(organizationUid);
+	                                 JSONObject sessionObj = new JSONObject(eventObject.getSession());
+	                                 sessionObj.put("organizationUId", organizationUid);
+	                                 eventObject.setSession(sessionObj.toString());
+	                                 JSONObject fieldsObj = new JSONObject(eventObject.getFields());
+	                                 fieldsObj.put("session", sessionObj.toString());
+	                                 eventObject.setFields(fieldsObj.toString());
+	                                 eventMap.put("organizationUId", organizationUid);
+	                                 } catch (Exception e) {
+	                                                logger.info("Error while fetching User uid ");
+	                                 }
+	                }
+
+	        eventMap.put("eventName", eventObject.getEventName());
+	        eventMap.put("eventId", eventObject.getEventId());
+	        eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
+
+	        return eventMap;
+	    }
     private <T> T formatEventObjectMap(EventObject eventObject, Map<String, T> eventMap) {
     	
     	String userUid = null;
