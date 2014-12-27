@@ -259,4 +259,20 @@ public interface Constants {
 	public String NAME = "name";
 	
 	public String EDIT = "edit";
+	
+	public String CREATE = "create";
+	
+	public String COPY = "copy";
+	
+	public String MOVE = "move";
+	
+	public String ITEMTYPES_SCSFFC =  "shelf.collection|shelf.folder|folder.collection";
+	
+	public String RESOURCETYPES_SF =  "scollection|folder";
+	
+	public String COLLECTION_TABLE_FIELDS = "contentId,gooruOid,collectionType,grade,goals,ideas,performanceTasks,language,keyPoints,notes,languageObjective,network,mailNotification,buildTypeId,narrationLink,estimatedTime";
+	
+	public String COLLECTION_ITEM_FIELDS = "collectionItemId|itemSequence|itemType";
+	
+	public String CLASSPAGE = "classpage";
 }

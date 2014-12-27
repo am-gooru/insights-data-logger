@@ -110,7 +110,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
     }
     
     @Async
-    public void callCountersV2(Map<String,String> eventMap) { 
+    public <T> void callCountersV2(Map<String, T> eventMaps) {
+    Map<String,String> eventMap = (Map<String, String>) eventMaps;
     MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     if((eventMap.containsKey(EVENTNAME))) {
         eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
@@ -346,7 +347,8 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 	}
 	
 	@Async
-	public void addContentForPostViews(Map<String,String> eventMap){
+	public <T> void addContentForPostViews(Map<String, T> eventMaps){
+		Map<String,String> eventMap = (Map<String, String>) eventMaps;
 		String dateKey = minDateFormatter.format(new Date()).toString();
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		
