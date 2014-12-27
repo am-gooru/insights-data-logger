@@ -677,7 +677,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	private void updateColumnFamily(String cfName, Map<String,Object> mapToInsert){
 		if(mapToInsert.get("rKey") != null) {
-			MutationBatch m = getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			ColumnListMutation<String> cfm = m.withRow(baseCassandraDao.accessColumnFamily(cfName), mapToInsert.get("rKey").toString());
 			for(Entry<String, Object> entry : mapToInsert.entrySet()){
 				if(!entry.getKey().equalsIgnoreCase("rKey")) {

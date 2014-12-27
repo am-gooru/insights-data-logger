@@ -143,7 +143,7 @@ public class CassandraConnectionProvider {
 	           client = transportClient;
             }
             
-           this.registerIndices();
+          // this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }
