@@ -968,7 +968,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		} catch (Exception ex) {
 			logger.error("Unable to save resource entity for Id {} due to {}", dataMap.get("gooruOid").toString(), ex);
 		}
-System.out.println("Collection contentId >> " +eventMap.get(CONTENTID).toString());
 		/** Update insights collection CF for collection mapping **/
 		rawUpdateDAO.updateCollectionTable(dataMap, collectionMap);
 		
@@ -985,15 +984,7 @@ System.out.println("Collection contentId >> " +eventMap.get(CONTENTID).toString(
 			}
 		}
 		collectionItemMap.put("deleted", Integer.valueOf(0));
-		if (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("shelf.collection")) {
-			Map<String, Object> collectionItem = ((Map<String, Object>) ((Map<String, Object>) dataMap.get("collectionItem")).get("collection"));
-			collectionItemMap.put(COLLECTIONITEMID, ((collectionItem.containsKey(COLLECTIONITEMID) && collectionItem.get(COLLECTIONITEMID) != null) ? collectionItem.get(COLLECTIONITEMID).toString() : null));
-			collectionItemMap.put("itemType", ((collectionItem.containsKey(ITEMTYPE) && collectionItem.get(ITEMTYPE) != null) ? collectionItem.get(ITEMTYPE).toString() : null));
-			collectionItemMap.put("itemSequence", ((collectionItem.containsKey(ITEMSEQUENCE) && collectionItem.get(ITEMSEQUENCE) != null) ? Integer.valueOf(collectionItem.get(ITEMSEQUENCE).toString()) : null));
-			rawUpdateDAO.updateCollectionItemTable(collectionItem, collectionItemMap);
-		} else {
-			rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
-		}
+		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 	
 	private void generateCollectionMove(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
@@ -1198,36 +1189,7 @@ System.out.println("Collection contentId >> " +eventMap.get(CONTENTID).toString(
 		collectionItemMap.put("deleted", Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(dataMap, collectionItemMap);
 	}
-	private void generateClasspageAssignmentEdit1(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
-
-		/** classpage Assignment Edit **/
-
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		ResourceCo collection = new ResourceCo();
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		try {
-			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(dataMap, collection));
-		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", dataMap.get("gooruOid").toString(), ex);
-		}
-
-		// Update Insights colectionItem CF for shelf-collection mapping
-		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
-		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
-		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
-			} else {
-				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
-			}
-		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
-		rawUpdateDAO.updateCollectionItemTable(dataMap, collectionItemMap);
-
 	
-	}
 	private void generateShelfCollectionOrClasspageEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		/** Collection/Classpage Edit **/
 		

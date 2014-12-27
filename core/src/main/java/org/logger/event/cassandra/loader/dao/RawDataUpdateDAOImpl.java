@@ -1,6 +1,5 @@
 package org.logger.event.cassandra.loader.dao;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -589,7 +588,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			}
 			
 		}
-		System.out.println("collectionMap >> "+collectionMap);
 		if (collectionMap.containsKey("gooruOid") && collectionMap.get("gooruOid") != null) {
 			collectionMap.put("rKey", collectionMap.get("gooruOid").toString());
 			Set<Entry<String, String>> collectionCFKeySet = DataUtils.collectionCFKeys.entrySet();
@@ -640,7 +638,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	}
 	
 	private Map<String, Object> generateCFMap(String cfName, Set<Entry<String, String>> entrySetToInsert, Map<String, Object> eventMap) {
-		System.out.println("entrySetToInsert >> "+entrySetToInsert.toString() );
 		Map<String, Object> mapToInsert = new HashMap<String, Object>();
 		Set<Entry<String, String>> dataTypeEntrySet = null;
 		if(cfName.equalsIgnoreCase(ColumnFamily.CLASSPAGE.getColumnFamily())) {
@@ -650,7 +647,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTIONITEM.getColumnFamily())) {
 			dataTypeEntrySet = DataUtils.collectionItemCFDataType.entrySet();
 		}
-		System.out.println("dataTypeEntrySet >> "+dataTypeEntrySet.toString());
 		if(dataTypeEntrySet != null) {
 			for(Entry<String, String> entry : entrySetToInsert) {
 				if (eventMap.get(entry.getValue()) != null) {
@@ -681,7 +677,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			ColumnListMutation<String> cfm = m.withRow(baseCassandraDao.accessColumnFamily(cfName), mapToInsert.get("rKey").toString());
 			for(Entry<String, Object> entry : mapToInsert.entrySet()){
 				if(!entry.getKey().equalsIgnoreCase("rKey")) {
-	                logger.info("entry Key : {} Value : {}>> ",entry.getKey(), entry.getValue());
 					baseCassandraDao.generateNonCounter(entry.getKey(), entry.getValue(), cfm);
 				}
 			}
