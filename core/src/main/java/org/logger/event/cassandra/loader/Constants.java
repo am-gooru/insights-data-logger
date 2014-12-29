@@ -257,4 +257,6 @@ public interface Constants {
 	public String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
 	
 	public String ACTIVEPLAYS = "active~content~plays";
+	
+	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*";
 }

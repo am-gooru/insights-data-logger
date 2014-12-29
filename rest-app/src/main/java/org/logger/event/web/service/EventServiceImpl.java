@@ -31,11 +31,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
@@ -81,7 +84,8 @@ public class EventServiceImpl implements EventService {
         this.connectionProvider = dataLoaderService.getConnectionProvider();
         baseDao = new BaseCassandraRepoImpl(connectionProvider);
         eventObjectValidator = new EventObjectValidator(null);
-        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");    
+        this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+        minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     @Override
@@ -279,29 +283,26 @@ public class EventServiceImpl implements EventService {
 	public void clearCacher(){
 		dataLoaderService.clearCache();
 	}
-	public void indexResource(String ids){
-		dataLoaderService.indexResource(ids);
-	}
-	public void indexResourceViews(String ids,String type){
+	
+	public void index(String ids,String indexType){
 		try {
-			dataLoaderService.indexResourceView(ids, type);
+			if(indexType.equalsIgnoreCase("resource")){
+				dataLoaderService.indexResource(ids);
+			}
+			if(indexType.equalsIgnoreCase("user")){
+				dataLoaderService.indexUser(ids);
+			}
+			if(indexType.equalsIgnoreCase("event")){
+				dataLoaderService.indexEvent(ids);
+			}
+			if(indexType.equalsIgnoreCase("code")){
+				dataLoaderService.indexTaxonomy(ids);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void indexAnyCf(String sourceCf, String key, String targetIndex,String targetType){
-		try {
-			dataLoaderService.indexTaxonomy(sourceCf, key, targetIndex, targetType);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void indexUser(String ids) throws Exception{
-		dataLoaderService.indexUser(ids);
-	}
-
 	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
 		dataLoaderService.migrateRow(sourceCluster,targetCluster,cfName,key,columnName,type);
 	}
@@ -311,7 +312,7 @@ public class EventServiceImpl implements EventService {
 	
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		logger.info("lastUpadatedTime : " + lastUpadatedTime + " - currentTime" + currentTime);
+		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;		
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
@@ -319,6 +320,7 @@ public class EventServiceImpl implements EventService {
 			try {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 				currDate = minuteDateFormatter.parse(currentTime);
+				
 				
 				if(lastDate.getTime() < currDate.getTime()){					
 					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null,true);
@@ -353,5 +355,20 @@ public class EventServiceImpl implements EventService {
     		}
     	}
     	 return resultData;
+	}
+
+	@Override
+	public void readIndex(String dataSource) {
+		try {
+			dataLoaderService.readIndex(dataSource);
+		} catch (ElasticsearchIllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (ElasticsearchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

@@ -47,13 +47,8 @@ public class BaseDAOCassandraImpl {
     
     private Keyspace keyspace;
     
-    private Keyspace awsKeyspace;
+    private Client esClient;
     
-    private Keyspace newAwsKeyspace;
-    
-    private Client devClient;
-    
-    private Client prodClient;
     
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
     
@@ -77,50 +72,18 @@ public class BaseDAOCassandraImpl {
             }
         }
         return this.keyspace;
-    }
+    }    
     
-    public Keyspace getAwsKeyspace() {
-        if(awsKeyspace == null && this.connectionProvider != null) {
-            try {
-                this.awsKeyspace = this.connectionProvider.getAwsKeyspace();
-            } catch (IOException ex) {
-                logger.info("Error while initializing AWS keyspace{}", ex);
-            }
-        }
-        return this.awsKeyspace;
-    }
     
-    public Keyspace getNewAwsKeyspace() {
-        if(newAwsKeyspace == null && this.connectionProvider != null) {
+    public Client getESClient() {
+        if(esClient == null && this.connectionProvider != null) {
             try {
-                this.newAwsKeyspace = this.connectionProvider.getNewAwsKeyspace();
-            } catch (IOException ex) {
-                logger.info("Error while initializing New AWS keyspace{}", ex);
-            }
-        }
-        return this.newAwsKeyspace;
-    }
-    
-    public Client getDevESClient() {
-        if(devClient == null && this.connectionProvider != null) {
-            try {
-                this.devClient = this.connectionProvider.getDevESClient();
+                this.esClient = this.connectionProvider.getESClient();
             } catch (IOException ex) {
                 logger.info("Error while initializing elastic search{}", ex);
             }
         }
-        return this.devClient;
-    }
-    
-    public Client getProdESClient() {
-        if(prodClient == null && this.connectionProvider != null) {
-            try {
-                this.prodClient = this.connectionProvider.getProdESClient();
-            } catch (IOException ex) {
-                logger.info("Error while initializing elastic search{}", ex);
-            }
-        }
-        return this.prodClient;
+        return this.esClient;
     }
     
     public EntityManager<ResourceCo, String> getResourceEntityPersister() {

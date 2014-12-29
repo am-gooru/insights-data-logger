@@ -544,39 +544,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			logger.info("Create Mapping Failed ",e);	
 		}
 
-		indexingProd(indexName, indexType, id, contentBuilder, 0);
-		//indexingDev(indexName, indexType, id, contentBuilder, 0);
-		
-		//getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+		indexingES(indexName, indexType, id, contentBuilder, 0);
 
 	}
 	
-	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
-		
-		try{
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
-		}catch(Exception e){
-			if(retryCount < 6){
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				logger.info("Retrying count: {}  ",retryCount);
-    			retryCount++;
-    			indexingProd(indexName, indexType, id, contentBuilder, retryCount);
-        	}else{
-        		logger.info("Indexing failed in Prod : {} ",e);
-        		e.printStackTrace();
-        	}
-		}
-	}
 	
-	public void indexingDev(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
+	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getDevESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
 				try {
@@ -586,7 +561,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				}
 				logger.info("Retrying count: {}  ",retryCount);
 				retryCount++;
-    			indexingDev(indexName, indexType, id, contentBuilder, retryCount);
+    			indexingES(indexName, indexType, id, contentBuilder, retryCount);
         	}else{
         		logger.info("Indexing failed in Prod : {} ",e);
         		e.printStackTrace();

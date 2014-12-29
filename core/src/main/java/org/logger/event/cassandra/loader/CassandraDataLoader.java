@@ -37,19 +37,25 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.utils.ExpiringMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.pig.impl.util.ObjectSerializer;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -72,14 +78,12 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
-import com.netflix.astyanax.serializers.MapSerializer;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
 import flexjson.JSONSerializer;
@@ -881,100 +885,6 @@ public class CassandraDataLoader  implements Constants {
     	counterThread.start();
     }
     
-    public void viewMigFromEvents(String startTime , String endTime,String customEventName) throws Exception {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    	SimpleDateFormat dateIdFormatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00+0000");
-    	Calendar cal = Calendar.getInstance();
-    	String resourceType = "resource";
-    	for (Long startDate = Long.parseLong(startTime) ; startDate <= Long.parseLong(endTime);) {
-    		String currentDate = dateIdFormatter.format(dateFormatter.parse(startDate.toString()));
-    		int currentHour = dateFormatter.parse(startDate.toString()).getHours();
-    		int currentMinute = dateFormatter.parse(startDate.toString()).getMinutes();
-    		
-    		logger.info("Porcessing Date : {}" , startDate.toString());
-   		 	String timeLineKey = null;   		 	
-   		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = startDate.toString();
-   		 	} else {
-   		 		timeLineKey = startDate.toString()+"~"+customEventName;
-   		 	}
-   		 	if(customEventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-   		 	resourceType = "scollection";
-   		 	}
-   		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
-   		 	String ids = "";
-	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
-
-		    	Collection<String> eventDetailkeys = new ArrayList<String>();
-		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    		String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-		    		logger.info("eventDetailUUID  : " + eventDetailUUID);
-		    		eventDetailkeys.add(eventDetailUUID);
-		    	}
-		    	
-		    	//Read all records from Event Detail
-		    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailkeys,0);
-		    	for (Row<String, String> row : eventDetailsNew) {
-
-		    		logger.info("content_gooru_oid : " + row.getColumns().getStringValue("content_gooru_oid", null));
-		    		
-		    		String id = row.getColumns().getStringValue("content_gooru_oid", null);
-		    		
-		    		if(id != null){
-		    			ids += ","+id;
-		    		}
-					
-		    	}
-		    	this.migrateViews(ids.substring(1),resourceType);
-	    	}
-	    	//Incrementing time - one minute
-	    	cal.setTime(dateFormatter.parse(""+startDate));
-	    	cal.add(Calendar.MINUTE, 1);
-	    	Date incrementedTime =cal.getTime(); 
-	    	startDate = Long.parseLong(dateFormatter.format(incrementedTime));
-	    }
-	    
-    }
-    public void migrateViews(String resourceIds ,String resourceType) throws Exception{
-    	
-    	boolean proceed = false;
-    	String ids = "";
-    	
-    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	MutationBatch m2 = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-
-    	for(String id : resourceIds.split(",")){
-    		
-    	ids += ","+id;
-		logger.info("type : {} ",resourceType);
-		logger.info("id : {} ",id);
-		ColumnList<String> insightsData = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id,0);
-		ColumnList<String> gooruData = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+id,0);
-		long insightsView = 0L;
-		long gooruView = 0L;
-		if(insightsData != null){
-			insightsView =   insightsData.getLongValue("count~views", 0L);
-		}
-		logger.info("insightsView : {} ",insightsView);
-		if(gooruData != null){
-			gooruView =  gooruData.getLongValue("views_count", 0L);
-		}
-		logger.info("gooruView : {} ",gooruView);
-		long balancedView = (gooruView - insightsView);
-		logger.info("Insights update views : {} ", (insightsView + balancedView) );
-		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+id, "count~views", balancedView, m);
-	
-		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),id,"stas.viewsCount",(insightsView+balancedView),m2);
-		proceed = true;
-    		
-    	}
-    	if(proceed){
-    		m2.execute();
-    		m.execute();
-    		this.callIndexingAPI(resourceType, ids.substring(1),null);
-    	}
-    }
     
     public void pathWayMigration(String startTime , String endTime,String customEventName) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -1200,34 +1110,7 @@ public class CassandraDataLoader  implements Constants {
     }
     
     public void createResourceBucket(String startTime , String endTime){
-		try{
-		long startVal = Long.valueOf(startTime);
-		long endVal = Long.valueOf(endTime);
-		for(long i = startVal ; i < endVal ; i++){
-			logger.info("contentId : "+ i);
-    	    	  	Rows<String, String>  resource = baseDao.readIndexedColumn("AWSV2",ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i);
-    				if(resource != null && resource.size() > 0){
-    					MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    					try {
-							for(int a = 0 ; a < resource.size(); a++){
-								ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
-									
-									if(columns != null && columns.getColumnByName("gooru_oid") != null && columns.getColumnByName("created_on") != null){
-										logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
-										Date createdDate = TypeConverter.stringToAny(columns.getColumnByName("created_on").getStringValue(), "Date") ;
-										baseDao.generateNonCounter(ColumnFamily.RESOURCEBUCKET.getColumnFamily(), dateFormatter.format(createdDate), columns.getColumnByName("gooru_oid").getStringValue(), columns.getColumnByName("gooru_oid").getStringValue(), m);
-									}
-								}
-							m.execute();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-    				}
-		}
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-	
+    	
     }
     
     public void catalogMigration(String startTime , String endTime,String loaderType) {
@@ -1312,216 +1195,16 @@ public class CassandraDataLoader  implements Constants {
     }
 
     public void MigrateSearchCF(Long start,Long end){
-    	logger.info("Migration started...................");
-		for(long i = start ; i < end ; i++){
-			try {
-			logger.info("contentId : "+ i);
-			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
-				if(resource != null && resource.size() > 0){
-					for(int a = 0 ; a < resource.size(); a++){
-						String Key = resource.getRowByIndex(a).getKey();
-						ColumnList<String> columns = resource.getRow(Key).getColumns();
-						long viewCount = columns.getLongValue("views_count", 0L);
-						long resourceType = columns.getLongValue("resource_type", 0L);
-						String gooruOid = columns.getStringValue("gooru_oid", null);
-						ColumnList<String> searchResource =  baseDao.readSearchKey("resource", gooruOid, 0);
-						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-						if(searchResource != null && searchResource.size() > 0){
-							logger.info("Migrating resource : "+ gooruOid);
-							for(int x = 0 ; x < searchResource.size(); x++){
-								String columnName = searchResource.getColumnByIndex(x).getName();
-								if(columnName.equalsIgnoreCase("stas.viewCount") || columnName.equalsIgnoreCase("stas.viewsCount") || columnName.equalsIgnoreCase("statistics.viewsCount")){
-									logger.info("Do Nothing:"+columnName);
-								}else if(columnName.equalsIgnoreCase("addDate") || columnName.equalsIgnoreCase("createdOn") || columnName.equalsIgnoreCase("lastModified")){
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getDateValue(), m);
-								}else if(columnName.equalsIgnoreCase("contentId") || columnName.equalsIgnoreCase("statistics.copiedCount") || columnName.equalsIgnoreCase("statistics.copiedLevelCount")){
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getLongValue(), m);
-								}else if(columnName.equalsIgnoreCase("collaboratorCount") || columnName.equalsIgnoreCase("creator.userId") || columnName.equalsIgnoreCase("frameBreaker") 
-										|| columnName.equalsIgnoreCase("isCanonical")|| columnName.equalsIgnoreCase("numOfPages") || columnName.equalsIgnoreCase("owner.userId") 
-										|| columnName.equalsIgnoreCase("resourceSourceId") || columnName.equalsIgnoreCase("statistics.hasFrameBreakerN") || columnName.equalsIgnoreCase("statistics.hasNoThumbnailN") 
-										|| columnName.equalsIgnoreCase("statistics.statusIsBroken") || columnName.equalsIgnoreCase("statistics.usedInCollectionCountN") 
-										|| columnName.equalsIgnoreCase("statistics.usedInDistCollectionCountN") || columnName.equalsIgnoreCase("statistics.usedInSCollectionCountN") ){
-			
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getIntegerValue(), m);
-								}
-								else if(columnName.equalsIgnoreCase("isOer")){
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
-									baseDao.generateNonCounter("resource",gooruOid,columnName+"Boolean", searchResource.getColumnByIndex(x).getStringValue().equalsIgnoreCase("0") ? false:true, m);
-								}else if(columnName.equalsIgnoreCase("ratings.average") || columnName.equalsIgnoreCase("ratings.count") || columnName.equalsIgnoreCase("ratings.reviewCount")){
-									ByteBuffer value = searchResource.getByteBufferValue(columnName, null);
-									baseDao.generateNonCounter("resource",gooruOid,columnName, value , m);									
-								}else if(columnName.equalsIgnoreCase("statistics.subscriberCount") || columnName.equalsIgnoreCase("statistics.voteDown") || columnName.equalsIgnoreCase("statistics.voteUp")){
-									baseDao.generateNonCounter("resource",gooruOid,columnName+"N", Long.valueOf(searchResource.getColumnByIndex(x).getStringValue()), m);
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
-								}else{
-									baseDao.generateNonCounter("resource",gooruOid,columnName, searchResource.getColumnByIndex(x).getStringValue(), m);
-								}
-								baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
-								baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 0, m);
-								baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
-								baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
-								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", viewCount , m);
-								baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", ""+viewCount , m);
-							}
-									
-						}else{
-							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
-							SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-							SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
-							
-							baseDao.generateNonCounter("resource",gooruOid,"version", 1, m);
-							baseDao.generateNonCounter("resource",gooruOid,"isDeleted", 1, m);
-							baseDao.generateNonCounter("resource",gooruOid,"gooruOId", gooruOid , m);
-							baseDao.generateNonCounter("resource",gooruOid,"resourceTypeN", resourceType , m);
-							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCountN", viewCount , m);
-							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", ""+viewCount , m);
-							
-							if(columns.getColumnByName("title") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"title", columns.getColumnByName("title").getStringValue() , m);
-							}
-							if(columns.getColumnByName("description") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"description", columns.getColumnByName("description").getStringValue() , m);
-							}
-							
-							if(columns.getColumnByName("last_modified") != null){
-							try{
-								baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
-							}catch(Exception e){
-								try{
-									baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
-								}catch(Exception e2){
-									baseDao.generateNonCounter("resource",gooruOid,"lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
-								}
-							}
-							}
-							if(columns.getColumnByName("created_on") != null){
-							try{
-								baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()) , m);
-							}catch(Exception e){
-									try{
-										baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()), m);
-									}catch(Exception e2){
-										baseDao.generateNonCounter("resource",gooruOid,"createdOn",columns.getColumnByName("created_on") != null  ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName("last_modified").getStringValue()), m);
-									}
-								}
-							}
-							if(columns.getColumnByName("creator_uid") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"creator.userUid",columns.getColumnByName("creator_uid").getStringValue(), m);
-							}
-							if(columns.getColumnByName("user_uid") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"owner.userUid",columns.getColumnByName("user_uid").getStringValue(), m);
-							}
-							if(columns.getColumnByName("record_source") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"recordSource",columns.getColumnByName("record_source").getStringValue(), m);
-							}
-							if(columns.getColumnByName("sharing") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"sharing",columns.getColumnByName("sharing").getStringValue(), m);
-							}
-
-							if(columns.getColumnByName("organization_uid") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"organization.partyUid",columns.getColumnByName("organization_uid").getStringValue(), m);
-							}
-							if(columns.getColumnByName("thumbnail") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"thumbnail",columns.getColumnByName("thumbnail").getStringValue(), m);
-							}
-							if(columns.getColumnByName("grade") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"grade",columns.getColumnByName("grade").getStringValue(), m);
-							}
-							if(columns.getColumnByName("license_name") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"license.name",columns.getColumnByName("license_name").getStringValue(), m);
-							}
-
-							if(columns.getColumnByName("category") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"category",columns.getColumnByName("category").getStringValue(), m);
-							}
-							if(columns.getColumnByName("type_name") != null){
-								baseDao.generateNonCounter("resource",gooruOid,"resourceType",columns.getColumnByName("type_name").getStringValue(), m);
-							}		
-							baseDao.generateNonCounter("resource",gooruOid,"stas.viewCount", viewCount, m);
-							baseDao.generateNonCounter("resource",gooruOid,"statistics.viewsCount", viewCount, m);
-							
-							logger.info("Resource NOT FOUND in search: "+ gooruOid);	
-						}
-						m.execute();
-					}
-				}
-			
-			} catch(Exception e){
-				e.printStackTrace();
-			}
-		
-		}
-    
+    	
     }
     
     public void MigrateResourceCF(long start,long end) {
     	
-		for(long i = start ; i < end ; i++){
-		
-			try {
-			logger.info("contentId : "+ i);
-			Rows<String, String> resource = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), "content_id", i,0);
-				if(resource != null && resource.size() > 0){
-					for(int a = 0 ; a < resource.size(); a++){
-						MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-						String Key = resource.getRowByIndex(a).getKey();
-						ColumnListMutation<String> cm = m.withRow(baseDao.accessColumnFamily(ColumnFamily.DIMRESOURCE.getColumnFamily()), Key);
-						ColumnList<String> columns = resource.getRow(Key).getColumns();
-						for(int j = 0 ; j < columns.size() ; j++){
-							
-							Object value = null;
-							String columnNameType = resourceCodeType.get(columns.getColumnByIndex(j).getName());
-
-							if(columnNameType == null){
-								value = columns.getColumnByIndex(j).getStringValue();
-							}
-							else if(columnNameType.equalsIgnoreCase("String")){
-			            		value = columns.getColumnByIndex(j).getStringValue();
-			            	}
-							else if(columnNameType.equalsIgnoreCase("Long")){
-			            		value = columns.getColumnByIndex(j).getLongValue();
-			            	}
-							else if(columnNameType.equalsIgnoreCase("Integer")){
-			            		value = columns.getColumnByIndex(j).getIntegerValue();
-			            	}
-							else if(columnNameType.equalsIgnoreCase("Boolean")){
-			            		value = columns.getColumnByIndex(j).getBooleanValue();
-			            	}
-			            	else{
-			            		value = columns.getColumnByIndex(j).getStringValue();
-			            	}
-							
-			            	baseDao.generateNonCounter(columns.getColumnByIndex(j).getName(),value,cm);
-			            
-						}
-						m.execute();		
-					}
-				}
-			
-			} catch(Exception e){
-				logger.info("error while migrating content : " + e );
-			}
-		
-		}
     }
 
     
     public void indexResource(String ids){
-    	Collection<String> idList = new ArrayList<String>();
-    	for(String id : ids.split(",")){
-    		idList.add("GLP~" + id);
-    	}
-    	logger.info("resource id : {}",idList);
-    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
-    	try {
-    		if(resource != null && resource.size() > 0){
-    			indexer.getResourceAndIndex(resource);
-    		}else {
-    			throw new AccessDeniedException("Invalid Id!!");
-    		}
-		} catch (Exception e) {
-			logger.info("indexing failed .. :{}",e);
-		}
+    	indexer.indexResource(ids);
     }
     
     public void indexUser(String ids) throws Exception{
@@ -1529,48 +1212,74 @@ public class CassandraDataLoader  implements Constants {
     		indexer.getUserAndIndex(userId);
     	}
     }
-    
-    public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
-    	
-    	MutationBatch m = null;
-    	
-    	ColumnList<String> sourceCoulmnList = baseDao.readWithKey(cfName, key,sourceCluster,0);
-    	try{
-	    	if(targetCluster.equalsIgnoreCase("DO")){
-	    		m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}else if(targetCluster.equalsIgnoreCase("AWSV1")){
-	    		m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}else if(targetCluster.equalsIgnoreCase("AWSV2")){
-	    		m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-	    	}
-	    	
-	    	if(columnName == null){
-	    		for(int i = 0 ;i < sourceCoulmnList.size() ; i++){
-	    			baseDao.generateNonCounter(cfName, key, sourceCoulmnList.getColumnByIndex(i).getName(), sourceCoulmnList.getColumnByIndex(i).getStringValue(), m);
-	    		}
-	    	}else if(columnName != null && type.equalsIgnoreCase("String")) {
-	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getStringValue(), m);
-	    	}else if(columnName != null && type.equalsIgnoreCase("Long")) {
-	    		baseDao.generateNonCounter(cfName, key, columnName, sourceCoulmnList.getColumnByName(columnName).getLongValue(), m);
-	    	}
-	    	
-	    	m.execute();
-	    	
-    	}catch(Exception e){
-    		e.printStackTrace();
-    		logger.info("Error while migration " + e);
+    public void indexEvent(String ids) throws Exception{
+    	for(String eventId : ids.split(",")){
+    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);
+    		if(event.size() > 0){
+    			indexer.indexActivity(event.getStringValue("fields", null));
+    		}else{
+    			logger.info("Invalid event id:" + eventId);
+    		}
     	}
     }
-    public void indexResourceView(String resourceIds,String type) throws Exception{
-    	this.migrateViews(resourceIds,type);
+    @Async
+    public void readIndex(String dataSource) throws ElasticsearchIllegalArgumentException, ElasticsearchException, IOException {   	
+    	MatchAllQueryBuilder query = QueryBuilders.matchAllQuery();
+    	String indexName = null;
+    	String[] indexTypes = null;
+    	if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.CONTENT.index.getIndex();
+    		indexTypes = ESDataSource.CONTENT.index.getType(); 
+    	} else if(ESDataSource.ACTIVITY.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.ACTIVITY.index.getIndex();
+    		indexTypes = ESDataSource.ACTIVITY.index.getType();     		
+    	} else if(ESDataSource.USERDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.USERDATA.index.getIndex();
+    		indexTypes = ESDataSource.USERDATA.index.getType();         		
+    	} else if(ESDataSource.TAXONOMYDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+    		indexName = ESDataSource.TAXONOMYDATA.index.getIndex();
+    		indexTypes = ESDataSource.TAXONOMYDATA.index.getType();         		
+    	} else {
+    		indexName = ESDataSource.CONTENT.index.getIndex();
+    		indexTypes = ESDataSource.CONTENT.index.getType();     		
+    	}
+    	SearchResponse scrollResp = connectionProvider.getESClient().prepareSearch(indexName).setTypes(indexTypes).setSearchType(SearchType.SCAN).setScroll(new TimeValue(600000)).setQuery(query) .setSize(500).execute().actionGet();
+    	Long total = 0L;
+
+    	  while (true) {
+	    		  try {
+		    		  scrollResp = connectionProvider.getESClient().prepareSearchScroll(scrollResp.getScrollId()) .setScroll(new TimeValue(600000)).execute().actionGet();
+		    		  total = total + scrollResp.getHits().getHits().length;
+		    	      System.out.println("Total record count: " + total); 
+		    		for (SearchHit hit : scrollResp.getHits()) { 
+		    			String id = hit.id();
+		    			System.out.println(id);
+		    			if(ESDataSource.ACTIVITY.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexEvent(id);	//	Event Logger Info
+		    			} else if(ESDataSource.USERDATA.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexUser(id);	// User Catalog Info
+		    			}else if(ESDataSource.CONTENT.getDataSource().equalsIgnoreCase(dataSource)) {
+		    				this.indexResource(id);	// Content Catalog Info
+		    			}
+		    			
+		    		} // Break condition: No hits are returned 
+		    		if (scrollResp.getHits().getHits().length == 0) { 
+		    			System.out.println("All records are fetched"); 
+		    			break; 
+		    		} 
+    		  } catch(Exception e) {
+    			  System.out.println("Invalid index/type");
+    		  }
+    	  }    	
+    }
+
+    public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type){
+    	
     }
     
     
-    
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
-    	
-    	indexer.indexTaxonomy(sourceCf, key, targetIndex, targetType);
-    	
+    public void indexTaxonomy(String key) throws Exception{
+    	indexer.indexTaxonomy(key);
     }
    
     public void postStatMigration(String startTime , String endTime,String customEventName) {
@@ -1809,112 +1518,113 @@ public class CassandraDataLoader  implements Constants {
    }
 
 
-    private boolean getRecordsToProcess(Date rowValues,JSONArray resourceList,String indexLabelLimit) throws Exception{
-  	  
-  		  	String indexCollectionType = null;
-  			String indexResourceType = null;
-  			String IndexingStatus = null;
-  			String resourceIds = "";
-  			String collectionIds = "";
-  			int indexedCount = 0;
-  			int indexedLimit = 2;
-  			int allowedLimit = 0;
-  		MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-  		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-  		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-  		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
-  		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-  		/*if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
-  		 rowValues = new Date(rowValues.getTime() + 60000);
-  		 contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
-  		}*/
-  		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
+    private boolean getRecordsToProcess(Date rowValues,JSONArray resourceList,String indexLabelLimit) throws Exception{		  	String indexCollectionType = null;
+	String indexResourceType = null;
+	String IndexingStatus = null;
+	String resourceIds = "";
+	String collectionIds = "";
+	int indexedCount = 0;
+	int indexedLimit = 2;
+	int allowedLimit = 0;
+//MutationBatch m = getConnectionProvider().getAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+indexLabelLimit,0);
+indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
+/*if(contents.size() == 0 || indexedCount == (contents.size() - 1)){
+ rowValues = new Date(rowValues.getTime() + 60000);
+ contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+minuteDateFormatter.format(rowValues),0);
+}*/
+logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
 
-  		if(contents.size() > 0 ){
-  			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
-  			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
-  			allowedLimit = (indexedCount + indexedLimit);
-  			if(allowedLimit > contents.size() ){
-  				allowedLimit = indexedCount + (contents.size() - indexedCount) ;
-  			}
-  			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
-  			IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
-  			if(IndexingStatus.equalsIgnoreCase("completed")){
-  				for(int i = indexedCount ; i < allowedLimit ; i++) {
-  					indexedCount = i;
-  					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
-  					for(Column<String> detail : vluesList) {
-  						JSONObject resourceObj = new JSONObject();
-  						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-  						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+contents.getColumnByIndex(i).getStringValue(),0);
-  		    			if(resource.getColumnByName("type_name") != null && resource.getColumnByName("type_name").getStringValue().equalsIgnoreCase("scollection")){
-  		    				indexCollectionType = "scollection";
-  		    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
-  		    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
-  		    				}
-  						}else{
-  							indexResourceType = "resource";
-  							if(!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())){
-  								resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
-  							}
-  						}
-  						for(String column : statKeys){
-  							if(detail.getName().equals(column)){
-  								if(statMetrics.getStringValue(column, null) != null){
-  									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m);
-  									if(statMetrics.getStringValue(column, null).equalsIgnoreCase("stas.viewsCount")){										
-  										baseDao.generateNonCounter(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+contents.getColumnByIndex(i).getStringValue(),"views_count",detail.getLongValue(),m2);
-  									}
-  								}
-  							}
-  						}
-  					
-  					}
-  				}
-  			}
-  		if(indexCollectionType != null || indexResourceType != null){
-  			m.execute();
-  			m2.execute();
-  			int indexingStatus = 0;
-  			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
-  			if(indexCollectionType != null){
-  				indexingStatus  = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1), rowValues);
-  			}
-  			if(indexResourceType != null){
-  				indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
-  			}
-  			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount++),86400);
+if(contents.size() > 0 ){
+	ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~limit",0);
+	indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULTCOLUMN, "0")) : 2;
+	allowedLimit = (indexedCount + indexedLimit);
+	if(allowedLimit > contents.size() ){
+		allowedLimit = indexedCount + (contents.size() - indexedCount) ;
+	}
+	ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"search~index~status",0);
+	IndexingStatus = indexingStat.getStringValue(DEFAULTCOLUMN,null); 
+	if(IndexingStatus.equalsIgnoreCase("completed")){
+		for(int i = indexedCount ; i < allowedLimit ; i++) {
+			indexedCount = i;
+			ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+contents.getColumnByIndex(i).getStringValue(), statKeys,0);
+			for(Column<String> detail : vluesList) {
+				JSONObject resourceObj = new JSONObject();
+				resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
+				ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(),0);
+;		    			if(resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
+    				indexCollectionType = "scollection";
+    				if(!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())){
+    					collectionIds += ","+contents.getColumnByIndex(i).getStringValue();
+    				}
+				}else{
+					indexResourceType = "resource";
+					if(!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())){
+						resourceIds += ","+contents.getColumnByIndex(i).getStringValue();
+					}
+				}
+				for(String column : statKeys){
+					if(detail.getName().equals(column)){
+						if(statMetrics.getStringValue(column, null) != null){
+							baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),statMetrics.getStringValue(column, null),detail.getLongValue(),m2);
+							if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent")&& vluesList.getLongValue("count~views", 0L) != 0L){
+								baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.averageTimeSpent",(detail.getLongValue()/vluesList.getLongValue("count~views", 0L)),m2);
+							}
+							if(statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")){										
+								baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(),contents.getColumnByIndex(i).getStringValue(),"statistics.viewsCount",""+detail.getLongValue(),m2);
+							}
+						}
+					}
+				}
+			
+			}
+		}
+	}
+if(indexCollectionType != null || indexResourceType != null){
+//	m.execute();
+	m2.execute();
+	int indexingStatus = 0;
+	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "in-progress");
+	if(indexCollectionType != null){
+		indexingStatus  = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1), rowValues);
+	}
+	if(indexResourceType != null){
+		indexingStatus  = this.callIndexingAPI(indexResourceType, resourceIds.substring(1), rowValues);
+	}
+	baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS+SEPERATOR+indexLabelLimit, minuteDateFormatter.format(rowValues) ,String.valueOf(indexedCount++),86400);
 
-  			if(indexingStatus == 200 || indexingStatus == 404){
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
-  				return true;
-  			}else{
-  				logger.info("Statistical data update failed");
-  				return false;
-  			}
-  		}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
-  			ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~limit",0);
-  			String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULTCOLUMN, "0") : "0";
-  			
-  			ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~count",0);
-  			String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULTCOLUMN, "0") : "0";
-  			
-  			if(Integer.valueOf(count) > Integer.valueOf(limit)){
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
-  			}else{
-  				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, ""+(Integer.valueOf(count)+1));
-  			}
-  	 		logger.info("Waiting for indexing"+ (Integer.valueOf(count)+1));
-  	 		return false;
-  		}
-  	}else{
-  		logger.info("No content is viewed");
-  		return true;
-  	}
-  	return false;
-  }
+	if(indexingStatus == 200 || indexingStatus == 404){
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
+		return true;
+	}else{
+		logger.info("Statistical data update failed");
+		return false;
+	}
+}else if(IndexingStatus != null && IndexingStatus.equalsIgnoreCase("in-progress")){
+	ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~limit",0);
+	String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULTCOLUMN, "0") : "0";
+	
+	ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"index~waiting~count",0);
+	String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULTCOLUMN, "0") : "0";
+	
+	if(Integer.valueOf(count) > Integer.valueOf(limit)){
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "search~index~status", DEFAULTCOLUMN, "completed");
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, "0");
+	}else{
+		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "index~waiting~count", DEFAULTCOLUMN, ""+(Integer.valueOf(count)+1));
+	}
+		logger.info("Waiting for indexing"+ (Integer.valueOf(count)+1));
+		return false;
+}
+}else{
+logger.info("No content is viewed");
+return true;
+}
+return false;
+}
    
   /*
    * rowValues can be null

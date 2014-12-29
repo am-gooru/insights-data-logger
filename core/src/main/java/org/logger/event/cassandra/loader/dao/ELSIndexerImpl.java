@@ -6,18 +6,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
@@ -98,11 +100,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 
 	public void indexActivity(String fields){
     	if(fields != null){
-			try {
-				JSONObject jsonField = new JSONObject(fields);
+				JSONObject jsonField = null;
+				try {
+					jsonField = new JSONObject(fields);
+				} catch (JSONException e1) {
+					try {
+						jsonField = new JSONObject(fields.substring(14).trim());
+					} catch (JSONException e2) {
+						logger.info("field : " + fields);
+						e2.printStackTrace();
+					}
+				}
 	    			if(jsonField.has("version")){
 	    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-	    				Map<String,Object> eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);    	
+	    				Map<String, Object> eventMap = new HashMap<String, Object>();
+						try {
+							eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}    	
 	    				
 	    				eventMap.put("eventName", eventObjects.getEventName());
 	    		    	eventMap.put("eventId", eventObjects.getEventId());
@@ -130,8 +146,17 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     				    	}
     					}
 	    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+	    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+	    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
+	    	    			try {
+								getUserAndIndex(eventMap.get(GOORUID).toString());
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+	    	    		}
 	    			} 
 	    			else{
+	    				try{
 	    				   Iterator<?> keys = jsonField.keys();
 	    				   Map<String,Object> eventMap = new HashMap<String, Object>();
 	    				   while( keys.hasNext() ){
@@ -139,9 +164,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			            
 	    			            eventMap.put(key,String.valueOf(jsonField.get(key)));
 	    			            
-	    			            if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
+	    			         /*   if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
 	    			            	eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
-	    			            }
+	    			            }*/
 	
 	    			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
 	    			            	eventMap.put("eventName", "reaction.create");
@@ -219,13 +244,37 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    				    	}
 	    					}
 		    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+		    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+		    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
+		    	    			getUserAndIndex(eventMap.get(GOORUID).toString());
+		    	    		}
+	    				}catch(Exception e3){
+	    					e3.printStackTrace();
+	    				}
 	    		     }
-				} catch (Exception e) {
-					logger.info("Error while Migration : {} ",e);
-				}
+				
 				}
 		
     }
+	
+	public void indexResource(String ids){
+    	Collection<String> idList = new ArrayList<String>();
+    	for(String id : ids.split(",")){
+    		idList.add("GLP~" + id);
+    	}
+    	logger.info("Indexing resources : {}",idList);
+    	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
+    	try {
+    		if(resource != null && resource.size() > 0){
+    			this.getResourceAndIndex(resource);
+    		}else {
+    			throw new AccessDeniedException("Invalid Id!!");
+    		}
+		} catch (Exception e) {
+			logger.info("indexing failed .. :{}",e);
+		}
+    }
+    
 
     public Map<String, Object> getUserInfo(Map<String,Object> eventMap , String gooruUId){
     	Collection<String> user = new ArrayList<String>();
@@ -247,10 +296,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     }
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	
-    	Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
-    	
-    	eventMap.put("contentItems",contentItems);
-    	
+    	Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),gooruOId, 0);
+    	if(!contentItems.isEmpty()){
+    		eventMap.put("contentItems",contentItems);
+    	}
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){
     			eventMap.put("title", resource.getStringValue("title", null));
@@ -261,6 +310,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     			eventMap.put("license", resource.getStringValue("license_name", null));
     			eventMap.put("contentOrganizationId", resource.getStringValue("organization_uid", null));
     			
+    			if(resource.getColumnByName("instructional_id") != null){
+    				eventMap.put("instructionalId", resource.getColumnByName("instructional_id").getLongValue());
+    				}
+    			if(resource.getColumnByName("resource_format_id") != null){
+    				eventMap.put("resourceFormatId", resource.getColumnByName("resource_format_id").getLongValue());
+    			}
+    				
     			if(resource.getColumnByName("type_name") != null){
 					if(resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())){    							
 						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
@@ -393,24 +449,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     			}
     		}
     	}
-    		if(subjectCode != null)
+    		if(subjectCode != null && !subjectCode.isEmpty())
     		eventMap.put("subject", subjectCode);
-    		if(courseCode != null)
+    		if(courseCode != null && !courseCode.isEmpty())
     		eventMap.put("course", courseCode);
-    		if(unitCode != null)
+    		if(unitCode != null && !unitCode.isEmpty())
     		eventMap.put("unit", unitCode);
-    		if(topicCode != null)
+    		if(topicCode != null && !topicCode.isEmpty())
     		eventMap.put("topic", topicCode);
-    		if(lessonCode != null)
+    		if(lessonCode != null && !lessonCode.isEmpty())
     		eventMap.put("lesson", lessonCode);
-    		if(conceptCode != null)
+    		if(conceptCode != null && !conceptCode.isEmpty())
     		eventMap.put("concept", conceptCode);
-    		if(taxArray != null)
+    		if(taxArray != null && !taxArray.isEmpty())
     		eventMap.put("standards", taxArray);
     	
     	return eventMap;
     }
     
+
     public void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
     	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -426,9 +483,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			return;
 		}
 		if(columns.getColumnByName("gooru_oid") != null){
-			logger.info( " Migrating content : " + columns.getColumnByName("gooru_oid").getStringValue()); 
+			Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),columns.getColumnByName("gooru_oid").getStringValue(), 0);
+			if(!contentItems.isEmpty()){
+				resourceMap.put("contentItems",contentItems);
+			}
+	    	
 		}
-		
 		if(columns.getColumnByName("title") != null){
 			resourceMap.put("title", columns.getColumnByName("title").getStringValue());
 		}
@@ -481,12 +541,20 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("thumbnail") != null){
 			resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 		}
-		if(columns.getColumnByName("grade") != null){
-			JSONArray gradeArray = new JSONArray();
-			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
-				gradeArray.put(gradeId);	
+		if(columns.getColumnByName("instructional_id") != null){
+			resourceMap.put("instructionalId", columns.getColumnByName("instructional_id").getLongValue());
 			}
-			resourceMap.put("grade", gradeArray);
+			if(columns.getColumnByName("resource_format_id") != null){
+			resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
+			}
+		if(columns.getColumnByName("grade") != null){
+			Set<String> gradeArray = new HashSet<String>(); 
+			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
+				gradeArray.add(gradeId);	
+			}
+			if(gradeArray != null && gradeArray.isEmpty() ){
+				resourceMap.put("grade", gradeArray);
+			}
 		}
 		if(columns.getColumnByName("license_name") != null){
 			//ColumnList<String> license = baseDao.readWithKey(ColumnFamily.LICENSE.getColumnFamily(), columns.getColumnByName("license_name").getStringValue());
@@ -511,52 +579,17 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		}
 		if(columns.getColumnByName("type_name") != null){
 			resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
-		}		
+		}
+		if(columns.getColumnByName("resource_format") != null){
+			resourceMap.put("resourceFormat", columns.getColumnByName("resource_format").getStringValue());
+		}
+		if(columns.getColumnByName("instructional") != null){
+			resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
+		}
 		if(columns.getColumnByName("gooru_oid") != null){
 			ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(),0);
 
-	    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+columns.getColumnByName("gooru_oid").getStringValue(),0);
-	    	
-	    	if(vluesList != null && vluesList.size() > 0){
-	    		
-	    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
-	    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
-	    		if(views > 0 && totalTimespent == 0L ){
-	    			totalTimespent = (views * 180000);
-	    			baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~"+columns.getColumnByName("gooru_oid").getStringValue(), "time_spent~total", totalTimespent);
-	    		}
-	    		resourceMap.put("viewsCount",views);
-	    		resourceMap.put("totalTimespent",totalTimespent);
-	    		resourceMap.put("avgTimespent",views != 0L ? (totalTimespent/views) : 0L );
-	    		
-	    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
-	    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
-	    		resourceMap.put("ratingsCount",ratings);
-	    		resourceMap.put("sumOfRatings",sumOfRatings);
-	    		resourceMap.put("avgRating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
-	    		
-	    		
-	    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
-	    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
-	    		resourceMap.put("reactionsCount",ratings);
-	    		resourceMap.put("sumOfreactionType",sumOfreactionType);
-	    		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
-	    		
-	    		
-	    		resourceMap.put("countOfRating5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
-	    		resourceMap.put("countOfRating1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
-	    		
-	    		resourceMap.put("countOfICanExplain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
-	    		resourceMap.put("countOfINeedHelp",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
-	    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
-	    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
-	    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
-	    		resourceMap.put("copiedCount",vluesList.getColumnByName("copied~count") != null ?vluesList.getColumnByName("copied~count").getLongValue() : 0L );
-	    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
-	    	}
+			this.getLiveCounterData("all~"+columns.getColumnByName("gooru_oid").getStringValue(), resourceMap);
 	    	
 	    	if(questionList != null && questionList.size() > 0){
 	    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
@@ -581,6 +614,50 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		}
     }
     
+    private Map<String,Object> getLiveCounterData(String key,Map<String,Object> resourceMap){
+    	
+    	ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key,0);
+    	
+    	if(vluesList != null && vluesList.size() > 0){
+    		
+    		long views = vluesList.getColumnByName("count~views") != null ?vluesList.getColumnByName("count~views").getLongValue() : 0L ;
+    		long totalTimespent = vluesList.getColumnByName("time_spent~total") != null ?vluesList.getColumnByName("time_spent~total").getLongValue() : 0L ;
+
+    		resourceMap.put("viewsCount",views);
+    		resourceMap.put("totalTimespent",totalTimespent);
+    		resourceMap.put("avgTimespent",views != 0L ? (totalTimespent/views) : 0L );
+    		
+    		long ratings = vluesList.getColumnByName("count~ratings") != null ?vluesList.getColumnByName("count~ratings").getLongValue() : 0L ;
+    		long sumOfRatings = vluesList.getColumnByName("sum~rate") != null ?vluesList.getColumnByName("sum~rate").getLongValue() : 0L ;
+    		resourceMap.put("ratingsCount",ratings);
+    		resourceMap.put("sumOfRatings",sumOfRatings);
+    		resourceMap.put("avgRating",ratings != 0L ? (sumOfRatings/ratings) : 0L );
+    		
+    		long reactions = vluesList.getColumnByName("count~reactions") != null ?vluesList.getColumnByName("count~reactions").getLongValue() : 0L ;
+    		long sumOfreactionType = vluesList.getColumnByName("sum~reactionType") != null ?vluesList.getColumnByName("sum~reactionType").getLongValue() : 0L ;
+    		resourceMap.put("reactionsCount",reactions);
+    		resourceMap.put("sumOfreactionType",sumOfreactionType);
+    		resourceMap.put("avgReaction",reactions != 0L ? (sumOfreactionType/reactions) : 0L );
+    		
+    		resourceMap.put("countOfRating5",vluesList.getColumnByName("count~5") != null ?vluesList.getColumnByName("count~5").getLongValue() : 0L );
+    		resourceMap.put("countOfRating4",vluesList.getColumnByName("count~4") != null ?vluesList.getColumnByName("count~4").getLongValue() : 0L );
+    		resourceMap.put("countOfRating3",vluesList.getColumnByName("count~3") != null ?vluesList.getColumnByName("count~3").getLongValue() : 0L );
+    		resourceMap.put("countOfRating2",vluesList.getColumnByName("count~2") != null ?vluesList.getColumnByName("count~2").getLongValue() : 0L );
+    		resourceMap.put("countOfRating1",vluesList.getColumnByName("count~1") != null ?vluesList.getColumnByName("count~1").getLongValue() : 0L );
+    		
+    		resourceMap.put("countOfICanExplain",vluesList.getColumnByName("count~i-can-explain") != null ?vluesList.getColumnByName("count~i-can-explain").getLongValue() : 0L );
+    		resourceMap.put("countOfINeedHelp",vluesList.getColumnByName("count~i-need-help") != null ?vluesList.getColumnByName("count~i-need-help").getLongValue() : 0L );
+    		resourceMap.put("countOfIDoNotUnderstand",vluesList.getColumnByName("count~i-donot-understand") != null ?vluesList.getColumnByName("count~i-donot-understand").getLongValue() : 0L );
+    		resourceMap.put("countOfMeh",vluesList.getColumnByName("count~meh") != null ?vluesList.getColumnByName("count~meh").getLongValue() : 0L );
+    		resourceMap.put("countOfICanUnderstand",vluesList.getColumnByName("count~i-can-understand") != null ?vluesList.getColumnByName("count~i-can-understand").getLongValue() : 0L );
+    		resourceMap.put("copyCount",vluesList.getColumnByName("count~copy") != null ?vluesList.getColumnByName("count~copy").getLongValue() : 0L );
+    		resourceMap.put("sharingCount",vluesList.getColumnByName("count~share") != null ?vluesList.getColumnByName("count~share").getLongValue() : 0L );
+    		resourceMap.put("commentCount",vluesList.getColumnByName("count~comment") != null ?vluesList.getColumnByName("count~comment").getLongValue() : 0L );
+    		resourceMap.put("reviewCount",vluesList.getColumnByName("count~review") != null ?vluesList.getColumnByName("count~review").getLongValue() : 0L );
+    	}
+    	return resourceMap;
+    }
+    
 	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
 		XContentBuilder contentBuilder = null;
 		try {
@@ -599,36 +676,14 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				logger.info("Indexing failed in content Builder ",e);	
 			}
 			
-			indexingProd(indexName, indexType, id, contentBuilder, 0);
-			indexingDev(indexName, indexType, id, contentBuilder, 0);
+			indexingES(indexName, indexType, id, contentBuilder, 0);
 	}
 	
-	public void indexingProd(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
-		
-		try{
-			getProdESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getProdESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
-		}catch(Exception e){
-			if(retryCount < 6){
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				logger.info("Retrying count: {}  ",retryCount);
-    			retryCount++;
-    			indexingProd(indexName, indexType, id, contentBuilder, retryCount);
-        	}else{
-        		logger.info("Indexing failed in Prod : {} ",e);
-        		e.printStackTrace();
-        	}
-		}
-	}
 	
-	public void indexingDev(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
+	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
-			getDevESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-			//getDevESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setIgnoreConflicts(true).setSource(contentBuilder).execute().actionGet();
+			contentBuilder.field("index_updated_time", new Date());
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		}catch(Exception e){
 			if(retryCount < 6){
 				try {
@@ -638,7 +693,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				}
 				logger.info("Retrying count: {}  ",retryCount);
 				retryCount++;
-    			indexingDev(indexName, indexType, id, contentBuilder, retryCount);
+    			indexingES(indexName, indexType, id, contentBuilder, retryCount);
         	}else{
         		logger.info("Indexing failed in Prod : {} ",e);
         		e.printStackTrace();
@@ -649,16 +704,22 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 
 
     public void getUserAndIndex(String userId) throws Exception{
-    	logger.info("user id : "+ userId);
 		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId,0);
 		
 		if(userInfos != null & userInfos.size() > 0){
-			
+			logger.info("INdexing user : "+ userId);			
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-		
 			if(userInfos.getColumnByName("gooru_uid") != null){
-				logger.info( " Migrating User : " + userInfos.getColumnByName("gooru_uid").getStringValue()); 
 				contentBuilder.field("user_uid",userInfos.getColumnByName("gooru_uid").getStringValue());
+				Map<String,Object> userMap = new HashMap<String, Object>();
+				this.getLiveCounterData("all~"+userInfos.getColumnByName("gooru_uid").getStringValue(), userMap);
+				for(Map.Entry<String, Object> entry : userMap.entrySet()){
+					String rowKey = null;  				
+					if(beFieldName.containsKey(entry.getKey())){
+						rowKey = beFieldName.get(entry.getKey());
+						contentBuilder.field(rowKey,entry.getValue());
+					}
+				}
 			}
 			if(userInfos.getColumnByName("confirm_status") != null){
 				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirm_status").getLongValue());
@@ -687,6 +748,14 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			if(userInfos.getColumnByName("last_login") != null){
 				contentBuilder.field("last_login",TypeConverter.stringToAny(userInfos.getColumnByName("last_login").getStringValue(), "Date"));
 			}
+			if(userInfos.getColumnByName("user_role") != null){
+				Set<String> roleSet = new HashSet<String>();
+				for(String role : userInfos.getColumnByName("user_role").getStringValue().split(",")){
+					roleSet.add(role);
+				}
+				contentBuilder.field("roles",roleSet);
+			}
+			
 			if(userInfos.getColumnByName("identity_id") != null){
 				contentBuilder.field("identity_id",userInfos.getColumnByName("identity_id").getIntegerValue());
 			}
@@ -770,20 +839,18 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    		}
 	    	}
-
-	    	connectionProvider.getProdESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()
-			;
-			connectionProvider.getDevESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+	    	contentBuilder.field("index_updated_time", new Date());
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
 		}	
 			
 	}
-    public void indexTaxonomy(String sourceCf, String key, String targetIndex,String targetType) throws Exception{
+    public void indexTaxonomy(String key) throws Exception{
     	
     	for(String id : key.split(",")){
-    		ColumnList<String> sourceValues = baseDao.readWithKey(sourceCf, id,0);
+    		ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.TAXONOMYCODE.getColumnFamily(), id,0);
 	    	if(sourceValues != null && sourceValues.size() > 0){
 	    		XContentBuilder contentBuilder = jsonBuilder().startObject();
 	            for(int i = 0 ; i < sourceValues.size() ; i++) {
@@ -803,10 +870,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	            		contentBuilder.field(sourceValues.getColumnByIndex(i).getName(),TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
 	            	}
 	            }
-	    		
-	    		connectionProvider.getDevESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
-				;
-	    		connectionProvider.getProdESClient().prepareIndex(targetIndex+"_"+cache.get(INDEXINGVERSION), targetType, id).setSource(contentBuilder).execute().actionGet()
+	            contentBuilder.field("index_updated_time", new Date());
+	    		connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet()
 	    		;
 	    	}
     	}

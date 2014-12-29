@@ -24,6 +24,9 @@
 "class":{
 "type":"String",
 "index":"not_analyzed"
+},"roles":{
+"type":"String",
+"index":"not_analyzed"
 },
 "teacher":{
 "type":"String",
