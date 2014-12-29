@@ -491,7 +491,7 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap2, aggregatorJson);	
 			}
 			
-			liveDashBoardDAOImpl.callCountersV2(eventMap);
+			liveDashBoardDAOImpl.callCountersV2(eventMap2);
 			
 			if(eventObject.getFields() != null) {
 				microAggregator.sendEventForAggregation(eventObject.getFields());
@@ -502,6 +502,7 @@ public class CassandraDataLoader implements Constants {
 			}
 			
     	}catch(Exception e){
+    		logger.info("Exception : {}",e);
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
     		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
     		activityErrorLog.info(eventObject.getFields());
