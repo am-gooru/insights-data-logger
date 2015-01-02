@@ -796,6 +796,77 @@ public class CassandraDataLoader  implements Constants {
     	logger.info("Process Ends  : Inserted successfully");
     }
 
+
+    public void eventMigration(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
+
+    	if(isSchduler){
+    		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"in-progress");
+    	}
+    	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
+
+  		   String currentDate = minuteDateFormatter.format(new Date(startDate));
+            logger.info("Processing Date : {}" , currentDate);
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = currentDate.toString();
+   		 	} else {
+   		 		timeLineKey = currentDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	try{
+		    	MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    	
+		    	logger.info("Event Id " + eventDetailUUID) ;
+		    	
+		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
+		    	
+		    if(eventDetailsRow != null && eventDetailsRow.getColumnByName("event_name") != null) {
+		    	
+	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
+	    			if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
+	    				baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
+					}else {
+						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getStringValue(), m);
+					}
+	    		}
+	    		
+	    		String aggregatorJson = null;
+	    		if(eventDetailsRow.getColumnByName("event_name").getStringValue() != null){
+	    			aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
+	    		}
+	    		
+	    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+	    			EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
+	    			this.handleEventObjectMessage(eventObjects);
+	    		}
+
+	    	 }
+		    
+		    }
+		    	m.execute();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+	    	//Incrementing time - one minute
+            startDate = new Date(startDate).getTime() + 60000;
+            
+		    if(isSchduler){
+		    	baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", DEFAULTCOLUMN,""+minuteDateFormatter.format(new Date(startDate)));
+		    }
+	    }
+    	if(isSchduler){
+    		 baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~status", DEFAULTCOLUMN,"completed");
+    	}
+    }
     
     public void updateStagingES(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
     	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
