@@ -1239,14 +1239,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.get("classId") != null && eventMap.get("groupUid") != null && eventMap.get("userUid") != null) {
+		if (eventMap.get("classId") != null && eventMap.get("groupUId") != null && eventMap.get("userUid") != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			m.withRow(this.accessColumnFamily(cfName), eventMap.get("classId").toString()+SEPERATOR+eventMap.get("groupUid").toString()+SEPERATOR+eventMap.get("userUid").toString())
 					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : 0)
 					.putColumnIfNotNull("classpage_content_id", eventMap.get("contentId") != null ? Long.valueOf(eventMap.get("contentId").toString()) : null)
 					.putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get("classId") != null ? eventMap.get("classId").toString() : null)
 					.putColumnIfNotNull("username", eventMap.get("username") != null ? eventMap.get("username").toString() : null)
-					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get("groupUid") != null ? eventMap.get("groupUid").toString() : null)
+					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get("groupUId") != null ? eventMap.get("groupUId").toString() : null)
 					.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get("organizationUId") != null ? eventMap.get("organizationUId").toString() : null)
 					.putColumnIfNotNull("user_group_type", eventMap.get("userGroupType") != null ? eventMap.get("userGroupType").toString() : null)
 					.putColumnIfNotNull("active_flag", eventMap.get("activeFlag") != null ? Integer.valueOf(eventMap.get("activeFlag").toString()) : null)

@@ -627,9 +627,9 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 				((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? ((Map<String, String>) dataMap.get("user")).get("username") : null));
 		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") : (dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? ((Map<String, String>) dataMap.get("user")).get("gooruUId")
 				: null));
-		if (classpageMap.get("classId") != null && classpageMap.get("groupUid") != null && classpageMap.get("userUid") != null) {
+		if (classpageMap.get("classId") != null && classpageMap.get("groupUId") != null && classpageMap.get("userUid") != null) {
 
-			classpageMap.put("rKey", classpageMap.get("classId").toString() + SEPERATOR + classpageMap.get("groupUid").toString() + SEPERATOR + classpageMap.get("userUid").toString());
+			classpageMap.put("rKey", classpageMap.get("classId").toString() + SEPERATOR + classpageMap.get("groupUId").toString() + SEPERATOR + classpageMap.get("userUid").toString());
 
 			Set<Entry<String, String>> entrySet = DataUtils.classpageTableKeyMap.entrySet();
 			updateColumnFamily(ColumnFamily.CLASSPAGE.getColumnFamily(), this.generateCFMap(ColumnFamily.CLASSPAGE.getColumnFamily(), entrySet, classpageMap));
