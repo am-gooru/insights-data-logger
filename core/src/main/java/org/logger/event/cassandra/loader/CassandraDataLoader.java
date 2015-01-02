@@ -519,7 +519,7 @@ public class CassandraDataLoader  implements Constants {
 			
     	}catch(Exception e){
     		logger.info("Exception : {}",e);
-    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+//    		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
     		//kafkaLogWriter.sendEventLog(eventObject.getFields(),"error-"+KafkaTopic);
     		activityErrorLog.info(eventObject.getFields());
 			logger.info("Writing error log : {} ",eventObject.getEventId());
@@ -2671,7 +2671,7 @@ public class CassandraDataLoader  implements Constants {
     	if(eventMap.containsKey("parentEventId") && eventMap.get("parentEventId") != null){
     		eventObject.setParentEventId(eventMap.get("parentEventId"));
     	}
-    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+    	//eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
     	eventObject.setEventType(eventMap.get("type"));
     	
     	if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null ||  eventMap.get("organizationUId").isEmpty())) {
