@@ -406,7 +406,7 @@ public class CassandraDataLoader  implements Constants {
 	         Map<String,Object> records = new HashMap<String, Object>();
 	         records.put("event_name", eventData.getEventName());
 	         records.put("api_key",eventData.getApiKey() != null ? eventData.getApiKey() : DEFAULT_API_KEY );
-	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records,0);
+	         Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(),records);
 	
 	         if(existingEventRecord == null && existingEventRecord.isEmpty()){
 	        	 logger.info("Please add new event in to events table ");
