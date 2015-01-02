@@ -456,8 +456,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return false;
 	}
-    
-    public Collection<String> getKey(String cfName,Map<String,Object> columns ,int retryCount) {
+
+    public Collection<String> getKey(String cfName,Map<String,Object> columns) {
 
 		try {
 			
@@ -470,16 +470,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
 		} catch (ConnectionException e) {
-			if(retryCount < 6){
-				retryCount++;
-        		return getKey(cfName,columns ,retryCount);
-        	}else{
-        		e.printStackTrace();
-        	}
+			logger.info("Exception while read  from Column Family" + cfName + " columns : " + columns);
 		}
 		return new ArrayList();
 	}
-    
 	public ColumnList<String> readColumnsWithPrefix(String cfName,String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead){
 		ColumnList<String> result = null;
 		String startColumnPrefix = null;
