@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
@@ -50,8 +49,6 @@ import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
-import com.netflix.astyanax.connectionpool.impl.Slf4jConnectionPoolMonitorImpl;
-import com.netflix.astyanax.connectionpool.impl.SmaLatencyScoreStrategyImpl;
 import com.netflix.astyanax.entitystore.DefaultEntityManager;
 import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
@@ -143,7 +140,7 @@ public class CassandraConnectionProvider {
 	           client = transportClient;
             }
             
-           this.registerIndices();
+          // this.registerIndices();
         } catch (IOException e) {
             logger.info("Error while initializing cassandra", e);
         }

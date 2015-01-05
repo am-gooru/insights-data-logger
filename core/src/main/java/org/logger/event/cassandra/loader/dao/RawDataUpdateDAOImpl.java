@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
@@ -17,14 +19,20 @@ import org.ednovo.data.model.QuestionCo;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.SCollectionCo;
 import org.ednovo.data.model.StatisticsCo;
+import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.DataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.netflix.astyanax.ColumnListMutation;
+import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.retry.ConstantBackoff;
 
 import flexjson.JSONSerializer;
 
@@ -283,7 +291,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	}
 
 	public ResourceCo updateCollection(Map<String, Object> eventMap, ResourceCo resourceCo) {
-		System.out.println("EVENT :: " + eventMap.get(EVENTNAME) + " EVENTMAP " + eventMap.toString());
 
 		SCollectionCo collectionCo = new SCollectionCo();
 		resourceCo.setId(eventMap.get("gooruOid").toString());
@@ -498,30 +505,6 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		
 		return userCo;
 	}
-
-	@SuppressWarnings("unused")
-	public void updateUser(Map<String, Object> dataMap, Map<String, Object> userMap) {
-
-		userMap.put("gooruUId", ((dataMap.containsKey(GOORUID) && dataMap.get(GOORUID) != null) ? dataMap.get(GOORUID).toString() : null));
-		userMap.put("firstname", ((dataMap.containsKey("firstName") && dataMap.get("firstName") != null) ? dataMap.get("firstName").toString() : null));
-		userMap.put("lastname", ((dataMap.containsKey("lastName") && dataMap.get("lastName") != null) ? dataMap.get("lastName").toString() : null));
-		userMap.put("username", ((dataMap.containsKey("username") && dataMap.get("username") != null) ? dataMap.get("username").toString() : null));
-		userMap.put("confirmStatus", ((dataMap.containsKey("confirmStatus") && dataMap.get("confirmStatus") != null) ? dataMap.get("confirmStatus").toString() : null));
-		userMap.put("isDeleted", 0);
-		userMap.put("active", ((dataMap.containsKey("active") && dataMap.get("active") != null) ? dataMap.get("active").toString() : null));
-		userMap.put("externalId", ((dataMap.containsKey("emailId") && dataMap.get("emailId") != null) ? dataMap.get("emailId").toString() : null));
-		userMap.put("accountCreatedType", ((dataMap.containsKey("accountCreatedType") && dataMap.get("accountCreatedType") != null) ? dataMap.get("accountCreatedType").toString() : null));
-		
-		userMap.put("loginType", ((dataMap.containsKey("loginType") && dataMap.get("loginType") != null) ? dataMap.get("loginType").toString() : null));
-		userMap.put("lastLogin", ((dataMap.containsKey("lastLogin") && dataMap.get("lastLogin") != null) ? dataMap.get("lastLogin").toString() : null));
-		if(dataMap.containsKey("parentUser") && dataMap.get("parentUser") != null) {
-			Map<String, Object> parentUser = (Map<String, Object>) dataMap.get("parentUser");
-			userMap.put("parentUid", (parentUser.containsKey("gooruUId") && parentUser.get("gooruUId") != null) ? parentUser.get("gooruUId").toString() : null);
-		}
-		userMap.put("accountTypeId", ((dataMap.containsKey("accountTypeId") && dataMap.get("accountTypeId") != null) ? dataMap.get("accountTypeId").toString() : null));
-		baseCassandraDao.updateUserCF(ColumnFamily.USER.getColumnFamily(), userMap);
-
-	}
 	
 	private UserCo getUser(Map<String, Object> user) {
 		Map<String, Object> userPo = user;
@@ -596,62 +579,42 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	public void updateCollectionTable(Map<String, Object> eventMap, Map<String, Object> collectionMap) {
 
-		collectionMap.put("collectionContentId", (collectionMap.containsKey("collectionContentId") && collectionMap.get("collectionContentId") != null) ? collectionMap.get("collectionContentId")
-				: null);
+		for(String field : COLLECTION_TABLE_FIELDS.split(",")) {
+			if (field.equalsIgnoreCase("contentId") || field.equalsIgnoreCase("gooruOid")) {
+				collectionMap.put(field, ((collectionMap.containsKey(field) && collectionMap.get(field) != null) ? collectionMap.get(field).toString()
+						: ((eventMap.containsKey(field) && eventMap.get(field) != null) ? eventMap.get(field).toString() : null)));
+			} else { 
+					collectionMap.put(field, (eventMap.containsKey(field) && eventMap.get(field) != null) ? eventMap.get(field).toString() : null);
+			}
+			
+		}
+		if (collectionMap.containsKey("gooruOid") && collectionMap.get("gooruOid") != null) {
+			collectionMap.put("rKey", collectionMap.get("gooruOid").toString());
+			Set<Entry<String, String>> collectionCFKeySet = DataUtils.collectionCFKeys.entrySet();
+			updateColumnFamily(ColumnFamily.COLLECTION.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTION.getColumnFamily(), collectionCFKeySet, collectionMap));
+		}
 
-		collectionMap.put("collectionGooruOid", eventMap.get("gooruOid").toString());
-		collectionMap.put("collectionType", ((eventMap.containsKey("collectionType") && eventMap.get("collectionType") != null) ? eventMap.get("collectionType").toString() : null));
-		collectionMap.put("collectionGrade", ((eventMap.containsKey("grade") && eventMap.get("grade") != null) ? eventMap.get("grade").toString() : null));
-		collectionMap.put("collectionGoals", ((eventMap.containsKey("goals") && eventMap.get("goals") != null) ? eventMap.get("goals").toString() : null));
-
-		collectionMap.put("ideas", (eventMap.containsKey("ideas") && eventMap.get("ideas") != null) ? eventMap.get("ideas").toString() : null);
-		collectionMap.put("performanceTasks", (eventMap.containsKey("performanceTasks") && eventMap.get("performanceTasks") != null) ? eventMap.get("performanceTasks").toString() : null);
-		collectionMap.put("language", (eventMap.containsKey("language") && eventMap.get("language") != null) ? eventMap.get("language").toString() : null);
-		collectionMap.put("keyPoints", (eventMap.containsKey("keyPoints") && eventMap.get("keyPoints") != null) ? eventMap.get("keyPoints").toString() : null);
-		collectionMap.put("notes", (eventMap.containsKey("notes") && eventMap.get("notes") != null) ? eventMap.get("notes").toString() : null);
-		collectionMap.put("languageObjective", (eventMap.containsKey("languageObjective") && eventMap.get("languageObjective") != null) ? eventMap.get("languageObjective").toString() : null);
-		collectionMap.put("network", (eventMap.containsKey("network") && eventMap.get("network") != null) ? eventMap.get("network").toString() : null);
-		collectionMap.put("mailNotification", (eventMap.containsKey("mailNotification") && eventMap.get("mailNotification") != null) ? eventMap.get("mailNotification").toString() : null);
-		collectionMap.put("buildTypeId", (eventMap.containsKey("buildTypeId") && eventMap.get("buildTypeId") != null) ? eventMap.get("buildTypeId").toString() : null);
-		collectionMap.put("narrationLink", (eventMap.containsKey("narrationLink") && eventMap.get("narrationLink") != null) ? eventMap.get("narrationLink").toString() : null);
-		collectionMap.put("estimatedTime", (eventMap.containsKey("estimatedTime") && eventMap.get("estimatedTime") != null) ? eventMap.get("estimatedTime").toString() : null);
-
-		baseCassandraDao.updateCollection(ColumnFamily.COLLECTION.getColumnFamily(), collectionMap);
 	}
 
 	public void updateCollectionItemTable(Map<String, Object> eventMap, Map<String, Object> collectionItemMap) {
+		
 		if (collectionItemMap.get(COLLECTIONITEMID) != null) {
-			collectionItemMap.put("collectionGooruOid",
-					((collectionItemMap.containsKey("collectionGooruOid") && collectionItemMap.get("collectionGooruOid") != null) ? collectionItemMap.get("collectionGooruOid").toString() : null));
-
-			collectionItemMap.put("collectionContentId",
-					((collectionItemMap.containsKey("collectionContentId") && collectionItemMap.get("collectionContentId") != null) ? collectionItemMap.get("collectionContentId").toString() : null));
-			collectionItemMap.put("resourceContentId",
-					((collectionItemMap.containsKey("resourceContentId") && collectionItemMap.get("resourceContentId") != null) ? collectionItemMap.get("resourceContentId").toString() : null));
-
-			collectionItemMap.put("deleted", collectionItemMap.get("deleted"));
-			collectionItemMap.put("collectionItemQuestionType",
-					((collectionItemMap.containsKey("collectionItemQuestionType") && collectionItemMap.get("collectionItemQuestionType") != null) ? collectionItemMap.get("collectionItemQuestionType")
+			Set<Entry<String, String>> entrySet = DataUtils.collectionItemTableKeys.entrySet();
+			for(Entry<String, String> entry : entrySet) {
+				if (entry.getKey().equalsIgnoreCase("questionType")) {
+					collectionItemMap.put(entry.getValue(), ((collectionItemMap.containsKey(entry.getValue()) && collectionItemMap.get(entry.getValue()) != null) ? collectionItemMap.get(entry.getValue())
 							.toString() : ((eventMap.containsKey("typeName") && eventMap.get("typeName") != null) ? eventMap.get("typeName").toString() : null)));
-			collectionItemMap.put("collectionItemMinimumScore", ((eventMap.containsKey("minimumScore") && eventMap.get("minimumScore") != null) ? eventMap.get("minimumScore").toString() : null));
-			collectionItemMap.put("collectionItemNarration", ((eventMap.containsKey("narration") && eventMap.get("narration") != null) ? eventMap.get("narration").toString() : null));
-			collectionItemMap.put("collectionItemEstimatedTime", ((eventMap.containsKey("estimatedTime") && eventMap.get("estimatedTime") != null) ? eventMap.get("estimatedTime").toString() : null));
-			collectionItemMap.put("collectionItemStart", ((eventMap.containsKey("start") && eventMap.get("start") != null) ? eventMap.get("start").toString() : null));
-			collectionItemMap.put("collectionItemStop", ((eventMap.containsKey("stop") && eventMap.get("stop") != null) ? eventMap.get("stop").toString() : null));
-			collectionItemMap.put("collectionItemNarrationType", ((eventMap.containsKey("narrationType") && eventMap.get("narrationType") != null) ? eventMap.get("narrationType").toString() : null));
-			collectionItemMap.put("collectionItemPlannedEndDate", ((eventMap.containsKey("plannedEndDate") && eventMap.get("plannedEndDate") != null) ? eventMap.get("plannedEndDate").toString()
-					: null));
-			collectionItemMap.put("collectionItemAssociationDate", ((collectionItemMap.containsKey("collectionItemAssociationDate") && collectionItemMap.get("collectionItemAssociationDate") != null) ? collectionItemMap.get(
-			"collectionItemAssociationDate").toString() : ((eventMap.containsKey("associationDate") && eventMap.get("associationDate") != null) ? eventMap.get("associationDate")
-					.toString() : null)));
-			collectionItemMap.put(
-					"collectionItemAssociatedByUid",
-					((collectionItemMap.containsKey("collectionItemAssociatedByUid") && collectionItemMap.get("collectionItemAssociatedByUid") != null) ? collectionItemMap.get(
-							"collectionItemAssociatedByUid").toString() : ((eventMap.containsKey("associatedByUid") && eventMap.get("associatedByUid") != null) ? eventMap.get("associatedByUid")
-							.toString() : null)));
-			collectionItemMap.put("collectionItemIsRequired", ((eventMap.containsKey("isRequired") && eventMap.get("isRequired") != null) ? eventMap.get("isRequired").toString() : null));
-
-			baseCassandraDao.updateCollectionItemCF(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemMap);
+				} else if (entry.getKey().equalsIgnoreCase("collectionGooruOid") || entry.getKey().equalsIgnoreCase("resourceGooruOid") || entry.getKey().equalsIgnoreCase("collectionContentId") || entry.getKey().equalsIgnoreCase("resourceContentId") || entry.getKey().equalsIgnoreCase("deleted")) {
+					collectionItemMap.put(entry.getValue(), (collectionItemMap.containsKey(entry.getKey()) && collectionItemMap.get(entry.getKey()) != null) ? collectionItemMap.get(entry.getKey()).toString() : null);
+				} else if (entry.getKey().equalsIgnoreCase("associationDate") || entry.getKey().equalsIgnoreCase("associatedByUid")) {
+					collectionItemMap.put(entry.getValue(), ((collectionItemMap.containsKey(entry.getValue()) && collectionItemMap.get(entry.getValue()) != null) ? collectionItemMap.get(entry.getValue()).toString() : ((eventMap.containsKey(entry.getValue()) && eventMap.get(entry.getValue()) != null) ? eventMap.get(entry.getValue()).toString() : null)));
+				} else {
+					collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
+				}
+			}
+			collectionItemMap.put("rKey", collectionItemMap.get("collectionItemId").toString());
+			Set<Entry<String, String>> collectionItemCFKeySet = DataUtils.collectionItemCFKeys.entrySet();
+			updateColumnFamily(ColumnFamily.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
 		} else {
 			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVENTNAME));
 		}
@@ -659,23 +622,71 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	public void updateClasspage(Map<String, Object> dataMap, Map<String, Object> classpageMap) {
 
-		/*
-		 * classpageMap.put("classCode", ((classpageMap.containsKey("classCode") && classpageMap.get("classCode") != null) ? classpageMap.get("classCode").toString() : null));
-		 * classpageMap.put("groupUid", ((classpageMap.containsKey("groupUid") && classpageMap.get("groupUid") != null) ? classpageMap.get("groupUid").toString() : null)); classpageMap.put(CONTENTID,
-		 * ((classpageMap.containsKey(CONTENTID) && classpageMap.get(CONTENTID) != null) ? Long.valueOf(classpageMap.get(CONTENTID).toString()) : null)); classpageMap.put("organizationUId",
-		 * ((classpageMap.containsKey("organizationUId") && classpageMap.get("organizationUId") != null) ? classpageMap.get("organizationUId").toString() : null));
-		 * 
-		 * classpageMap.put("is_group_owner", ((dataMap.containsKey("gooruOid") && dataMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null)); classpageMap.put("deleted",
-		 * ((dataMap.containsKey("gooruOid") && dataMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null)); classpageMap.put("active_flag", ((dataMap.containsKey("gooruOid") &&
-		 * datcollectionItemQuestionCreateaMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null)); classpageMap.put("user_group_type", ((dataMap.containsKey("gooruOid") &&
-		 * dataMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null));
-		 */
 		classpageMap.put("classId", ((dataMap.containsKey("gooruOid") && dataMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null));
 		classpageMap.put("username",
 				((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? ((Map<String, String>) dataMap.get("user")).get("username") : null));
-		classpageMap.put("userUid", ((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? ((Map<String, String>) dataMap.get("user")).get("gooruUId")
+		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") : (dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? ((Map<String, String>) dataMap.get("user")).get("gooruUId")
 				: null));
-		baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
+		if (classpageMap.get("classId") != null && classpageMap.get("groupUId") != null && classpageMap.get("userUid") != null) {
 
+			classpageMap.put("rKey", classpageMap.get("classId").toString() + SEPERATOR + classpageMap.get("groupUId").toString() + SEPERATOR + classpageMap.get("userUid").toString());
+
+			Set<Entry<String, String>> entrySet = DataUtils.classpageTableKeyMap.entrySet();
+			updateColumnFamily(ColumnFamily.CLASSPAGE.getColumnFamily(), this.generateCFMap(ColumnFamily.CLASSPAGE.getColumnFamily(), entrySet, classpageMap));
+
+		}
+	}
+	
+	private Map<String, Object> generateCFMap(String cfName, Set<Entry<String, String>> entrySetToInsert, Map<String, Object> eventMap) {
+		Map<String, Object> mapToInsert = new HashMap<String, Object>();
+		Set<Entry<String, String>> dataTypeEntrySet = null;
+		if(cfName.equalsIgnoreCase(ColumnFamily.CLASSPAGE.getColumnFamily())) {
+			dataTypeEntrySet = DataUtils.classpageCFDataTypeMap.entrySet();
+		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTION.getColumnFamily())) {
+			dataTypeEntrySet = DataUtils.collectionCFDataType.entrySet();
+		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTIONITEM.getColumnFamily())) {
+			dataTypeEntrySet = DataUtils.collectionItemCFDataType.entrySet();
+		}
+		if(dataTypeEntrySet != null) {
+			for(Entry<String, String> entry : entrySetToInsert) {
+				if (eventMap.get(entry.getValue()) != null) {
+					for(Entry<String, String> dataTypeEntry : dataTypeEntrySet) {
+						if(dataTypeEntry.getKey().equalsIgnoreCase(entry.getKey())) {
+							mapToInsert.put(entry.getKey(), TypeConverter.stringToAny((eventMap.get(entry.getValue()) != null ? eventMap.get(entry.getValue()).toString() : null), dataTypeEntry.getValue()));
+						}
+					}
+				}
+			}
+		}
+		return mapToInsert;
+	}
+	
+	private Map<String, Object> generateCFMap(Set<Entry<String, String>> entrySet, Map<String, Object> eventMap) {
+		Map<String, Object> mapToInsert = new HashMap<String, Object>();
+		for(Entry<String, String> entry : entrySet) {
+			if (eventMap.get(entry.getValue()) != null) {
+				mapToInsert.put(entry.getKey(), eventMap.get(entry.getValue()) != null ? eventMap.get(entry.getValue()).toString() : null);
+			}
+		}
+		return mapToInsert;
+	}
+
+	private void updateColumnFamily(String cfName, Map<String,Object> mapToInsert){
+		if(mapToInsert.get("rKey") != null) {
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			ColumnListMutation<String> cfm = m.withRow(baseCassandraDao.accessColumnFamily(cfName), mapToInsert.get("rKey").toString());
+			for(Entry<String, Object> entry : mapToInsert.entrySet()){
+				if(!entry.getKey().equalsIgnoreCase("rKey")) {
+					baseCassandraDao.generateNonCounter(entry.getKey(), entry.getValue(), cfm);
+				}
+			}
+			try {
+				m.execute();
+			} catch (ConnectionException e) {
+				e.printStackTrace();
+			}
+		} else {
+			logger.info("Incoming Key is null to update CF {}" ,cfName );
+		}
 	}
 }
