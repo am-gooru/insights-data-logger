@@ -524,13 +524,10 @@ public class CassandraDataLoader  implements Constants {
 			    return;
 			}
 			
-			Date eventDateTime = new Date(eventObject.getStartTime());
+			Date eventDateTime = new Date(eventObject.getEndTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-	
-			//if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
-			if(eventObject.getEventType() == null){
-			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
-			}
+			logger.info("eventRowKey:" + eventRowKey + "- eventName:"+eventObject.getEventName());
+			baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
 			
 			aggregatorJson = cache.get(eventMap.get("eventName"));
 			
