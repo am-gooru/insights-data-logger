@@ -480,9 +480,9 @@ public class CassandraDataLoader implements Constants {
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 	
 		//	if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
-if(eventObject.getEventType() == null){
+//if(eventObject.getEventType() == null){
 			    baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventKeyUUID.toString(),eventObject);
-			}
+//			}
 						
 			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
 			
