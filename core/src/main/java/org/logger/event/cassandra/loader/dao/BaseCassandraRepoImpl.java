@@ -910,18 +910,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     @Async
     public void updateTimeline(String cfName,EventData eventData, String rowKey) {
 
-        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+//        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
         MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
-                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+                CoulmnValue, eventData.getEventKeyUUID(), null);
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey+"~"+eventData.getEventName())).putColumn(
-                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+                CoulmnValue, eventData.getEventKeyUUID(), null);
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8)+"~"+eventData.getEventName())).putColumn(
-                eventColumnTimeUUID.toString(), eventData.getEventKeyUUID(), null);
+                CoulmnValue, eventData.getEventKeyUUID(), null);
         
         try {
             eventTimelineMutation.execute();
