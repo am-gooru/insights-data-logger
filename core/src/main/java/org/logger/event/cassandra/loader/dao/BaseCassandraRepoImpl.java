@@ -886,18 +886,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     @Async
     public void updateTimelineObject(String cfName,String rowKey,String CoulmnValue,EventObject eventObject) {
 
-        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+//        UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
         MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
-                eventColumnTimeUUID.toString(), CoulmnValue, null);
+                CoulmnValue, CoulmnValue, null);
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey+"~"+eventObject.getEventName())).putColumn(
-                eventColumnTimeUUID.toString(), CoulmnValue, null);
+                CoulmnValue, CoulmnValue, null);
         
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8)+"~"+eventObject.getEventName())).putColumn(
-                eventColumnTimeUUID.toString(), CoulmnValue, null);
+                CoulmnValue, CoulmnValue, null);
         
         try {
             eventTimelineMutation.execute();
@@ -915,13 +915,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(
-                CoulmnValue, eventData.getEventKeyUUID(), null);
+                eventData.getEventKeyUUID(), eventData.getEventKeyUUID(), null);
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey+"~"+eventData.getEventName())).putColumn(
-                CoulmnValue, eventData.getEventKeyUUID(), null);
+                eventData.getEventKeyUUID(), eventData.getEventKeyUUID(), null);
 
         eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8)+"~"+eventData.getEventName())).putColumn(
-                CoulmnValue, eventData.getEventKeyUUID(), null);
+                eventData.getEventKeyUUID(), eventData.getEventKeyUUID(), null);
         
         try {
             eventTimelineMutation.execute();
