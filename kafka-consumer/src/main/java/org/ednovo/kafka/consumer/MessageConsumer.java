@@ -88,7 +88,7 @@ public class MessageConsumer extends Thread {
 
 		props.put("zookeeper.connect",buildEndPoint(ZK_IP, ZK_PORT));
 		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "1000");
+		props.put("zookeeper.session.timeout.ms", "10000");
 		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
 

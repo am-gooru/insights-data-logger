@@ -73,7 +73,7 @@ public class KafkaLogConsumer extends Thread {
 
 		props.put("zookeeper.connect", buildEndPoint(ZOOKEEPER_IP, ZOOKEEPER_PORT));
 		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "1000");
+		props.put("zookeeper.session.timeout.ms", "10000");
 		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
 		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
