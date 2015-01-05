@@ -149,7 +149,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
 	    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
 	    	    			try {
-								getUserAndIndex(eventMap.get(GOORUID).toString());
+	    	    				if(!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")){
+	    	    					getUserAndIndex(eventMap.get(GOORUID).toString());
+	    	    				}
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
