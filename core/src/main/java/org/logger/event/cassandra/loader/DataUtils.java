@@ -166,7 +166,7 @@ public class DataUtils {
 		classpageTableKeyMap.put("classpage_content_id", "contentId");
 		classpageTableKeyMap.put("classpage_gooru_oid", "classId");
 		classpageTableKeyMap.put("username", "username");
-		classpageTableKeyMap.put("user_group_uid", "groupUid");
+		classpageTableKeyMap.put("user_group_uid", "groupUId");
 		classpageTableKeyMap.put("organization_uid", "organizationUId");
 		classpageTableKeyMap.put("user_group_type", "userGroupType");
 		classpageTableKeyMap.put("active_flag", "activeFlag");

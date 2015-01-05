@@ -74,7 +74,7 @@ private static ConsumerConfig createConsumerConfig() {
 
 	props.put("zookeeper.connect",MicroAggregatorConsumer.buildEndPoint(ZK_IP, ZK_PORT));
     props.put("group.id", KAFKA_GROUPID);
-    props.put("zookeeper.session.timeout.ms", "1000");
+    props.put("zookeeper.session.timeout.ms", "10000");
     props.put("zookeeper.sync.time.ms", "200");
     props.put("auto.commit.interval.ms", "1000");
 	LOG.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
