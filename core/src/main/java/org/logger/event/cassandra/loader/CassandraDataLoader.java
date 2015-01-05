@@ -476,7 +476,7 @@ public class CassandraDataLoader implements Constants {
 			    return;
 			}
 			
-			Date eventDateTime = new Date(eventObject.getStartTime());
+			Date eventDateTime = new Date(eventObject.getEndTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 	
 		//	if(eventObject.getEventType() == null || !eventObject.getEventType().equalsIgnoreCase("stop") || !eventObject.getEventType().equalsIgnoreCase("completed-event")){
