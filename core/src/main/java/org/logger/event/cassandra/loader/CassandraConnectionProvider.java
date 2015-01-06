@@ -66,7 +66,6 @@ public class CassandraConnectionProvider {
 
     private Properties properties;
     private Keyspace cassandraKeyspace;
-    private Keyspace cassandraNewAwsKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_KEYSPACE;
@@ -143,7 +142,7 @@ public class CassandraConnectionProvider {
 	           client = transportClient;
             }
 
-			if(cassandraNewAwsKeyspace != null ) {
+			if(cassandraKeyspace != null ) {
 				resourceEntityPersister = new DefaultEntityManager.Builder<ResourceCo, String>().withEntityType(ResourceCo.class).withKeyspace(getKeyspace()).build();
 			}
           this.registerEsIndices();
