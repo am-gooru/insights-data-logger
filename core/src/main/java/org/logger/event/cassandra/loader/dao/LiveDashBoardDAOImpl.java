@@ -124,12 +124,14 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 			            	String columnName = eventKeys.getColumnByIndex(i).getName();
 			            	String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
 			        		String key = formOrginalKey(columnName, eventMap);
+			        		if(key != null){
 			        		for(String value : columnValue.split(",")){
 			            		String orginalColumn = formOrginalKey(value, eventMap);
 				            		if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
 				            			if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
 				            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
 				            			}else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
+				            				
 				            				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
 				            			}else if(orginalColumn.startsWith("sum"+SEPERATOR)){
 				            				String[] rowKey = orginalColumn.split("~");
@@ -137,6 +139,7 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				            				
 				            			}
 				            		} 
+			            			}
 			            			}
 			            		}
 			                	try {
@@ -504,8 +507,10 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				subKey = splittedKey.split(":");
 				if(splittedKey.contains(USERAGENT)) {
 					key += "~"+this.getBrowser(eventMap.get(USERAGENT));
-				} else {
-					key += "~"+(eventMap.get(subKey[1]) != null ? eventMap.get(subKey[1]).toLowerCase() : subKey[1]);
+				} else if(eventMap.get(subKey[1]) != null){
+					key += eventMap.get(subKey[1]).toLowerCase();
+				}else{
+					return null;
 				}
 			}
 			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
