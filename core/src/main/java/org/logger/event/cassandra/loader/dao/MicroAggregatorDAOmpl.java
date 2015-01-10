@@ -400,7 +400,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		               }
 	                        
 	        	}
-				if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){
+				if(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP)){
 					String	collectionStatus = "completed";
 					try {
 						Thread.sleep(200);
