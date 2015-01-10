@@ -133,12 +133,33 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		List<String> keysList = new ArrayList<String>();
 		
 		boolean isStudent = false;
+		/*
+		 * 
+		 * Update last accessed time/user
+		 * 
+		 */
+		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			
+		}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(PARENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),eventMap.get(PARENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+		}else{
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+		}
+		baseCassandraDao.saveStringValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessedUser", eventMap.get(GOORUID));
+		baseCassandraDao.saveStringValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "last_accessed_user", eventMap.get(GOORUID));
 		
 		/*Maintain session - Start */
 		
 		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 	        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
+	        
 	        if(eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()){
 	        	/*isStudent = classpage.isUserPartOfClass(eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID));
 	        	if(isStudent){*/
@@ -542,14 +563,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				String newKey = null;
 				if((eventMap.get(CLASSPAGEGOORUOID) != null) && (!eventMap.get(CLASSPAGEGOORUOID).isEmpty())) {
 					sessionKey = "RS"+SEPERATOR+eventMap.get(CLASSPAGEGOORUOID)+SEPERATOR+eventMap.get(PARENTGOORUOID);
-				} else {
+				}else if((eventMap.get("classId") != null) && (!eventMap.get("classId").isEmpty())) {
+					sessionKey = "RS"+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENTGOORUOID);
+				}else {
 					sessionKey = "RS"+SEPERATOR+eventMap.get(PARENTGOORUOID);
 				}
+				logger.info("sessionKey:" + sessionKey);
 				Column<String> session = baseCassandraDao.readWithKeyColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), sessionKey,eventMap.get(GOORUID),0);
 				sessionId = session != null ? session.getStringValue() : null;
 				
 				if((sessionId != null) && (!sessionId.isEmpty())) {
 					newKey = keyValue.replaceFirst("AS~", sessionId+SEPERATOR);
+					logger.info("newKey:" + newKey);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null, m);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null, m);
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,Long.valueOf(eventMap.get(STARTTIME)), m);
