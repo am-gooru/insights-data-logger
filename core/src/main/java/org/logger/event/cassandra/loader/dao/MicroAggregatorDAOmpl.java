@@ -582,6 +582,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 				}
 			}
+			logger.info("keyValue : " + keyValue);
+			
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID)+ SEPERATOR+FEEDBACK, eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null, m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+FEEDBACKPROVIDER,eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null, m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID)+SEPERATOR+TIMESTAMP,Long.valueOf(eventMap.get(STARTTIME)), m);
@@ -789,6 +791,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	            }
 	        }
     	}
+	    if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())){
+	    	if(eventMap.containsKey("classId") && StringUtils.isNotBlank(eventMap.get("classId")) ){
+	    		classPages.add(eventMap.get("classId"));
+	    	}
+	    }
+	    	
 	    	if(eventMap.containsKey(CLASSPAGEGOORUOID) && eventMap.get(CLASSPAGEGOORUOID) != null){
 	    		classPages.add(eventMap.get(CLASSPAGEGOORUOID));
 	    	}

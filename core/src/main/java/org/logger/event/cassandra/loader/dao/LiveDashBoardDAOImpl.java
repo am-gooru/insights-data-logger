@@ -122,24 +122,20 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
                     if(key != null){
                     for(String value : columnValue.split(",")){
                     String orginalColumn = this.formOrginalKey(value, eventMap);
+                    if(orginalColumn != null){
                             if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
                                     if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
-                                    	logger.info("key:"+key);
-                                    	logger.info("orginalColumn:"+orginalColumn);
                                             baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
                                     }else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
                                             baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
                                     }else if(orginalColumn.startsWith("sum"+SEPERATOR)){
                                             String[] rowKey = orginalColumn.split("~");
-                                            logger.info("key2:"+key);
-                                        	logger.info("orginalColumn2:"+orginalColumn);
-                                        	logger.info("value:"+eventMap.get(rowKey[1].trim()));
-                                        	logger.info("rowKey:"+rowKey[1]);
                                             baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
 
-                                 }
-                            }
-                    	}
+                                    	}
+                            		}
+                    			}
+                    		}
         				}
         			}
         
