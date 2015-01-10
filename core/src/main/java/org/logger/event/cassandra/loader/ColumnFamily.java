@@ -6,6 +6,10 @@ public enum ColumnFamily {
 	
 	EVENTDETAIL("event_detail"),
 	
+	TAXONOMYCODE("taxonomy_code"),
+	
+	TABLEDATATYPES("table_datatypes"),
+	
 	EVENTTIMELINE("event_timeline"),
 	
 	ACTIVITYSTREAM("activity_stream"),

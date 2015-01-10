@@ -63,14 +63,8 @@ public interface EventService {
 	boolean createEvent(String eventName,String apiKey);
 	
 	boolean validateSchedular(String ipAddress);
-
-	void postMigration(String start,String Stop,String param);
-	
-	void postStatMigration(String start,String Stop,String param);
-	
-	void catalogMigration(String start,String Stop,String param);
-	void balanceStatDataUpdate();
 	
 	public void clearCacher();
+
 	public void migrateCF(String cfName);
 }

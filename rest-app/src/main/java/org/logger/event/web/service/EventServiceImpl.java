@@ -253,20 +253,7 @@ public class EventServiceImpl implements EventService {
 		
 		return dataLoaderService.validateSchedular(ipAddress);
 	}
-	public void postMigration(String start,String end,String param){
-			dataLoaderService.postMigration(start, end, param);
-	}
-	public void postStatMigration(String start,String end,String param){
-		dataLoaderService.postStatMigration(start, end, param);
-	}
-	public void catalogMigration(String start,String end,String param){
-		dataLoaderService.catalogMigration(start, end, param);
-	}
 
-	@Override
-	public void balanceStatDataUpdate() {
-		dataLoaderService.balanceStatDataUpdate();
-	}
 	public void clearCacher(){
 		dataLoaderService.clearCache();
 	}

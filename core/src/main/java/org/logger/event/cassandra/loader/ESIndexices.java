@@ -2,18 +2,14 @@ package org.logger.event.cassandra.loader;
 
 public enum ESIndexices {
 	
-	EVENTLOGGERINSIGHTS("event_logger_insights" , new String[] {"event_detail" , "dim_events_list"}),
+	EVENTLOGGERINFO("event_logger_info" , new String[] {"event_detail"}),
 	
-	EVENTLOGGER("event_logger" , new String[] {"event_detail"}),
-	
-	CONTENTCATALOG("content_catalog" , new String[] {"dim_resource"}),
+	CONTENTCATALOGINFO("content_catalog_info" , new String[] {"dim_resource"}),
 	
 	USERCATALOG("user_catalog" , new String[] {"dim_user"}),
 	
 	TAXONOMYCATALOG("taxonomy_catalog" , new String[] {"taxonomy_code"}),
 
-	TESTCATALOG("test_catalog" , new String[] {"dim_resource"}),
-	
 	;
 	
 	String name;

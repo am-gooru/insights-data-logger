@@ -275,4 +275,8 @@ public interface Constants {
 	public String COLLECTION_ITEM_FIELDS = "collectionItemId|itemSequence|itemType";
 	
 	public String CLASSPAGE = "classpage";
+	
+	public String INDEXINGVERSION = "index_version";
+	
+	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*";
 }

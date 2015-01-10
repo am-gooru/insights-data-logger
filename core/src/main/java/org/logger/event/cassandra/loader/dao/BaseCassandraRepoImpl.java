@@ -11,9 +11,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
@@ -1261,5 +1263,36 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 		}
 	}
-	
+
+
+    public Set<String> getAllLevelParents(String cfName,String Key,int retryCount){
+
+    	Rows<String, String> collectionItem = null;
+    	Set<String> parentIds = new HashSet<String>();
+    	try {
+    		collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    			.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
+    		 	.searchWithIndex()
+    			.addExpression()
+    			.whereColumn("resource_gooru_oid")
+    			.equals()
+    			.value(Key.trim()).execute().getResult();
+    	
+    		if(collectionItem != null){
+        		for(Row<String, String> collectionItems : collectionItem){
+        			String parentId =  collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue().trim();
+        			if(parentId != null){
+        				parentId = parentId.trim();
+        				parentIds.add(parentId);
+        				getAllLevelParents(cfName,parentId,0);
+        			}
+        		 }
+        	}
+    		
+	    	} catch (ConnectionException e) {
+	    		e.printStackTrace();
+	    	}
+	    	
+    		return parentIds; 
+    	}
 }
