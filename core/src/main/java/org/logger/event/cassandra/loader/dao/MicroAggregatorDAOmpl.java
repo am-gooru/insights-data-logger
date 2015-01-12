@@ -145,8 +145,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
 			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
 			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
-			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(PARENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
-			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(PARENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			//baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(PARENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			//baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(PARENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
 		}else{
 			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
 			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
