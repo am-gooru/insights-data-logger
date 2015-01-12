@@ -28,6 +28,8 @@ public interface Constants {
 	
 	public String CONTENTGOORUOID = "contentGooruId";
 	
+	public String SOURCEGOORUOID = "sourceGooruId";
+	
 	public String PARENTGOORUOID = "parentGooruId";
 	
 	public String TIMEINMS = "timeInMillSec";
@@ -278,5 +280,5 @@ public interface Constants {
 	
 	public String INDEXINGVERSION = "index_version";
 	
-	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*";
+	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
 }
