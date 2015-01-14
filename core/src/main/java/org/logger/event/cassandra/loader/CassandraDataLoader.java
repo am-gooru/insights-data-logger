@@ -445,7 +445,6 @@ public class CassandraDataLoader implements Constants {
 	    	if (eventObject.getFields() != null) {
 				logger.info("CORE: Writing to activity log - :"+ eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
-				indexer.indexActivity(eventObject.getFields());
 				
 			}
 
@@ -500,7 +499,7 @@ public class CassandraDataLoader implements Constants {
     		logger.info("Writing error log : {} ",eventObject.getEventId());
     		kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
     	}
-
+    	indexer.indexActivity(eventObject.getFields());
     	try {
 
 			if(cache.get(VIEWEVENTS).contains(eventMap.get("eventName").toString())){
