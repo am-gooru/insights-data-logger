@@ -116,7 +116,7 @@ public class DataUtils {
 	}
 	
 	public static Long getResourceFormatId(String key) {
-		return resourceFormatIdMap.containsKey(key) ? resourceFormatIdMap.get(key) : 0L ;
+		return resourceFormatIdMap.containsKey(key) ? resourceFormatIdMap.get(key) : null ;
 	}
 	
 	public static String makeCombinedAnswerSeq(int sequence) {
