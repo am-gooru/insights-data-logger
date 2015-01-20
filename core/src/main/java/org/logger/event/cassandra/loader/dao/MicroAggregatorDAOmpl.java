@@ -132,8 +132,29 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			List<String> keysList = new ArrayList<String>();
 			
 			boolean isStudent = false;
-			/*Maintain session - Start */
+		
+			/*
+			* 
+			* Update last accessed time/user
+			* 
+			*/
+			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){	
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
 			
+			}else if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			//baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(PARENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			//baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(PARENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			}else{
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed", Long.parseLong(eventMap.get("endTime")));
+			}
+			baseCassandraDao.saveStringValue(ColumnFamily.RESOURCE.getColumnFamily(),eventMap.get(CONTENTGOORUOID), "lastAccessedUser", eventMap.get(GOORUID));
+			baseCassandraDao.saveStringValue(ColumnFamily.DIMRESOURCE.getColumnFamily(),"GLP~"+eventMap.get(CONTENTGOORUOID), "last_accessed_user", eventMap.get(GOORUID));
+			
+			/*Maintain session - Start */
 			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 		        String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
