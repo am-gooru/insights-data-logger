@@ -39,6 +39,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -54,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -593,6 +595,42 @@ public class EventController {
     }
 		return false;
 	}
+	
+	@RequestMapping(value = "/update/field", method = RequestMethod.POST)
+	public ModelAndView indexMissingField(@RequestParam(required = true) String type, @RequestParam(required = true) String indexName, 
+			@RequestParam(required = true) String missingFieldName, @RequestParam(required = true) String fieldsToRetrieve, 
+			@RequestParam(required = false) Integer batchSize, @RequestParam(required = false) Integer scrollSize){
+		ModelAndView model = new ModelAndView("model");
+		Map<String, Object> requestMap = new HashMap<String, Object>();
+		if(batchSize == null || StringUtils.isBlank(batchSize.toString())) {
+			batchSize = 100;
+		}
+		if(scrollSize == null || StringUtils.isBlank(scrollSize.toString())) {
+			scrollSize = 100;
+		}
+		requestMap.put("batchSize", batchSize);
+		if(type !=null && indexName != null && missingFieldName != null && fieldsToRetrieve != null) {
+			requestMap.put("type", type);
+			requestMap.put("indexName", indexName);
+			requestMap.put("missingFieldName", missingFieldName);
+			requestMap.put("fieldsToRetrieve", fieldsToRetrieve);
+			requestMap.put("scrollSize", scrollSize);
+		
+			try {
+				eventService.updateSingleField(requestMap);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			model.addObject("model", "Done Indexing");
+		} else {
+			model.addObject("model", "Please send all required parameters");
+		}
+		return model;
+		
+	}
+	
 	public static void main(String args[]) throws InterruptedException{
 
 		Set<Long> items = new HashSet<Long>();

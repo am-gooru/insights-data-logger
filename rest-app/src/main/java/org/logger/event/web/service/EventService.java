@@ -82,4 +82,6 @@ public interface EventService {
 	public void migrateRow(String sourceCluster,String targetCluster,String cfName,String key,String columnName,String type);
 	
 	public void index(String ids,String indexType);
+	
+	void updateSingleField(Map<String, Object> requestMap) throws InterruptedException, IOException;
 }

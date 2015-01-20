@@ -33,17 +33,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.EventObjectValidator;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.ELSIndexerImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -76,6 +83,8 @@ public class EventServiceImpl implements EventService {
 	private EventObjectValidator eventObjectValidator;
     
 	private BaseCassandraRepoImpl baseDao ;
+	
+	private ELSIndexerImpl indexer ;
     
 	private SimpleDateFormat minuteDateFormatter;
     
@@ -86,6 +95,7 @@ public class EventServiceImpl implements EventService {
         eventObjectValidator = new EventObjectValidator(null);
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
         minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        indexer = new ELSIndexerImpl(connectionProvider);
     }
 
     @Override
@@ -370,5 +380,60 @@ public class EventServiceImpl implements EventService {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public void updateSingleField(Map<String, Object> requestMap) throws InterruptedException, IOException {
+
+		int batchSize = (Integer) requestMap.get("batchSize");
+		int scrollSize = (Integer) requestMap.get("scrollSize");
+		String fieldsToRetrieve[] = requestMap.get("fieldsToRetrieve").toString().split(",");
+		String type = requestMap.get("type").toString();
+		String indexName = requestMap.get("indexName").toString();
+		String missingFieldName = requestMap.get("missingFieldName").toString();
+		SearchRequestBuilder requestBuilder = this.connectionProvider.getESClient().prepareSearch().setSearchType(org.elasticsearch.action.search.SearchType.SCAN).setScroll(new TimeValue(60000)).setSize(scrollSize).setIndices(indexName).setTypes(type);
+
+		requestBuilder.setPostFilter(FilterBuilders.missingFilter(missingFieldName));
+		requestBuilder.addFields(fieldsToRetrieve);
+		SearchResponse searchResponse = requestBuilder.execute().actionGet();
+
+		logger.info("Total hits of " + indexName + " : " + searchResponse.getHits().getTotalHits());
+		int totalDocsIndexedCount = 0;
+
+		while (true) {
+			searchResponse = this.connectionProvider.getESClient().prepareSearchScroll(searchResponse.getScrollId()).setScroll(new TimeValue(600000)).execute().actionGet();
+			List<String> ids = new ArrayList<String>();
+			int countInBatch = 0;
+			int totalDocsInBatch = 0;
+
+			for (SearchHit searchHit : searchResponse.getHits()) {
+				long start = System.currentTimeMillis();
+				String id = (String) searchHit.getId();	
+
+				ids.add(id);
+				countInBatch++;
+				if (ids.size() > 0 && (batchSize == countInBatch || countInBatch == searchResponse.getHits().getTotalHits())) {
+					totalDocsIndexedCount += ids.size();
+					totalDocsInBatch += ids.size();
+					indexer.indexResource(StringUtils.join(ids, ","));
+					logger.info("Count of indexed documents in current batch : " + totalDocsInBatch);
+					logger.info("Indexing took :" + (System.currentTimeMillis() - start) + " ms");
+					ids.clear();
+					logger.info("Total indexed documents current count : " + totalDocsIndexedCount);
+				}
+				if (batchSize == countInBatch) {
+					countInBatch = 0;
+					Thread.sleep(5000);
+				}
+			}
+			
+			logger.info("hits Length : "+searchResponse.getHits().getHits().length);
+			
+			if (searchResponse.getHits().getHits().length == 0) {
+				break;
+			}
+		}
+		logger.info("Total documents indexed count : " + totalDocsIndexedCount);		
+	
 	}
 }
