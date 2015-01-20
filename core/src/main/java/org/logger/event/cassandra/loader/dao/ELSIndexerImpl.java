@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.ESIndexices;
 import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -559,49 +560,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
 		} else if(columns.getColumnByName("resource_format_id") == null && StringUtils.isNotBlank(columns.getStringValue("type_name", null))) {
 			String typeName = columns.getColumnByName("type_name").getStringValue();
-			if(typeName.equalsIgnoreCase("animation/swf") || typeName.equalsIgnoreCase("animation/kmz") ) {
-				resourceMap.put("resourceFormatId", 103L);
-			} else if (typeName.equalsIgnoreCase("application") || typeName.equalsIgnoreCase("gooru/classplan")) {
-				resourceMap.put("resourceFormatId", 123L);
-			} else if (typeName.equalsIgnoreCase("assessment-exam")) {
-				resourceMap.put("resourceFormatId", 130L);
-			} else if (typeName.equalsIgnoreCase("assessment-question")) {
-				resourceMap.put("resourceFormatId", 104L);
-			} else if (typeName.equalsIgnoreCase("assessment-quiz")) {
-				resourceMap.put("resourceFormatId", 106L);
-			} else if (typeName.equalsIgnoreCase("assignment")) {
-				resourceMap.put("resourceFormatId", 132L);
-			} else if (typeName.equalsIgnoreCase("classpage")) {
-				resourceMap.put("resourceFormatId", 131L);
-			} else if (typeName.equalsIgnoreCase("exam/pdf")) {
-				resourceMap.put("resourceFormatId", 102L);
-			} else if (typeName.equalsIgnoreCase("folder")) {
-				resourceMap.put("resourceFormatId", 133L);
-			} else if (typeName.equalsIgnoreCase("gooru/classbook")) {
-				resourceMap.put("resourceFormatId", 124L);
-			} else if (typeName.equalsIgnoreCase("gooru/notebook")) {
-				resourceMap.put("resourceFormatId", 126L);
-			} else if (typeName.equalsIgnoreCase("gooru/studyshelf")) {
-				resourceMap.put("resourceFormatId", 125L);
-			} else if (typeName.equalsIgnoreCase("handouts")) {
-				resourceMap.put("resourceFormatId", 106L);
-			} else if (typeName.equalsIgnoreCase("image/png") || typeName.equalsIgnoreCase("ppt/pptx")) {
-				resourceMap.put("resourceFormatId", 105L);
-			} else if (typeName.equalsIgnoreCase("qb/question")) {
-				resourceMap.put("resourceFormatId", 128L);
-			} else if (typeName.equalsIgnoreCase("qb/response")) {
-				resourceMap.put("resourceFormatId", 127L);
-			} else if (typeName.equalsIgnoreCase("question")) {
-				resourceMap.put("resourceFormatId", 104L);
-			} else if (typeName.equalsIgnoreCase("resource/url")) {
-				resourceMap.put("resourceFormatId", 102L);
-			} else if (typeName.equalsIgnoreCase("scollection") || typeName.equalsIgnoreCase("scollection") || typeName.equalsIgnoreCase("shelf")) {
-				resourceMap.put("resourceFormatId", 122L);
-			} else if (typeName.equalsIgnoreCase("textbook/scribd")) {
-				resourceMap.put("resourceFormatId", 106L);
-			} else if (typeName.equalsIgnoreCase("video/youtube") || typeName.equalsIgnoreCase("vimeo/video")) {
-				resourceMap.put("resourceFormatId", 100L);
-			}
+			resourceMap.put("resourceFormatId", DataUtils.getResourceFormatId(typeName));
 		}
 		if(columns.getColumnByName("grade") != null){
 			Set<String> gradeArray = new HashSet<String>(); 
