@@ -105,6 +105,7 @@ public class DataUtils {
 		resourceFormatIdMap.put("textbook/scribd",106L);
 		resourceFormatIdMap.put("video/youtube",100L);
 		resourceFormatIdMap.put("vimeo/video",100L);
+		resourceFormatIdMap.put("quiz",122L);
 	}
 	
 	public static String makeCombinedEventName(String eventName) {
