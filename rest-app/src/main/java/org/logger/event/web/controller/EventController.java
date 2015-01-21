@@ -598,7 +598,8 @@ public class EventController {
 	
 	@RequestMapping(value = "/update/field", method = RequestMethod.POST)
 	public ModelAndView indexMissingField(@RequestParam(required = true) String type, @RequestParam(required = true) String indexName, 
-			@RequestParam(required = true) String missingFieldName, @RequestParam(required = true) String fieldsToRetrieve, 
+			@RequestParam(required = true) String missingFieldName, @RequestParam(required = false) String filterQuery,
+			@RequestParam(required = true) String fieldsToRetrieve, @RequestParam(required = true) String indexType,
 			@RequestParam(required = false) Integer batchSize, @RequestParam(required = false) Integer scrollSize){
 		ModelAndView model = new ModelAndView("model");
 		Map<String, Object> requestMap = new HashMap<String, Object>();
@@ -609,12 +610,15 @@ public class EventController {
 			scrollSize = 100;
 		}
 		requestMap.put("batchSize", batchSize);
-		if(type !=null && indexName != null && missingFieldName != null && fieldsToRetrieve != null) {
+		requestMap.put("scrollSize", scrollSize);
+		if(filterQuery != null && StringUtils.isNotBlank(filterQuery)) {requestMap.put("filterQuery", filterQuery);}
+		
+		if(type !=null && indexName != null && missingFieldName != null && fieldsToRetrieve != null && indexType != null) {
 			requestMap.put("type", type);
 			requestMap.put("indexName", indexName);
 			requestMap.put("missingFieldName", missingFieldName);
 			requestMap.put("fieldsToRetrieve", fieldsToRetrieve);
-			requestMap.put("scrollSize", scrollSize);
+			requestMap.put("indexType", indexType);
 		
 			try {
 				eventService.updateSingleField(requestMap);
