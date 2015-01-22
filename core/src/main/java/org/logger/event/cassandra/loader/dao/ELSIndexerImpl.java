@@ -576,12 +576,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("category") != null){
 			resourceMap.put("category", columns.getColumnByName("category").getStringValue());
 		}
-		if(columns.getColumnByName("type_name") != null){
-			resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
+		if(columns.getColumnByName("resourceType") != null){
+			resourceMap.put("typeName", columns.getColumnByName("resourceType").getStringValue());
 		}
-		if(columns.getColumnByName("resource_format") != null){
-			resourceMap.put("resourceFormat", columns.getColumnByName("resource_format").getStringValue());
-			resourceMap.put("resourceFormatId", resourceFormatCache.get(columns.getColumnByName("resource_format").getStringValue()));
+		if(columns.getColumnByName("resourceFormat") != null){
+			resourceMap.put("resourceFormat", columns.getColumnByName("resourceFormat").getStringValue());
+			resourceMap.put("resourceFormatId", resourceFormatCache.get(columns.getColumnByName("resourceFormat").getStringValue()));
 		}
 		if(columns.getColumnByName("instructional") != null){
 			resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
