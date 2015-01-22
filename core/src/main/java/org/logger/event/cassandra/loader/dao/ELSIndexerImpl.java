@@ -117,9 +117,57 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
         }
         cache = new LinkedHashMap<String, String>();
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
-        REPOPATH = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue();
+        REPOPATH = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
 	}
 
+	public void clearCache(){
+		beFieldName =  new LinkedHashMap<String,String>();
+        fieldDataTypes =  new LinkedHashMap<String,String>();
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		} 
+        
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
+        resourceTypesCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
+        categoryCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> resourceFormatRows = baseDao.readAllRows(ColumnFamily.RESOURCEFORMAT.getColumnFamily(),0);
+        resourceFormatCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceFormatRows) {
+        	resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamily.INSTRUCTIONAL.getColumnFamily(),0);
+        
+        instructionalCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : instructionalRows) {
+        	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        taxonomyCodeType = new LinkedHashMap<String, String>();
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        cache = new LinkedHashMap<String, String>();
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
+        REPOPATH = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
+	}
 	public void indexActivity(String fields){
     	if(fields != null){
 				JSONObject jsonField = null;
@@ -516,7 +564,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("description") != null){
 			resourceMap.put("description", columns.getColumnByName("description").getStringValue());
 		}
-		
 		if(columns.getColumnByName("lastModified") != null){
 			resourceMap.put("lastModified", columns.getColumnByName("lastModified").getDateValue());
 		}
@@ -538,17 +585,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		if(columns.getColumnByName("organization") != null){
 			resourceMap.put("contentOrganizationId", columns.getColumnByName("organization").getStringValue());
 		}
-		if(columns.getColumnByName("thumbnail") != null){
+		if(columns.getColumnByName("thumbnail") != null && StringUtils.isNotBlank(columns.getColumnByName("thumbnail").getStringValue())){
 			if(columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")){				
 				resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 			}else{
 				resourceMap.put("thumbnail", REPOPATH+"/"+columns.getColumnByName("folder").getStringValue()+"/"+columns.getColumnByName("thumbnail").getStringValue());
 			}
 		}
-		/* if(columns.getColumnByName("resource_format_id") == null && StringUtils.isNotBlank(columns.getStringValue("type_name", null))) {
-			String typeName = columns.getColumnByName("type_name").getStringValue();
-			resourceMap.put("resourceFormatId", DataUtils.getResourceFormatId(typeName));
-		}*/
 		if(columns.getColumnByName("grade") != null){
 			Set<String> gradeArray = new HashSet<String>(); 
 			for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){

@@ -296,6 +296,7 @@ public class CassandraDataLoader  implements Constants {
         statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics",0);
         statKeys = statMetrics.getColumnNames();
         liveDashBoardDAOImpl.clearCache();
+        indexer.clearCache();
         ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status",0);
         for(int i = 0 ; i < schdulersStatus.size() ; i++) {
         	cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
@@ -325,6 +326,20 @@ public class CassandraDataLoader  implements Constants {
         ColumnList<String> resourceCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), ColumnFamily.DIMRESOURCE.getColumnFamily(),0);
         for(int i = 0 ; i < resourceCodeTypeList.size() ; i++) {
         	resourceCodeType.put(resourceCodeTypeList.getColumnByIndex(i).getName(), resourceCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        if(kafkaConfigurationCache == null){
+        	
+            kafkaConfigurationCache = new HashMap<String,Map<String,String>>();
+            String[] kafkaMessager =new String[]{"kafka~consumer","kafka~logwritter~producer","kafka~logwritter~consumer","kafka~microaggregator~producer","kafka~microaggregator~consumer"};
+            Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
+            for(Row<String,String> row : result){
+            	Map<String,String> properties = new HashMap<String, String>();
+            	for(Column<String> column : row.getColumns()){
+            		properties.put(column.getName(),column.getStringValue());
+            	}
+            	kafkaConfigurationCache.put(row.getKey(), properties);
+            }
+        System.out.println("kafa config"+kafkaConfigurationCache);
         }
     }
     
