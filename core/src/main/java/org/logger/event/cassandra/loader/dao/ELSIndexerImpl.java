@@ -615,8 +615,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
 		}
 		if(gooruOid != null){
-			resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-			this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+			resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
+			this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 		}
 		}
     }
