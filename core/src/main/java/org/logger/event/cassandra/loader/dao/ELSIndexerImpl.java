@@ -290,13 +290,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     }
 	
 	public void indexResource(String ids){
-    	Collection<String> idList = new ArrayList<String>();
     	Collection<String> idListN = new ArrayList<String>();
     	for(String id : ids.split(",")){
     //		idList.add("GLP~" + id);
     		idListN.add(id);
     	}
-    	logger.info("Indexing resources : {}",idList);
+    	logger.info("Indexing resources : {}",idListN);
     	Rows<String,String> resourceN = baseDao.readWithKeyList(ColumnFamily.RESOURCE.getColumnFamily(), idListN,0);
     	try {
     		if(resourceN != null && resourceN.size() > 0){
@@ -612,10 +611,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 	    	}
 		}
-		if(columns.getColumnByName("user_uid") != null){
-			resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
+		if(columns.getColumnByName("owner.userUid") != null){
+			resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
 		}
-		if(columns.getColumnByName("gooru_oid") != null){
+		if(gooruOid != null){
 			resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
 			this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
 		}
