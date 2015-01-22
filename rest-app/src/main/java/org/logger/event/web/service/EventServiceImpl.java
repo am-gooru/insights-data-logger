@@ -83,9 +83,7 @@ public class EventServiceImpl implements EventService {
 	private EventObjectValidator eventObjectValidator;
     
 	private BaseCassandraRepoImpl baseDao ;
-	
-	private ELSIndexerImpl indexer ;
-    
+	    
 	private SimpleDateFormat minuteDateFormatter;
     
     public EventServiceImpl() {
@@ -95,7 +93,6 @@ public class EventServiceImpl implements EventService {
         eventObjectValidator = new EventObjectValidator(null);
         this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
         minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        indexer = new ELSIndexerImpl(connectionProvider);
     }
 
     @Override
@@ -391,9 +388,17 @@ public class EventServiceImpl implements EventService {
 		String type = requestMap.get("type").toString();
 		String indexName = requestMap.get("indexName").toString();
 		String missingFieldName = requestMap.get("missingFieldName").toString();
+		String indexType = requestMap.get("indexType").toString();
+		String filterQuery = requestMap.containsKey("filterQuery") ? requestMap.get("filterQuery").toString() : null;
+		
 		SearchRequestBuilder requestBuilder = this.connectionProvider.getESClient().prepareSearch().setSearchType(org.elasticsearch.action.search.SearchType.SCAN).setScroll(new TimeValue(60000)).setSize(scrollSize).setIndices(indexName).setTypes(type);
 
-		requestBuilder.setPostFilter(FilterBuilders.missingFilter(missingFieldName));
+		if(filterQuery != null) {
+			requestBuilder.setPostFilter(filterQuery);
+		} else {
+			requestBuilder.setPostFilter(FilterBuilders.missingFilter(missingFieldName));
+		}
+		
 		requestBuilder.addFields(fieldsToRetrieve);
 		SearchResponse searchResponse = requestBuilder.execute().actionGet();
 
@@ -415,7 +420,7 @@ public class EventServiceImpl implements EventService {
 				if (ids.size() > 0 && (batchSize == countInBatch || countInBatch == searchResponse.getHits().getTotalHits())) {
 					totalDocsIndexedCount += ids.size();
 					totalDocsInBatch += ids.size();
-					indexer.indexResource(StringUtils.join(ids, ","));
+					this.index(StringUtils.join(ids, ","), indexType);
 					logger.info("Count of indexed documents in current batch : " + totalDocsInBatch);
 					logger.info("Indexing took :" + (System.currentTimeMillis() - start) + " ms");
 					ids.clear();
