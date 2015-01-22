@@ -70,6 +70,10 @@ public enum ColumnFamily {
 	
 	RESOURCE("resource"),
 	
+	RESOURCEFORMAT("resource_format"),
+	
+	INSTRUCTIONAL("instructional_use"),
+	
 	;
 	
 	String name;
