@@ -76,6 +76,8 @@ public enum ColumnFamily {
 	
 	INSTRUCTIONAL("instructional_use"),
 	
+	ANONYMIZEDUSERDATA("anonymized_user_data")
+	
 	;
 	
 	String name;

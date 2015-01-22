@@ -1038,6 +1038,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    			}
 	    		}
 	    	}
+	     	
+	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamily.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
+	    	
+	    	if(aliasUserData.getColumnNames().contains("gooru_uid_alias")){
+	    		contentBuilder.field("gooru_uid_alias", aliasUserData.getColumnByName("gooru_uid_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("firstname_alias")){
+	    		contentBuilder.field("firstname_alias", aliasUserData.getColumnByName("firstname_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("lastname_alias")){
+	    		contentBuilder.field("lastname_alias", aliasUserData.getColumnByName("lastname_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("username_alias")){
+	    		contentBuilder.field("username_alias", aliasUserData.getColumnByName("username_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("external_id_alias")){
+	    		contentBuilder.field("external_id_alias", aliasUserData.getColumnByName("external_id_alias").getStringValue());
+	    	}
+	    	
 	    	contentBuilder.field("index_updated_time", new Date());
 			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
