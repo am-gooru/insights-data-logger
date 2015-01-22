@@ -18,6 +18,8 @@ public enum ColumnFamily {
 	
 	DIMUSER("dim_user"),
 	
+	USER("user"),
+	
 	EXTRACTEDUSER("extracted_user"),
 	
 	EXTRACTEDCODE("extracted_code"),
