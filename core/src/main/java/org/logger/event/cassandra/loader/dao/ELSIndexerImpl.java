@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.Gson;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
@@ -1024,18 +1025,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			if(userInfos.getColumnByName("accountUid") != null){
 				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
 			}
-
-	    	Collection<String> user = new ArrayList<String>();
-	    	user.add(userId);
-	    	Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user,0);
-	    	for (Row<String, String> row : eventDetailsNew) {
-	    		ColumnList<String> userInfo = row.getColumns();
-	    		for(int i = 0 ; i < userInfo.size() ; i++) {
-	    			String columnName = userInfo.getColumnByIndex(i).getName();
-	    			String value = userInfo.getColumnByIndex(i).getStringValue();
-	    			if(value != null){
-	    				contentBuilder.field(columnName, value);
-	    			}
+	    	
+	    	ColumnList<String> eventDetailsNeww = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
+	    	for(Column<String> column : eventDetailsNeww) {
+	    		if(column.getStringValue() != null){
+	    			contentBuilder.field(column.getName(), column.getStringValue());
 	    		}
 	    	}
 	     	
