@@ -761,7 +761,65 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	    
     }
+    public void migrateFirstSessionData(String startTime , String endTime) throws ParseException {
+    	
+   	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
 
+		   String currentDate = minuteDateFormatter.format(new Date(startDate));
+          logger.info("Processing Date : {}" , currentDate);
+ 		 	String timeLineKey = null;   		 	
+ 		 	
+ 		 	timeLineKey = currentDate.toString()+"~collection.play";
+ 		 	
+ 		 	
+ 		 	//Read Event Time Line for event keys and create as a Collection
+ 		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+	    		logger.info("No events in given timeline :  {}",startDate);
+	    		return;
+	    	}
+	 
+	    	try{
+		    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
+		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    	
+		    	logger.info("Event Id " + eventDetailUUID) ;
+		    	
+		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
+		    	
+		    if(eventDetailsRow != null && !eventDetailsRow.isEmpty()) {
+		    	String fields = eventDetailsRow.getStringValue("fields", null);
+		    	JSONObject jsonField = new JSONObject(fields);
+    			if(jsonField.has("version")){
+    				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+    				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
+    				
+    				if(eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
+    					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);	
+    					long columnCount = baseDao.getCount(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart);
+    					logger.info("columnCount:"+columnCount);
+    					if( columnCount == 0L){
+    						ColumnList<String> sessions = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), keyPart,0);
+    						String firstSessionId = sessions.getColumnByIndex(1).getName();
+    						logger.info("Key to read : " + firstSessionId+keyPart);
+    					}
+    				}
+    			}
+		    }
+		    
+		    }
+		    	m.execute();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+	    	//Incrementing time - one minute
+          startDate = new Date(startDate).getTime() + 60000;
+          
+	    }
+   	 
+    }
+    
     public void eventMigration(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
 
     	if(isSchduler){
