@@ -780,7 +780,6 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	 
 	    	try{
-		    	MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
 		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
 		    	
@@ -812,6 +811,7 @@ public class CassandraDataLoader implements Constants {
     					
     						logger.info("isStudent : " + isStudent);
     						if(isStudent){
+    							MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
     							for(int j = 0 ; j < sessionData.size() ; j++ ){
     								
@@ -831,10 +831,10 @@ public class CassandraDataLoader implements Constants {
     								}
     								
     							}
+    							m.execute();
     						}
     					}
     				}
-    				m.execute();
     			}
 		    }
 		    
