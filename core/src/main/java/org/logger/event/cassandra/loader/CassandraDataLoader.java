@@ -836,10 +836,8 @@ public class CassandraDataLoader implements Constants {
     					}
     				}
     			}
+		    }		    
 		    }
-		    
-		    }
-		    	m.execute();
 	    	}catch(Exception e){
 	    		e.printStackTrace();
 	    	}
