@@ -780,8 +780,8 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	 
 	    	try{
-		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
+		    	for(int a = 0 ; a < eventUUID.size() ; a++) {
+		    	String eventDetailUUID = eventUUID.getColumnByIndex(a).getStringValue();
 		    	
 		    	logger.info("Event Id " + eventDetailUUID) ;
 		    	
@@ -813,8 +813,7 @@ public class CassandraDataLoader implements Constants {
     						if(isStudent){
     							MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
-    							for(int j = 0 ; j < sessionData.size() ; j++ ){
-    								
+    							for(int i = 0 ; i < sessionData.size() ; i++ ){
     								if ((sessionData.getColumnByIndex(i).getName().endsWith("~grade_in_percentage") || sessionData.getColumnByIndex(i).getName().endsWith("~question_count") || sessionData.getColumnByIndex(i).getName().endsWith("~views")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~avg_time_spent") || sessionData.getColumnByIndex(i).getName().endsWith("~time_spent") || sessionData.getColumnByIndex(i).getName().endsWith("~A") || sessionData.getColumnByIndex(i).getName().endsWith("~B")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("is_group_owner") || sessionData.getColumnByIndex(i).getName().endsWith("question_id") || sessionData.getColumnByIndex(i).getName().endsWith("~C") || sessionData.getColumnByIndex(i).getName().endsWith("~D")
@@ -825,9 +824,9 @@ public class CassandraDataLoader implements Constants {
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~tau") || sessionData.getColumnByIndex(i).getName().endsWith("~in-correct") || sessionData.getColumnByIndex(i).getName().endsWith("~correct") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("status") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~attempts"))) {
-    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(j).getName(), sessionData.getColumnByIndex(j).getLongValue(), m);
+    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m);
     								}else {
-    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(j).getName(), sessionData.getColumnByIndex(j).getStringValue(), m);
+    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m);
     								}
     								
     							}
