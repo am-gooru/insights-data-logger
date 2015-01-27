@@ -796,13 +796,20 @@ public class CassandraDataLoader implements Constants {
     				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
     				
     				if(eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
-    					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);	
+    					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
+    					logger.info("keyPart:"+keyPart);
     					long columnCount = baseDao.getCount(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart);
     					logger.info("columnCount:"+columnCount);
     					if( columnCount == 0L){
     						ColumnList<String> sessions = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), keyPart,0);
-    						String firstSessionId = sessions.getColumnByIndex(1).getName();
-    						logger.info("Key to read : " + firstSessionId+keyPart);
+    						String firstSessionId = sessions.getColumnByIndex(0).getName();
+    						
+    						logger.info("classpage id: "+ eventMap.get(PARENTGOORUOID));
+    
+    						boolean isStudent = baseDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID),0);
+    						
+    						logger.info("Key to read : " + (firstSessionId+keyPart));
+    						logger.info("isStudent : " + isStudent);
     					}
     				}
     			}
