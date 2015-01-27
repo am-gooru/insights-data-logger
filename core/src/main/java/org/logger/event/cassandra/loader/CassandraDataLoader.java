@@ -795,7 +795,7 @@ public class CassandraDataLoader implements Constants {
     				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
     				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
     				
-    				if(eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
+    				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
     					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
     					logger.info("keyPart:"+keyPart);
     					long columnCount = baseDao.getCount(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart);
@@ -808,10 +808,33 @@ public class CassandraDataLoader implements Constants {
     
     						boolean isStudent = baseDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID),0);
     						
-    						logger.info("Key to read : " + (firstSessionId+keyPart));
+    						logger.info("Key to read : " + (firstSessionId+"~"+keyPart));
+    					
     						logger.info("isStudent : " + isStudent);
+    						if(isStudent){
+    							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
+    							for(int j = 0 ; j < sessionData.size() ; j++ ){
+    								
+    								if ((sessionData.getColumnByIndex(i).getName().endsWith("~grade_in_percentage") || sessionData.getColumnByIndex(i).getName().endsWith("~question_count") || sessionData.getColumnByIndex(i).getName().endsWith("~views")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~avg_time_spent") || sessionData.getColumnByIndex(i).getName().endsWith("~time_spent") || sessionData.getColumnByIndex(i).getName().endsWith("~A") || sessionData.getColumnByIndex(i).getName().endsWith("~B")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("is_group_owner") || sessionData.getColumnByIndex(i).getName().endsWith("question_id") || sessionData.getColumnByIndex(i).getName().endsWith("~C") || sessionData.getColumnByIndex(i).getName().endsWith("~D")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~E") || sessionData.getColumnByIndex(i).getName().endsWith("~F") || sessionData.getColumnByIndex(i).getName().endsWith("answer_id") || sessionData.getColumnByIndex(i).getName().endsWith("sequence") || sessionData.getColumnByIndex(i).getName().endsWith("is_correct")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~skipped") || sessionData.getColumnByIndex(i).getName().endsWith("deleted") || sessionData.getColumnByIndex(i).getName().endsWith("active_flag")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~avg_reaction") || sessionData.getColumnByIndex(i).getName().endsWith("~RA") || sessionData.getColumnByIndex(i).getName().endsWith("~feed_back_timestamp") || sessionData.getColumnByIndex(i).getName().endsWith("~skipped~status")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~feed_back_time_spent")  || sessionData.getColumnByIndex(i).getName().endsWith("is_required") || sessionData.getColumnByIndex(i).getName().endsWith("~question_status") || sessionData.getColumnByIndex(i).getName().endsWith("~score")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~tau") || sessionData.getColumnByIndex(i).getName().endsWith("~in-correct") || sessionData.getColumnByIndex(i).getName().endsWith("~correct") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("status") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
+    										|| sessionData.getColumnByIndex(i).getName().endsWith("~attempts"))) {
+    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m);
+    								}else {
+    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m);
+    								}
+    								
+    							}
+    						}
     					}
     				}
+    				m.execute();
     			}
 		    }
 		    
