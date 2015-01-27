@@ -825,9 +825,9 @@ public class CassandraDataLoader implements Constants {
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~tau") || sessionData.getColumnByIndex(i).getName().endsWith("~in-correct") || sessionData.getColumnByIndex(i).getName().endsWith("~correct") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("status") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~attempts"))) {
-    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m);
+    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(j).getName(), sessionData.getColumnByIndex(j).getLongValue(), m);
     								}else {
-    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m);
+    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(j).getName(), sessionData.getColumnByIndex(j).getStringValue(), m);
     								}
     								
     							}
