@@ -815,7 +815,7 @@ public class CassandraDataLoader implements Constants {
     					
     						logger.info("isStudent : " + isStudent);
     						if(isStudent){
-    							MutationBatch m1 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    					/*		MutationBatch m1 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							ColumnList<String> counterSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
     							for(int cs = 0 ; cs < counterSessionData.size() ; cs++ ){
@@ -841,11 +841,11 @@ public class CassandraDataLoader implements Constants {
     								
     							}
     							m1.execute();
-    							
+    							*/
     							MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-    							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", ("AS~"+keyPart),0);
+    							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), ("AS~"+keyPartAll),0);
     							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
-    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterSessionData.getColumnByIndex(as).getName(), counterSessionData.getColumnByIndex(as).getLongValue(), m3);
+    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterAllSessionData.getColumnByIndex(as).getName(), counterAllSessionData.getColumnByIndex(as).getLongValue(), m3);
     							}
     							m3.execute();
     							
