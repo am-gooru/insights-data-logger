@@ -797,7 +797,7 @@ public class CassandraDataLoader implements Constants {
     				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
     					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
     					logger.info("keyPart:"+keyPart);
-    					long columnCount = baseDao.getCount(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart);
+    					long columnCount = baseDao.getCount(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "FS~"+keyPart);
     					logger.info("columnCount:"+columnCount);
     					if( columnCount == 0L){
     						ColumnList<String> sessions = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), keyPart,0);
@@ -811,7 +811,13 @@ public class CassandraDataLoader implements Constants {
     					
     						logger.info("isStudent : " + isStudent);
     						if(isStudent){
-    							MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    							MutationBatch m1 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    							MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    							ColumnList<String> counterSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
+    							for(int cs = 0 ; cs < counterSessionData.size() ; cs++ ){
+    								baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", "AS~"+keyPart, counterSessionData.getColumnByIndex(cs).getName(), counterSessionData.getColumnByIndex(cs).getLongValue(), m2);
+    							}
+    							m2.execute();
     							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
     							for(int i = 0 ; i < sessionData.size() ; i++ ){
     								if ((sessionData.getColumnByIndex(i).getName().endsWith("~grade_in_percentage") || sessionData.getColumnByIndex(i).getName().endsWith("~question_count") || sessionData.getColumnByIndex(i).getName().endsWith("~views")
@@ -824,13 +830,21 @@ public class CassandraDataLoader implements Constants {
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~tau") || sessionData.getColumnByIndex(i).getName().endsWith("~in-correct") || sessionData.getColumnByIndex(i).getName().endsWith("~correct") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("status") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~attempts"))) {
-    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m);
+    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m1);
     								}else {
-    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m);
+    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m1);
     								}
     								
     							}
-    							m.execute();
+    							m1.execute();
+    							
+    							MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+    							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", ("AS~"+keyPart),0);
+    							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
+    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "AS~"+keyPart, counterSessionData.getColumnByIndex(as).getName(), counterSessionData.getColumnByIndex(as).getLongValue(), m3);
+    							}
+    							m3.execute();
+    							
     						}
     					}
     				}
