@@ -819,7 +819,7 @@ public class CassandraDataLoader implements Constants {
     							MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							ColumnList<String> counterSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
     							for(int cs = 0 ; cs < counterSessionData.size() ; cs++ ){
-    								baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", "AS~"+keyPartAll, counterSessionData.getColumnByIndex(cs).getName(), counterSessionData.getColumnByIndex(cs).getLongValue(), m2);
+    								baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "AS~"+keyPartAll, counterSessionData.getColumnByIndex(cs).getName(), counterSessionData.getColumnByIndex(cs).getLongValue(), m2);
     							}
     							m2.execute();
     							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
@@ -834,9 +834,9 @@ public class CassandraDataLoader implements Constants {
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~tau") || sessionData.getColumnByIndex(i).getName().endsWith("~in-correct") || sessionData.getColumnByIndex(i).getName().endsWith("~correct") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("status") || sessionData.getColumnByIndex(i).getName().endsWith("item_sequence")
     										|| sessionData.getColumnByIndex(i).getName().endsWith("~attempts"))) {
-    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m1);
+    										baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getLongValue(), m1);
     								}else {
-    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m1);
+    									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "FS~"+keyPart, sessionData.getColumnByIndex(i).getName(), sessionData.getColumnByIndex(i).getStringValue(), m1);
     								}
     								
     							}
@@ -845,7 +845,7 @@ public class CassandraDataLoader implements Constants {
     							MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
     							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", ("AS~"+keyPart),0);
     							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
-    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily()+"_temp", "AS~"+keyPartAll, counterSessionData.getColumnByIndex(as).getName(), counterSessionData.getColumnByIndex(as).getLongValue(), m3);
+    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterSessionData.getColumnByIndex(as).getName(), counterSessionData.getColumnByIndex(as).getLongValue(), m3);
     							}
     							m3.execute();
     							
