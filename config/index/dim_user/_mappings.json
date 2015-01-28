@@ -128,6 +128,21 @@
 },"external_id":{
 "type":"String",
 "index":"not_analyzed"
+},"gooru_uid_alias": {
+"index": "not_analyzed",
+"type": "string"
+},"external_id_alias": {
+"index": "not_analyzed",
+"type": "string"
+},"firstname_alias": {
+"index": "not_analyzed",
+"type": "string"
+},"lastname_alias": {
+"index": "not_analyzed",
+"type": "string"
+},"username_alias": {
+"index": "not_analyzed",
+"type": "string"
 }
 }
 }
