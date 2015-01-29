@@ -761,6 +761,93 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	    
     }
+    
+    public void migrateAllSessionData(String startTime , String endTime) throws ParseException {
+    	
+      	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
+
+   		   String currentDate = minuteDateFormatter.format(new Date(startDate));
+             logger.info("Processing Date : {}" , currentDate);
+    		 	String timeLineKey = null;   		 	
+    		 	
+    		 	timeLineKey = currentDate.toString()+"~collection.play";
+    		 	
+    		 	
+    		 	//Read Event Time Line for event keys and create as a Collection
+    		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+   	    	if(eventUUID == null && eventUUID.isEmpty() ) {
+   	    		logger.info("No events in given timeline :  {}",startDate);
+   	    		return;
+   	    	}
+   	 
+   	    	try{
+   		    	for(int a = 0 ; a < eventUUID.size() ; a++) {
+   		    	String eventDetailUUID = eventUUID.getColumnByIndex(a).getStringValue();
+   		    	
+   		    	logger.info("Event Id " + eventDetailUUID) ;
+   		    	
+   		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
+   		    	
+   		    if(eventDetailsRow != null && !eventDetailsRow.isEmpty()) {
+   		    	String fields = eventDetailsRow.getStringValue("fields", null);
+   		    	JSONObject jsonField = new JSONObject(fields);
+       			if(jsonField.has("version")){
+       				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+       				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
+       				
+       				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID)) && eventMap.get(PARENTGOORUOID).equalsIgnoreCase("20690e35-ae61-4d7f-9694-a04b34430b5d")){
+       					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
+       					logger.info("keyPart:"+keyPart);
+       					
+       					String keyPartAll = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID);
+       					logger.info("keyPartAll:"+keyPartAll);
+       					
+       					long columnCount = baseDao.getCount(ColumnFamily.MICROAGGREGATION.getColumnFamily()+"_temp", eventMap.get(SESSION)+"~"+keyPart);
+       					logger.info("columnCount:"+columnCount);
+       					if( columnCount == 0L){
+ 						
+       						logger.info("classpage id: "+ eventMap.get(PARENTGOORUOID));
+       
+       						boolean isStudent = baseDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(),eventMap.get(GOORUID),eventMap.get(PARENTGOORUOID),0);       						
+       					
+       						logger.info("isStudent : " + isStudent);
+       						if(isStudent){
+       
+       							MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+       							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), (eventMap.get(SESSION)+"~"+keyPart),0);
+       							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
+       								baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily()+"_temp", "AS~"+keyPartAll, counterAllSessionData.getColumnByIndex(as).getName(), counterAllSessionData.getColumnByIndex(as).getLongValue(), m3);
+       							}
+       							
+       							m3.execute();
+       							
+       						}
+       						MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+       						baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily()+"_temp", eventMap.get(SESSION)+"~"+keyPart, "testt","test", m2);
+       						m2.execute();
+       						
+       						/*MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), ("AS~"+keyPartAll),0);
+							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
+								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterAllSessionData.getColumnByIndex(as).getName(), counterAllSessionData.getColumnByIndex(as).getLongValue(), m3);
+							}
+							m3.execute();
+							*/
+       					}
+       				}
+       			}
+   		    }		    
+   		    }
+   	    	}catch(Exception e){
+   	    		e.printStackTrace();
+   	    	}
+   	    	//Incrementing time - one minute
+             startDate = new Date(startDate).getTime() + 60000;
+             
+   	    }
+      	 
+       }
+    
     public void migrateFirstSessionData(String startTime , String endTime) throws ParseException {
     	
    	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
