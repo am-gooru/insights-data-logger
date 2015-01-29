@@ -795,7 +795,7 @@ public class CassandraDataLoader implements Constants {
        				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
        				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
        				
-       				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
+       				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID)) ){
        					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
        					logger.info("keyPart:"+keyPart);
        					
@@ -840,6 +840,9 @@ public class CassandraDataLoader implements Constants {
        									   baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterAllAggSessionData.getColumnByIndex(agg).getName(), counterAllAggSessionData.getColumnByIndex(agg).getStringValue(), m3);
        									   baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPart, counterAllAggSessionData.getColumnByIndex(agg).getName(), counterAllAggSessionData.getColumnByIndex(agg).getStringValue(), m3);
        								   }
+       								}else{
+       									baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterAllAggSessionData.getColumnByIndex(agg).getName(), counterAllAggSessionData.getColumnByIndex(agg).getStringValue(), m3);
+    									   baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPart, counterAllAggSessionData.getColumnByIndex(agg).getName(), counterAllAggSessionData.getColumnByIndex(agg).getStringValue(), m3);
        								}
        							}
        							
