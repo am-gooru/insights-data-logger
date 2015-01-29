@@ -795,7 +795,7 @@ public class CassandraDataLoader implements Constants {
        				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
        				Map<String, String> eventMap = JSONDeserializer.deserializeEventObject(eventObjects);   
        				
-       				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID)) && eventMap.get(PARENTGOORUOID).equalsIgnoreCase("20690e35-ae61-4d7f-9694-a04b34430b5d")){
+       				if(!eventMap.get(GOORUID).equals("ANONYMOUS") && eventMap.containsKey(PARENTGOORUOID) && StringUtils.isNotBlank(eventMap.get(PARENTGOORUOID))){
        					String keyPart = eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID);
        					logger.info("keyPart:"+keyPart);
        					
