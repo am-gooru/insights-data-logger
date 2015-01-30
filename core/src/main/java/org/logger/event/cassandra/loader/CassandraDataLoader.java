@@ -762,6 +762,43 @@ public class CassandraDataLoader implements Constants {
 	    
     }
     
+    public void migrateViewCountTs(String ids){
+    	for(String id : ids.split(",")){
+    		ColumnList<String> metricsC = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+id,0);
+    		long views = metricsC.getColumnByName("count~views").getLongValue();
+    		long timeSpent = metricsC.getColumnByName("time_spent~total").getLongValue();
+    		if(views != 0L){
+	    		ColumnList<String> resourceC = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),id,0);
+				try {
+					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCountN", views, m);
+		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCount", ""+views, m);
+		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.totalTimeSpent", timeSpent, m);
+		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.averageTimeSpent", (timeSpent/views), m);
+		    		m.execute();
+
+		    		if(!resourceC.getColumnNames().contains("statistics.viewsCountN") && views != 0L){
+		    			String type = "resource";
+		    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
+		    				type = "scollection";
+		    			}
+		    			callIndexingAPI(type, id, new Date());
+		    		}
+				} catch (Exception e) {
+					try{
+					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", id, id, m);
+					m.execute();
+					}catch(Exception e2){
+						e2.printStackTrace();
+					}
+				}
+	    		
+    		}
+    		
+    	}
+    }
+    
     public void migrateAllSessionData(String startTime , String endTime) throws ParseException {
     	
       	 for (Long startDate = minuteDateFormatter.parse(startTime).getTime() ; startDate < minuteDateFormatter.parse(endTime).getTime();) {
@@ -2050,12 +2087,27 @@ public class CassandraDataLoader implements Constants {
 	 		logger.info("Reason : {} ",response.getStatusLine().getReasonPhrase());
 	 		if (response.getStatusLine().getStatusCode() != 200 && response.getStatusLine().getStatusCode() != 404) {
 	 	 		logger.info("Search Indexing failed...");
+	 	 		try{
+					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, ids, m);
+					m.execute();
+					}catch(Exception e2){
+						e2.printStackTrace();
+					}
+	 	 		
 	 	 		return response.getStatusLine().getStatusCode();
 	 		} else {
 	 	 		logger.info("Search Indexing call Success...");
 	 	 		return response.getStatusLine().getStatusCode();
 	 		}
     	}catch(Exception e){
+    		try{
+				MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+				baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, ids, m);
+				m.execute();
+				}catch(Exception e2){
+					e2.printStackTrace();
+				}
     		logger.info("Search Indexing failed..." + e);
  	 		return 500;
     	}

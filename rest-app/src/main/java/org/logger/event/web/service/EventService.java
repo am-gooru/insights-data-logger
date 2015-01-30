@@ -79,4 +79,6 @@ public interface EventService {
 	void balanceStatDataUpdate();
 	
 	public void clearCacher();
+	
+	void viewsTsMigration(String ids);
 }

@@ -393,6 +393,16 @@ public class EventController {
 		}
 	}
 	
+	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
+	public void timeSpentViewsUpdate(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids,HttpServletResponse response) {
+		try {
+			eventService.viewsTsMigration(ids);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+		}
+	}
+	
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request,
 			@RequestParam(value = "apiKey", required = true) String apiKey,
@@ -451,7 +461,7 @@ public class EventController {
 			return;
 		}
 		System.out.println("Executing every five mintues");
-		eventService.updateProdViews();
+		//eventService.updateProdViews();
 	}
 	
 	// scheduled for every 1 minute
@@ -459,7 +469,7 @@ public class EventController {
 		if (!validateSchedular()) {
 			return;
 		}
-		eventService.executeForEveryMinute(null, null);
+		//eventService.executeForEveryMinute(null, null);
 	}
 	
 	//run micro aggregation for the given time range
@@ -467,7 +477,7 @@ public class EventController {
 		if (!validateSchedular()) {
 			return;
 		}	
-		eventService.executeForEveryMinute(startTime, endTime);
+		//eventService.executeForEveryMinute(startTime, endTime);
 	}
 		
 	public void runAggregation(){
@@ -475,14 +485,14 @@ public class EventController {
 	}
 	
 	public void eventMigration(){
-		eventService.eventMigration();
+		//eventService.eventMigration();
 	}
 	public void watchSession() {
 		if (!validateSchedular()) {
 			return;
 		}
 		logger.info("watching session");
-		eventService.watchSession();
+	//	eventService.watchSession();
 	}
 
 	public void postMigration(){
@@ -492,7 +502,7 @@ public class EventController {
 //		logger.info("post migration............");
 		//eventService.postMigration(null, null, null);
 		//eventService.postStatMigration(null, null, null);
-		eventService.catalogMigration(null, null, null);
+//		eventService.catalogMigration(null, null, null);
 		//eventService.balanceStatDataUpdate();
 	}
 	

@@ -314,4 +314,9 @@ public class EventServiceImpl implements EventService {
         }
 		
 	}
+
+	@Override
+	public void viewsTsMigration(String ids) {
+		dataLoaderService.migrateViewCountTs(ids);		
+	}
 }
