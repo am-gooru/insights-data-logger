@@ -765,6 +765,7 @@ public class CassandraDataLoader implements Constants {
     public void migrateViewCountTs(String ids){
     	for(String id : ids.split(",")){
     		ColumnList<String> metricsC = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+id,0);
+    	if(metricsC != null){
     		long views = metricsC.getColumnByName("count~views").getLongValue();
     		long timeSpent = metricsC.getColumnByName("time_spent~total").getLongValue();
     		if(views != 0L){
@@ -796,6 +797,7 @@ public class CassandraDataLoader implements Constants {
 	    		
     		}
     		
+    		}
     	}
     }
     

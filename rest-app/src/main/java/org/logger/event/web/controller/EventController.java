@@ -399,7 +399,7 @@ public class EventController {
 			eventService.viewsTsMigration(ids);
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "migrated!!");
 		} catch (Exception e) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ""+e);
+			e.printStackTrace();
 		}
 	}
 	
