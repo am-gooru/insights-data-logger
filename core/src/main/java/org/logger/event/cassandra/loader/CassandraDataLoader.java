@@ -787,7 +787,7 @@ public class CassandraDataLoader implements Constants {
 						e2.printStackTrace();
 					}
 				}
-				if(!resourceC.getColumnNames().contains("statistics.viewsCountN") && views != 0L){
+				if(!resourceC.getColumnNames().contains("statistics.viewsCount") && views != 0L){
 	    			String type = "resource";
 	    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 	    				type = "scollection";
