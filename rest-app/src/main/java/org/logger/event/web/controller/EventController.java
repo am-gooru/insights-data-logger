@@ -393,13 +393,13 @@ public class EventController {
 		}
 	}
 	
-	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
+	@RequestMapping(value = "/migrate/stat", method = RequestMethod.GET)
 	public void timeSpentViewsUpdate(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids,HttpServletResponse response) {
 		try {
 			eventService.viewsTsMigration(ids);
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "migrated!!");
 		} catch (Exception e) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ""+e);
 		}
 	}
 	

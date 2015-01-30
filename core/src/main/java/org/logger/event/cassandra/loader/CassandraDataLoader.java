@@ -776,23 +776,23 @@ public class CassandraDataLoader implements Constants {
 		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.totalTimeSpent", timeSpent, m);
 		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.averageTimeSpent", (timeSpent/views), m);
 		    		m.execute();
-
-		    		if(!resourceC.getColumnNames().contains("statistics.viewsCountN") && views != 0L){
-		    			String type = "resource";
-		    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
-		    				type = "scollection";
-		    			}
-		    			callIndexingAPI(type, id, new Date());
-		    		}
+		    
 				} catch (Exception e) {
 					try{
 					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", id, id, m);
+					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", id, "Error while migration", m);
 					m.execute();
 					}catch(Exception e2){
 						e2.printStackTrace();
 					}
 				}
+				if(!resourceC.getColumnNames().contains("statistics.viewsCountN") && views != 0L){
+	    			String type = "resource";
+	    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
+	    				type = "scollection";
+	    			}
+	    			callIndexingAPI(type, id, new Date());
+	    		}
 	    		
     		}
     		
@@ -2089,7 +2089,7 @@ public class CassandraDataLoader implements Constants {
 	 	 		logger.info("Search Indexing failed...");
 	 	 		try{
 					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, ids, m);
+					baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, "Indexing Error Status:"+response.getStatusLine().getStatusCode(), m);
 					m.execute();
 					}catch(Exception e2){
 						e2.printStackTrace();
@@ -2103,7 +2103,7 @@ public class CassandraDataLoader implements Constants {
     	}catch(Exception e){
     		try{
 				MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-				baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, ids, m);
+				baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), "failed_index_resources", ids, "Indexing Error message:"+e, m);
 				m.execute();
 				}catch(Exception e2){
 					e2.printStackTrace();
