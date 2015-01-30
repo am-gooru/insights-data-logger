@@ -768,9 +768,11 @@ public class CassandraDataLoader implements Constants {
     	if(metricsC != null){
     		long views = metricsC.getLongValue("count~views", 0L);
     		long timeSpent = metricsC.getLongValue("time_spent~total", 0L);
+    		logger.info("views:"+views+"-timeSpent:"+timeSpent);
+    		logger.info("Migration id:"+id);
     		if(views != 0L){
-	    		ColumnList<String> resourceC = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),id,0);
-				try {
+				ColumnList<String> resourceC = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),id,0);
+    			try {
 					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 					baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCountN", views, m);
 		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCount", ""+views, m);
@@ -787,7 +789,8 @@ public class CassandraDataLoader implements Constants {
 						e2.printStackTrace();
 					}
 				}
-				if(!resourceC.getColumnNames().contains("statistics.viewsCount") && views != 0L){
+
+				if((!resourceC.getColumnNames().contains("statistics.viewsCount") || !resourceC.getColumnNames().contains("statistics.viewsCountN")) && views != 0L){
 	    			String type = "resource";
 	    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 	    				type = "scollection";
