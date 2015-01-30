@@ -568,12 +568,12 @@ public class EventController {
 	
 	public void migrateLiveDashBoard(){
 		logger.info("live dashboard migration .....");
-		eventService.migrateLiveDashBoard();
+//		eventService.migrateLiveDashBoard();
 	}
 	
 	public void migrateVTLiveDashboard() {
 		logger.info("live dashboard view and timespent migration .....");
-		eventService.migrateVTLiveDashBoard();		
+	//	eventService.migrateVTLiveDashBoard();		
 	}
 	
 	public boolean validateSchedular(){
