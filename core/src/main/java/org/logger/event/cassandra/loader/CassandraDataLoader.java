@@ -936,12 +936,7 @@ public class CassandraDataLoader implements Constants {
     						logger.info("isStudent : " + isStudent);
     						if(isStudent){
     							MutationBatch m1 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-    							MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-    							ColumnList<String> counterSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
-    							for(int cs = 0 ; cs < counterSessionData.size() ; cs++ ){
-    								baseDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), "AS~"+keyPartAll, counterSessionData.getColumnByIndex(cs).getName(), counterSessionData.getColumnByIndex(cs).getLongValue(), m2);
-    							}
-    							m2.execute();
+    					
     							ColumnList<String> sessionData = baseDao.readWithKey(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), (firstSessionId+"~"+keyPart),0);
     							for(int i = 0 ; i < sessionData.size() ; i++ ){
     								if ((sessionData.getColumnByIndex(i).getName().endsWith("~grade_in_percentage") || sessionData.getColumnByIndex(i).getName().endsWith("~question_count") || sessionData.getColumnByIndex(i).getName().endsWith("~views")
@@ -965,14 +960,7 @@ public class CassandraDataLoader implements Constants {
     								
     							}
     							m1.execute();
-    							
-    							MutationBatch m3 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-    							ColumnList<String> counterAllSessionData = baseDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), ("AS~"+keyPartAll),0);
-    							for(int as = 0 ; as < counterAllSessionData.size() ; as++ ){
-    								baseDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), "AS~"+keyPartAll, counterAllSessionData.getColumnByIndex(as).getName(), counterAllSessionData.getColumnByIndex(as).getLongValue(), m3);
-    							}
-    							m3.execute();
-    							
+    					    							
     						}
     					}
     				}
