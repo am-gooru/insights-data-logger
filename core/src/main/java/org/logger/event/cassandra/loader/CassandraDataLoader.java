@@ -766,8 +766,8 @@ public class CassandraDataLoader implements Constants {
     	for(String id : ids.split(",")){
     		ColumnList<String> metricsC = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+id,0);
     	if(metricsC != null){
-    		long views = metricsC.getColumnByName("count~views").getLongValue();
-    		long timeSpent = metricsC.getColumnByName("time_spent~total").getLongValue();
+    		long views = metricsC.getLongValue("count~views", 0L);
+    		long timeSpent = metricsC.getLongValue("time_spent~total", 0L);
     		if(views != 0L){
 	    		ColumnList<String> resourceC = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),id,0);
 				try {
