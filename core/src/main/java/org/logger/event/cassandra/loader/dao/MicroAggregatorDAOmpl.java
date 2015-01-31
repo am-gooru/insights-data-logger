@@ -116,7 +116,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 	            m.execute();
 	        } catch (ConnectionException e) {
-	            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+	           e.printStackTrace();
 	        }
 		}
 		
@@ -197,7 +197,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						while (retryCount < 5 && !isStudent) {
 							Thread.sleep(500);
 							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID), classPage, 0);
-							logger.info("retrying to check if a student : {}", retryCount);
+							logger.info("Retrying to check if a student : {}", retryCount);
 							retryCount++;
 						}
 						cache.put(eventMap.get(GOORUID) + SEPERATOR + classPage, isStudent);
@@ -261,7 +261,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						while (retryCount < 5 && !isStudent) {
 							Thread.sleep(500);
 							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID), classPage, 0);
-							logger.info("retrying to check if a student : {}", retryCount);
+							logger.info("Retrying to check if a student : {}", retryCount);
 							retryCount++;
 						}
 						cache.put(eventMap.get(GOORUID) + SEPERATOR + classPage, isStudent);
@@ -389,8 +389,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -438,8 +438,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
     
@@ -531,8 +531,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -680,8 +680,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Error while inserting to cassandra - JSON - ", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}

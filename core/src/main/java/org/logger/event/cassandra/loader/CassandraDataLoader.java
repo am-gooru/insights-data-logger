@@ -443,7 +443,7 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap2, aggregatorJson);
 			}
 
-			liveDashBoardDAOImpl.callCountersV2(eventMap2);
+			liveDashBoardDAOImpl.callCountersV2(eventMap);
 
 			if (eventObject.getFields() != null) {
 				microAggregator.sendEventForAggregation(eventObject.getFields());

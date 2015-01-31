@@ -321,7 +321,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			return cfQuery.execute().getResult().isEmpty();
 		} catch (ConnectionException e) {
-			logger.info("Exception while read from Column Family" + cfName + " columns : " + columns);
+			e.printStackTrace();
 		}
 		return false;
 	}
@@ -338,7 +338,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
 		} catch (ConnectionException e) {
-			logger.info("Exception while read  from Column Family" + cfName + " columns : " + columns);
+			e.printStackTrace();
 		}
 		return new ArrayList();
 	}
@@ -354,7 +354,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(rowKey)
 					.withColumnRange(new RangeBuilder().setLimit(rowsToRead).setStart(startColumnPrefix).setEnd(endColumnPrefix).build()).execute().getResult();
 		} catch (ConnectionException e) {
-			logger.info("Error while fetching data from method : readColumnsWithPrefix {} ", e);
+			e.printStackTrace();
 		}
 
 		return result;
@@ -574,7 +574,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		} else {
-			logger.info("Column Value is null");
+			logger.error("Column Value is null");
 		}
 	}
 
@@ -606,7 +606,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
 		} catch (ConnectionException e) {
-			logger.info("Error while deleting rows in method :deleteAll {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -617,7 +617,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 			m.execute();
 		} catch (ConnectionException e) {
-			logger.info("Error while deleting rows in method :deleteRowKey {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -627,7 +627,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			m.withRow(this.accessColumnFamily(cfName), key).deleteColumn(columnName);
 			m.execute();
 		} catch (ConnectionException e) {
-			logger.info("Error while deleting rows in method :deleteColumn {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -788,7 +788,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			eventTimelineMutation.execute();
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			logger.info("Exception while write  from Column Family" + cfName);
 			e.printStackTrace();
 		}
@@ -814,7 +814,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 			;
 			m.execute();
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			logger.info("Exception while write from Column Family" + cfName);
 			e.printStackTrace();
 		}
@@ -841,7 +841,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 						}
 					}
 				}
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			logger.info("Cassandra Connection Exception thrown!!");
 			e.printStackTrace();
 		}
@@ -881,7 +881,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		String parentId = null;
 		try {
 			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(Key).execute().getResult();
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			if (retryCount < 6) {
 				retryCount++;
 				return getParentId(cfName, Key, retryCount);
@@ -1007,7 +1007,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (ConnectionException e) {
-			logger.info("Error while inserting to assessmet_answer from event - ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -1026,7 +1026,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (ConnectionException e) {
-				logger.info("Error while inserting to collection CF from event - ", e);
+				e.printStackTrace();
 			}
 		}
 	}
@@ -1051,7 +1051,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (ConnectionException e) {
-				logger.info("Error while inserting to Collection Item CF from event - ", e);
+				e.printStackTrace();
 			}
 		}
 	}
@@ -1069,7 +1069,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (ConnectionException e) {
-				logger.info("Error while inserting to Classpage CF from event - ", e);
+				e.printStackTrace();
 			}
 		}
 	}

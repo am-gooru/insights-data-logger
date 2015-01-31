@@ -106,20 +106,19 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	}
 
 	@Async
-	public <T> void callCountersV2(Map<String, T> eventMaps) {
-		Map<String, String> eventMap = (Map<String, String>) eventMaps;
+	public <T> void callCountersV2(Map<String, Object> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENTNAME))) {
-			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), eventMap.get("eventName"), 0);
+			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), String.valueOf(eventMap.get("eventName")), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-				String key = this.formOrginalKey(columnName, eventMap);
+				String key = this.formOrginalKeys(columnName, eventMap);
 				if (key != null) {
 					for (String value : columnValue.split(",")) {
-						String orginalColumn = this.formOrginalKey(value, eventMap);
+						String orginalColumn = this.formOrginalKeys(value, eventMap);
 						if (orginalColumn != null) {
-							if (!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
+							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
 								if (!orginalColumn.startsWith(TIMESPENT + SEPERATOR) && !orginalColumn.startsWith("sum" + SEPERATOR)) {
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, 1L, m);
 								} else if (orginalColumn.startsWith(TIMESPENT + SEPERATOR)) {
@@ -127,7 +126,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 								} else if (orginalColumn.startsWith("sum" + SEPERATOR)) {
 									String[] rowKey = orginalColumn.split("~");
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn,
-											rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0" : eventMap.get(rowKey[1].trim()))), m);
+											rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey[1]))) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0" : eventMap.get(rowKey[1].trim()))), m);
 
 								}
 							}
@@ -138,8 +137,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 			try {
 				m.executeAsync();
-			} catch (ConnectionException e) {
-				logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -243,7 +242,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.executeAsync();
 		} catch (Exception e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -285,8 +284,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		}
 		try {
 			json = ow.writeValueAsString(geoData);
-		} catch (JsonProcessingException e) {
-			logger.info("Exception while converting Object as JSON : {}", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		if (columnName != null) {
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
@@ -342,7 +341,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.executeAsync();
 		} catch (Exception e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -358,8 +357,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -430,7 +429,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.executeAsync();
 		} catch (ConnectionException e) {
-			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -438,7 +437,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 * C: defines => Constant D: defines => Date format lookup E: defines =>
 	 * eventMap param lookup
 	 */
-	public String formOrginalKey(String value, Map<String, String> eventMap) {
+	
+	public String formOrginalKeys(String value, Map<String, Object> eventMap) {
 		Date eventDateTime = new Date();
 		String key = "";
 		for (String splittedKey : value.split("~")) {
@@ -451,16 +451,16 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				subKey = splittedKey.split(":");
 				customDateFormatter = new SimpleDateFormat(subKey[1]);
 				if (eventMap != null) {
-					eventDateTime = new Date(Long.valueOf(eventMap.get("startTime")));
+					eventDateTime = new Date(Long.valueOf(String.valueOf(eventMap.get("startTime"))));
 				}
 				key += "~" + customDateFormatter.format(eventDateTime).toString();
 			}
 			if (splittedKey.startsWith("E:") && eventMap != null) {
 				subKey = splittedKey.split(":");
 				if (splittedKey.contains(USERAGENT)) {
-					key += "~" + this.getBrowser(eventMap.get(USERAGENT));
+					key += "~" + this.getBrowser(String.valueOf(eventMap.get(USERAGENT)));
 				} else if (eventMap.get(subKey[1]) != null) {
-					key += "~" + eventMap.get(subKey[1]).toLowerCase();
+					key += "~" + String.valueOf(eventMap.get(subKey[1])).toLowerCase();
 				} else {
 					return null;
 				}
@@ -468,7 +468,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			if (!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")) {
 				try {
 					throw new AccessDeniedException("Unsupported key format : " + splittedKey);
-				} catch (AccessDeniedException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
@@ -476,6 +476,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		return key != null ? key.substring(1).trim() : null;
 	}
 
+	
 	@Async
 	public void saveActivityInESIndex(Map<String, Object> eventMap, String indexName, String indexType, String id) {
 		try {
@@ -493,7 +494,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			}
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		} catch (Exception e) {
-			logger.info("Indexing failed", e);
+			e.printStackTrace();
 		}
 
 	}
@@ -532,7 +533,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			}
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		} catch (Exception e) {
-			logger.info("Indexing failed", e);
+			e.printStackTrace();
 		}
 
 	}
@@ -557,7 +558,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 			mutationBatch.execute();
 		} catch (Exception e) {
-			logger.info("Staging data failed", e);
+			e.printStackTrace();
 		}
 	}
 
