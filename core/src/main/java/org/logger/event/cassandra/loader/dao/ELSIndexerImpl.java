@@ -100,6 +100,40 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
 	}
 
+	public void clearCache(){
+		beFieldName =  new LinkedHashMap<String,String>();
+        fieldDataTypes =  new LinkedHashMap<String,String>();
+        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		} 
+        
+        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
+        resourceTypesCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
+        categoryCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        taxonomyCodeType = new LinkedHashMap<String, String>();
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        cache = new LinkedHashMap<String, String>();
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
+	}
 	public void indexActivity(final String fields){
 	    if(fields != null){				
 	    		final Thread counterThread = new Thread(new Runnable() {
