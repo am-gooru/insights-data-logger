@@ -56,7 +56,8 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
     private static String CASSANDRA_CLUSTER;
-
+    private static String DATACENTER;
+    
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
@@ -64,7 +65,8 @@ public class CassandraConnectionProvider {
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
-
+        DATACENTER = System.getenv("DATACENTER");
+        
         if(CASSANDRA_CLUSTER == null){
         	CASSANDRA_CLUSTER = "gooru-cassandra";
         }
@@ -87,7 +89,7 @@ public class CassandraConnectionProvider {
                         ;
                 
                 if (!hosts.startsWith("127.0")) {
-                    poolConfig.setLocalDatacenter("us-west");
+                    poolConfig.setLocalDatacenter(DATACENTER);
                 }
 
                 AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()

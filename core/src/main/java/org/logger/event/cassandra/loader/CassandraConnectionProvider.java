@@ -66,6 +66,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_CLUSTER;
     private static String INSIHGHTS_ES_IP;
     private static String ES_CLUSTER;
+    private static String DATACENTER;
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
 	private EntityManager<UserCo, String> userEntityPersister;
     
@@ -76,8 +77,8 @@ public class CassandraConnectionProvider {
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
         INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
-        ES_CLUSTER = System.getenv("ES_CLUSTER");;
-        
+        ES_CLUSTER = System.getenv("ES_CLUSTER");
+        DATACENTER = System.getenv("DATACENTER");
        
         if(CASSANDRA_CLUSTER == null){
         	CASSANDRA_CLUSTER = "gooru-cassandra";
@@ -95,6 +96,7 @@ public class CassandraConnectionProvider {
             logger.info("CASSANDRA_CLUSTER" + CASSANDRA_CLUSTER);
             logger.info("CASSANDRA_KEYSPACE" + keyspace);
             logger.info("CASSANDRA_IP" + hosts);
+            logger.info("DATACENTER" + DATACENTER);
             
             if(cassandraKeyspace == null){
             ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
@@ -108,7 +110,7 @@ public class CassandraConnectionProvider {
                     ;
             
             if (!hosts.startsWith("127.0")) {
-                poolConfig.setLocalDatacenter("us-west");
+                poolConfig.setLocalDatacenter(DATACENTER);
             }
 
             AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
