@@ -124,6 +124,24 @@ public interface Constants {
 	
 	public String VIEWS = "views";
 	
+	public String COMPLETED = "completed";
+	
+	public String INPROGRESS = "in-progress";
+	
+	public String INDEXWAITINGLIMIT = "index~waiting~limit";
+	
+	public String INDEXWAITINGCOUNT = "index~waiting~count";
+	
+	public String INDEXEDLIMIT = "indexed~limit";
+	
+	public String INDEXLIMIT = "index~limit";
+	
+	public String INDEXSTATUS = "search~index~status";
+	
+	public String CURRINDEXINGLIMIT = "curr~indexing~limit";
+	
+	public String VIEWSLASTUPDATED = "view~count~last~updated";
+	
 	public String VIEWEVENTS = "viewEvents";
 	
 	public String ATMOSPHERENDPOINT = "atmosphereEndPoint";
