@@ -64,7 +64,6 @@ public interface EventService {
 	
 	boolean validateSchedular(String ipAddress);
 	
-	public void clearCacher();
+	public void clearCache();
 
-	public void migrateCF(String cfName);
 }
