@@ -42,433 +42,430 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveDashBoardDAO,Constants{
+public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDashBoardDAO, Constants {
 
 	private static final Logger logger = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 
-    private CassandraConnectionProvider connectionProvider;
-    
-    private MicroAggregatorDAOmpl microAggregatorDAOmpl;
-    
-    private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
+	private CassandraConnectionProvider connectionProvider;
 
-    private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-    
-    private SimpleDateFormat hourlyDateFormatter = new SimpleDateFormat("yyyyMMddkk");
+	private MicroAggregatorDAOmpl microAggregatorDAOmpl;
 
-    private SimpleDateFormat customDateFormatter;
-    
-    private BaseCassandraRepoImpl baseDao;
+	private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
-    String dashboardKeys = null;
-    
-    String browserDetails = null;
-    
-    String customEventsConfig = null;
-    
-    Map<String,String> fieldDataTypes = null ;
-    
-    Map<String,String> beFieldName = null ;
-    
-    ColumnList<String> eventKeys = null;
-    	
-    Collection<String> esEventFields = null;
-    
-    public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
-        super(connectionProvider);
-        this.connectionProvider = connectionProvider;
-        this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-        this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-        dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN,0).getStringValue();
-        browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN,0).getStringValue();
-        customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"custom~events",DEFAULTCOLUMN,0).getStringValue();
-        /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
-        esEventFields = Arrays.asList(esFields);*/
-        fieldDataTypes =  new LinkedHashMap<String,String>();
-        beFieldName =  new LinkedHashMap<String,String>();
-        //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
-        for (Row<String, String> row : fieldDescrption) {
-        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}        
-    }
-    
-    public void clearCache(){  
-    	dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"dashboard~keys",DEFAULTCOLUMN,0).getStringValue();
-	    browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"available~browsers",DEFAULTCOLUMN,0).getStringValue();
-	    /*String[] esFields = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),"es~fields",DEFAULTCOLUMN).getStringValue().split(",");
-	    esEventFields = Arrays.asList(esFields);*/
-	    fieldDataTypes =  new LinkedHashMap<String,String>();
-        beFieldName =  new LinkedHashMap<String,String>();
-        //Rows<String, String> fieldTypes = baseDao.readWithKeyList(ColumnFamily.EVENTFIELDS.getColumnFamily(), esEventFields);
-        Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
-        for (Row<String, String> row : fieldDescrption) {
-        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}   
-    }
-    
-    @Async
-    public <T> void callCountersV2(Map<String, T> eventMaps) {
-    Map<String,String> eventMap = (Map<String, String>) eventMaps;
-    MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    if((eventMap.containsKey(EVENTNAME))) {
-        eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),eventMap.get("eventName"),0);
-        for(int i=0 ; i < eventKeys.size() ; i++ ){
-            String columnName = eventKeys.getColumnByIndex(i).getName();
-            String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-                    String key = this.formOrginalKey(columnName, eventMap);
-                    if(key != null){
-                    for(String value : columnValue.split(",")){
-                    String orginalColumn = this.formOrginalKey(value, eventMap);
-                    if(orginalColumn != null){
-                            if(!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT+SEPERATOR))) {
-                                    if(!orginalColumn.startsWith(TIMESPENT+SEPERATOR) && !orginalColumn.startsWith("sum"+SEPERATOR)){
-                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, 1L, m);
-                                    }else if(orginalColumn.startsWith(TIMESPENT+SEPERATOR)){
-                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))),m);
-                                    }else if(orginalColumn.startsWith("sum"+SEPERATOR)){
-                                            String[] rowKey = orginalColumn.split("~");
-                                            baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),key, orginalColumn, rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0":eventMap.get(rowKey[1].trim()))),m);
+	private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 
-                                    	}
-                            		}
-                    			}
-                    		}
-        				}
-        			}
-        
-                try {
-                    m.executeAsync();
-                } catch (ConnectionException e) {
-                    logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
-                }
-    	}
-}
-    
-    public String getBrowser(String userAgent) {
-    	String browser = "";
-    	if(!userAgent.isEmpty() && userAgent != null) {
-            	for(String browserList : browserDetails.split(",")) {
-            		if(userAgent.indexOf(browserList)!= -1) {
-            	         browser = browserList;
-            		}
-            	}
-    	}
-    	return browser;
-    }
-    
-    @Async
-    public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
-   		
-    	JSONObject filtersObj = new JSONObject();
-    	filtersObj.put("eventName", eventMap.get("eventName")+","+customEventsConfig);
+	private SimpleDateFormat customDateFormatter;
+
+	private BaseCassandraRepoImpl baseDao;
+
+	String dashboardKeys = null;
+
+	String browserDetails = null;
+
+	String customEventsConfig = null;
+
+	Map<String, String> fieldDataTypes = null;
+
+	Map<String, String> beFieldName = null;
+
+	ColumnList<String> eventKeys = null;
+
+	Collection<String> esEventFields = null;
+
+	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
+		super(connectionProvider);
+		this.connectionProvider = connectionProvider;
+		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
+		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+		dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "dashboard~keys", DEFAULTCOLUMN, 0).getStringValue();
+		browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "available~browsers", DEFAULTCOLUMN, 0).getStringValue();
+		customEventsConfig = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "custom~events", DEFAULTCOLUMN, 0).getStringValue();
+
+		fieldDataTypes = new LinkedHashMap<String, String>();
+		beFieldName = new LinkedHashMap<String, String>();
+
+		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
+		for (Row<String, String> row : fieldDescrption) {
+			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		}
+	}
+
+	public void clearCache() {
+		dashboardKeys = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "dashboard~keys", DEFAULTCOLUMN, 0).getStringValue();
+		browserDetails = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "available~browsers", DEFAULTCOLUMN, 0).getStringValue();
+
+		fieldDataTypes = new LinkedHashMap<String, String>();
+		beFieldName = new LinkedHashMap<String, String>();
+
+		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
+		for (Row<String, String> row : fieldDescrption) {
+			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		}
+	}
+
+	@Async
+	public <T> void callCountersV2(Map<String, T> eventMaps) {
+		Map<String, String> eventMap = (Map<String, String>) eventMaps;
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		if ((eventMap.containsKey(EVENTNAME))) {
+			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), eventMap.get("eventName"), 0);
+			for (int i = 0; i < eventKeys.size(); i++) {
+				String columnName = eventKeys.getColumnByIndex(i).getName();
+				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+				String key = this.formOrginalKey(columnName, eventMap);
+				if (key != null) {
+					for (String value : columnValue.split(",")) {
+						String orginalColumn = this.formOrginalKey(value, eventMap);
+						if (orginalColumn != null) {
+							if (!(eventMap.containsKey(TYPE) && eventMap.get(TYPE).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
+								if (!orginalColumn.startsWith(TIMESPENT + SEPERATOR) && !orginalColumn.startsWith("sum" + SEPERATOR)) {
+									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, 1L, m);
+								} else if (orginalColumn.startsWith(TIMESPENT + SEPERATOR)) {
+									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
+								} else if (orginalColumn.startsWith("sum" + SEPERATOR)) {
+									String[] rowKey = orginalColumn.split("~");
+									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn,
+											rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(eventMap.get(rowKey[1])) : Long.valueOf(String.valueOf(eventMap.get(rowKey[1].trim()) == null ? "0" : eventMap.get(rowKey[1].trim()))), m);
+
+								}
+							}
+						}
+					}
+				}
+			}
+
+			try {
+				m.executeAsync();
+			} catch (ConnectionException e) {
+				logger.info("updateCounter => Error while inserting to cassandra via callCountersV2 {} ", e);
+			}
+		}
+	}
+
+	public String getBrowser(String userAgent) {
+		String browser = "";
+		if (!userAgent.isEmpty() && userAgent != null) {
+			for (String browserList : browserDetails.split(",")) {
+				if (userAgent.indexOf(browserList) != -1) {
+					browser = browserList;
+				}
+			}
+		}
+		return browser;
+	}
+
+	@Async
+	public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String, String> eventMap) throws JSONException {
+
+		JSONObject filtersObj = new JSONObject();
+		filtersObj.put("eventName", eventMap.get("eventName") + "," + customEventsConfig);
 
 		JSONObject mainObj = new JSONObject();
-		mainObj.put("filters", filtersObj);		
+		mainObj.put("filters", filtersObj);
 
-    	ClientResource clientResource = null;
-    	clientResource = new ClientResource(atmosphereEndPoint+"/push/message");
-    	Form forms = new Form();
+		ClientResource clientResource = null;
+		clientResource = new ClientResource(atmosphereEndPoint + "/push/message");
+		Form forms = new Form();
 		forms.add("data", mainObj.toString());
 		clientResource.post(forms.getWebRepresentation());
-       logger.info("atmos status : {} ",clientResource.getStatus());
-    }
+		logger.info("atmos status : {} ", clientResource.getStatus());
+	}
 
-    @Async
-    public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String,String> eventMap) throws JSONException{
-   		
-    	JSONObject filtersObj = new JSONObject();
-    	JSONObject paginateObj = new JSONObject();
-    	Collection<String> fields = new ArrayList<String>();
-    	fields.add("timeSpent");
-    	fields.add("avgTimeSpent");
-    	fields.add("resourceGooruOId");
-    	fields.add("OE");
-    	fields.add("questionType");
-    	fields.add("category");
-    	fields.add("gooruUId");
-    	fields.add("userName");
-    	fields.add("userData");
-    	fields.add("metaData");
-    	fields.add("title");
-    	fields.add("reaction");
-    	fields.add("description");
-    	fields.add("options");
-    	fields.add("skip");
-    	filtersObj.put("session","FS");
-    	paginateObj.put("sortBy","itemSequence");
-    	paginateObj.put("sortOrder","ASC");
-    	
-    	List<String> classpage = microAggregatorDAOmpl.getClassPages(eventMap);
-    	
-    	for(String classId : classpage){
-	    	filtersObj.put("classId",classId);
+	@Async
+	public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String, String> eventMap) throws JSONException {
+
+		JSONObject filtersObj = new JSONObject();
+		JSONObject paginateObj = new JSONObject();
+		Collection<String> fields = new ArrayList<String>();
+		fields.add("timeSpent");
+		fields.add("avgTimeSpent");
+		fields.add("resourceGooruOId");
+		fields.add("OE");
+		fields.add("questionType");
+		fields.add("category");
+		fields.add("gooruUId");
+		fields.add("userName");
+		fields.add("userData");
+		fields.add("metaData");
+		fields.add("title");
+		fields.add("reaction");
+		fields.add("description");
+		fields.add("options");
+		fields.add("skip");
+		filtersObj.put("session", "FS");
+		paginateObj.put("sortBy", "itemSequence");
+		paginateObj.put("sortOrder", "ASC");
+
+		List<String> classpage = microAggregatorDAOmpl.getClassPages(eventMap);
+
+		for (String classId : classpage) {
+			filtersObj.put("classId", classId);
 			JSONObject mainObj = new JSONObject();
 			mainObj.put("filters", filtersObj);
 			mainObj.put("paginate", paginateObj);
 			mainObj.put("fields", fields);
-	
-	    	ClientResource clientResource = null;
-	    	clientResource = new ClientResource(atmosphereEndPoint+"/classpage/users/usage");
-	    	Form forms = new Form();
+
+			ClientResource clientResource = null;
+			clientResource = new ClientResource(atmosphereEndPoint + "/classpage/users/usage");
+			Form forms = new Form();
 			forms.add("data", mainObj.toString());
 			forms.add("collectionId", eventMap.get(PARENTGOORUOID));
 			clientResource.post(forms.getWebRepresentation());
-    	}
-       
-    }
-    
-    @Async
-    public void findDifferenceInCount(Map<String,String> eventMap) throws ParseException{
-    	
-    	Map<String,String>  aggregator = this.generateKeyValues(eventMap);
-    	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-    	
-    	for (Map.Entry<String, String> entry : aggregator.entrySet()) {
-    		Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT+SEPERATOR+eventMap.get(EVENTNAME),0);
-    		Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT+SEPERATOR+eventMap.get(EVENTNAME),0); 
-    	    long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
-    	    long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
-    	    long difference = 100L;
-    	    long findDifference = 0L;
-    	    if(lastCount != 0L){
-    	    	if(thisCount > lastCount) {
-    	    		findDifference = thisCount - lastCount;
-    	    		difference = (findDifference/lastCount)*100;
-    	    	} else {
-    	    		difference = 0L;
-    	    	}
-    	    }
-    	    baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey()+SEPERATOR+entry.getValue(), DIFF+SEPERATOR+eventMap.get(EVENTNAME), String.valueOf(difference), m);
-    	}    	
-    	try {
-            m.executeAsync();
-        } catch (Exception e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
-    }
-    
-    @Async
-	public Map<String,String> generateKeyValues(Map<String,String> eventMap) throws ParseException{
-		Map<String,String> returnDate = new LinkedHashMap<String, String>();
-		if(dashboardKeys != null){
-			for(String key : dashboardKeys.split(",")){
+		}
+
+	}
+
+	@Async
+	public void findDifferenceInCount(Map<String, String> eventMap) throws ParseException {
+
+		Map<String, String> aggregator = this.generateKeyValues(eventMap);
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+
+		for (Map.Entry<String, String> entry : aggregator.entrySet()) {
+			Column<String> thisCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getKey(), COUNT + SEPERATOR + eventMap.get(EVENTNAME), 0);
+			Column<String> lastCountList = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), entry.getValue(), COUNT + SEPERATOR + eventMap.get(EVENTNAME), 0);
+			long thisCount = thisCountList != null ? thisCountList.getLongValue() : 0L;
+			long lastCount = lastCountList != null ? lastCountList.getLongValue() : 0L;
+			long difference = 100L;
+			long findDifference = 0L;
+			if (lastCount != 0L) {
+				if (thisCount > lastCount) {
+					findDifference = thisCount - lastCount;
+					difference = (findDifference / lastCount) * 100;
+				} else {
+					difference = 0L;
+				}
+			}
+			baseDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), entry.getKey() + SEPERATOR + entry.getValue(), DIFF + SEPERATOR + eventMap.get(EVENTNAME), String.valueOf(difference), m);
+		}
+		try {
+			m.executeAsync();
+		} catch (Exception e) {
+			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		}
+	}
+
+	@Async
+	public Map<String, String> generateKeyValues(Map<String, String> eventMap) throws ParseException {
+		Map<String, String> returnDate = new LinkedHashMap<String, String>();
+		if (dashboardKeys != null) {
+			for (String key : dashboardKeys.split(",")) {
 				String rowKey = null;
-				if(!key.equalsIgnoreCase("all")) {
+				if (!key.equalsIgnoreCase("all")) {
 					customDateFormatter = new SimpleDateFormat(key);
 					Date eventDateTime = new Date(Long.valueOf(eventMap.get(STARTTIME)));
 					rowKey = customDateFormatter.format(eventDateTime);
 					Date lastDate = customDateFormatter.parse(rowKey);
 					Date rowValues = new Date(lastDate.getTime() - 2);
 					returnDate.put(customDateFormatter.format(lastDate), customDateFormatter.format(rowValues));
-					if(eventMap.containsKey(CLIENTSOURCE)) {
-						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(CLIENTSOURCE), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(CLIENTSOURCE));
+					if (eventMap.containsKey(CLIENTSOURCE)) {
+						returnDate.put(customDateFormatter.format(lastDate) + SEPERATOR + eventMap.get(CLIENTSOURCE), customDateFormatter.format(rowValues) + SEPERATOR + eventMap.get(CLIENTSOURCE));
 					}
-					if(eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()){
-						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(ORGANIZATIONUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(ORGANIZATIONUID));
+					if (eventMap.get(ORGANIZATIONUID) != null && !eventMap.get(ORGANIZATIONUID).isEmpty()) {
+						returnDate.put(customDateFormatter.format(lastDate) + SEPERATOR + eventMap.get(ORGANIZATIONUID), customDateFormatter.format(rowValues) + SEPERATOR + eventMap.get(ORGANIZATIONUID));
 					}
-					if(eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()){
-						returnDate.put(customDateFormatter.format(lastDate)+SEPERATOR+eventMap.get(GOORUID), customDateFormatter.format(rowValues)+SEPERATOR+eventMap.get(GOORUID));
+					if (eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).isEmpty()) {
+						returnDate.put(customDateFormatter.format(lastDate) + SEPERATOR + eventMap.get(GOORUID), customDateFormatter.format(rowValues) + SEPERATOR + eventMap.get(GOORUID));
 					}
-				} 
+				}
 			}
 		}
-		return returnDate; 
+		return returnDate;
 	}
-    
-    private void saveGeoLocation(GeoData geoData,Map<String,String> eventMap){
-    	ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-    	String json = null ;
-    	String rowKey = "geo~locations";
-    	String columnName = null;
-    	if(geoData.getLatitude() != null && geoData.getLongitude() != null){    		
-    		 columnName = geoData.getLatitude()+"x"+geoData.getLongitude();
-    	}
-		try {
-			 json = ow.writeValueAsString(geoData);
-		} catch (JsonProcessingException e) {
-			logger.info("Exception while converting Object as JSON : {}",e);
+
+	private void saveGeoLocation(GeoData geoData, Map<String, String> eventMap) {
+		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+		String json = null;
+		String rowKey = "geo~locations";
+		String columnName = null;
+		if (geoData.getLatitude() != null && geoData.getLongitude() != null) {
+			columnName = geoData.getLatitude() + "x" + geoData.getLongitude();
 		}
-		if(columnName != null){
+		try {
+			json = ow.writeValueAsString(geoData);
+		} catch (JsonProcessingException e) {
+			logger.info("Exception while converting Object as JSON : {}", e);
+		}
+		if (columnName != null) {
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
 		}
-		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT+SEPERATOR+eventMap.get(EVENTNAME), 1);
-    }	
-    
+		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT + SEPERATOR + eventMap.get(EVENTNAME), 1);
+	}
+
 	@Async
-	public void addApplicationSession(Map<String,String> eventMap){
-		
+	public void addApplicationSession(Map<String, String> eventMap) {
+
 		int expireTime = 3600;
 		int contentExpireTime = 600;
-		
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
-		}else{
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
-		}
-			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),expireTime, m);
 
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase("logOut") || eventMap.get(EVENTNAME).equalsIgnoreCase("user.logout")){
-				if(eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")){
-					baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID));
-				}else{
-					baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID));
-				}
-				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, eventMap.get(SESSIONTOKEN)+SEPERATOR+eventMap.get(GOORUID));
+		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+		if (eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")) {
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), expireTime, m);
+		} else {
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), expireTime, m);
 		}
-			
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){				
-				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-			}else{
-				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVECOLLECTIONPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), expireTime, m);
+
+		if (eventMap.get(EVENTNAME).equalsIgnoreCase("logOut") || eventMap.get(EVENTNAME).equalsIgnoreCase("user.logout")) {
+			if (eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")) {
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID));
+			} else {
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID));
+			}
+			baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, eventMap.get(SESSIONTOKEN) + SEPERATOR + eventMap.get(GOORUID));
+		}
+
+		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+			} else {
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RP1.getName())){
-			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){				
-				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-			}else{
-				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVERESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RP1.getName())) {
+			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+			} else {
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
-		if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())){
-			if(eventMap.get(TYPE).equalsIgnoreCase(STOP)){				
-				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-			}else{
-				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),ACTIVECOLLECTIONRESOURCEPLAYS, eventMap.get(CONTENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(),contentExpireTime, m);
+		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+			} else {
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS, eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
-		
+
 		try {
-            m.executeAsync();
-        } catch (Exception e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
+			m.executeAsync();
+		} catch (Exception e) {
+			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		}
 	}
-	
+
 	@Async
-	public <T> void addContentForPostViews(Map<String, T> eventMaps){
-		Map<String,String> eventMap = (Map<String, String>) eventMaps;
+	public <T> void addContentForPostViews(Map<String, T> eventMaps) {
+		Map<String, String> eventMap = (Map<String, String>) eventMaps;
 		String dateKey = minDateFormatter.format(new Date()).toString();
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		
-		logger.info("Key- view : {} ",VIEWS+SEPERATOR+dateKey);
-		
-		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(),VIEWS+SEPERATOR+dateKey,eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000,m);
-		
+
+		logger.info("Key- view : {} ", VIEWS + SEPERATOR + dateKey);
+
+		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + dateKey, eventMap.get(CONTENTGOORUOID), eventMap.get(CONTENTGOORUOID), 2592000, m);
+
 		try {
-            m.execute();
-        } catch (ConnectionException e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
+			m.execute();
+		} catch (ConnectionException e) {
+			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		}
 	}
-	
-	public void watchApplicationSession() throws ParseException{
-	
+
+	public void watchApplicationSession() throws ParseException {
+
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		long allUserSessionCounts = 0L;
 		long anonymousSessionCounts = 0L;
 		long loggedUserSessionCounts = 0L;
-		
+
 		long allCollectionPlayCounts = 0L;
 		long allResourcePlayCounts = 0L;
 		long allCollectionResourcePlayCounts = 0L;
-		
-		try{
-			Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ALLUSERSESSION,0);
-			Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+ANONYMOUSSESSION,0);
-			Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION,COUNT+SEPERATOR+USERSESSION,0);
-			
-			ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION,0);
-			ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION,0);
-			ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION,0);
-			
-			Column<String> allCollectionPlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS,0);
-			Column<String> allResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVERESOURCEPLAYS,0);
-			Column<String> allCollectionResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS,COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS,0);
-			
-			ColumnList<String> allCollectionPlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS,0);
-			ColumnList<String> allResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS,0);
-			ColumnList<String> allCollectionResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS,0);
-			
-			if(allUserSession != null)
-			allUserSessionCounts = allUserSession.size();
-			
-			if(anonymousSession != null)
-			anonymousSessionCounts = anonymousSession.size();
-			
-			if(loggedUserSession != null)
-			loggedUserSessionCounts = loggedUserSession.size();
-			
-			if(allResourcePlay != null)
-			allResourcePlayCounts = allResourcePlay.size();
-				
-			if(allCollectionPlay != null)
-			allCollectionPlayCounts = allCollectionPlay.size();
-				
-			if(allCollectionResourcePlay != null)
-			allCollectionResourcePlayCounts = allCollectionResourcePlay.size();
-				
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ALLUSERSESSION, (allUserSessionCounts - allUserSessionCount.getLongValue()), m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ANONYMOUSSESSION, (anonymousSessionCounts  - anonymousSessionCount.getLongValue()), m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+USERSESSION, (loggedUserSessionCounts - loggedUserSessionCount.getLongValue()), m);
-			
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS, (allCollectionPlayCounts - allCollectionPlayCount.getLongValue()), m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVERESOURCEPLAYS, (allResourcePlayCounts  - allResourcePlayCount.getLongValue()), m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS, (allCollectionResourcePlayCounts - allCollectionResourcePlayCount.getLongValue()), m);
-			
-		}catch(Exception e){
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ALLUSERSESSION, 0, m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+ANONYMOUSSESSION,0, m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVESESSION, COUNT+SEPERATOR+USERSESSION, 0, m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONPLAYS, 0, m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVERESOURCEPLAYS,0, m);
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),ACTIVEPLAYS, COUNT+SEPERATOR+ACTIVECOLLECTIONRESOURCEPLAYS, 0, m);
-			logger.info("Exception in watching session : {}",e);
-		}
-		
+
 		try {
-            m.executeAsync();
-        } catch (ConnectionException e) {
-            logger.info("updateCounter => Error while inserting to cassandra {} ", e);
-        }
+			Column<String> allUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ALLUSERSESSION, 0);
+			Column<String> anonymousSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ANONYMOUSSESSION, 0);
+			Column<String> loggedUserSessionCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + USERSESSION, 0);
+
+			ColumnList<String> allUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALLUSERSESSION, 0);
+			ColumnList<String> anonymousSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUSSESSION, 0);
+			ColumnList<String> loggedUserSession = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USERSESSION, 0);
+
+			Column<String> allCollectionPlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONPLAYS, 0);
+			Column<String> allResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVERESOURCEPLAYS, 0);
+			Column<String> allCollectionResourcePlayCount = baseDao.readWithKeyColumn(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONRESOURCEPLAYS, 0);
+
+			ColumnList<String> allCollectionPlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONPLAYS, 0);
+			ColumnList<String> allResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVERESOURCEPLAYS, 0);
+			ColumnList<String> allCollectionResourcePlay = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVECOLLECTIONRESOURCEPLAYS, 0);
+
+			if (allUserSession != null)
+				allUserSessionCounts = allUserSession.size();
+
+			if (anonymousSession != null)
+				anonymousSessionCounts = anonymousSession.size();
+
+			if (loggedUserSession != null)
+				loggedUserSessionCounts = loggedUserSession.size();
+
+			if (allResourcePlay != null)
+				allResourcePlayCounts = allResourcePlay.size();
+
+			if (allCollectionPlay != null)
+				allCollectionPlayCounts = allCollectionPlay.size();
+
+			if (allCollectionResourcePlay != null)
+				allCollectionResourcePlayCounts = allCollectionResourcePlay.size();
+
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ALLUSERSESSION, (allUserSessionCounts - allUserSessionCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ANONYMOUSSESSION, (anonymousSessionCounts - anonymousSessionCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + USERSESSION, (loggedUserSessionCounts - loggedUserSessionCount.getLongValue()), m);
+
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONPLAYS, (allCollectionPlayCounts - allCollectionPlayCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVERESOURCEPLAYS, (allResourcePlayCounts - allResourcePlayCount.getLongValue()), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONRESOURCEPLAYS, (allCollectionResourcePlayCounts - allCollectionResourcePlayCount.getLongValue()), m);
+
+		} catch (Exception e) {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ALLUSERSESSION, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + ANONYMOUSSESSION, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVESESSION, COUNT + SEPERATOR + USERSESSION, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONPLAYS, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVERESOURCEPLAYS, 0, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), ACTIVEPLAYS, COUNT + SEPERATOR + ACTIVECOLLECTIONRESOURCEPLAYS, 0, m);
+			logger.info("Exception in watching session : {}", e);
+		}
+
+		try {
+			m.executeAsync();
+		} catch (ConnectionException e) {
+			logger.info("updateCounter => Error while inserting to cassandra {} ", e);
+		}
 	}
 
-
-/*	C: defines => Constant
-	D: defines => Date format lookup
-	E: defines => eventMap param lookup*/
-	public String formOrginalKey(String value,Map<String,String> eventMap){
+	/*
+	 * C: defines => Constant D: defines => Date format lookup E: defines =>
+	 * eventMap param lookup
+	 */
+	public String formOrginalKey(String value, Map<String, String> eventMap) {
 		Date eventDateTime = new Date();
 		String key = "";
-		for(String splittedKey : value.split("~")){	
-			String[]  subKey = null;
-			if(splittedKey.startsWith("C:")){
+		for (String splittedKey : value.split("~")) {
+			String[] subKey = null;
+			if (splittedKey.startsWith("C:")) {
 				subKey = splittedKey.split(":");
-				key += "~"+subKey[1];
+				key += "~" + subKey[1];
 			}
-			if(splittedKey.startsWith("D:")){
+			if (splittedKey.startsWith("D:")) {
 				subKey = splittedKey.split(":");
 				customDateFormatter = new SimpleDateFormat(subKey[1]);
-				if(eventMap != null){
-					 eventDateTime = new Date(Long.valueOf(eventMap.get("startTime")));					
+				if (eventMap != null) {
+					eventDateTime = new Date(Long.valueOf(eventMap.get("startTime")));
 				}
-				key += "~"+customDateFormatter.format(eventDateTime).toString();
+				key += "~" + customDateFormatter.format(eventDateTime).toString();
 			}
-			if(splittedKey.startsWith("E:") && eventMap != null){
+			if (splittedKey.startsWith("E:") && eventMap != null) {
 				subKey = splittedKey.split(":");
-				if(splittedKey.contains(USERAGENT)) {
-					key += "~"+this.getBrowser(eventMap.get(USERAGENT));
-				} else if(eventMap.get(subKey[1]) != null){
-					key += "~"+eventMap.get(subKey[1]).toLowerCase();
-				}else {
+				if (splittedKey.contains(USERAGENT)) {
+					key += "~" + this.getBrowser(eventMap.get(USERAGENT));
+				} else if (eventMap.get(subKey[1]) != null) {
+					key += "~" + eventMap.get(subKey[1]).toLowerCase();
+				} else {
 					return null;
 				}
 			}
-			if(!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")){
+			if (!splittedKey.startsWith("C:") && !splittedKey.startsWith("D:") && !splittedKey.startsWith("E:")) {
 				try {
 					throw new AccessDeniedException("Unsupported key format : " + splittedKey);
 				} catch (AccessDeniedException e) {
@@ -476,135 +473,127 @@ public class LiveDashBoardDAOImpl  extends BaseDAOCassandraImpl implements LiveD
 				}
 			}
 		}
-		return key != null ? key.substring(1).trim():null;
+		return key != null ? key.substring(1).trim() : null;
 	}
 
 	@Async
-	public void saveActivityInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
+	public void saveActivityInESIndex(Map<String, Object> eventMap, String indexName, String indexType, String id) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			String rowKey = null;  
-			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+			String rowKey = null;
+			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
+				if (beFieldName.containsKey(entry.getKey()) && rowKey != null) {
 					rowKey = beFieldName.get(entry.getKey());
-				}else{
+				} else {
 					rowKey = entry.getKey();
 				}
-	            if(rowKey != null && fieldDataTypes.containsKey(entry.getKey())&& entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.get(entry.getKey())));
-	            }
+				if (rowKey != null && fieldDataTypes.containsKey(entry.getKey()) && entry.getValue() != null) {
+					contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.get(entry.getKey())));
+				}
 			}
-				getESClient().prepareIndex(indexName, indexType, id)
-				.setSource(contentBuilder)
-				.execute()
-				.actionGet()
-				;
-			} catch (Exception e) {
-				logger.info("Indexing failed",e);
-			}
-		
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+		} catch (Exception e) {
+			logger.info("Indexing failed", e);
+		}
+
 	}
 
 	@Async
-	public void saveInESIndex(Map<String,Object> eventMap ,String indexName,String indexType,String id ) {
+	public void saveInESIndex(Map<String, Object> eventMap, String indexName, String indexType, String id) {
 		try {
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			String rowKey = null;  
-			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				
-				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+			String rowKey = null;
+			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
+
+				if (beFieldName.containsKey(entry.getKey()) && rowKey != null) {
 					rowKey = beFieldName.get(entry.getKey());
-				}else{
+				} else {
 					rowKey = entry.getKey();
 				}
-				
-				if(rowKey != null && entry.getValue() != null){	            	
-	            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
-	            }else if(rowKey != null){
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")){        		
-	            		contentBuilder.field(rowKey, String.valueOf(entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")){        		
-	            		contentBuilder.field(rowKey, Integer.valueOf(""+entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")){        		
-	            		contentBuilder.field(rowKey, Long.valueOf(""+entry.getValue()));
-	            	}
-	            	if(entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")){        		
-	            		contentBuilder.field(rowKey, Boolean.valueOf(""+entry.getValue()));
-	            	}
-	            	else{        		
-	            		contentBuilder.field(rowKey, entry.getValue());
-	            	}
-	            }
+
+				if (rowKey != null && entry.getValue() != null) {
+					contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
+				} else if (rowKey != null) {
+					if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("String")) {
+						contentBuilder.field(rowKey, String.valueOf(entry.getValue()));
+					}
+					if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Integer")) {
+						contentBuilder.field(rowKey, Integer.valueOf("" + entry.getValue()));
+					}
+					if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Long")) {
+						contentBuilder.field(rowKey, Long.valueOf("" + entry.getValue()));
+					}
+					if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
+						contentBuilder.field(rowKey, Boolean.valueOf("" + entry.getValue()));
+					} else {
+						contentBuilder.field(rowKey, entry.getValue());
+					}
+				}
 			}
-				getESClient().prepareIndex(indexName, indexType, id)
-				.setSource(contentBuilder)
-				.execute()
-				.actionGet()
-				;
-			} catch (Exception e) {
-				logger.info("Indexing failed",e);
-			}
-		
+			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+		} catch (Exception e) {
+			logger.info("Indexing failed", e);
+		}
+
 	}
-	
+
 	@Async
-	public void saveInStaging(Map<String,Object> eventMap) {
+	public void saveInStaging(Map<String, Object> eventMap) {
 		try {
-			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL); 
+			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamily.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
 			String rowKey = null;
-			for(Map.Entry<String, Object> entry : eventMap.entrySet()){
-				
-				if(beFieldName.containsKey(entry.getKey()) && rowKey != null){
+			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
+
+				if (beFieldName.containsKey(entry.getKey()) && rowKey != null) {
 					rowKey = beFieldName.get(entry.getKey());
-				}else{
+				} else {
 					rowKey = entry.getKey();
 				}
-				
-				String typeToChange =  fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String";		       
-				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),typeToChange), m);
-		    }
-			
+
+				String typeToChange = fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String";
+				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), typeToChange), m);
+			}
+
 			mutationBatch.execute();
 		} catch (Exception e) {
-			logger.info("Staging data failed",e);
+			logger.info("Staging data failed", e);
 		}
 	}
-	@Async
-    public void saveGeoLocations(Map<String,String> eventMap) throws IOException{
-    	
-		if(eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()){
-			
-			GeoData geoData = new GeoData();
-			
-			GeoLocation geo = new GeoLocation();
-			
-			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));			
 
-			if(res != null && res.getCountry().getName() != null){
+	@Async
+	public void saveGeoLocations(Map<String, String> eventMap) throws IOException {
+
+		if (eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()) {
+
+			GeoData geoData = new GeoData();
+
+			GeoLocation geo = new GeoLocation();
+
+			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));
+
+			if (res != null && res.getCountry().getName() != null) {
 				geoData.setCountry(res.getCountry().getName());
 				eventMap.put("country", res.getCountry().getName());
 			}
-			if(res != null && res.getCity().getName() != null){
+			if (res != null && res.getCity().getName() != null) {
 				geoData.setCity(res.getCity().getName());
 				eventMap.put("city", res.getCity().getName());
 			}
-			if(res != null && res.getLocation().getLatitude() != null){
+			if (res != null && res.getLocation().getLatitude() != null) {
 				geoData.setLatitude(res.getLocation().getLatitude());
 			}
-			if(res != null && res.getLocation().getLongitude() != null){
+			if (res != null && res.getLocation().getLongitude() != null) {
 				geoData.setLongitude(res.getLocation().getLongitude());
 			}
-			if(res != null && res.getMostSpecificSubdivision().getName() != null){
+			if (res != null && res.getMostSpecificSubdivision().getName() != null) {
 				geoData.setState(res.getMostSpecificSubdivision().getName());
 				eventMap.put("state", res.getMostSpecificSubdivision().getName());
 			}
-			
-			if(geoData.getLatitude() != null && geoData.getLongitude() != null){
-				this.saveGeoLocation(geoData,eventMap);
-			}			
+
+			if (geoData.getLatitude() != null && geoData.getLongitude() != null) {
+				this.saveGeoLocation(geoData, eventMap);
+			}
 		}
-    }
+	}
 }

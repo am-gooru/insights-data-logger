@@ -95,7 +95,7 @@ public class DataUtils {
 
 	static {
 		collectionItemTableKeys = new HashMap<String, String>();
-		collectionItemTableKeys.put("collectionContentId","collectionContentId");
+		collectionItemTableKeys.put("collectionContentId", "collectionContentId");
 		collectionItemTableKeys.put("collectionGooruOid", "collectionGooruOid");
 		collectionItemTableKeys.put("resourceGooruOid", "resourceGooruOid");
 		collectionItemTableKeys.put("resourceContentId", "resourceContentId");
@@ -119,8 +119,7 @@ public class DataUtils {
 		collectionItemCFKeys.put("deleted", "deleted");
 		collectionItemCFKeys.put("item_type", "itemType");
 		collectionItemCFKeys.put("resource_content_id", "resourceContentId");
-		collectionItemCFKeys
-				.put("collection_content_id", "collectionContentId");
+		collectionItemCFKeys.put("collection_content_id", "collectionContentId");
 		collectionItemCFKeys.put("collection_gooru_oid", "collectionGooruOid");
 		collectionItemCFKeys.put("resource_gooru_oid", "resourceGooruOid");
 		collectionItemCFKeys.put("item_sequence", "itemSequence");
@@ -251,8 +250,8 @@ public class DataUtils {
 		collectionItemCFDataType.put("deleted", "Integer");
 		collectionItemCFDataType.put("item_type", "String");
 		collectionItemCFDataType.put("resource_content_id", "Long");
-		collectionItemCFDataType.put("collection_content_id","Long");
-		collectionItemCFDataType.put("collection_gooru_oid","String");
+		collectionItemCFDataType.put("collection_content_id", "Long");
+		collectionItemCFDataType.put("collection_gooru_oid", "String");
 		collectionItemCFDataType.put("resource_gooru_oid", "String");
 		collectionItemCFDataType.put("item_sequence", "Integer");
 		collectionItemCFDataType.put("collection_item_id", "String");
@@ -271,19 +270,15 @@ public class DataUtils {
 	}
 
 	public static String makeCombinedEventName(String eventName) {
-		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName),
-				eventName);
+		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName), eventName);
 	}
 
 	public static Long formatReactionString(String key) {
-		return formatedReaction.get(key) == null ? 0L : formatedReaction
-				.get(key);
+		return formatedReaction.get(key) == null ? 0L : formatedReaction.get(key);
 	}
 
 	public static String makeCombinedAnswerSeq(int sequence) {
-		return StringUtils.defaultIfEmpty(
-				formatedAnswerSeq.get(String.valueOf(sequence)),
-				String.valueOf(sequence));
+		return StringUtils.defaultIfEmpty(formatedAnswerSeq.get(String.valueOf(sequence)), String.valueOf(sequence));
 	}
 
 }
