@@ -246,9 +246,9 @@ public class EventServiceImpl implements EventService {
 		return dataLoaderService.createEvent(eventName, apiKey);
 	}
 
-	public boolean validateSchedular(String ipAddress) {
+	public boolean validateSchedular() {
 
-		return dataLoaderService.validateSchedular(ipAddress);
+		return dataLoaderService.validateSchedular();
 	}
 
 	public void clearCache() {

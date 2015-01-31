@@ -24,6 +24,8 @@
 package org.logger.event.cassandra.loader;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -94,7 +96,7 @@ public class CassandraDataLoader implements Constants {
 	public static Map<String, Object> gooruTaxonomy;
 
 	private MicroAggregatorProducer microAggregator;
-	
+
 	public Collection<String> pushingEvents;
 
 	public Collection<String> statKeys;
@@ -103,7 +105,7 @@ public class CassandraDataLoader implements Constants {
 
 	private BaseCassandraRepoImpl baseDao;
 
-	private String configuredIp;
+	private boolean canRunSchduler = false;
 
 	/**
 	 * Get Kafka properties from Environment
@@ -187,7 +189,17 @@ public class CassandraDataLoader implements Constants {
 		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics", 0);
 		statKeys = statMetrics.getColumnNames();
 
-		configuredIp = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~ip", 0).getStringValue("ip_address", null);
+		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~host", 0).getStringValue("host", null);
+
+		try {
+			String localHost = "" + InetAddress.getLocalHost();
+			logger.info("Host : " + localHost);
+			if (localHost.contains(host)) {
+				canRunSchduler = true;
+			}
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 
 		if (kafkaConfigurationCache == null) {
 
@@ -228,8 +240,6 @@ public class CassandraDataLoader implements Constants {
 			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 		}
 
-		configuredIp = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~ip", 0).getStringValue("ip_address", null);
-
 		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 		String[] kafkaMessager = new String[] { "v2~kafka~consumer", "v2~kafka~logwritter~producer", "v2~kafka~logwritter~consumer", "v2~kafka~microaggregator~producer", "v2~kafka~microaggregator~consumer" };
 		Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
@@ -241,6 +251,17 @@ public class CassandraDataLoader implements Constants {
 			kafkaConfigurationCache.put(row.getKey(), properties);
 		}
 
+		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~host", 0).getStringValue("host", null);
+
+		try {
+			String localHost = "" + InetAddress.getLocalHost();
+			logger.info("Host : " + localHost);
+			if (localHost.contains(host)) {
+				canRunSchduler = true;
+			}
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -830,24 +851,9 @@ public class CassandraDataLoader implements Constants {
 		return false;
 	}
 
-	public boolean validateSchedular(String ipAddress) {
+	public boolean validateSchedular() {
 
-		try {
-			/*
-			 * ColumnList<String> columnList =
-			 * baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS
-			 * .getColumnFamily(),"schedular~ip",0); String configuredIp =
-			 * columnList.getColumnByName("ip_address").getStringValue();
-			 */
-			if (configuredIp != null) {
-				if (configuredIp.equalsIgnoreCase(ipAddress))
-					return true;
-			}
-		} catch (Exception e) {
-			logger.error(" unable to get the scedular IP " + e);
-			return false;
-		}
-		return false;
+		return canRunSchduler;
 	}
 
 	private Map<String, String> formatEventMap(EventObject eventObject, Map<String, String> eventMap) {

@@ -522,14 +522,6 @@ public class EventController {
 	}
 
 	public boolean validateSchedular() {
-
-		try {
-			InetAddress ip = InetAddress.getByName("DO-LOGAPI");
-			String ipAddress = ip.getHostAddress();
-			return eventService.validateSchedular(ipAddress);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		return false;
+		return eventService.validateSchedular();
 	}
 }

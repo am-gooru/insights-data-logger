@@ -62,7 +62,7 @@ public interface EventService {
 	
 	boolean createEvent(String eventName,String apiKey);
 	
-	boolean validateSchedular(String ipAddress);
+	boolean validateSchedular();
 	
 	public void clearCache();
 
