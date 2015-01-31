@@ -87,7 +87,7 @@ public class CassandraConnectionProvider {
                         ;
                 
                 if (!hosts.startsWith("127.0")) {
-                    poolConfig.setLocalDatacenter("datacenter1");
+                    poolConfig.setLocalDatacenter("us-west");
                 }
 
                 AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
