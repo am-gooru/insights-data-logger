@@ -153,7 +153,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		/* Maintain session - Start */
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(START)) {
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 
@@ -164,7 +164,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+		/*
+		 * Removing this code to maintain session start time alone.Otherwise it will update session end time as well.
+		 * 
+		 * if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
 			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 			if (eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()) {
@@ -175,7 +178,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
-		}
+		}*/
 
 		/* Maintain session - END */
 
