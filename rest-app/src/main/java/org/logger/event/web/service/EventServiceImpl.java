@@ -288,6 +288,8 @@ public class EventServiceImpl implements EventService {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}else if(status.equalsIgnoreCase("stop")){
+			logger.info("Event indexing stopped...");
 		}else{
 			logger.info("Indexing is in-progress.....");
 
