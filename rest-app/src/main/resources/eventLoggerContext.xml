@@ -60,12 +60,12 @@
 
 	<bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
-           <property name="targetMethod" value="watchSession" />
+           <property name="targetMethod" value="indexActivity" />
        </bean>
 
        <bean id="watchSessionTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
            <property name="jobDetail" ref="watchSessionDetails" />
-           <property name="repeatInterval" value="5000" />
+           <property name="repeatInterval" value="60000" />
            <property name="startDelay" value="1000" />
        </bean>
        
