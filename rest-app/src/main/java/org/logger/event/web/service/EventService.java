@@ -66,4 +66,5 @@ public interface EventService {
 	
 	public void clearCache();
 
+	public void indexActivity();
 }

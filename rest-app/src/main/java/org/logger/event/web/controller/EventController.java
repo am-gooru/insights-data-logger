@@ -458,8 +458,8 @@ public class EventController {
 
 	}
 
-	public void watchSession() {
-
+	public void indexActivity() {
+		eventService.indexActivity();
 	}
 
 	public void postMigration() {

@@ -18,6 +18,8 @@ import java.util.TreeSet;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -730,14 +732,32 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 		            	contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()),fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
 		            }
 				}
+				indexingES(indexName, indexType, id, contentBuilder, 0);
 			} catch (Exception e) {
-				logger.info("Indexing failed in content Builder ",e);	
+				e.printStackTrace();	
 			}
 			
-			indexingES(indexName, indexType, id, contentBuilder, 0);
 	}
 	
-	
+	public void indexCustomFieldIndex(String indexName, String indexType, String id, Map<String, Object> eventMap) {
+		UpdateRequestBuilder updateRequestBuilder = getESClient().prepareUpdate(indexName, indexType, id);
+		StringBuilder ctxSource = new StringBuilder();
+
+		for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
+			String rowKey = null;
+			if (beFieldName.containsKey(entry.getKey())) {
+				rowKey = beFieldName.get(entry.getKey());
+			}
+			if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
+				updateRequestBuilder.addScriptParam(rowKey, entry.getValue());
+				ctxSource.append(ctxSource.length() == 0 ? "" : ";");
+				ctxSource.append("ctx._source."+rowKey+"="+rowKey);
+			}
+		}
+		updateRequestBuilder.setScript(ctxSource.toString()).execute().actionGet();
+
+	}
+
 	public void indexingES(String indexName,String indexType,String id ,XContentBuilder contentBuilder,int retryCount){
 		try{
 			contentBuilder.field("index_updated_time", new Date());
@@ -753,7 +773,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				retryCount++;
     			indexingES(indexName, indexType, id, contentBuilder, retryCount);
         	}else{
-        		logger.info("Indexing failed in Prod : {} ",e);
         		e.printStackTrace();
         	}
 		}

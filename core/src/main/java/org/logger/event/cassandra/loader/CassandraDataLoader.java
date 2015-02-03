@@ -1175,6 +1175,66 @@ public class CassandraDataLoader implements Constants {
 		}
 	}
 
+
+    public void updateStagingES(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
+    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+
+    	if(isSchduler){
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
+    	}
+    	
+    	for (long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
+
+    		String currentDate = dateFormatter.format(new Date(startDate));
+    		logger.info("Processing Date : {}" , currentDate);
+    		
+   		 	String timeLineKey = null;   		 	
+   		 	if(customEventName == null || customEventName  == "") {
+   		 		timeLineKey = currentDate.toString();
+   		 	} else {
+   		 		timeLineKey = currentDate.toString()+"~"+customEventName;
+   		 	}
+   		 	
+   		 	//Read Event Time Line for event keys and create as a Collection
+   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
+   		 	
+	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
+	    		readEventAndIndex(eventUUID);
+	    	}
+	    	//Incrementing time - one minute
+	    	startDate = new Date(startDate).getTime() + 60000;
+	    	
+	    	if(isSchduler){
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+dateFormatter.format(new Date(startDate)));
+	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
+	    	}
+	    }
+	    
+    	if(isSchduler){
+    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"completed");
+    	}
+    	
+    	logger.info("Indexing completed..........");
+    }
+    
+    public void  readEventAndIndex(final ColumnList<String> eventUUID){
+    	final Thread counterThread = new Thread(new Runnable() {
+    	  	@Override
+    	  	public void run(){
+    	  		
+    	  		for(int i = 0 ; i < eventUUID.size() ; i++) {
+    	    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
+    	    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
+    	    		indexer.indexActivity(event.getStringValue("fields", null));
+    	    	}
+    	  	}
+    	});
+
+    	counterThread.setDaemon(true);
+    	counterThread.start();
+    }
+
+    
 	@Async
 	private String updateEvent(EventData eventData) {
 		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), eventData.getApiKey(), 0);
