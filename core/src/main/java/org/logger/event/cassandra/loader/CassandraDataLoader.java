@@ -752,7 +752,7 @@ public class CassandraDataLoader implements Constants {
 	private int callStatAPI(String resourceType, String ids) {
 
 		try {
-			String url = cache.get(SEARCHINDEXAPI) + resourceType + "/index?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
+			String url = cache.get(VIEWUPDATEENDPOINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
 			DefaultHttpClient httpClient = new DefaultHttpClient();
 			HttpPost postRequest = new HttpPost(url);
 			logger.info("Indexing url : {} ", url);
