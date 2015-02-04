@@ -37,11 +37,8 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,Constants {
-	
-	
 
 	private static final Logger logger = LoggerFactory.getLogger(ELSIndexerImpl.class);
-	
 	
 	private CassandraConnectionProvider connectionProvider;
 	 
@@ -60,7 +57,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     public static  Map<String,Object> categoryCache;
 
     public static  Map<String,String> taxonomyCodeType;
-    
+
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+	
+    SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+	
+	SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
+	
 	public ELSIndexerImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 	    this.connectionProvider = connectionProvider;
@@ -156,7 +159,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			try {
 				jsonField = new JSONObject(fields.substring(14).trim());
 			} catch (JSONException e2) {
-				logger.info("field : " + fields);
 				e2.printStackTrace();
 			}
 		}
@@ -196,7 +198,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				}
 	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)){
-	    			logger.info(""+eventMap.get(EVENTNAME));
 	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
 	    			if(eventMap.containsKey(SOURCEGOORUOID)){
 	    				indexResource(eventMap.get(SOURCEGOORUOID).toString());
@@ -321,7 +322,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     	for(String id : ids.split(",")){
     		idList.add("GLP~" + id);
     	}
-    	logger.info("Indexing resources : {}",idList);
+    	logger.debug("Indexing resources : {}",idList);
     	Rows<String,String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList,0);
     	try {
     		if(resource != null && resource.size() > 0){
@@ -330,7 +331,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     			throw new AccessDeniedException("Invalid Id!!");
     		}
 		} catch (Exception e) {
-			logger.info("indexing failed .. :{}",e);
+			logger.error("indexing failed .. :{}",e);
 		}
     }
     
@@ -528,9 +529,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
     
 
     public void getResourceAndIndex(Rows<String, String> resource) throws ParseException{
-    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
-		SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-		SimpleDateFormat formatter3 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 		
 		Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
 		

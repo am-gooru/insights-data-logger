@@ -761,6 +761,7 @@ public class CassandraDataLoader implements Constants {
 				logger.info("Stat Indexing failed...");
 				return response.getStatusLine().getStatusCode();
 			} else {
+				logger.info("Stat Indexing call Success...");
 				return response.getStatusLine().getStatusCode();
 			}
 		} catch (Exception e) {
@@ -1212,18 +1213,15 @@ public class CassandraDataLoader implements Constants {
 
 
 	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isSchduler) throws ParseException {
-		SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 
 		if (isSchduler) {
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
 		}
 
-		for (long startDate = dateFormatter.parse(startTime).getTime(); startDate < dateFormatter.parse(endTime).getTime();) {
-
-			String currentDate = dateFormatter.format(new Date(startDate));
+		String timeLineKey = null;
+		for (long startDate = minuteDateFormatter.parse(startTime).getTime(); startDate < minuteDateFormatter.parse(endTime).getTime();) {
+			String currentDate = minuteDateFormatter.format(new Date(startDate));
 			logger.info("Processing Date : {}", currentDate);
-
-			String timeLineKey = null;
 			if (customEventName == null || customEventName == "") {
 				timeLineKey = currentDate.toString();
 			} else {
@@ -1240,7 +1238,7 @@ public class CassandraDataLoader implements Constants {
 			startDate = new Date(startDate).getTime() + 60000;
 
 			if (isSchduler) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, "" + dateFormatter.format(new Date(startDate)));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, "" + minuteDateFormatter.format(new Date(startDate)));
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, "" + 0);
 			}
 		}
@@ -1252,22 +1250,14 @@ public class CassandraDataLoader implements Constants {
 		logger.info("Indexing completed..........");
 	}
     
-    public void  readEventAndIndex(final ColumnList<String> eventUUID){
-    	final Thread counterThread = new Thread(new Runnable() {
-    	  	@Override
-    	  	public void run(){
-    	  		
-    	  		for(int i = 0 ; i < eventUUID.size() ; i++) {
-    	    		logger.info("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
-    	    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(),0);
-    	    		indexer.indexActivity(event.getStringValue("fields", null));
-    	    	}
-    	  	}
-    	});
+	public void readEventAndIndex(final ColumnList<String> eventUUID) {
+		for (int i = 0; i < eventUUID.size(); i++) {
+			logger.debug("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
+			ColumnList<String> event = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(), 0);
+			indexer.indexActivity(event.getStringValue("fields", null));
+		}
 
-    	counterThread.setDaemon(true);
-    	counterThread.start();
-    }
+	}
 
     
 	@Async
