@@ -434,7 +434,7 @@ public class CassandraDataLoader implements Constants {
 			eventMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
 			eventMap2 = JSONDeserializer.deserializeEventObject(eventObject);
 			if (eventObject.getFields() != null) {
-				logger.info("CORE: Writing to activity log - :" + eventObject.getFields().toString());
+				//logger.info("CORE: Writing to activity log - :" + eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
 
 			}
@@ -468,8 +468,6 @@ public class CassandraDataLoader implements Constants {
 
 			baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), eventObject);
 
-			logger.info("From cachee : {} ", cache.get(ATMOSPHERENDPOINT));
-
 			aggregatorJson = cache.get(eventMap.get("eventName").toString());
 
 			if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)) {
@@ -487,8 +485,8 @@ public class CassandraDataLoader implements Constants {
 			}
 
 		} catch (Exception e) {
-			logger.info("Writing error log : {} ", eventObject.getEventId());
 			kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
+			logger.error("Writing error log : {} ", eventObject.getEventId());
 		}
 		if(canRunIndexing){
 			indexer.indexActivity(eventObject.getFields());
@@ -522,7 +520,7 @@ public class CassandraDataLoader implements Constants {
 			 */
 
 		} catch (Exception e) {
-			logger.info("Exception in handleEventObjectHandler Post Process : {} ", e);
+			e.printStackTrace();
 		}
 
 	}
@@ -763,11 +761,10 @@ public class CassandraDataLoader implements Constants {
 				logger.info("Stat Indexing failed...");
 				return response.getStatusLine().getStatusCode();
 			} else {
-				logger.info("Stat Indexing call Success...");
 				return response.getStatusLine().getStatusCode();
 			}
 		} catch (Exception e) {
-			logger.info("Stat Indexing failed..." + e);
+			logger.error("Stat Indexing failed..." + e);
 			return 500;
 		}
 	}

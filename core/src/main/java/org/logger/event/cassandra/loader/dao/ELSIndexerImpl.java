@@ -13,12 +13,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
-import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
@@ -197,7 +195,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			    	}
 				}
 	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)){
+	    			logger.info(""+eventMap.get(EVENTNAME));
 	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
 	    			if(eventMap.containsKey(SOURCEGOORUOID)){
 	    				indexResource(eventMap.get(SOURCEGOORUOID).toString());
@@ -276,7 +275,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			            }
 			            
 			        }
-				   if(eventMap.get(CONTENTGOORUOID) != null){
+				   if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null){
 				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 				   		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 				   }
@@ -284,7 +283,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
 				   }	    	    	
 				   
-				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.get(CONTENTGOORUOID) != null){
+				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null){
 						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
 				    	if(questionList != null && questionList.size() > 0){
 				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
@@ -300,7 +299,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				    	}
 					}
     	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS)){
+    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)){
     	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
     	    			if(eventMap.containsKey(SOURCEGOORUOID)){
     	    				indexResource(eventMap.get(SOURCEGOORUOID).toString());
