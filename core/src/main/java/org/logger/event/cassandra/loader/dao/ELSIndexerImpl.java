@@ -137,7 +137,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
         cache = new LinkedHashMap<String, String>();
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
 	}
-	public void indexActivity(final String fields){
+	/*public void indexActivity(final String fields){
 	    if(fields != null){				
 	    		final Thread counterThread = new Thread(new Runnable() {
 	        	  	@Override
@@ -149,9 +149,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				counterThread.start();
 	    }
 		
-    }
+    }*/
 	
-	public void indexEvents (String fields){
+	public void indexEvents(String fields) {
 		JSONObject jsonField = null;
 		try {
 			jsonField = new JSONObject(fields);
@@ -162,158 +162,146 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				e2.printStackTrace();
 			}
 		}
-			if(jsonField.has("version")){
-				EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
-				Map<String, Object> eventMap = new HashMap<String, Object>();
+		if (jsonField.has("version")) {
+			EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+			Map<String, Object> eventMap = new HashMap<String, Object>();
+			try {
+				eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+
+			eventMap.put("eventName", eventObjects.getEventName());
+			eventMap.put("eventId", eventObjects.getEventId());
+			eventMap.put("eventTime", String.valueOf(eventObjects.getStartTime()));
+			if (eventMap.get(CONTENTGOORUOID) != null) {
+				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+			}
+			if (eventMap.get(GOORUID) != null) {
+				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
+			}
+			if (String.valueOf(eventMap.get(CONTENTGOORUOID)) != null) {
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)), 0);
+				if (questionList != null && questionList.size() > 0) {
+					eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+					eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+					eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+					eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+
+					eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+					eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+					eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+
+					eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+				}
+			}
+			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			if (eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)) {
+				indexResource(eventMap.get(CONTENTGOORUOID).toString());
+				if (eventMap.containsKey(SOURCEGOORUOID)) {
+					indexResource(eventMap.get(SOURCEGOORUOID).toString());
+				}
 				try {
-					eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);
-				} catch (JSONException e) {
+					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
+						getUserAndIndex(eventMap.get(GOORUID).toString());
+					}
+				} catch (Exception e) {
 					e.printStackTrace();
-				}    	
-				
-				eventMap.put("eventName", eventObjects.getEventName());
-		    	eventMap.put("eventId", eventObjects.getEventId());
-		    	eventMap.put("eventTime",String.valueOf(eventObjects.getStartTime()));
-		    	if(eventMap.get(CONTENTGOORUOID) != null){		    		    		
-		    		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-		    	}
-		    	if(eventMap.get(GOORUID) != null){  
-		    		eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
-		    	}
-			   if(String.valueOf(eventMap.get(CONTENTGOORUOID)) != null){
-					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
-			    	if(questionList != null && questionList.size() > 0){
-			    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-			    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-			    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-			    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
-
-			    		eventMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-			    		eventMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-			    		eventMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
-
-			    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
-			    	}
 				}
-	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)){
-	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
-	    			if(eventMap.containsKey(SOURCEGOORUOID)){
-	    				indexResource(eventMap.get(SOURCEGOORUOID).toString());
-	    			}
-	    			try {
-	    				if(!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")){
-	    					getUserAndIndex(eventMap.get(GOORUID).toString());
-	    				}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-	    		}
-			} 
-			else{
-				try{
-				   Iterator<?> keys = jsonField.keys();
-				   Map<String,Object> eventMap = new HashMap<String, Object>();
-				   while( keys.hasNext() ){
-			            String key = (String)keys.next();
-			            
-			            eventMap.put(key,String.valueOf(jsonField.get(key)));
-			            
-			         /*   if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){
-			            	eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
-			            }*/
+			}
+		} else {
+			try {
+				Iterator<?> keys = jsonField.keys();
+				Map<String, Object> eventMap = new HashMap<String, Object>();
+				while (keys.hasNext()) {
+					String key = (String) keys.next();
 
-			            if(key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))){
-			            	eventMap.put("eventName", "reaction.create");
-			            }
-			            
-			            if(key.equalsIgnoreCase("eventName") 
-			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") 
-			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
-			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played")
-			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))){
-			            	
-			            	eventMap.put("eventName", "collection.play");
-			            }
-			            
-			            if(key.equalsIgnoreCase("eventName") 
-			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") 
-			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home")
-			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))){
-			            	eventMap.put("eventName", "user.login");
-			            }
-			            
-			            if(key.equalsIgnoreCase("eventName") 
-			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") 
-			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))){
-			            	eventMap.put("eventName", "user.register");
-			            }
-			            
-			            if(key.equalsIgnoreCase("eventName") 
-			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") 
-			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
-			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
-			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
-			            							|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots")
-			            								|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-question-play-dots"))){
-			            	eventMap.put("eventName", "collection.resource.play");
-			            }
-			            
-			            if(key.equalsIgnoreCase("eventName") 
-			            		&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") 
-			            				|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
-			            					|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart")
-			            						|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
-			            							|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played")
-			            								|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots")
-			            									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))){
-			            	eventMap.put("eventName", "resource.play");
-			            }
-			            
-			            if(key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")){
-			            	eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
-			            }
-			            
-			        }
-				   if(eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null){
-				   		eventMap =  this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-				   		eventMap =  this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
-				   }
-				   if(eventMap.get(GOORUID) != null ){
-					   eventMap =   this.getUserInfo(eventMap,String.valueOf(eventMap.get(GOORUID)));
-				   }	    	    	
-				   
-				   if(eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null){
-						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)),0);
-				    	if(questionList != null && questionList.size() > 0){
-				    		eventMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-				    		eventMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-				    		eventMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-				    		eventMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
-				    		
-				    		eventMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-				    		eventMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-				    		eventMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
-				    		
-				    		eventMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
-				    	}
+					eventMap.put(key, String.valueOf(jsonField.get(key)));
+
+					/*
+					 * if(key.equalsIgnoreCase("contentGooruId") ||
+					 * key.equalsIgnoreCase("gooruOId") ||
+					 * key.equalsIgnoreCase("gooruOid")){
+					 * eventMap.put("gooruOid",
+					 * String.valueOf(jsonField.get(key))); }
+					 */
+
+					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
+						eventMap.put("eventName", "reaction.create");
 					}
-    	    		this.saveInESIndex(eventMap,ESIndexices.EVENTLOGGERINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-    	    		if(eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)){
-    	    			indexResource(eventMap.get(CONTENTGOORUOID).toString());
-    	    			if(eventMap.containsKey(SOURCEGOORUOID)){
-    	    				indexResource(eventMap.get(SOURCEGOORUOID).toString());
-    	    			}
-    	    			if(!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")){
-    	    				getUserAndIndex(eventMap.get(GOORUID).toString());
-    	    			}
-    	    		}
-				}catch(Exception e3){
-					e3.printStackTrace();
+
+					if (key.equalsIgnoreCase("eventName")
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key))
+									.equalsIgnoreCase("quiz-play"))) {
+
+						eventMap.put("eventName", "collection.play");
+					}
+
+					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
+						eventMap.put("eventName", "user.login");
+					}
+
+					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
+						eventMap.put("eventName", "user.register");
+					}
+
+					if (key.equalsIgnoreCase("eventName")
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
+									"collection-resource-question-play-dots"))) {
+						eventMap.put("eventName", "collection.resource.play");
+					}
+
+					if (key.equalsIgnoreCase("eventName")
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String.valueOf(
+									jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
+						eventMap.put("eventName", "resource.play");
+					}
+
+					if (key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")) {
+						eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+					}
+
 				}
-		     }
-		
+				if (eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) {
+					eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+					eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
+				}
+				if (eventMap.get(GOORUID) != null) {
+					eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
+				}
+
+				if (eventMap.get(EVENTNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) {
+					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENTGOORUOID)), 0);
+					if (questionList != null && questionList.size() > 0) {
+						eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+						eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+						eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+						eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+
+						eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+						eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+						eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+
+						eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+					}
+				}
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+				if (eventMap.get(EVENTNAME).toString().matches(INDEXEVENTS) && eventMap.containsKey(CONTENTGOORUOID)) {
+					indexResource(eventMap.get(CONTENTGOORUOID).toString());
+					if (eventMap.containsKey(SOURCEGOORUOID)) {
+						indexResource(eventMap.get(SOURCEGOORUOID).toString());
+					}
+					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
+						getUserAndIndex(eventMap.get(GOORUID).toString());
+					}
+				}
+			} catch (Exception e3) {
+				e3.printStackTrace();
+			}
+		}
 
 	}
 	

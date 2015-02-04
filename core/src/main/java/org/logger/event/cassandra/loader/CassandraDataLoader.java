@@ -109,6 +109,8 @@ public class CassandraDataLoader implements Constants {
 
 	private boolean canRunIndexing = true;
 	
+	private int indexMinLoopCount = 100;
+	
 	/**
 	 * Get Kafka properties from Environment
 	 */
@@ -183,6 +185,7 @@ public class CassandraDataLoader implements Constants {
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(BATCH_SIZE, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), BATCH_SIZE, DEFAULTCOLUMN, 0).getStringValue());
 		
 		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHSTATUS, 0);
 		for (int i = 0; i < schdulersStatus.size(); i++) {
@@ -489,7 +492,7 @@ public class CassandraDataLoader implements Constants {
 			logger.error("Writing error log : {} ", eventObject.getEventId());
 		}
 		if(canRunIndexing){
-			indexer.indexActivity(eventObject.getFields());
+			indexer.indexEvents(eventObject.getFields());
 		}
 		
 		try {
@@ -1212,17 +1215,28 @@ public class CassandraDataLoader implements Constants {
 	}
 
 
-	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isSchduler) throws ParseException {
+	/**
+	 * Index all events between a given start and end times. 
+	 * @param startTime
+	 * @param endTime
+	 * @param customEventName
+	 * @param isScheduledJob true if called from scheduler. false when called from real-time indexing.
+	 * @throws ParseException
+	 */
+	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
 
-		if (isSchduler) {
+		if (isScheduledJob) {
+			// Called from Scheduled job. Mark the status as in-progress so that no other activity will overlap.
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
 		}
 
 		String timeLineKey = null;
-		for (long startDate = minuteDateFormatter.parse(startTime).getTime(); startDate < minuteDateFormatter.parse(endTime).getTime();) {
-			String currentDate = minuteDateFormatter.format(new Date(startDate));
+		final long batchEndDate = minuteDateFormatter.parse(endTime).getTime();
+		
+		for (long batchStartDate = minuteDateFormatter.parse(startTime).getTime(); batchStartDate < batchEndDate;) {
+			String currentDate = minuteDateFormatter.format(new Date(batchStartDate));
 			logger.info("Processing Date : {}", currentDate);
-			if (customEventName == null || customEventName == "") {
+			if (StringUtils.isBlank(customEventName)) {
 				timeLineKey = currentDate.toString();
 			} else {
 				timeLineKey = currentDate.toString() + "~" + customEventName;
@@ -1232,31 +1246,27 @@ public class CassandraDataLoader implements Constants {
 			ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey, 0);
 
 			if (eventUUID != null && !eventUUID.isEmpty()) {
-				readEventAndIndex(eventUUID);
+				for (Column<String> column : eventUUID) {
+					logger.debug("eventDetailUUID  : " + column.getStringValue());
+					ColumnList<String> event = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), column.getStringValue(), 0);
+					indexer.indexEvents(event.getStringValue("fields", null));
+				}
+				
 			}
 			// Incrementing time - one minute
-			startDate = new Date(startDate).getTime() + 60000;
+			batchStartDate = new Date(batchStartDate).getTime() + 60000;
 
-			if (isSchduler) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, "" + minuteDateFormatter.format(new Date(startDate)));
+			if (isScheduledJob) {
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, "" + minuteDateFormatter.format(new Date(batchStartDate)));
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, "" + 0);
 			}
 		}
 
-		if (isSchduler) {
+		if (isScheduledJob) {
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, COMPLETED);
 		}
 
 		logger.info("Indexing completed..........");
-	}
-    
-	public void readEventAndIndex(final ColumnList<String> eventUUID) {
-		for (int i = 0; i < eventUUID.size(); i++) {
-			logger.debug("eventDetailUUID  : " + eventUUID.getColumnByIndex(i).getStringValue());
-			ColumnList<String> event = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventUUID.getColumnByIndex(i).getStringValue(), 0);
-			indexer.indexActivity(event.getStringValue("fields", null));
-		}
-
 	}
 
     

@@ -58,6 +58,8 @@ public interface Constants {
 	
 	public static final  String STATFIELDS = "statFields";
 	
+	public static final  String BATCH_SIZE = "index~loop~count";
+	
 	public static final  String GOORUID = "gooruUId" ;
 	
 	public static final  String AGG = "aggregator";
