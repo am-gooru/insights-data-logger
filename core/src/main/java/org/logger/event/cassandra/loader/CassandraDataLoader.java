@@ -107,6 +107,8 @@ public class CassandraDataLoader implements Constants {
 
 	private boolean canRunSchduler = false;
 
+	private boolean canRunIndexing = true;
+	
 	/**
 	 * Get Kafka properties from Environment
 	 */
@@ -115,16 +117,16 @@ public class CassandraDataLoader implements Constants {
 
 		// micro Aggregator producer IP
 		// micro Aggregator producer IP
-		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_ip");
-		String KAFKA_AGGREGATOR_PORT = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_portno");
-		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_topic");
-		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_producertype");
+		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAIP);
+		String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAPORT);
+		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKATOPIC);
+		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAPRODUCERTYPE);
 
 		// Log Writter producer IP
-		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_ip");
-		String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_portno");
-		String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_topic");
-		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_producertype");
+		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAIP);
+		String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAPORT);
+		String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKATOPIC);
+		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAPRODUCERTYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 	}
@@ -132,16 +134,16 @@ public class CassandraDataLoader implements Constants {
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
 		// micro Aggregator producer IP
-		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_ip");
-		String KAFKA_AGGREGATOR_PORT = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_portno");
-		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_topic");
-		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty("v2~kafka~microaggregator~producer").get("kafka_producertype");
+		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAIP);
+		String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAPORT);
+		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKATOPIC);
+		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAPRODUCERTYPE);
 
 		// Log Writter producer IP
-		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_ip");
-		String KAFKA_LOG_WRITTER_PORT = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_portno");
-		String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_topic");
-		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty("v2~kafka~logwritter~producer").get("kafka_producertype");
+		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAIP);
+		String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAPORT);
+		String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKATOPIC);
+		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2KAFKALOGWRITERPRODUCER).get(KAFKAPRODUCERTYPE);
 
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
@@ -173,23 +175,24 @@ public class CassandraDataLoader implements Constants {
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
 		cache = new LinkedHashMap<String, String>();
 		for (Row<String, String> row : operators) {
-			cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+			cache.put(row.getKey(), row.getColumns().getStringValue(AGGJSON, null));
 		}
-		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN, 0).getStringValue());
-		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEW_EVENTS, DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATMOENDPOINT, DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
-
-		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status", 0);
+		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
+		
+		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHSTATUS, 0);
 		for (int i = 0; i < schdulersStatus.size(); i++) {
 			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 		}
-		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key", 0).getColumnNames();
-		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics", 0);
+		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
+		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATMETRICS, 0);
 		statKeys = statMetrics.getColumnNames();
 
-		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~host", 0).getStringValue("host", null);
+		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHHOST, 0).getStringValue(HOST, null);
 
 		try {
 			String localHost = "" + InetAddress.getLocalHost();
@@ -201,10 +204,14 @@ public class CassandraDataLoader implements Constants {
 			e.printStackTrace();
 		}
 
+		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REALTIMEINDEXING, 0).getStringValue(DEFAULTCOLUMN, null);
+		if(realTimeIndexing.equalsIgnoreCase(STOP)){
+			canRunIndexing = false;
+		}
 		if (kafkaConfigurationCache == null) {
 
 			kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
-			String[] kafkaMessager = new String[] { "v2~kafka~consumer", "v2~kafka~logwritter~producer", "v2~kafka~logwritter~consumer", "v2~kafka~microaggregator~producer", "v2~kafka~microaggregator~consumer" };
+			String[] kafkaMessager = new String[] { V2KAFKACONSUMER, V2KAFKALOGWRITERPRODUCER, V2KAFKALOGWRITERCONSUMER, V2KAFKAMICROPRODUCER, V2KAFKAMICROCONSUMER };
 			Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
 			for (Row<String, String> row : result) {
 				Map<String, String> properties = new HashMap<String, String>();
@@ -221,27 +228,28 @@ public class CassandraDataLoader implements Constants {
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
 		cache = new LinkedHashMap<String, String>();
 		for (Row<String, String> row : operators) {
-			cache.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));
+			cache.put(row.getKey(), row.getColumns().getStringValue(AGGJSON, null));
 		}
-		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "views~events", DEFAULTCOLUMN, 0).getStringValue());
-		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "atmosphere.end.point", DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEW_EVENTS, DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATMOENDPOINT, DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
-
-		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "default~key", 0).getColumnNames();
-		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "stat~metrics", 0);
+		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
+		
+		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
+		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATMETRICS, 0);
 
 		statKeys = statMetrics.getColumnNames();
 		liveDashBoardDAOImpl.clearCache();
 		indexer.clearCache();
-		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status", 0);
+		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHSTATUS, 0);
 		for (int i = 0; i < schdulersStatus.size(); i++) {
 			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 		}
 
 		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
-		String[] kafkaMessager = new String[] { "v2~kafka~consumer", "v2~kafka~logwritter~producer", "v2~kafka~logwritter~consumer", "v2~kafka~microaggregator~producer", "v2~kafka~microaggregator~consumer" };
+		String[] kafkaMessager = new String[] { V2KAFKACONSUMER, V2KAFKALOGWRITERPRODUCER, V2KAFKALOGWRITERCONSUMER, V2KAFKAMICROPRODUCER, V2KAFKAMICROCONSUMER };
 		Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
 		for (Row<String, String> row : result) {
 			Map<String, String> properties = new HashMap<String, String>();
@@ -251,7 +259,7 @@ public class CassandraDataLoader implements Constants {
 			kafkaConfigurationCache.put(row.getKey(), properties);
 		}
 
-		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schedular~host", 0).getStringValue("host", null);
+		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHHOST, 0).getStringValue(HOST, null);
 
 		try {
 			String localHost = "" + InetAddress.getLocalHost();
@@ -261,6 +269,10 @@ public class CassandraDataLoader implements Constants {
 			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
+		}
+		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REALTIMEINDEXING, 0).getStringValue(DEFAULTCOLUMN, null);
+		if(realTimeIndexing.equalsIgnoreCase(STOP)){
+			canRunIndexing = false;
 		}
 	}
 
@@ -432,13 +444,13 @@ public class CassandraDataLoader implements Constants {
 			String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
 
 			Map<String, Object> records = new HashMap<String, Object>();
-			records.put("event_name", eventMap.get("eventName"));
-			records.put("api_key", apiKey);
+			records.put(EVENT_NAME, eventMap.get(EVENTNAME));
+			records.put(API_KEY, apiKey);
 			Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(), records);
 
 			if (eventId == null || eventId.isEmpty()) {
 				UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-				records.put("event_id", uuid.toString());
+				records.put(EVENT_ID, uuid.toString());
 				String key = apiKey + SEPERATOR + uuid.toString();
 				baseDao.saveBulkList(ColumnFamily.DIMEVENTS.getColumnFamily(), key, records);
 			}
@@ -478,7 +490,10 @@ public class CassandraDataLoader implements Constants {
 			logger.info("Writing error log : {} ", eventObject.getEventId());
 			kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
 		}
-		indexer.indexActivity(eventObject.getFields());
+		if(canRunIndexing){
+			indexer.indexActivity(eventObject.getFields());
+		}
+		
 		try {
 
 			if (cache.get(VIEWEVENTS).contains(eventMap.get("eventName").toString())) {
@@ -734,6 +749,29 @@ public class CassandraDataLoader implements Constants {
 		return false;
 	}
 
+	private int callStatAPI(String resourceType, String ids) {
+
+		try {
+			String url = cache.get(SEARCHINDEXAPI) + resourceType + "/index?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			HttpPost postRequest = new HttpPost(url);
+			logger.info("Indexing url : {} ", url);
+			HttpResponse response = httpClient.execute(postRequest);
+			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
+			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
+			if (response.getStatusLine().getStatusCode() != 200) {
+				logger.info("Stat Indexing failed...");
+				return response.getStatusLine().getStatusCode();
+			} else {
+				logger.info("Stat Indexing call Success...");
+				return response.getStatusLine().getStatusCode();
+			}
+		} catch (Exception e) {
+			logger.info("Stat Indexing failed..." + e);
+			return 500;
+		}
+	}
+	
 	private int callIndexingAPI(String resourceType, String ids) {
 
 		try {
@@ -1176,46 +1214,46 @@ public class CassandraDataLoader implements Constants {
 	}
 
 
-    public void updateStagingES(String startTime , String endTime,String customEventName,boolean isSchduler) throws ParseException {
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isSchduler) throws ParseException {
+		SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 
-    	if(isSchduler){
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"in-progress");
-    	}
-    	
-    	for (long startDate = dateFormatter.parse(startTime).getTime() ; startDate < dateFormatter.parse(endTime).getTime();) {
+		if (isSchduler) {
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
+		}
 
-    		String currentDate = dateFormatter.format(new Date(startDate));
-    		logger.info("Processing Date : {}" , currentDate);
-    		
-   		 	String timeLineKey = null;   		 	
-   		 	if(customEventName == null || customEventName  == "") {
-   		 		timeLineKey = currentDate.toString();
-   		 	} else {
-   		 		timeLineKey = currentDate.toString()+"~"+customEventName;
-   		 	}
-   		 	
-   		 	//Read Event Time Line for event keys and create as a Collection
-   		 	ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey,0);
-   		 	
-	    	if(eventUUID != null &&  !eventUUID.isEmpty() ) {
-	    		readEventAndIndex(eventUUID);
-	    	}
-	    	//Incrementing time - one minute
-	    	startDate = new Date(startDate).getTime() + 60000;
-	    	
-	    	if(isSchduler){
-	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", DEFAULTCOLUMN,""+dateFormatter.format(new Date(startDate)));
-	    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+0);
-	    	}
-	    }
-	    
-    	if(isSchduler){
-    		baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", DEFAULTCOLUMN,"completed");
-    	}
-    	
-    	logger.info("Indexing completed..........");
-    }
+		for (long startDate = dateFormatter.parse(startTime).getTime(); startDate < dateFormatter.parse(endTime).getTime();) {
+
+			String currentDate = dateFormatter.format(new Date(startDate));
+			logger.info("Processing Date : {}", currentDate);
+
+			String timeLineKey = null;
+			if (customEventName == null || customEventName == "") {
+				timeLineKey = currentDate.toString();
+			} else {
+				timeLineKey = currentDate.toString() + "~" + customEventName;
+			}
+
+			// Read Event Time Line for event keys and create as a Collection
+			ColumnList<String> eventUUID = baseDao.readWithKey(ColumnFamily.EVENTTIMELINE.getColumnFamily(), timeLineKey, 0);
+
+			if (eventUUID != null && !eventUUID.isEmpty()) {
+				readEventAndIndex(eventUUID);
+			}
+			// Incrementing time - one minute
+			startDate = new Date(startDate).getTime() + 60000;
+
+			if (isSchduler) {
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, "" + dateFormatter.format(new Date(startDate)));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, "" + 0);
+			}
+		}
+
+		if (isSchduler) {
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, COMPLETED);
+		}
+
+		logger.info("Indexing completed..........");
+	}
     
     public void  readEventAndIndex(final ColumnList<String> eventUUID){
     	final Thread counterThread = new Thread(new Runnable() {

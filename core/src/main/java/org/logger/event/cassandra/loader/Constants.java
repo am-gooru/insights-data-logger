@@ -36,7 +36,9 @@ public interface Constants {
 	
 	public String TOTALTIMEINMS = "totalTimeSpentInMs";
 	
-	public String EVENTIS = "eventId";
+	public String EVENT_ID = "event_id";
+	
+	public String EVENTID = "eventId";
 	
 	public String PARENTEVENTID = "parentEventId";
 	
@@ -53,6 +55,8 @@ public interface Constants {
 	public String SESSION = "sessionId";
 	
 	public String SESSIONTOKEN = "sessionToken";
+	
+	public String STATFIELDS = "statFields";
 	
 	public String GOORUID = "gooruUId" ;
 	
@@ -178,6 +182,8 @@ public interface Constants {
 	
 	public String APIKEY = "apiKey";
 	
+	public String API_KEY = "api_key";
+	
 	public String ORGANIZATIONUID = "organizationUId";
 	
 	public String EVENT_VALUE = "event_value";
@@ -254,7 +260,33 @@ public interface Constants {
 	
 	public String DEFAULTCOLUMN = "constant_value";
 	
+	public String DEFAULTKEY = "default~key";
+	
+	public String STATMETRICS = "stat~metrics";
+	
+	public String SCHSTATUS = "schdulers~status";
+	
+	public String SCHHOST = "schedular~host";
+	
+	public String HOST = "host";
+	
+	public String REALTIMEINDEXING = "real~time~indexing";
+	
+	public String VIEW_EVENTS = "views~events";
+	
+	public String ATMOENDPOINT = "atmosphere.end.point";
+	
+	public String ACTIVITYINDEXMAXCOUNT = "activity~indexing~max~count";
+	
+	public String ACTIVITYINDEXCHECKEDCOUNT = "activity~indexing~checked~count";
+	
+	public String ACTIVITYINDEXLASTUPDATED = "activity~indexing~last~updated";
+	
+	public String ACTIVITYINDEXSTATUS = "activity~indexing~status";
+	
 	public String USERSESSION = "user~session";
+	
+	public String AGGJSON = "aggregator_json";
 	
 	public String ANONYMOUSSESSION = "anonymous~session";
 	
@@ -299,4 +331,24 @@ public interface Constants {
 	public String INDEXINGVERSION = "index_version";
 	
 	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
+	
+	public String V2KAFKAMICROPRODUCER = "v2~kafka~microaggregator~producer";
+	
+	public String V2KAFKALOGWRITERPRODUCER = "v2~kafka~logwritter~producer";
+	
+	public String V2KAFKACONSUMER = "v2~kafka~consumer";
+	
+	public String V2KAFKALOGWRITERCONSUMER = "v2~kafka~logwritter~consumer";
+	
+	public String V2KAFKAMICROCONSUMER = "v2~kafka~microaggregator~consumer";
+	
+	public String KAFKAIP =  "kafka_ip";
+	
+	public String KAFKAPORT = "kafka_portno";
+	
+	public String KAFKATOPIC = "kafka_topic";
+	
+	public String KAFKAPRODUCERTYPE = "kafka_producertype";
+
+	
 }

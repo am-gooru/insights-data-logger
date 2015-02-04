@@ -39,6 +39,7 @@ import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -60,7 +61,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
 @Service
-public class EventServiceImpl implements EventService {
+public class EventServiceImpl implements EventService,Constants {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
@@ -268,13 +269,13 @@ public class EventServiceImpl implements EventService {
 
 	public void indexActivity() {
 	
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~last~updated", "constant_value",0).getStringValue();
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN,0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;		
-		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value",0).getStringValue();
-		if(status.equalsIgnoreCase("completed")){
+		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS , DEFAULTCOLUMN,0).getStringValue();
+		if(status.equalsIgnoreCase(COMPLETED)){
 			try {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 				currDate = minuteDateFormatter.parse(currentTime);
@@ -293,13 +294,13 @@ public class EventServiceImpl implements EventService {
 		}else{
 			logger.info("Indexing is in-progress.....");
 
-			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value",0).getStringValue();
-			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~max~count", "constant_value",0).getStringValue();
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT,DEFAULTCOLUMN,0).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXMAXCOUNT, DEFAULTCOLUMN,0).getStringValue();
 
 			if(Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)){
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~checked~count", "constant_value", ""+ (Integer.valueOf(lastCheckedCount) + 1));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, ""+ (Integer.valueOf(lastCheckedCount) + 1));
 			}else{
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~indexing~status", "constant_value","completed");
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(),ACTIVITYINDEXSTATUS,DEFAULTCOLUMN,COMPLETED);
 			}
 		}
 	}
