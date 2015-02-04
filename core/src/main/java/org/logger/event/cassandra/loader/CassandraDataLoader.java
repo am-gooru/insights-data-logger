@@ -711,10 +711,10 @@ public class CassandraDataLoader implements Constants {
 				int indexingStatus = 0;
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
 				if (indexCollectionType != null) {
-					indexingStatus = this.callIndexingAPI(indexCollectionType, collectionIds.substring(1));
+					indexingStatus = this.callStatAPI(indexCollectionType, collectionIds.substring(1));
 				}
 				if (indexResourceType != null) {
-					indexingStatus = this.callIndexingAPI(indexResourceType, resourceIds.substring(1));
+					indexingStatus = this.callStatAPI(indexResourceType, resourceIds.substring(1));
 				}
 				baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + indexLabelLimit, minuteDateFormatter.format(rowValues), String.valueOf(indexedCount++), 86400);
 
