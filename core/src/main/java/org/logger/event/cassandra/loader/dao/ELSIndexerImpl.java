@@ -137,19 +137,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
         cache = new LinkedHashMap<String, String>();
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
 	}
-	/*public void indexActivity(final String fields){
-	    if(fields != null){				
-	    		final Thread counterThread = new Thread(new Runnable() {
-	        	  	@Override
-	        	  	public void run(){
-	        	  		indexEvents(fields);
-			      	}
-				});
-				counterThread.setDaemon(true);
-				counterThread.start();
-	    }
-		
-    }*/
 	
 	public void indexEvents(String fields) {
 		JSONObject jsonField = null;

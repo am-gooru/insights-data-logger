@@ -265,10 +265,9 @@ public class EventServiceImpl implements EventService,Constants {
 	public void migrateCF(String cfName) {
 		dataLoaderService.migrateCF(cfName);
 	}
-	
 
-	public void indexActivity() {
 	
+	public void indexActivity() {
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN,0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
@@ -276,6 +275,7 @@ public class EventServiceImpl implements EventService,Constants {
 		Date currDate = null;		
 		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS , DEFAULTCOLUMN,0).getStringValue();
 		if(status.equalsIgnoreCase(COMPLETED)){
+			// All past indexing complete. Start new.
 			try {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
 				currDate = minuteDateFormatter.parse(currentTime);
