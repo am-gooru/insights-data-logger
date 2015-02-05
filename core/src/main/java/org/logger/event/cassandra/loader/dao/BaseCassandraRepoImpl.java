@@ -52,6 +52,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 
+
 	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		// TODO Auto-generated constructor stub
@@ -1074,26 +1075,43 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 	}
 
-	public Set<String> getAllLevelParents(String cfName, String Key, int retryCount) {
+	/**
+	 * Given a child content id gets all it's parent / grand parents. This is
+	 * primarily to cover cases where collections are in folder / library.
+	 * 
+	 * @param cfName
+	 * @param childOid
+	 *            Gooru OID for the resource / folder / collection.
+	 * @param depth
+	 * @return
+	 * @throws ConnectionException
+	 */
+	public Set<String> getAllLevelParents(String cfName, String childOid, final int depth) throws ConnectionException {
+		if (depth > RECURSION_MAX_DEPTH) {
+			// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
+			logger.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
+			return null;
+		}
 
-		Rows<String, String> collectionItem = null;
+		Rows<String, String> collectionItemParents = null;
 		Set<String> parentIds = new HashSet<String>();
-		try {
-			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(Key.trim()).execute().getResult();
+		collectionItemParents = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(childOid.trim()).execute()
+				.getResult();
 
-			if (collectionItem != null) {
-				for (Row<String, String> collectionItems : collectionItem) {
-					String parentId = collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue().trim();
-					if (parentId != null) {
-						parentId = parentId.trim();
-						parentIds.add(parentId);
-						getAllLevelParents(cfName, parentId, 0);
+		if (collectionItemParents != null) {
+			for (Row<String, String> collectionItemParent : collectionItemParents) {
+				String parentId = collectionItemParent.getColumns().getColumnByName("collection_gooru_oid").getStringValue().trim();
+
+				if (parentId != null && !parentId.equalsIgnoreCase(childOid)) {
+					// We have a valid parent other than self.
+					parentId = parentId.trim();
+					parentIds.add(parentId);
+					Set<String> grandParents = getAllLevelParents(cfName, parentId, depth + 1);
+					if (grandParents != null) {
+						parentIds.addAll(grandParents);
 					}
 				}
 			}
-
-		} catch (ConnectionException e) {
-			e.printStackTrace();
 		}
 
 		return parentIds;

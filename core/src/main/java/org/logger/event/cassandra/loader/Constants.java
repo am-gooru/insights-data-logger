@@ -352,5 +352,6 @@ public interface Constants {
 	
 	public static final  String KAFKAPRODUCERTYPE = "kafka_producertype";
 
+	public static final int RECURSION_MAX_DEPTH = 20;
 	
 }
