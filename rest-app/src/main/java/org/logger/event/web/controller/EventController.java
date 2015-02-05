@@ -459,6 +459,9 @@ public class EventController {
 	}
 
 	public void indexActivity() {
+		if (!validateSchedular()) {
+			return;
+		}
 		eventService.indexActivity();
 	}
 
