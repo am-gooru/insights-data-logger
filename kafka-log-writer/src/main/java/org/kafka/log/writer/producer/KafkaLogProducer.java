@@ -29,13 +29,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.json.JSONObject;
 import org.kafka.log.writer.consumer.KafkaLogConsumer;
@@ -51,6 +50,7 @@ public class KafkaLogProducer
 	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
 	private Producer<String, String> producer;
 	private String topic = "event-log-writer-dev";
+	private String errorLogTopic = "error-event-log-writer";
 	protected Properties props = new Properties();
 	
 	public KafkaLogProducer(){
@@ -62,11 +62,14 @@ public class KafkaLogProducer
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
-		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		this.errorLogTopic = "error"+topic;
+		
+		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
+		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
+		props.put("metadata.broker.list",KafkaLogProducer.buildEndPoint(kafkaIp, port));
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", kafkaIp + ":" + port);		
-		props.put("producer.type", producerType);
-		props.put("compression.codec", "1");
+		props.put("request.required.acks", "1");
+		props.put("producer.type",producerType);
 		
 		
 		try{
@@ -74,22 +77,58 @@ public class KafkaLogProducer
 				new ProducerConfig(props));
 		}
 		catch (Exception e) {
+			LOG.info("Error while initializing kafka : " + e);
 		}
 	}
 	
+	 public static String buildEndPoint(String ip, String portNo){
+			
+			StringBuffer stringBuffer  = new StringBuffer();
+			String[] ips = ip.split(",");
+			String[] ports = portNo.split(",");
+			for( int count = 0; count<ips.length; count++){
+				
+				if(stringBuffer.length() > 0){
+					stringBuffer.append(",");
+				}
+				
+				if(count < ports.length){
+					stringBuffer.append(ips[count]+":"+ports[count]);
+				}else{
+					stringBuffer.append(ips[count]+":"+ports[0]);
+				}
+			}
+			return stringBuffer.toString();
+		}
+	 
 	public void sendEventLog(String eventLog) {
-		Map<String, String> message = new HashMap<String, String>();
-		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-		message.put("raw", new String(eventLog));
-		
-		String messageAsJson = new JSONObject(message).toString();
-		send(messageAsJson);
-	}
+	Map<String, String> message = new HashMap<String, String>();
+	message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+	message.put("raw", new String(eventLog));
 	
-	private void send(String message) {
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
-		producer.send(data);
-	}
+	String messageAsJson = new JSONObject(message).toString();
+	send(messageAsJson);
+}
+
+public void sendErrorEventLog(String eventLog) {
+    Map<String, String> message = new HashMap<String, String>();
+    message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+    message.put("raw", new String(eventLog));
+
+    String messageAsJson = new JSONObject(message).toString();
+    sendErrorEvent(messageAsJson);
+}
+
+ private void sendErrorEvent(String message) {
+	 KeyedMessage<String, String> data = new KeyedMessage<String, String>(errorLogTopic,message);
+     producer.send(data);
+ }
+
+ 
+private void send(String message) {
+	KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
+	producer.send(data);
+}
 
 	public static void main(String args[]) {
 		try{

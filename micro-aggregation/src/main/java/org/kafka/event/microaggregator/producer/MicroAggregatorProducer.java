@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
-import kafka.javaapi.producer.ProducerData;
+import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.json.JSONObject;
@@ -57,13 +57,13 @@ public class MicroAggregatorProducer
 	}
 	
 	public void init(String kafkaIp, String port, String topic, String producerType) {
-		this.topic = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");;
-		LOG.info("Kafka File writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
-		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("zk.connect", kafkaIp + ":" + port);		
-		props.put("producer.type", producerType);
-		props.put("compression.codec", "1");
+		this.topic = topic;
+		LOG.info("Kafka micro aggregator producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
 		
+		props.put("metadata.broker.list",MicroAggregatorProducer.buildEndPoint(kafkaIp, port));
+		props.put("serializer.class", "kafka.serializer.StringEncoder");
+		props.put("request.required.acks", "1");
+		props.put("producer.type",producerType);
 		
 		try{
 		producer = new Producer<String, String>(
@@ -71,6 +71,26 @@ public class MicroAggregatorProducer
 		}
 		catch (Exception e) {
 		}
+	}
+	
+	public static String buildEndPoint(String ip, String portNo){
+		
+		StringBuffer stringBuffer  = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for( int count = 0; count<ips.length; count++){
+			
+			if(stringBuffer.length() > 0){
+				stringBuffer.append(",");
+			}
+			
+			if(count < ports.length){
+				stringBuffer.append(ips[count]+":"+ports[count]);
+			}else{
+				stringBuffer.append(ips[count]+":"+ports[0]);
+			}
+		}
+		return stringBuffer.toString();
 	}
 	
 	public void sendEventForAggregation(String eventLog) {
@@ -94,7 +114,7 @@ public class MicroAggregatorProducer
 	private void send(String message) {
 		LOG.info("message: {}",message);
 		LOG.info("topic: {}",topic);
-		ProducerData<String, String> data = new ProducerData<String, String>(topic, message);
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
 		producer.send(data);
 	}
 

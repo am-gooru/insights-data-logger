@@ -105,17 +105,20 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
          }
 	}
         
-        public void updateToStaging(String statTime,String endTime,String eventName,String apiKey){
-        	try {
-				dataLoader.updateStaging(statTime, endTime,eventName,apiKey);
+        public void updateToStaging(String startTime,String endTime,String eventName,String apiKey,String methodName){
+        	/*try {
+        		if(methodName.equalsIgnoreCase("staging")){        			
+        			dataLoader.updateStaging(startTime, endTime,eventName,apiKey);
+        		}
+        		
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
         }
 
         public void postAggregation(String statTime,String endTime,String eventName){
-				dataLoader.postMigration(statTime, endTime,eventName);
+			/*	dataLoader.postMigration(statTime, endTime,eventName);*/
         }
 
         private void cleanseData(EventData eventData) {

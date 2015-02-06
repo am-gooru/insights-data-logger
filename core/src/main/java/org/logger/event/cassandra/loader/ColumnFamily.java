@@ -6,6 +6,10 @@ public enum ColumnFamily {
 	
 	EVENTDETAIL("event_detail"),
 	
+	TAXONOMYCODE("taxonomy_code"),
+	
+	TABLEDATATYPES("table_datatypes"),
+	
 	EVENTTIMELINE("event_timeline"),
 	
 	ACTIVITYSTREAM("activity_stream"),
@@ -26,7 +30,7 @@ public enum ColumnFamily {
 	
 	DIMRESOURCE("dim_resource"),
 	
-	STAGING("stging_event_resource_user"),
+	STAGING("staging_event_detail"),
 	
 	EVENTFIELDS("event_fields"),
 	
@@ -52,7 +56,21 @@ public enum ColumnFamily {
 	
 	COLLECTION("collection"),
 	
-	CLASSPAGE("classpage");
+	CLASSPAGE("classpage"),
+	
+	LICENSE("license"),
+	
+	RESOURCETYPES("resource_type"),
+	
+	CATEGORY("category"),
+	
+	RESOURCE("resource"),
+	
+	ASSESSMENTANSWER("assessment_answer"),
+	
+	USER("user"),
+	
+	;
 	
 	String name;
 

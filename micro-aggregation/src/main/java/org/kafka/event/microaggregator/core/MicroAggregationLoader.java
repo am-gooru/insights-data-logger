@@ -30,8 +30,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
@@ -101,6 +103,8 @@ public class MicroAggregationLoader implements Constants{
     
     private MicroAggregationDAOImpl microAggregationDAOImpl;
     
+	private static Map<String, Map<String, String>> kafkaConfigurationCache;
+    
     private Gson gson = new Gson();
     /**
      * Get Kafka properties from Environment
@@ -108,16 +112,21 @@ public class MicroAggregationLoader implements Constants{
     public MicroAggregationLoader() {
         this(null);
         
-        String KAFKA_IP = System.getenv("INSIGHTS_KAFKA_IP");
-        String KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
-        String KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
-        String KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
-        String KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-        String KAFKA_AGGREGATOR_TOPIC = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_TOPIC");
-        String KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-        
-        microAggregator = new MicroAggregatorProducer(KAFKA_IP, KAFKA_ZK_PORT,  KAFKA_AGGREGATOR_TOPIC, KAFKA_PRODUCER_TYPE);
-        this.gson = new Gson();
+        kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
+		Set<String> rowKeyProperties = new HashSet<String>();
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~microaggregator~consumer");
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~logwritter~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~producer");
+		Rows<String, String> result = aggregationDAO.readRows(CONFIG_SETTINGS, rowKeyProperties, new ArrayList<String>()).getResult();
+		for (Row<String, String> row : result) {
+			Map<String, String> properties = new HashMap<String, String>();
+			for (Column<String> column : row.getColumns()) {
+				properties.put(column.getName(), column.getStringValue());
+			}
+			kafkaConfigurationCache.put(row.getKey(), properties);
+		}
     }
 
     public MicroAggregationLoader(Map<String, String> configOptionsMap) {
@@ -144,6 +153,9 @@ public class MicroAggregationLoader implements Constants{
         this.aggregationDAO = new AggregationDAOImpl(getConnectionProvider()); 
         this.activityStreamDao = new ActivityStreamDAOCassandraImpl(getConnectionProvider());
         realTimeOperators = realTimeOperation.getOperators();
+        if (kafkaConfigurationCache == null) {
+			activateKafkaCache(aggregationDAO);
+		}
 
     }
     
@@ -209,7 +221,8 @@ public class MicroAggregationLoader implements Constants{
 	    	
 	    	ColumnList<String> activityRow = eventDetailDao.readEventDetail(eventId);	
 	    	String fields = activityRow.getStringValue(FIELDS, null);
-
+	    	
+	    	if(activityRow != null & activityRow.size() > 0){
 	    	if (fields != null){
 		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
 		        	EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
@@ -333,6 +346,9 @@ public class MicroAggregationLoader implements Constants{
 	    	activityMap.put("activity", new JSONSerializer().serialize(eventMap));
 	    	
 	    	activityStreamDao.saveActivity(activityMap);
+	    	} else {
+	    		logger.info("Entry is not available for this key in EventDetailCF {}", eventId);
+	    	}
     	}
 	}
     
@@ -421,6 +437,27 @@ public class MicroAggregationLoader implements Constants{
     private ColumnFamilyQuery<String, String> prepareQuery(ColumnFamily<String, String> columnFamily) {
     	return cassandraKeyspace.prepareQuery(columnFamily).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     }
+    
+    public Map<String, String> getKafkaProperty(String name) {
+		return kafkaConfigurationCache.get(name);
+	}
+    
+	public void activateKafkaCache(AggregationDAOImpl aggregationDAO) {
+		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
+		Set<String> rowKeyProperties = new HashSet<String>();
+		rowKeyProperties.add("v2~kafka~microaggregator~producer");
+		rowKeyProperties.add("v2~kafka~microaggregator~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~consumer");
+		rowKeyProperties.add("v2~kafka~logwritter~producer");
+		Rows<String, String> result = aggregationDAO.readRows(CONFIG_SETTINGS, rowKeyProperties, new ArrayList<String>()).getResult();
+		for (Row<String, String> row : result) {
+			Map<String, String> properties = new HashMap<String, String>();
+			for (Column<String> column : row.getColumns()) {
+				properties.put(column.getName(), column.getStringValue());
+			}
+			kafkaConfigurationCache.put(row.getKey(), properties);
+		}
+	}
     
 }
 

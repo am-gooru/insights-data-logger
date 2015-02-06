@@ -104,17 +104,17 @@ public class CassandraProcessor extends BaseDataProcessor implements
        		return;
         	}
 
-       	eventObjectValidator.validateEventObject(eventObject);
+//       	eventObjectValidator.validateEventObject(eventObject);
         	dataLoader.handleEventObjectMessage(eventObject);
         }
 	}
         public void updateToStaging(String statTime,String endTime,String eventName,String apiKey){
-        	try {
+        	/*try {
 				dataLoader.updateStaging(statTime, endTime,eventName,apiKey);
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
         }
         
 	private void cleanseData(EventData eventData) {

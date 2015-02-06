@@ -55,57 +55,59 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;
     private static String CASSANDRA_KEYSPACE;
-
+    private static String CASSANDRA_CLUSTER;
+    private static String DATACENTER;
+    
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-
+        CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
+        DATACENTER = System.getenv("DATACENTER");
+        
+        if(CASSANDRA_CLUSTER == null){
+        	CASSANDRA_CLUSTER = "gooru-cassandra";
+        }
+        
         try {
 
             logger.info("Loading cassandra properties");
             String hosts = CASSANDRA_IP;
             String keyspace = CASSANDRA_KEYSPACE;
 
-            if (configOptionsMap != null) {
-                hosts = StringUtils.defaultIfEmpty(
-                        configOptionsMap.get("hosts"), hosts);
-                keyspace = StringUtils.defaultIfEmpty(
-                        configOptionsMap.get("keyspace"), keyspace);
-            }
+            if(cassandraKeyspace == null){
+                ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
+                        .setPort(9160)
+                        .setSeeds(hosts)
+                        .setSocketTimeout(30000)
+    					.setMaxTimeoutWhenExhausted(2000)
+    					.setMaxConnsPerHost(10)
+    					.setInitConnsPerHost(1)
+    					
+                        ;
+                
+                if (!hosts.startsWith("127.0")) {
+                    poolConfig.setLocalDatacenter(DATACENTER);
+                }
 
-            properties.load(MicroAggregationLoader.class
-                    .getResourceAsStream("/loader.properties"));
-            String clusterName = properties.getProperty("cluster.name",
-                    "gooruinsights");
+                AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
+                        .forCluster(CASSANDRA_CLUSTER)
+                        .forKeyspace(keyspace)
+                        .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+                        .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
+                        .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
+                        .withConnectionPoolConfiguration(poolConfig)
+                        .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
+                        .buildKeyspace(ThriftFamilyFactory.getInstance());
 
-            ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool")
-                    .setPort(9160)
-                    .setMaxConnsPerHost(3)
-                    .setSeeds(hosts);
-            if (!hosts.startsWith("127.0")) {
-                poolConfig.setLocalDatacenter("datacenter1");
-            }
+                context.start();
 
-            poolConfig.setLatencyScoreStrategy(new SmaLatencyScoreStrategyImpl()); // Enabled SMA.  Omit this to use round robin with a token range
-
-            AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
-                    .forCluster(clusterName)
-                    .forKeyspace(keyspace)
-                    .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-                    .setDiscoveryType(NodeDiscoveryType.NONE)
-                    .setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE))
-                    .withConnectionPoolConfiguration(poolConfig)
-                    .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
-                    .buildKeyspace(ThriftFamilyFactory.getInstance());
-
-            context.start();
-
-            cassandraKeyspace = (Keyspace) context.getClient();
-            logger.info("Initialized connection to Cassandra");
-        } catch (IOException e) {
+                cassandraKeyspace = (Keyspace) context.getClient();
+                logger.info("Initialized connection to Cassandra");
+                }
+        } catch (Exception e) {
             logger.info("Error while initializing cassandra", e);
         }
     }

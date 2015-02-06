@@ -46,10 +46,11 @@ import java.util.Properties;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaMessageStream;
+import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.Message;
 
+import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,62 +58,78 @@ import com.google.gson.Gson;
 
 public class MessageConsumer extends Thread
 {
-  private final ConsumerConnector consumer;
-  private static String topic;
-  private DataProcessor rowDataProcessor;
-  private static String KAFKA_IP;
-  private static String KAFKA_PORT;
-  private static String KAFKA_ZK_PORT;
-  private static String KAFKA_TOPIC;
-  private static String KAFKA_PRODUCER_TYPE;
-  private static String KAFKA_GROUPID;
-  private static String KAFKA_FILE_TOPIC;
-  private static String KAFKA_FILE_GROUPID;
+	CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
+	private final ConsumerConnector consumer;
+	private static String topic;
+	private DataProcessor rowDataProcessor;
+	private static String ZK_IP;
+	private static String ZK_PORT;
+	private static String KAFKA_TOPIC;
+	private static String KAFKA_GROUPID;
   static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
   
   public MessageConsumer(DataProcessor insertRowForLogDB)
   {
-	KAFKA_IP = System.getenv("INSIGHTS_KAFKA_API_CONSUMER_IP");
-	KAFKA_PORT = System.getenv("INSIGHTS_KAFKA_PORT");
-	KAFKA_ZK_PORT = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
-	KAFKA_TOPIC = System.getenv("INSIGHTS_KAFKA_TOPIC");
-	KAFKA_PRODUCER_TYPE = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");
-	KAFKA_GROUPID = System.getenv("INSIGHTS_KAFKA_GROUPID");
-	KAFKA_FILE_GROUPID = System.getenv("INSIGHTS_KAFKA_FILE_GROUPID");
-	KAFKA_FILE_TOPIC = System.getenv("INSIGHTS_KAFKA_FILE_TOPIC");
-	LOG.info("Mesage Consumer: "+ KAFKA_IP + ":" + KAFKA_ZK_PORT);
-	this.topic = KAFKA_TOPIC;    
-	this.rowDataProcessor = insertRowForLogDB;
-	   
-    consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
-    
+	  Map<String, String> kafkaProperty = new HashMap<String, String>();
+		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
+		ZK_IP = kafkaProperty.get("zookeeper_ip");
+		ZK_PORT = kafkaProperty.get("zookeeper_portno");
+		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
+		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+		LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
+		this.topic = KAFKA_TOPIC;
+		this.rowDataProcessor = insertRowForLogDB;
+
+		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
     
   }
 
-  private static ConsumerConfig createConsumerConfig()
-  {
-    Properties props = new Properties();
-    props.put("zk.connect", KAFKA_IP + ":" + KAFKA_ZK_PORT);
-    props.put("groupid", KAFKA_GROUPID);
-    props.put("zk.sessiontimeout.ms", "10000");
-    props.put("zk.synctime.ms", "200");
-    props.put("autocommit.interval.ms", "1000");
-    
-    LOG.info("Kafka consumer config: "+ KAFKA_IP+":"+KAFKA_ZK_PORT+"::"+topic+"::"+KAFKA_GROUPID);
+  public static String buildEndPoint(String ip, String portNo){
+		
+		StringBuffer stringBuffer  = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for( int count = 0; count<ips.length; count++){
+			
+			if(stringBuffer.length() > 0){
+				stringBuffer.append(",");
+			}
+			
+			if(count < ports.length){
+				stringBuffer.append(ips[count]+":"+ports[count]);
+			}else{
+				stringBuffer.append(ips[count]+":"+ports[0]);
+			}
+		}
+		return stringBuffer.toString();
+	}
+  
+  private static ConsumerConfig createConsumerConfig(){
+	  
+	  Properties props = new Properties();
+		props.put("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
+		props.put("group.id", KAFKA_GROUPID);
+		props.put("zookeeper.session.timeout.ms", "10000");
+		props.put("zookeeper.sync.time.ms", "200");
+		props.put("auto.commit.interval.ms", "1000");
+
+		LOG.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
     return new ConsumerConfig(props);
 
   }
  
   public void run() {
-    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-    topicCountMap.put(topic, new Integer(1));
-    Map<String, List<KafkaMessageStream<Message>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-    KafkaMessageStream<Message> stream =  consumerMap.get(topic).get(0);
-    ConsumerIterator<Message> it = stream.iterator();
-    while(it.hasNext())
-    {
-    	String message = ExampleUtils.getMessage(it.next());
+	  Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		Integer noOfThread = 1;
+		topicCountMap.put(topic, new Integer(noOfThread));
+		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+
+		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+		ConsumerIterator<byte[], byte[]> it = stream.iterator();
+
+		while (it.hasNext()) {
+			String message = new String(it.next().message());
     	Gson gson = new Gson();
     	Map<String, String> messageMap = new HashMap<String, String>();
     	try {

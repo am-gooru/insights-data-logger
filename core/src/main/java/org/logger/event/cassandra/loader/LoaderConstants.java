@@ -41,6 +41,8 @@ public enum LoaderConstants {
     
     SESSIONTOKEN("session_token"),
     
+    SEARCHINDEXAPI("search_indexing_api"),
+    
     VIEW_COUNT_REST_API_END_POINT("view.count.update.rest.api"),
     
     CROPD("collection-resource-oe-play-dots"),
@@ -134,6 +136,18 @@ public enum LoaderConstants {
 	RUFB("resource.user.feedback"),
 	
 	CLASSPAGE("classpage"),
+	
+	SCITEMCREATE("item.create"),
+	
+	SCITEMEDIT("item.edit"),
+	
+	SCITEMDELETE("item.delete"),
+	
+	REGISTERUSER("user.register"),
+	
+	PROFILEACTION("profile.action"),
+	
+	CPUSERREMOVE("classpage.user.remove")
     
     ;
 	

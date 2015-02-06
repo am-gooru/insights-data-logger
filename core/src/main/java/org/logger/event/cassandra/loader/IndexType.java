@@ -4,6 +4,12 @@ public enum IndexType {
 
 	EVENTDETAIL("event_detail"),
 	
+	DIMRESOURCE("dim_resource"),
+	
+	DIMUSER("dim_user"),
+	
+	TAXONOMYCODE("taxonomy_code"),
+	
 	;
 	
 	String name;

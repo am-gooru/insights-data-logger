@@ -66,6 +66,7 @@ public class DataLoader  {
     	options.addOption( "et", "endTime", true, "EndTime to process stagind data" );
     	options.addOption( "en", "eventName", true, "Load particular event in staging" );
     	options.addOption( "postUpdate", "postUpdate", true, "Load events for post aggregation" );
+    	options.addOption( "method", "method", true, "Call method for job" );
     	
     	options.addOption( "dryRun", "dryRun", true, "DryRun. pass true to make a dryrun. default true" );
         options.addOption( "tsStart", "tsStart", true, "time stamp Start. start of timestamp" );
@@ -145,7 +146,7 @@ public class DataLoader  {
     	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
     	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
     	    	return;
-    	    }else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
+    	    }else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName") && line.hasOption("method")) {
 	    	    	String EventName = null;
 	    	    	if(line.getOptionValue("eventName") != null || line.getOptionValue("eventName") == ""){
 	    	    		EventName = line.getOptionValue("eventName");
@@ -161,7 +162,7 @@ public class DataLoader  {
 	    	    	LOG.info("processing staging data");
 	    	    	LOG.info("eventName : {} ",line.getOptionValue("eventName"));
 	    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName,apiKey);
+	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName,apiKey,line.getOptionValue("method"));
 	    	    
     	    }
     	}

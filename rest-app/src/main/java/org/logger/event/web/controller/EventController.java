@@ -64,81 +64,78 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-
 @Controller
-@RequestMapping(value="/event")
+@RequestMapping(value = "/event")
 @EnableAsync
 public class EventController {
 
-	protected final Logger logger = LoggerFactory 
-			.getLogger(EventController.class);
+	protected final Logger logger = LoggerFactory.getLogger(EventController.class);
 	private final String EVENT_SOURCE = "api-logged";
 
 	@Autowired
 	protected EventService eventService;
-	
+
 	private Gson gson = new Gson();
-	
+
 	/**
-	 * Tracks events. 
-	 * @param fields Request Body with a JSON string that will have the fields to update
-	 * @param eventName Name of the event
-	 * @param apiKey API Key for the logging service
+	 * Tracks events.
+	 * 
+	 * @param fields
+	 *            Request Body with a JSON string that will have the fields to
+	 *            update
+	 * @param eventName
+	 *            Name of the event
+	 * @param apiKey
+	 *            API Key for the logging service
 	 * @param request
 	 * @param response
 	 * @throws Exception
 	 */
-	@RequestMapping(method = RequestMethod.POST, headers="Content-Type=application/json")
-	public void trackEvent(
-			@RequestBody String fields,
-			@RequestParam(value = "apiKey", required = true) String apiKey,
-			HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
-		
-		//add cross domain support
+	@RequestMapping(method = RequestMethod.POST, headers = "Content-Type=application/json")
+	public void trackEvent(@RequestBody String fields, @RequestParam(value = "apiKey", required = true) String apiKey, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-		
+
 		boolean isValid = ensureValidRequest(request, response);
-		if(!isValid) {
+		if (!isValid) {
 			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 			return;
 		}
-		
+
 		EventData eventData = null;
 		EventObject eventObject = null;
 		JsonElement jsonElement = null;
 		JsonArray eventJsonArr = null;
-		ActionResponseDTO<EventData>  responseDTO= null;
-		ActionResponseDTO<EventObject>  eventObjDTO= null;
-		
-		if(!fields.isEmpty()){
-			
+		ActionResponseDTO<EventData> responseDTO = null;
+		ActionResponseDTO<EventObject> eventObjDTO = null;
+
+		if (!fields.isEmpty()) {
+
 			try {
-				//validate JSON
+				// validate JSON
 				jsonElement = new JsonParser().parse(fields);
-			    eventJsonArr = jsonElement.getAsJsonArray();
+				eventJsonArr = jsonElement.getAsJsonArray();
 			} catch (JsonParseException e) {
-			    // Invalid.
+				// Invalid.
 				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON");
 				logger.error("OOPS! Invalid JSON", e);
 				return;
 			}
-			
-		}
-		else {
+
+		} else {
 			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
 			return;
 		}
-		
+
 		request.setCharacterEncoding("UTF-8");
 		Long timeStamp = System.currentTimeMillis();
 		String userAgent = request.getHeader("User-Agent");
-		
+
 		String userIp = request.getHeader("X-FORWARDED-FOR");
-		if (userIp == null) 
-		{
+		if (userIp == null) {
 			userIp = request.getRemoteAddr();
 		}
 
@@ -155,15 +152,15 @@ public class EventController {
 			eventObject.setStartTime(timeStamp);
 			eventObject.setEndTime(timeStamp);
 			JsonObject eventObj = eventJson.getAsJsonObject();
-			if(eventObj.get("version") == null){
-				logger.info("Version :{}",eventObj.get("version"));
-				responseDTO = this.createEventData(responseDTO,eventData,eventObj);
-	
+			if (eventObj.get("version") == null) {
+				logger.info("Version :{}", eventObj.get("version"));
+				responseDTO = this.createEventData(responseDTO, eventData, eventObj);
+
 				if (responseDTO.getErrors().getErrorCount() > 0) {
-		            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		            throw new IllegalArgumentException(responseDTO.getErrors().getFieldError().getDefaultMessage());
+					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+					throw new IllegalArgumentException(responseDTO.getErrors().getFieldError().getDefaultMessage());
 				}
-			}else{
+			} else {
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
 				JsonObject jsonObj = eventJson.getAsJsonObject();
 				eventObjects.setFields(jsonObj.toString());
@@ -174,63 +171,63 @@ public class EventController {
 				fieldsObj.put("user", useObj.toString());
 				eventObjects.setFields(fieldsObj.toString());
 				eventObjects.setApiKey(apiKey);
-	        	 eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
-					if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
-			            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			           throw new IllegalArgumentException(eventObjDTO.getErrors().getFieldError().getDefaultMessage());
-					}
-				}		
+				eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
+				if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
+					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+					throw new IllegalArgumentException(eventObjDTO.getErrors().getFieldError().getDefaultMessage());
+				}
+			}
 		}
-		
+
 		return;
-}
-	
- private ActionResponseDTO<EventData> createEventData(ActionResponseDTO<EventData> responseDTO,EventData eventData ,JsonObject eventObj) {
-		
-		if(eventObj.get("eventName") != null){
+	}
+
+	private ActionResponseDTO<EventData> createEventData(ActionResponseDTO<EventData> responseDTO, EventData eventData, JsonObject eventObj) {
+
+		if (eventObj.get("eventName") != null) {
 			eventData.setEventName(eventObj.get("eventName").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("eventId") != null){
+		if (eventObj.get("eventId") != null) {
 			eventData.setEventId(eventObj.get("eventId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("eventId") != null){
+		if (eventObj.get("eventId") != null) {
 			eventData.setEventId(eventObj.get("eventId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("contentGooruId") != null){
+		if (eventObj.get("contentGooruId") != null) {
 			eventData.setContentGooruId(eventObj.get("contentGooruId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("parentGooruId") != null){
+		if (eventObj.get("parentGooruId") != null) {
 			eventData.setParentGooruId(eventObj.get("parentGooruId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("parentEventId") != null){
+		if (eventObj.get("parentEventId") != null) {
 			eventData.setParentEventId(eventObj.get("parentEventId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("organizationUid") != null){
+		if (eventObj.get("organizationUid") != null) {
 			eventData.setOrganizationUid(eventObj.get("organizationUid").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("eventType") != null){
+		if (eventObj.get("eventType") != null) {
 			eventData.setEventType(eventObj.get("eventType").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("type") != null){
+		if (eventObj.get("type") != null) {
 			eventData.setType(eventObj.get("type").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("gooruUId") != null){
+		if (eventObj.get("gooruUId") != null) {
 			eventData.setType(eventObj.get("gooruUId").toString().replaceAll("\"", ""));
 		}
-		if(eventObj.get("timeSpentInMs") != null){
+		if (eventObj.get("timeSpentInMs") != null) {
 			eventData.setTimeSpentInMs(Long.parseLong(eventObj.get("timeSpentInMs").toString().replaceAll("\"", "")));
 		}
-		if(eventObj.get("attemptTrySequence") != null){				
+		if (eventObj.get("attemptTrySequence") != null) {
 			JsonArray jsonArray = eventObj.get("attemptTrySequence").getAsJsonArray();
 			int[] attempTrySequence = new int[jsonArray.size()];
 			for (int i = 0; i < jsonArray.size(); i++) {
 				attempTrySequence[i] = jsonArray.get(i).getAsInt();
 			}
-			
+
 			eventData.setAttemptTrySequence(attempTrySequence);
 		}
 
-		if(eventObj.get("attemptStatus") != null){
+		if (eventObj.get("attemptStatus") != null) {
 			JsonArray jsonArray = eventObj.get("attemptStatus").getAsJsonArray();
 			int[] attemptStatus = new int[jsonArray.size()];
 			for (int i = 0; i < jsonArray.size(); i++) {
@@ -238,7 +235,7 @@ public class EventController {
 			}
 			eventData.setAttemptStatus(attemptStatus);
 		}
-		if(eventObj.get("answerId") != null){
+		if (eventObj.get("answerId") != null) {
 			JsonArray jsonArray = eventObj.get("answerId").getAsJsonArray();
 			int[] answerId = new int[jsonArray.size()];
 			for (int i = 0; i < jsonArray.size(); i++) {
@@ -246,107 +243,68 @@ public class EventController {
 			}
 			eventData.setAnswerId(answerId);
 		}
-		if(eventObj.get("openEndedText") != null){
+		if (eventObj.get("openEndedText") != null) {
 			eventData.setOpenEndedText((eventObj.get("openEndedText").toString().replaceAll("\"", "")));
 		}
-		if(eventObj.get("contextInfo") != null){
+		if (eventObj.get("contextInfo") != null) {
 			eventData.setContextInfo((eventObj.get("contextInfo").toString().replaceAll("\"", "")));
 		}
-		if(eventObj.get("collaboratorIds") != null){
+		if (eventObj.get("collaboratorIds") != null) {
 			eventData.setCollaboratorIds((eventObj.get("collaboratorIds").toString().replaceAll("\"", "")));
 		}
-		if(eventObj.get("mobileData") != null){
+		if (eventObj.get("mobileData") != null) {
 			eventData.setMobileData(Boolean.parseBoolean((eventObj.get("mobileData").toString().replaceAll("\"", ""))));
 		}
-		if(eventObj.get("hintId") != null){
+		if (eventObj.get("hintId") != null) {
 			eventData.setHintId(Integer.parseInt((eventObj.get("hintId").toString().replaceAll("\"", ""))));
 		}
-		//push it to cassandra
+		// push it to cassandra
 		responseDTO = eventService.handleLogMessage(eventData);
-		
+
 		return responseDTO;
-}
+	}
+
 	private boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response) {
 
 		String apiKeyToken = request.getParameter("apiKey");
-		
-		if(apiKeyToken != null && apiKeyToken.length() == 36) {
+
+		if (apiKeyToken != null && apiKeyToken.length() == 36) {
 			AppDO validKey = eventService.verifyApiKey(apiKeyToken);
-			 if(validKey != null)
-			 {
-				 return true;
-			 }
-		 }
-		 return false;
+			if (validKey != null) {
+				return true;
+			}
+		}
+		return false;
 	}
-	
+
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
-		 response.setStatus(responseStatus);
-		 response.setContentType("application/json");
-		 Map<String, Object> resultMap = new HashMap<String, Object>();
-		 
-		 resultMap.put("statusCode", responseStatus);
-		 resultMap.put("message", message);
-		 JSONObject resultJson = new JSONObject(resultMap);
-		 
-		 try {
+		response.setStatus(responseStatus);
+		response.setContentType("application/json");
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+
+		resultMap.put("statusCode", responseStatus);
+		resultMap.put("message", message);
+		JSONObject resultJson = new JSONObject(resultMap);
+
+		try {
 			response.getWriter().write(resultJson.toString());
 		} catch (IOException e) {
 			logger.error("OOPS! Something went wrong", e);
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param request
 	 * @param response
 	 */
-	
+
 	@RequestMapping(value = "/authenticate", method = RequestMethod.POST)
 	public void authenticateRequest(HttpServletRequest request, HttpServletResponse response) {
-		
-		//add cross domain support
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
-		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-
-		String apiKeyToken = request.getParameter("apiKey");
-		
-		if(apiKeyToken != null && apiKeyToken.length() == 36) {
-			AppDO appDO = eventService.verifyApiKey(apiKeyToken);
-			 if(appDO != null)
-			 {
-				 response.setContentType("application/json");
-				 Map<String, Object> resultMap = new HashMap<String, Object>();
-				 
-				 resultMap.put("endPoint", appDO.getEndPoint());
-				 resultMap.put("pushIntervalMs", appDO.getDataPushingIntervalInMillsecs());
-				 JSONObject resultJson = new JSONObject(resultMap);
-				 
-				 try {
-					response.getWriter().write(resultJson.toString());
-				} catch (IOException e) {
-					logger.error("OOPS! Something went wrong", e);
-				}
-				
-				return;
-			 }
-		 }
-		 sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
-		 return;
-	}
-	
-	
-	@RequestMapping(value = "/tail", method = RequestMethod.GET)
-	public void readEventDetails(HttpServletRequest request,
-			@RequestParam(value = "apiKey", required = true) String apiKey,
-			@RequestParam(value = "eventId", required = true) String eventId,
-			HttpServletResponse response) {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers",
-				"Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
 
 		String apiKeyToken = request.getParameter("apiKey");
@@ -354,8 +312,40 @@ public class EventController {
 		if (apiKeyToken != null && apiKeyToken.length() == 36) {
 			AppDO appDO = eventService.verifyApiKey(apiKeyToken);
 			if (appDO != null) {
-				ColumnList<String> eventDetail = eventService
-						.readEventDetail(eventId);
+				response.setContentType("application/json");
+				Map<String, Object> resultMap = new HashMap<String, Object>();
+
+				resultMap.put("endPoint", appDO.getEndPoint());
+				resultMap.put("pushIntervalMs", appDO.getDataPushingIntervalInMillsecs());
+				JSONObject resultJson = new JSONObject(resultMap);
+
+				try {
+					response.getWriter().write(resultJson.toString());
+				} catch (IOException e) {
+					logger.error("OOPS! Something went wrong", e);
+				}
+
+				return;
+			}
+		}
+		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+		return;
+	}
+
+	@RequestMapping(value = "/tail", method = RequestMethod.GET)
+	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventId", required = true) String eventId, HttpServletResponse response) {
+
+		// add cross domain support
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
+
+		String apiKeyToken = request.getParameter("apiKey");
+
+		if (apiKeyToken != null && apiKeyToken.length() == 36) {
+			AppDO appDO = eventService.verifyApiKey(apiKeyToken);
+			if (appDO != null) {
+				ColumnList<String> eventDetail = eventService.readEventDetail(eventId);
 				if (eventDetail != null && !eventDetail.isEmpty()) {
 
 					response.setContentType("application/json");
@@ -378,31 +368,27 @@ public class EventController {
 				return;
 			}
 		}
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-				"Invalid API Key");
+		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 
 	}
+
 	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
-	public void clearCache(HttpServletRequest request,HttpServletResponse response) {
+	public void clearCache(HttpServletRequest request, HttpServletResponse response) {
 		try {
-			eventService.clearCacher();
+			eventService.clearCache();
 			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
 		} catch (Exception e) {
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
-	
+
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
-	public void readLastNevents(HttpServletRequest request,
-			@RequestParam(value = "apiKey", required = true) String apiKey,
-			@RequestParam(value = "totalRows", defaultValue = "20", required = false) Integer totalRows,			
-			HttpServletResponse response) {
+	public void readLastNevents(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "totalRows", defaultValue = "20", required = false) Integer totalRows, HttpServletResponse response) {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers",
-				"Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
 
 		String apiKeyToken = request.getParameter("apiKey");
@@ -410,15 +396,14 @@ public class EventController {
 		if (apiKeyToken != null && apiKeyToken.length() == 36) {
 			AppDO appDO = eventService.verifyApiKey(apiKeyToken);
 			if (appDO != null) {
-				 Rows<String, String> eventDetailRows = eventService
-						.readLastNevents(apiKey, totalRows);
+				Rows<String, String> eventDetailRows = eventService.readLastNevents(apiKey, totalRows);
 				if (eventDetailRows != null && !eventDetailRows.isEmpty()) {
-					
+
 					List<Map<String, Object>> eventJSONList = new ArrayList<Map<String, Object>>();
-					
+
 					response.setContentType("application/json");
-					
-					//Iterate through cassandra rows and get the event JSONS
+
+					// Iterate through cassandra rows and get the event JSONS
 					for (Row<String, String> row : eventDetailRows) {
 						Map<String, Object> resultMap = new HashMap<String, Object>();
 						resultMap.put("eventJSON", row.getColumns().getStringValue("fields", null));
@@ -429,7 +414,7 @@ public class EventController {
 						eventJSONList.add(resultMap);
 					}
 					JSONObject resultJson = new JSONObject(eventJSONList);
-					
+
 					try {
 						response.getWriter().write(resultJson.toString());
 					} catch (IOException e) {
@@ -440,20 +425,19 @@ public class EventController {
 				return;
 			}
 		}
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN,
-				"Invalid API Key");
+		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 
 	}
 
-	public void updateViews() throws Exception{
+	public void updateViews() throws Exception {
 		if (!validateSchedular()) {
 			return;
 		}
 		System.out.println("Executing every five mintues");
 		eventService.updateProdViews();
 	}
-	
+
 	// scheduled for every 1 minute
 	public void executeForEveryMinute() {
 		if (!validateSchedular()) {
@@ -461,54 +445,43 @@ public class EventController {
 		}
 		eventService.executeForEveryMinute(null, null);
 	}
-	
-	//run micro aggregation for the given time range
-	public void executeForEveryMinute(String startTime,String endTime){
-		if (!validateSchedular()) {
-			return;
-		}	
-		eventService.executeForEveryMinute(startTime, endTime);
-	}
-		
-	public void runAggregation(){
-		
-	}
-	
-	public void watchSession() {
+
+	// run micro aggregation for the given time range
+	public void executeForEveryMinute(String startTime, String endTime) {
 		if (!validateSchedular()) {
 			return;
 		}
-		logger.info("watching session");
-		eventService.watchSession();
+		eventService.executeForEveryMinute(startTime, endTime);
 	}
 
-	public void postMigration(){
-		if(!validateSchedular()){
-			return;
-			}
-		logger.info("post migration............");
-		//eventService.postMigration(null, null, null);
-		//eventService.postStatMigration(null, null, null);
-		eventService.balanceStatDataUpdate();
+	public void runAggregation() {
+
 	}
-	
+
+	public void indexActivity() {
+		if (!validateSchedular()) {
+			return;
+		}
+		eventService.indexActivity();
+	}
+
+	public void postMigration() {
+
+	}
+
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
-	public void getUserActivity(@RequestParam String userUid,
-				@RequestParam(value = "apiKey", required = false) String apiKey,
-				@RequestParam(value = "eventName", required = false) String eventName,
-				@RequestParam(value = "minutesToRead", required = false, defaultValue= "30") Integer minutesToRead,
-				@RequestParam(value = "eventsToRead", required = false, defaultValue= "30") Integer eventsToRead,
-				HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = "eventName", required = false) String eventName, @RequestParam(value = "minutesToRead", required = false, defaultValue = "30") Integer minutesToRead,
+			@RequestParam(value = "eventsToRead", required = false, defaultValue = "30") Integer eventsToRead, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 		SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		Calendar cal = Calendar.getInstance();
-	 	String currentMinute = minuteDateFormatter.format(cal.getTime());
-	 	cal.setTime(minuteDateFormatter.parse(currentMinute));
-    	cal.add(Calendar.MINUTE, -minutesToRead);
-    	Date decrementedTime =cal.getTime(); 
-    	String decremenedMinute = minuteDateFormatter.format(decrementedTime);
-	 	
+		String currentMinute = minuteDateFormatter.format(cal.getTime());
+		cal.setTime(minuteDateFormatter.parse(currentMinute));
+		cal.add(Calendar.MINUTE, -minutesToRead);
+		Date decrementedTime = cal.getTime();
+		String decremenedMinute = minuteDateFormatter.format(decrementedTime);
+
 		List<Map<String, Object>> resultMap = eventService.readUserLastNEventsResourceIds(userUid, decremenedMinute, currentMinute, eventName, eventsToRead);
 		JSONObject resultJson = new JSONObject();
 		resultJson.put("activity", resultMap);
@@ -519,10 +492,9 @@ public class EventController {
 		}
 		return;
 	}
-	
+
 	@RequestMapping(method = RequestMethod.PUT)
-	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName,
-			HttpServletResponse response) throws IOException {
+	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName, HttpServletResponse response) throws IOException {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -551,16 +523,8 @@ public class EventController {
 		}
 
 	}
-	
-	public boolean validateSchedular(){
-		
-		try {
-            InetAddress ip = InetAddress.getByName("DO-LOGAPI");
-            String ipAddress = ip.getHostAddress();
-            return eventService.validateSchedular(ipAddress);
-    } catch (UnknownHostException e) {
-            e.printStackTrace();
-    }
-		return false;
+
+	public boolean validateSchedular() {
+		return eventService.validateSchedular();
 	}
 }
