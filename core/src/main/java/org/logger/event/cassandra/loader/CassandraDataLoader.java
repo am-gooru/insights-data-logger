@@ -42,6 +42,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.xalan.xsltc.compiler.util.InternalError;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
@@ -811,7 +812,7 @@ public class CassandraDataLoader implements Constants {
     	}
     }
     
-    private int callStatAPI(String resourceType, String ids) {
+    private void callStatAPI(String resourceType, String ids) {
 
 		try {
 			String url = cache.get(VIEWUPDATEENDPOINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
@@ -820,17 +821,11 @@ public class CassandraDataLoader implements Constants {
 			logger.info("Indexing url : {} ", url);
 			HttpResponse response = httpClient.execute(postRequest);
 			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
-			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
 			if (response.getStatusLine().getStatusCode() != 200) {
-				logger.info("Stat Indexing failed...");
-				return response.getStatusLine().getStatusCode();
-			} else {
-				logger.info("Stat Indexing call Success...");
-				return response.getStatusLine().getStatusCode();
+				throw new InternalError("Indexing failed");
 			}
 		} catch (Exception e) {
-			logger.error("Stat Indexing failed..." + e);
-			return 500;
+			throw new InternalError("Indexing failed");
 		}
 	}
     
