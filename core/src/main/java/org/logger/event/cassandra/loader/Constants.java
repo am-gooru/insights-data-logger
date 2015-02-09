@@ -355,5 +355,11 @@ public interface Constants {
 	public static final int RECURSION_MAX_DEPTH = 20;
 	
 	public static final  String SCOLLECTION = "scollection";
+
+	public static final String READ_EXCEPTION = "Exception while read ColumnFamily:";
 	
+	public static final String WRITE_EXCEPTION = "Exception while write in  ColumnFamily:";
+	
+	public static final String DELETE_EXCEPTION = "Exception while delete in  ColumnFamily:";
+
 }
