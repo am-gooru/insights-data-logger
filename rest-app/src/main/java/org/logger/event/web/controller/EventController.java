@@ -153,7 +153,6 @@ public class EventController {
 			eventObject.setEndTime(timeStamp);
 			JsonObject eventObj = eventJson.getAsJsonObject();
 			if (eventObj.get("version") == null) {
-				logger.info("Version :{}", eventObj.get("version"));
 				responseDTO = this.createEventData(responseDTO, eventData, eventObj);
 
 				if (responseDTO.getErrors().getErrorCount() > 0) {

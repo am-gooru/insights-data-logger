@@ -62,6 +62,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		super(connectionProvider);
 	}
 
+	/**
+	 * This method using to read data with single Key&Indexed column.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param retryCount
+	 * @return
+	 */
 	public Column<String> readWithKeyColumn(String cfName, String key, String columnName, int retryCount) {
 
 		Column<String> result = null;
@@ -69,207 +77,289 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			columnList = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readWithKeyColumn(cfName, key, columnName, retryCount);
-			} else {
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readWithKeyColumn(cfName, key, columnName, ++retryCount);
 			}
+			logger.error("Exception:" + e);
+			throw new RuntimeException(READ_EXCEPTION+cfName);
 		}
 		if (columnList != null) {
 			result = columnList.getColumnByName(columnName);
 		}
 		return result;
 	}
-
+	/**
+	 * This method using to read data with single Key and multiple Indexed columns.
+	 * @param cfName
+	 * @param key
+	 * @param columnList
+	 * @param retryCount
+	 * @return
+	 */
 	public ColumnList<String> readWithKeyColumnList(String cfName, String key, Collection<String> columnList, int retryCount) {
 
 		ColumnList<String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).withColumnSlice(columnList).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readWithKeyColumnList(cfName, key, columnList, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readWithKeyColumnList(cfName, key, columnList, ++retryCount);
 			}
+			logger.error("Exception:" + e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
-
+	
+	/**
+	 * This method using to read data with multiple Keys and multiple Indexed columns.
+	 * @param cfName
+	 * @param keys
+	 * @param columnList
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readWithKeyListColumnList(String cfName, Collection<String> keys, Collection<String> columnList, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(keys).withColumnSlice(columnList).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readWithKeyListColumnList(cfName, keys, columnList, retryCount);
-			} else {
-				logger.info("Exception while read keys : " + keys + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readWithKeyListColumnList(cfName, keys, columnList, ++retryCount);
 			}
+			logger.error("Exception:" + e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
+	/**
+	 * This method using to read data with single Key.
+	 * @param cfName
+	 * @param key
+	 * @param retryCount
+	 * @return
+	 */
 	public ColumnList<String> readWithKey(String cfName, String key, int retryCount) {
 
 		ColumnList<String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readWithKey(cfName, key, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readWithKey(cfName, key, ++retryCount);
 			}
+			logger.error("Exception:" + e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
-
+	
+	/**
+	 * This method using to read data with multiple Keys.
+	 * @param cfName
+	 * @param key
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readWithKeyList(String cfName, Collection<String> key, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(key).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readWithKeyList(cfName, key, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
-			}
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readWithKeyList(cfName, key, ++retryCount);
+			} 
+			logger.error("Exception:" + e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
-	public Rows<String, String> readCommaKeyList(String cfName, String... key) {
+	/**
+	 * This method is using to get the data with multiple Keys in comma separated.
+	 * @param cfName
+	 * @param retryCount
+	 * @param key
+	 * @return
+	 */
+	public Rows<String, String> readCommaKeyList(String cfName, int retryCount,String... key) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(key).execute().getResult();
 
-		} catch (ConnectionException e) {
-			logger.info("Exception while read key : " + key + " from Column Family" + cfName);
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readCommaKeyList(cfName, ++retryCount, key);
+			} 
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
-
+	
+	/**
+	 * 
+	 * @param cfName
+	 * @param keys
+	 * @return
+	 */
 	public Rows<String, String> readIterableKeyList(String cfName, Iterable<String> keys) {
-
+		
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(keys).execute().getResult();
 
-		} catch (ConnectionException e) {
-			logger.info("Exception while read key : " + keys + " from Column Family" + cfName);
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
-
+	
+	/**
+	 * This method is using to get data with single String data type Indexed column.
+	 * @param cfName
+	 * @param columnName
+	 * @param value
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readIndexedColumn(String cfName, String columnName, String value, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readIndexedColumn(cfName, columnName, value, retryCount);
-			} else {
-				logger.info("Exception while read Column : " + columnName + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readIndexedColumn(cfName, columnName, value, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 		return result;
 	}
 
+    /**
+     * This method is using to get data with single Long data type Indexed column.
+     * @param cfName
+     * @param columnName
+     * @param value
+     * @param retryCount
+     * @return
+     */
 	public Rows<String, String> readIndexedColumn(String cfName, String columnName, long value, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
 
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readIndexedColumn(cfName, columnName, value, retryCount);
-			} else {
-				logger.info("Exception while read Column : " + columnName + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readIndexedColumn(cfName, columnName, value, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 		return result;
 	}
 
+	/**
+	 * This method is using to read rows from bottom.
+	 * @param cfName
+	 * @param columnName
+	 * @param value
+	 * @param rowsToRead
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readIndexedColumnLastNrows(String cfName, String columnName, String value, Integer rowsToRead, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().autoPaginateRows(true).setRowLimit(rowsToRead.intValue()).addExpression().whereColumn(columnName).equals()
 					.value(value).execute().getResult();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readIndexedColumnLastNrows(cfName, columnName, value, rowsToRead, retryCount);
-			} else {
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readIndexedColumnLastNrows(cfName, columnName, value, rowsToRead, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
-
+	
+	/**
+	 * This method is using to read columns which have recently introduced.To use this method, Cassandra has to store columns order by enable NTP config.
+	 * @param cfName
+	 * @param key
+	 * @param columnsToRead
+	 * @param retryCount
+	 * @return
+	 */
 	public ColumnList<String> readKeyLastNColumns(String cfName, String key, Integer columnsToRead, int retryCount) {
 
 		ColumnList<String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build()).execute()
-					.getResult();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
+					.getResult();	
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
 				return readKeyLastNColumns(cfName, key, columnsToRead, retryCount);
-			} else {
-				e.printStackTrace();
-			}
+			} 
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
+	/**
+	 * This method is using to get row count.
+	 * @param cfName
+	 * @param key
+	 * @return
+	 */
 	public long getCount(String cfName, String key) {
 
 		Integer columns = null;
 
 		try {
 			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).getCount().execute().getResult();
-		} catch (ConnectionException e) {
-			logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return columns.longValue();
 	}
 
+	/**
+	 * This method is using to get data with more number of indexed columns.
+	 * @param cfName
+	 * @param columnList
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readIndexedColumnList(String cfName, Map<String, String> columnList, int retryCount) {
 
 		Rows<String, String> result = null;
@@ -283,35 +373,43 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			result = query.execute().getResult();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readIndexedColumnList(cfName, columnList, retryCount);
-			} else {
-				logger.info("Exception while read from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readIndexedColumnList(cfName, columnList, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
+	/**
+	 * Just to check if row is available or not for given key.
+	 * @param cfName
+	 * @param key
+	 * @param retryCount
+	 * @return
+	 */
 	public boolean isRowKeyExists(String cfName, String key, int retryCount) {
 
 		try {
 			return getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute().getResult().isEmpty();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return isRowKeyExists(cfName, key, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
-			}
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return isRowKeyExists(cfName, key, ++retryCount);
+			} 
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
-		return false;
 	}
 
+	/**
+	 * Just to check if rows available while use indexed columns.
+	 * @param cfName
+	 * @param columns
+	 * @return
+	 */
 	public boolean isValueExists(String cfName, Map<String, Object> columns) {
 
 		try {
@@ -321,12 +419,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				cfQuery.addExpression().whereColumn(map.getKey()).equals().value(map.getValue().toString());
 			}
 			return cfQuery.execute().getResult().isEmpty();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
-		return false;
 	}
 
+	/**
+	 * Get all the Keys for indexed columns.
+	 * @param cfName
+	 * @param columns
+	 * @return
+	 */
 	public Collection<String> getKey(String cfName, Map<String, Object> columns) {
 
 		try {
@@ -338,12 +442,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
-		return new ArrayList();
 	}
 
+	/**
+	 * Get data based on column range.
+	 * @param cfName
+	 * @param rowKey
+	 * @param startColumnNamePrefix
+	 * @param endColumnNamePrefix
+	 * @param rowsToRead
+	 * @return
+	 */
 	public ColumnList<String> readColumnsWithPrefix(String cfName, String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead) {
 		ColumnList<String> result = null;
 		String startColumnPrefix = null;
@@ -354,13 +467,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(rowKey)
 					.withColumnRange(new RangeBuilder().setLimit(rowsToRead).setStart(startColumnPrefix).setEnd(endColumnPrefix).build()).execute().getResult();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
+	/**
+	 * Get all the rows from ColumnFamily.Please use this method for less number of data.
+	 * @param cfName
+	 * @param retryCount
+	 * @return
+	 */
 	public Rows<String, String> readAllRows(String cfName, int retryCount) {
 
 		Rows<String, String> result = null;
@@ -375,19 +495,23 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					return true;
 				}
 			}).execute().getResult();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return readAllRows(cfName, retryCount);
-			} else {
-				logger.info("Exception while read all rows  from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return readAllRows(cfName, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 
 		return result;
 	}
 
+	/**
+	 * Saving multiple String columns & values for single Key.
+	 * @param cfName
+	 * @param key
+	 * @param columnValueList
+	 */
 	public void saveBulkStringList(String cfName, String key, Map<String, String> columnValueList) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -399,12 +523,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Saving multiple Long columns & values for single Key. 
+	 * @param cfName
+	 * @param key
+	 * @param columnValueList
+	 */
 	public void saveBulkLongList(String cfName, String key, Map<String, Long> columnValueList) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -416,12 +546,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
-
+	
+	/**
+	 * Saving multiple (String,Integer,Long,Boolean) columns & values for single Key.
+	 * @param cfName
+	 * @param key
+	 * @param columnValueList
+	 */
 	public void saveBulkList(String cfName, String key, Map<String, Object> columnValueList) {
 
 		MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -441,15 +577,25 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
 				m.putColumnIfNotNull(entry.getKey(), Boolean.valueOf(String.valueOf(entry.getValue())));
 			}
+			if (entry.getValue().getClass().getSimpleName().equalsIgnoreCase("Date")) {
+				m.putColumnIfNotNull(entry.getKey(), (Date) entry.getValue());
+			}
 		}
 		try {
 			mutation.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
-
+	
+	/**
+	 * Saving String single column,value for a key.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 */
 	public void saveStringValue(String cfName, String key, String columnName, String value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -458,12 +604,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Saving String single column,value for a key with expired time so that data will be removed while given time get expire.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param expireTime
+	 */
 	public void saveStringValue(String cfName, String key, String columnName, String value, int expireTime) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -472,12 +626,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Saving Long single column,value for a key with expired time so that data will be removed while given time get expire.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param expireTime
+	 */
 	public void saveLongValue(String cfName, String key, String columnName, long value, int expireTime) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -486,12 +648,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 */
 	public void saveLongValue(String cfName, String key, String columnName, long value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -500,12 +669,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Save any type of value.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 */
 	public void saveValue(String cfName, String key, String columnName, Object value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -529,12 +705,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Add values in counter columnfamily.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 */
 	public void increamentCounter(String cfName, String key, String columnName, long value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -543,16 +726,30 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
+	/**
+	 * Generate Counter mutation batch for counter column family.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).incrementCounterColumn(columnName, value);
 	}
 
+	/**
+	 * Generate Mutation batch for any type of data
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateNonCounter(String columnName, Object value, ColumnListMutation<String> m) {
 		if (value != null) {
 			if (value.getClass().getSimpleName().equalsIgnoreCase("String")) {
@@ -570,8 +767,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (value.getClass().getSimpleName().equalsIgnoreCase("Timestamp")) {
 				try {
 					m.putColumnIfNotNull(columnName, new Timestamp((formatter.parse(value.toString())).getTime()));
-				} catch (ParseException e) {
-					logger.info("Unable to parse columnValue as timeStamp while inserting to CF");
+				} catch (Exception e) {
+					logger.error("Exception:"+e);
+					throw new RuntimeException(WRITE_EXCEPTION);
 				}
 			}
 		} else {
@@ -579,59 +777,132 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 	}
 
+	/**
+	 * Generate Mutation batch with String value.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateNonCounter(String cfName, String key, String columnName, String value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
 
+	/**
+	 * Generate Mutation batch with Long value.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateNonCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
 
+	/**
+	 * Generate Mutation batch with Integer value.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateNonCounter(String cfName, String key, String columnName, Integer value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
 
+	/**
+	 * Generate Mutation batch with Boolean value.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param m
+	 */
 	public void generateNonCounter(String cfName, String key, String columnName, Boolean value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
 
+	/**
+	 * Generate Mutation batch with Long value with expire time.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param expireTime
+	 * @param m
+	 */
 	public void generateTTLColumns(String cfName, String key, String columnName, long value, int expireTime, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 	}
 
+	/**
+	 * Generate Mutation batch with String value with expire time.
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 * @param value
+	 * @param expireTime
+	 * @param m
+	 */
 	public void generateTTLColumns(String cfName, String key, String columnName, String value, int expireTime, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumn(columnName, value, expireTime);
 	}
 
+	/**
+	 * Delete all the data from ColumnFamily
+	 * @param cfName
+	 */
 	public void deleteAll(String cfName) {
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * Delete single row key
+	 * @param cfName
+	 * @param key
+	 */
 	public void deleteRowKey(String cfName, String key) {
 		MutationBatch m = getKeyspace().prepareMutationBatch();
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).delete();
 
 			m.execute();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * Delete a column
+	 * @param cfName
+	 * @param key
+	 * @param columnName
+	 */
 	public void deleteColumn(String cfName, String key, String columnName) {
 		MutationBatch m = getKeyspace().prepareMutationBatch();
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).deleteColumn(columnName);
 			m.execute();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
-
+   
+	/**
+	 * Get ColumnFamily class
+	 * @param columnFamilyName
+	 * @return
+	 */
 	public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
 
 		ColumnFamily<String, String> aggregateColumnFamily;
@@ -645,6 +916,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * These are custom methods which is supporting in out application
 	 */
 
+	/**
+	 * Saving data into event_detail columnFamily for old events.
+	 * @param cfName
+	 * @param eventData
+	 * @return
+	 */
 	public String saveEvent(String cfName, EventData eventData) {
 		String key = null;
 		if (eventData.getEventId() == null) {
@@ -719,14 +996,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION+cfName);
 		}
 		return key;
 	}
 
-	@Async
+	/**
+	 * Saving events in event_detail column family for 1.0 logapi version events.
+	 * @param cfName
+	 * @param key
+	 * @param eventObject
+	 * @return
+	 */
 	public String saveEventObject(String cfName, String key, EventObject eventObject) {
 
 		if (eventObject.getEventId() == null) {
@@ -745,15 +1028,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.putColumnIfNotNull("parent_event_id", eventObject.getParentEventId(), null);
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write key : " + key + " from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 		return key;
 
 	}
 
-	@Async
+	/**
+	 * Saving data into event_timeline columnfamily
+	 * @param cfName
+	 * @param rowKey
+	 * @param CoulmnValue
+	 * @param eventObject
+	 */
 	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, EventObject eventObject) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -768,13 +1057,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			eventTimelineMutation.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
-	@Async
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventData
+	 * @param rowKey
+	 */
 	public void updateTimeline(String cfName, EventData eventData, String rowKey) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -790,11 +1084,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			eventTimelineMutation.execute();
 		} catch (Exception e) {
-			logger.info("Exception while write  from Column Family" + cfName);
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param activities
+	 */
 	public void saveActivity(String cfName, HashMap<String, Object> activities) {
 		String rowKey = null;
 		String dateId = "0";
@@ -816,11 +1115,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 			m.execute();
 		} catch (Exception e) {
-			logger.info("Exception while write from Column Family" + cfName);
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param userUid
+	 * @param eventId
+	 * @return
+	 */
 	public Map<String, Object> isEventIdExists(String cfName, String userUid, String eventId) {
 		OperationResult<ColumnList<String>> eventColumns = null;
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -843,8 +1149,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					}
 				}
 		} catch (Exception e) {
-			logger.info("Cassandra Connection Exception thrown!!");
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 		if (!isExists) {
 			resultMap.put("isExists", isExists);
@@ -854,6 +1160,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return resultMap;
 	}
 
+	/**
+	 * 
+	 * @param is
+	 * @return
+	 */
 	protected static String convertStreamToString(InputStream is) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		StringBuilder sb = new StringBuilder();
@@ -864,17 +1175,26 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				sb.append(line + "\n");
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException();
 		} finally {
 			try {
 				is.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				logger.error("Exception:"+e);
+				throw new RuntimeException();
 			}
 		}
 		return sb.toString();
 	}
 
+	/**
+	 * Get first level parents.
+	 * @param cfName
+	 * @param Key
+	 * @param retryCount
+	 * @return
+	 */
 	public List<String> getParentId(String cfName, String Key, int retryCount) {
 
 		Rows<String, String> collectionItem = null;
@@ -883,12 +1203,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(Key).execute().getResult();
 		} catch (Exception e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return getParentId(cfName, Key, retryCount);
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return getParentId(cfName, Key, ++retryCount);
 			} else {
-				logger.info("Exception while write read key : " + Key + " from Column Family" + cfName);
-				e.printStackTrace();
+				logger.error("Exception:"+e);
+				throw new RuntimeException(READ_EXCEPTION+cfName);
 			}
 		}
 		if (collectionItem != null) {
@@ -902,6 +1221,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return classPages;
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateCollectionItem(String cfName, Map<String, String> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -911,6 +1235,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateClasspage(String cfName, Map<String, String> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -925,26 +1254,32 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			logger.info("Exception while write from Column Family" + cfName);
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(DELETE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param key
+	 * @param classPageGooruOid
+	 * @param retryCount
+	 * @return
+	 */
 	public boolean getClassPageOwnerInfo(String cfName, String key, String classPageGooruOid, int retryCount) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("gooru_uid").equals().value(key).addExpression()
 					.whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression().whereColumn("is_group_owner").equals().value(1).execute().getResult();
-		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return getClassPageOwnerInfo(cfName, key, classPageGooruOid, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return getClassPageOwnerInfo(cfName, key, classPageGooruOid, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION+cfName);
 		}
 		if (result != null && !result.isEmpty()) {
 			return true;
@@ -952,6 +1287,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param key
+	 * @param classPageGooruOid
+	 * @param retryCount
+	 * @return
+	 */
 	public boolean isUserPartOfClass(String cfName, String key, String classPageGooruOid, int retryCount) {
 
 		Rows<String, String> result = null;
@@ -959,13 +1302,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression()
 					.whereColumn("gooru_uid").equals().value(key).execute().getResult();
 		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return isUserPartOfClass(cfName, key, classPageGooruOid, retryCount);
-			} else {
-				logger.info("Exception while read key : " + key + " from Column Family" + cfName);
-				e.printStackTrace();
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return isUserPartOfClass(cfName, key, classPageGooruOid, ++retryCount);
 			}
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION+cfName);
 		}
 
 		if (result != null && !result.isEmpty()) {
@@ -975,22 +1316,37 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	}
 
+	/**
+	 * 
+	 * @param resourceco
+	 */
 	public void updateResourceEntity(ResourceCo resourceco) {
 		try {
 			getResourceEntityPersister().put(resourceco);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION+RESOURCE);
 		}
 	}
 
+	/**
+	 * 
+	 * @param userCo
+	 */
 	public void updateUserEntity(UserCo userCo) {
 		try {
 			getUserEntityPersister().put(userCo);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION+USER);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1007,11 +1363,17 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.putColumnIfNotNull("sequence", ((eventMap.containsKey("sequence") && eventMap.get("sequence") != null) ? Integer.valueOf(eventMap.get("sequence").toString()) : null));
 		try {
 			m.execute();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(WRITE_EXCEPTION+cfName);
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateCollection(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey("gooruOid") && eventMap.get("gooruOid") != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1026,12 +1388,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.putColumnIfNotNull("estimated_time", eventMap.get("estimatedTime") != null ? eventMap.get("estimatedTime").toString() : null);
 			try {
 				m.execute();
-			} catch (ConnectionException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				logger.error("Exception:"+e);
+				throw new RuntimeException(WRITE_EXCEPTION+cfName);
 			}
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey("collectionItemId") && eventMap.get("collectionItemId") != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1051,12 +1419,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.putColumnIfNotNull("is_required", eventMap.get("collectionItemIsRequired") != null ? Integer.valueOf(eventMap.get("isRequired").toString()) : null);
 			try {
 				m.execute();
-			} catch (ConnectionException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				logger.error("Exception:"+e);
+				throw new RuntimeException(WRITE_EXCEPTION+cfName);
 			}
 		}
 	}
 
+	/**
+	 * 
+	 * @param cfName
+	 * @param eventMap
+	 */
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.get("classId") != null && eventMap.get("groupUId") != null && eventMap.get("userUid") != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1069,8 +1443,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.putColumnIfNotNull(USERID, eventMap.get("userUid") != null ? eventMap.get("userUid").toString() : null).putColumnIfNotNull("is_group_owner", eventMap.get("isGroupOwner") != null ? Integer.valueOf(eventMap.get("isGroupOwner").toString()) : null);
 			try {
 				m.execute();
-			} catch (ConnectionException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				logger.error("Exception:"+e);
+				throw new RuntimeException(DELETE_EXCEPTION+cfName);
 			}
 		}
 	}
@@ -1084,9 +1459,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 *            Gooru OID for the resource / folder / collection.
 	 * @param depth
 	 * @return
-	 * @throws ConnectionException
+	 * 
 	 */
-	public Set<String> getAllLevelParents(String cfName, String childOid, final int depth) throws ConnectionException {
+	public Set<String> getAllLevelParents(String cfName, String childOid, final int depth) {
 		if (depth > RECURSION_MAX_DEPTH) {
 			// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
 			logger.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
@@ -1095,8 +1470,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		Rows<String, String> collectionItemParents = null;
 		Set<String> parentIds = new HashSet<String>();
-		collectionItemParents = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(childOid.trim()).execute()
-				.getResult();
+		try {
+			collectionItemParents = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex().addExpression().whereColumn("resource_gooru_oid").equals().value(childOid.trim()).execute()
+					.getResult();
+		
 
 		if (collectionItemParents != null) {
 			for (Row<String, String> collectionItemParent : collectionItemParents) {
@@ -1113,7 +1490,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		}
-
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
+			throw new RuntimeException(READ_EXCEPTION+cfName);
+		}
 		return parentIds;
 	}
 }
