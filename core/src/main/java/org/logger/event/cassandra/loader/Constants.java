@@ -100,9 +100,9 @@ public interface Constants {
 	
 	public static final  String TYPE = "type";
 	
-	public static final  String ITEMTYPE = "itemType";
+	public static final  String ITEM_TYPE = "itemType";
 	
-	public static final  String ACTIONTYPE = "actionType";
+	public static final  String ACTION_TYPE = "actionType";
 	
 	public static final  String USERAGENT = "userAgent";
 	
@@ -353,5 +353,7 @@ public interface Constants {
 	public static final  String KAFKAPRODUCERTYPE = "kafka_producertype";
 
 	public static final int RECURSION_MAX_DEPTH = 20;
+	
+	public static final  String SCOLLECTION = "scollection";
 	
 }

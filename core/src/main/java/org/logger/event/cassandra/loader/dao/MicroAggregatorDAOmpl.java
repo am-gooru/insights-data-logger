@@ -917,7 +917,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 	}
-	@SuppressWarnings("unchecked")
 	@Async
 	public void updateRawData(Map<String, Object> eventMap) {
 		logger.info("Into Raw Data Update");
@@ -939,108 +938,107 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 
-		if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMCREATE.getName()) 
-				&& ((eventMap.containsKey(DATA)) && eventDataMap != null && !eventDataMap.isEmpty())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().matches(ITEMTYPES_SCSFFC)) && eventMap.containsKey(MODE))) {
-			/** Collection Create **/
+		if ((!eventDataMap.isEmpty() || !eventDataMapList.isEmpty()) && eventMap.containsKey(EVENTNAME)
+				&& StringUtils.isNotBlank(eventMap.get(EVENTNAME).toString())) {
+			if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_CREATE.getName()) && eventMap.containsKey(ITEM_TYPE)) {
+				if (!eventDataMap.isEmpty()) {
+					if ((eventMap.get(ITEM_TYPE).toString().matches(ITEMTYPES_SCSFFC)) && eventMap.containsKey(MODE)) {
+						/** Collection/Folder Create **/
+						if (eventMap.get(MODE).toString().equalsIgnoreCase(CREATE)
+								&& (eventDataMap.containsKey(RESOURCETYPE) && ((((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME)
+										.toString().matches(RESOURCETYPES_SF))))) {
+							this.generateCollectionCreate(eventDataMap, eventMap);
+						} else if (eventMap.get(MODE).toString().equalsIgnoreCase(MOVE)) {
+							this.generateCollectionMove(eventDataMap, eventMap);
+						} else if (eventMap.get(MODE).toString().equalsIgnoreCase(COPY)) {
+							this.generateCollectionCopy(eventDataMap, eventMap);
+						}
 
-			if (eventMap.get(MODE).toString().equalsIgnoreCase(CREATE)
-					 && (eventDataMap.containsKey(RESOURCETYPE) && ((((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME)
-							.toString().matches(RESOURCETYPES_SF))))) {
-				this.generateCollectionCreate(eventDataMap, eventMap);
-			} else if (eventMap.get(MODE).toString().equalsIgnoreCase(MOVE)) {
-				this.generateCollectionMove(eventDataMap, eventMap);
-			} else if (eventMap.get(MODE).toString().equalsIgnoreCase(COPY)) {
-				this.generateCollectionCopy(eventDataMap, eventMap);
+					} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASSPAGE))
+							&& (eventDataMap.containsKey(RESOURCETYPE) && ((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME)
+									.toString().equalsIgnoreCase(CLASSPAGE))) {
+						this.generateClasspageCreate(eventDataMap, eventMap);
+
+					} else if (((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())))
+							&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
+							&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString()
+									.equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE))
+									.get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
+						this.generateResourceCreate(eventDataMap, eventMap);
+					}
+				} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())) 
+						&& eventDataMapList.size() > 0) {
+					this.generateClasspageAssignmentCreate(eventDataMapList, eventMap);
+				} 
+			} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName()) && (eventMap.containsKey(ITEM_TYPE)) && !eventDataMap.isEmpty()) {
+				if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())
+						&& (eventDataMap.containsKey(RESOURCE)
+						&& ((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE) 
+						&& (((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString()
+								.equalsIgnoreCase(LoaderConstants.SCOLLECTION.getName())))) {
+
+					this.generateClasspageAssignmentEdit(eventDataMap, eventMap);
+
+				} else if (((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.SHELF_DOT_COLLECTION
+								.getName())) || eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASSPAGE)) && (eventMap.containsKey(DATA))) {
+
+					this.generateShelfCollectionOrClasspageEdit(eventDataMap, eventMap);
+
+				} else if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())
+						&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
+						&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString()
+								.equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE)
+								.get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
+
+					this.generateResourceEdit(eventDataMap, eventMap);
+
+				}
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName())) {
+
+				this.generateClasspageUserAdd(eventDataMap, eventMap);
+
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLP_USER_REMOVE.getName())) {
+
+				this.generateClasspageUserRemove(eventDataMap, eventMap);
+
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
+
+				this.markItemDelete(eventDataMap, eventMap);
+
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
+
+				this.generateRegisterUser(eventDataMap, eventMap);
+
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.PROFILE_DOT_ACTION.getName())
+					&& eventMap.get(ACTION_TYPE).toString().equalsIgnoreCase(EDIT)) {
+
+				this.generateProfileEdit(eventDataMap, eventMap);
+
 			}
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMCREATE.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase(CLASSPAGE)))
-				&& ((eventMap.containsKey(DATA)) && !eventDataMap.isEmpty() && (eventDataMap.containsKey(RESOURCETYPE)) && ((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME).toString()
-						.equalsIgnoreCase(CLASSPAGE))) {
-				this.generateClasspageCreate(eventDataMap, eventMap);
-				
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName()) && eventMap.containsKey(DATA)) {
-			
-			this.generateClasspageUserAdd(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CPUSERREMOVE.getName())) {
-			
-			this.generateClasspageUserRemove(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMCREATE.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("classpage.collection"))) 
-				&& eventMap.containsKey(DATA) && eventDataMapList.size() > 0) {
-			
-			this.generateClasspageAssignmentCreate(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMEDIT.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("classpage.collection")))
-				&& ((eventMap.containsKey(DATA)) && !eventDataMap.isEmpty() && eventDataMap.containsKey(RESOURCE)
-						&& ((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE) && (((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE))
-						.get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase("scollection")))) {
-			
-			this.generateClasspageAssignmentEdit(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMEDIT.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && ((eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("shelf.collection")) || eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("classpage")))
-				&& (eventMap.containsKey(DATA))) {
-			
-			this.generateShelfCollectionOrClasspageEdit(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMCREATE.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("collection.resource")))
-				&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
-				&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase("scollection")) && !((Map<String, Map<String, Object>>) eventDataMap
-						.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase("classpage"))) {
-			
-			this.generateResourceCreate(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMEDIT.getName())
-				&& (eventMap.containsKey(ITEMTYPE) && (eventMap.get(ITEMTYPE).toString().equalsIgnoreCase("collection.resource")))
-				&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
-				&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase("scollection")) && !((Map<String, Map<String, Object>>) eventDataMap
-						.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
-			
-			this.generateResourceEdit(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.SCITEMDELETE.getName())) {
-			
-			this.markItemDelete(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.REGISTERUSER.getName())) {
-			
-			this.generateRegisterUser(eventDataMap, eventMap);
-			
-		} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.PROFILEACTION.getName()) && eventMap.get(ACTIONTYPE).toString().equalsIgnoreCase(EDIT)) {
-			
-			this.generateProfileEdit(eventDataMap, eventMap);
-			
 		}
 	}
 	
 	private void generateCollectionCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		ResourceCo collection = new ResourceCo();
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
 		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
 			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
 			collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
 		}
 		try {
-			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(dataMap, collection));
+			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(eventDataMap, collection));
 		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", dataMap.get("gooruOid").toString(), ex);
+			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get("gooruOid").toString(), ex);
 		}
 		/** Update insights collection CF for collection mapping **/
-		rawUpdateDAO.updateCollectionTable(dataMap, collectionMap);
+		rawUpdateDAO.updateCollectionTable(eventDataMap, collectionMap);
 		
 		/**Update Insights colectionItem CF for shelf-collection/folder-collection/shelf-folder mapping**/
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().equalsIgnoreCase(ITEMTYPE)) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else if (entry.getKey().equalsIgnoreCase("ItemId") || entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)){
 				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey("ItemId") && eventMap.get("ItemId") != null) ? eventMap.get("ItemId").toString() : null);
 			} else {
@@ -1158,7 +1156,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().equalsIgnoreCase(ITEMTYPE)) {
+			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
 				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
 			} else if (entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)){
 				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey("ItemId") && eventMap.get("ItemId") != null) ? eventMap.get("ItemId").toString() : null);
@@ -1196,7 +1194,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		classpageMap.put("userUid", ((eventMap.containsKey("removedGooruUId") && eventMap.get("removedGooruUId") != null) ? eventMap.get("removedGooruUId") : null));
 		baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
 	}
-	private void generateClasspageAssignmentCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void generateClasspageAssignmentCreate(List<Map<String, Object>> eventDataMapList, Map<String, Object> eventMap) {
 		/** classpage assignment create **/
 		List<Map<String, Object>> dataMapList = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<ArrayList<Map<String, Object>>>() {});
 		for (Map<String, Object> dataMap : dataMapList) {

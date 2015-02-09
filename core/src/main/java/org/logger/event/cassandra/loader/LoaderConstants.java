@@ -137,17 +137,25 @@ public enum LoaderConstants {
 	
 	CLASSPAGE("classpage"),
 	
-	SCITEMCREATE("item.create"),
+	ITEM_DOT_CREATE("item.create"),
 	
-	SCITEMEDIT("item.edit"),
+	ITEM_DOT_EDIT("item.edit"),
 	
-	SCITEMDELETE("item.delete"),
+	ITEM_DOT_DELETE("item.delete"),
 	
-	REGISTERUSER("user.register"),
+	REGISTER_DOT_USER("user.register"),
 	
-	PROFILEACTION("profile.action"),
+	PROFILE_DOT_ACTION("profile.action"),
 	
-	CPUSERREMOVE("classpage.user.remove")
+	CLP_USER_REMOVE("classpage.user.remove"),
+	
+	CLASSPAGE_DOT_COLLECTION("classpage.collection"),
+	
+	SHELF_DOT_COLLECTION("shelf.collection"),
+	
+	COLLECTION_DOT_RESOURCE("collection.resource"),
+	
+	SCOLLECTION("scollection")
     
     ;
 	
