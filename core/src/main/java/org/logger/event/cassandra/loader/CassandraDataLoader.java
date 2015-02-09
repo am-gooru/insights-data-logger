@@ -764,6 +764,8 @@ public class CassandraDataLoader implements Constants {
     }
     
     public void migrateViewCountTs(String ids){
+    	String resourceIds = "";
+    	String collectionIds = "";
     	for(String id : ids.split(",")){
     		ColumnList<String> metricsC = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),"all~"+id,0);
     	if(metricsC != null){
@@ -791,17 +793,21 @@ public class CassandraDataLoader implements Constants {
 					}
 				}
 
-				if((!resourceC.getColumnNames().contains("statistics.viewsCount") || !resourceC.getColumnNames().contains("statistics.viewsCountN")) && views != 0L){
-	    			String type = "resource";
 	    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
-	    				type = "scollection";
+	    				collectionIds += ","+id;
+	    			}else{
+	    				resourceIds += ","+id;
 	    			}
-	    			callStatAPI(type, id);
-	    		}
 	    		
     		}
     		
     		}
+    	}
+    	if(StringUtils.isNotBlank(collectionIds)){
+    		callStatAPI("scollection", collectionIds.substring(1));
+    	}
+    	if(StringUtils.isNotBlank(resourceIds)){
+    		callStatAPI("resource", resourceIds.substring(1));
     	}
     }
     
