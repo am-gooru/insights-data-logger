@@ -205,6 +205,7 @@ public class CassandraDataLoader implements Constants {
         cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN,0).getStringValue());
         cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN,0).getStringValue());
         cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN,0).getStringValue());
+        cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
         geo = new GeoLocation();
         
         ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status",0);
@@ -775,7 +776,7 @@ public class CassandraDataLoader implements Constants {
     			try {
 					MutationBatch m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
 					baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCountN", views, m);
-		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCount", ""+views, m);
+		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.viewsCount", String.valueOf(views), m);
 		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.totalTimeSpent", timeSpent, m);
 		    		baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), id, "statistics.averageTimeSpent", (timeSpent/views), m);
 		    		m.execute();
@@ -803,6 +804,29 @@ public class CassandraDataLoader implements Constants {
     		}
     	}
     }
+    
+    private int callStatAPI(String resourceType, String ids) {
+
+		try {
+			String url = cache.get(VIEWUPDATEENDPOINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			HttpPost postRequest = new HttpPost(url);
+			logger.info("Indexing url : {} ", url);
+			HttpResponse response = httpClient.execute(postRequest);
+			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
+			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
+			if (response.getStatusLine().getStatusCode() != 200) {
+				logger.info("Stat Indexing failed...");
+				return response.getStatusLine().getStatusCode();
+			} else {
+				logger.info("Stat Indexing call Success...");
+				return response.getStatusLine().getStatusCode();
+			}
+		} catch (Exception e) {
+			logger.error("Stat Indexing failed..." + e);
+			return 500;
+		}
+	}
     
     public void migrateAllSessionData(String startTime , String endTime) throws ParseException {
     	

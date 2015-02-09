@@ -128,6 +128,8 @@ public interface Constants {
 	
 	public String VIEWUPDATEENDPOINT = "viewCountAPI";
 	
+	public static final  String STATFIELDS = "statFields";
+	
 	public String SEARCHINDEXAPI = "searchIndexAPI";
 	
 	public String QUESTION = "question";
