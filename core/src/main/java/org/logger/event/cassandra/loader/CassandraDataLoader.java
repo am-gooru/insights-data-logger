@@ -796,7 +796,7 @@ public class CassandraDataLoader implements Constants {
 	    			if(resourceC.getColumnByName("resourceType") != null && resourceC.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")){
 	    				type = "scollection";
 	    			}
-	    			callIndexingAPI(type, id, new Date());
+	    			callStatAPI(type, id);
 	    		}
 	    		
     		}
