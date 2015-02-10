@@ -78,8 +78,7 @@ public class EventController {
 	 * Tracks events.
 	 * 
 	 * @param fields
-	 *            Request Body with a JSON string that will have the fields to
-	 *            update
+	 *            Request Body with a JSON string that will have the fields to update
 	 * @param eventName
 	 *            Name of the event
 	 * @param apiKey
@@ -356,7 +355,8 @@ public class EventController {
 	 * @param response
 	 */
 	@RequestMapping(value = "/tail", method = RequestMethod.GET)
-	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventId", required = true) String eventId, HttpServletResponse response) {
+	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventId", required = true) String eventId,
+			HttpServletResponse response) {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -421,7 +421,8 @@ public class EventController {
 	 * @param response
 	 */
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
-	public void readLastNevents(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "totalRows", defaultValue = "20", required = false) Integer totalRows, HttpServletResponse response) {
+	public void readLastNevents(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey,
+			@RequestParam(value = "totalRows", defaultValue = "20", required = false) Integer totalRows, HttpServletResponse response) {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -474,8 +475,7 @@ public class EventController {
 	 */
 	public void updateViews() throws Exception {
 		/**
-		 * Just to check this method can run from server whenever multiple
-		 * server using the same code
+		 * Just to check this method can run from server whenever multiple server using the same code
 		 */
 		if (!validateSchedular()) {
 			return;
@@ -539,7 +539,8 @@ public class EventController {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
-	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = "eventName", required = false) String eventName, @RequestParam(value = "minutesToRead", required = false, defaultValue = "30") Integer minutesToRead,
+	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = "eventName", required = false) String eventName,
+			@RequestParam(value = "minutesToRead", required = false, defaultValue = "30") Integer minutesToRead,
 			@RequestParam(value = "eventsToRead", required = false, defaultValue = "30") Integer eventsToRead, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 		SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -570,7 +571,8 @@ public class EventController {
 	 * @throws IOException
 	 */
 	@RequestMapping(method = RequestMethod.PUT)
-	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName, HttpServletResponse response) throws IOException {
+	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName,
+			HttpServletResponse response) throws IOException {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");

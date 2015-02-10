@@ -211,11 +211,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					eventMap.put(key, String.valueOf(jsonField.get(key)));
 
 					/*
-					 * if(key.equalsIgnoreCase("contentGooruId") ||
-					 * key.equalsIgnoreCase("gooruOId") ||
-					 * key.equalsIgnoreCase("gooruOid")){
-					 * eventMap.put("gooruOid",
-					 * String.valueOf(jsonField.get(key))); }
+					 * if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){ eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
+					 * }
 					 */
 
 					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
@@ -223,31 +220,37 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					}
 
 					if (key.equalsIgnoreCase("eventName")
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key))
-									.equalsIgnoreCase("quiz-play"))) {
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
 
 						eventMap.put("eventName", "collection.play");
 					}
 
-					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
+					if (key.equalsIgnoreCase("eventName")
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
+									.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
 						eventMap.put("eventName", "user.login");
 					}
 
-					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
+					if (key.equalsIgnoreCase("eventName")
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
 						eventMap.put("eventName", "user.register");
 					}
 
 					if (key.equalsIgnoreCase("eventName")
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
 									"collection-resource-question-play-dots"))) {
 						eventMap.put("eventName", "collection.resource.play");
 					}
 
 					if (key.equalsIgnoreCase("eventName")
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String.valueOf(
-									jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
+							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
+									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
+									.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
 						eventMap.put("eventName", "resource.play");
 					}
 
@@ -569,12 +572,21 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			if (columns.getColumnByName("created_on") != null) {
 				try {
-					resourceMap.put("createdOn", columns.getColumnByName("created_on") != null ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
+					resourceMap.put(
+							"createdOn",
+							columns.getColumnByName("created_on") != null ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName(
+									"last_modified").getStringValue()));
 				} catch (Exception e) {
 					try {
-						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
+						resourceMap.put(
+								"createdOn",
+								columns.getColumnByName("created_on") != null ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName(
+										"last_modified").getStringValue()));
 					} catch (Exception e2) {
-						resourceMap.put("createdOn", columns.getColumnByName("created_on") != null ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
+						resourceMap.put(
+								"createdOn",
+								columns.getColumnByName("created_on") != null ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName(
+										"last_modified").getStringValue()));
 					}
 				}
 			}
@@ -591,9 +603,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
 			}
 			/*
-			 * if(columns.getColumnByName("views_count") != null){
-			 * resourceMap.put("viewsCount",
-			 * columns.getColumnByName("views_count").getLongValue()); }
+			 * if(columns.getColumnByName("views_count") != null){ resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue()); }
 			 */
 			if (columns.getColumnByName("organization_uid") != null) {
 				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization_uid").getStringValue());
@@ -666,7 +676,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			if (columns.getColumnByName("gooru_oid") != null) {
 				resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), columns.getColumnByName("gooru_oid").getStringValue());
+				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), columns
+						.getColumnByName("gooru_oid").getStringValue());
 			}
 		}
 	}
@@ -739,7 +750,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					rowKey = beFieldName.get(entry.getKey());
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
-					contentBuilder.field(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
+					contentBuilder.field(rowKey,
+							TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
 				}
 			}
 			indexingES(indexName, indexType, id, contentBuilder, 0);
@@ -946,7 +958,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 			}
 			contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet();
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder)
+					.execute().actionGet();
 		} else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
 		}
@@ -982,7 +995,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					}
 				}
 				contentBuilder.field("index_updated_time", new Date());
-				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id).setSource(contentBuilder).execute().actionGet();
+				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
+						.setSource(contentBuilder).execute().actionGet();
 			}
 		}
 	}

@@ -179,7 +179,8 @@ public class CassandraDataLoader implements Constants {
 		}
 		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEW_EVENTS, DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATMOENDPOINT, DEFAULTCOLUMN, 0).getStringValue());
-		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0)
+				.getStringValue());
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
@@ -236,7 +237,8 @@ public class CassandraDataLoader implements Constants {
 		}
 		cache.put(VIEWEVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEW_EVENTS, DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(ATMOSPHERENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATMOENDPOINT, DEFAULTCOLUMN, 0).getStringValue());
-		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0).getStringValue());
+		cache.put(VIEWUPDATEENDPOINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULTCOLUMN, 0)
+				.getStringValue());
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
@@ -309,8 +311,9 @@ public class CassandraDataLoader implements Constants {
 	 * 
 	 *            Generate EventData Object
 	 */
-	public void handleLogMessage(String fields, Long startTime, String userAgent, String userIp, Long endTime, String apiKey, String eventName, String gooruOId, String contentId, String query, String gooruUId, String userId, String gooruId, String type, String parentEventId, String context,
-			String reactionType, String organizationUid, Long timeSpentInMs, int[] answerId, int[] attemptStatus, int[] trySequence, String requestMethod, String eventId) {
+	public void handleLogMessage(String fields, Long startTime, String userAgent, String userIp, Long endTime, String apiKey, String eventName, String gooruOId, String contentId, String query,
+			String gooruUId, String userId, String gooruId, String type, String parentEventId, String context, String reactionType, String organizationUid, Long timeSpentInMs, int[] answerId,
+			int[] attemptStatus, int[] trySequence, String requestMethod, String eventId) {
 		EventData eventData = new EventData();
 		eventData.setEventId(eventId);
 		eventData.setStartTime(startTime);
@@ -400,9 +403,7 @@ public class CassandraDataLoader implements Constants {
 				return;
 			}
 			/**
-			 * write the JSON to Log file using kafka log writer module in aysnc
-			 * mode. This will store/write all data to activity log file in
-			 * log/event_api_logs/activity.log
+			 * write the JSON to Log file using kafka log writer module in aysnc mode. This will store/write all data to activity log file in log/event_api_logs/activity.log
 			 */
 			if (eventData.getFields() != null) {
 				baseDao.saveEvent(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventData);
@@ -520,14 +521,9 @@ public class CassandraDataLoader implements Constants {
 			 * liveDashBoardDAOImpl.saveGeoLocations(eventMap);
 			 * 
 			 * 
-			 * if(pushingEvents.contains(eventMap.get("eventName"))){
-			 * liveDashBoardDAOImpl
-			 * .pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap); }
+			 * if(pushingEvents.contains(eventMap.get("eventName"))){ liveDashBoardDAOImpl .pushEventForAtmosphere(cache.get(ATMOSPHERENDPOINT),eventMap); }
 			 * 
-			 * if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1
-			 * .getName())){
-			 * liveDashBoardDAOImpl.pushEventForAtmosphereProgress(
-			 * atmosphereEndPoint, eventMap); }
+			 * if(eventMap.get("eventName").equalsIgnoreCase(LoaderConstants.CRPV1 .getName())){ liveDashBoardDAOImpl.pushEventForAtmosphereProgress( atmosphereEndPoint, eventMap); }
 			 */
 
 		} catch (Exception e) {
@@ -692,12 +688,15 @@ public class CassandraDataLoader implements Constants {
 						for (String column : statKeys) {
 							if (detail.getName().equals(column)) {
 								if (statMetrics.getStringValue(column, null) != null) {
-									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), statMetrics.getStringValue(column, null), detail.getLongValue(), m2);
+									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), statMetrics.getStringValue(column, null),
+											detail.getLongValue(), m2);
 									if (statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent") && vluesList.getLongValue("count~views", 0L) != 0L) {
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.averageTimeSpent", (detail.getLongValue() / vluesList.getLongValue("count~views", 0L)), m2);
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.averageTimeSpent",
+												(detail.getLongValue() / vluesList.getLongValue("count~views", 0L)), m2);
 									}
 									if (statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")) {
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.viewsCount", "" + detail.getLongValue(), m2);
+										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.viewsCount",
+												"" + detail.getLongValue(), m2);
 									}
 								}
 							}
@@ -716,7 +715,8 @@ public class CassandraDataLoader implements Constants {
 				if (indexResourceType != null) {
 					indexingStatus = this.callStatAPI(indexResourceType, resourceIds.substring(1));
 				}
-				baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + indexLabelLimit, minuteDateFormatter.format(rowValues), String.valueOf(indexedCount++), 86400);
+				baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + indexLabelLimit, minuteDateFormatter.format(rowValues), String.valueOf(indexedCount++),
+						86400);
 
 				if (indexingStatus == 200 || indexingStatus == 404) {
 					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXSTATUS, DEFAULTCOLUMN, COMPLETED);
@@ -937,7 +937,8 @@ public class CassandraDataLoader implements Constants {
 			eventObject.setEventType(eventMap.get("type").toString());
 		}
 
-		if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId") && (eventMap.get("organizationUId") == null || eventMap.get("organizationUId").toString().isEmpty())) {
+		if (eventMap != null && eventMap.get("gooruUId") != null && eventMap.containsKey("organizationUId")
+				&& (eventMap.get("organizationUId") == null || eventMap.get("organizationUId").toString().isEmpty())) {
 			try {
 				userUid = eventMap.get("gooruUId").toString();
 				Rows<String, String> userDetails = baseDao.readIndexedColumn(ColumnFamily.DIMUSER.getColumnFamily(), "gooru_uid", userUid, 0);
@@ -1213,8 +1214,7 @@ public class CassandraDataLoader implements Constants {
 	 * @param endTime
 	 * @param customEventName
 	 * @param isScheduledJob
-	 *            true if called from scheduler. false when called from
-	 *            real-time indexing.
+	 *            true if called from scheduler. false when called from real-time indexing.
 	 * @throws ParseException
 	 */
 	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
