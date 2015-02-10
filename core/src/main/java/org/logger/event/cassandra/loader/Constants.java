@@ -54,6 +54,16 @@ public interface Constants {
 	
 	public static final  String SESSION = "sessionId";
 	
+	public static final  String FIRST_ATTEMPT_STATUS = "first_attempt_status";
+	
+	public static final  String FIRSTATTEMPTSTATUS = "firstAttemptStatus";
+	
+	public static final  String ANSWER_STATUS = "answer_status";
+	
+	public static final  String ANSWERSTATUS = "answerStatus";
+	
+	public static final  String SESSION_ID = "session_id";
+	
 	public static final  String SESSIONTOKEN = "sessionToken";
 	
 	public static final  String STATFIELDS = "statFields";
@@ -132,6 +142,8 @@ public interface Constants {
 	
 	public static final  String COMPLETED = "completed";
 	
+	public static final  String COMPLETED_EVENT = "completed-event";
+	
 	public static final  String INPROGRESS = "in-progress";
 	
 	public static final  String INDEXWAITINGLIMIT = "index~waiting~limit";
@@ -168,7 +180,13 @@ public interface Constants {
 	
 	public static final  String GOORU_OID = "gooru_oid";
 	
-	public static final  String USERID = "gooru_uid";
+	public static final  String GOORU_UID = "gooru_uid";
+	
+	public static final  String USER_UID = "user_uid";
+	
+	public static final  String USERUID = "userUid";
+	
+	public static final  String USERNAME = "username";
 	
 	public static final  String CLASSPAGEID = "classpage_id";
 	
@@ -192,7 +210,11 @@ public interface Constants {
 	
 	public static final  String CONTENT_GOORU_OID = "content_gooru_oid";
 
+	public static final  String RESOURCE_ID = "resourceId";
+	
 	public static final  String PARENT_GOORU_OID = "parent_gooru_oid";
+	
+	public static final  String PARENT_ID = "parentId";
 	
 	public static final  String EVENT_TYPE = "event_type";
 	

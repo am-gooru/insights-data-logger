@@ -1247,7 +1247,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		int isGroupOwner = 0;
 		int deleted = 0;
 		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GROUPUID) + SEPERATOR + eventMap.get(GOORUID)).putColumnIfNotNull(USER_GROUP_UID, eventMap.get(GROUPUID)).putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get(CONTENTGOORUOID))
-				.putColumnIfNotNull("is_group_owner", isGroupOwner).putColumnIfNotNull("deleted", deleted).putColumnIfNotNull(USERID, eventMap.get(GOORUID)).putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get(CLASSCODE)).putColumnIfNotNull(USER_GROUP_CODE, eventMap.get(CONTENT_GOORU_OID))
+				.putColumnIfNotNull("is_group_owner", isGroupOwner).putColumnIfNotNull("deleted", deleted).putColumnIfNotNull(GOORU_UID, eventMap.get(GOORUID)).putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get(CLASSCODE)).putColumnIfNotNull(USER_GROUP_CODE, eventMap.get(CONTENT_GOORU_OID))
 				.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get(ORGANIZATIONUID))
 
 		;
@@ -1440,7 +1440,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get("groupUId") != null ? eventMap.get("groupUId").toString() : null).putColumnIfNotNull(ORGANIZATION_UID, eventMap.get("organizationUId") != null ? eventMap.get("organizationUId").toString() : null)
 					.putColumnIfNotNull("user_group_type", eventMap.get("userGroupType") != null ? eventMap.get("userGroupType").toString() : null).putColumnIfNotNull("active_flag", eventMap.get("activeFlag") != null ? Integer.valueOf(eventMap.get("activeFlag").toString()) : null)
 					.putColumnIfNotNull(USER_GROUP_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null).putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null)
-					.putColumnIfNotNull(USERID, eventMap.get("userUid") != null ? eventMap.get("userUid").toString() : null).putColumnIfNotNull("is_group_owner", eventMap.get("isGroupOwner") != null ? Integer.valueOf(eventMap.get("isGroupOwner").toString()) : null);
+					.putColumnIfNotNull(GOORU_UID, eventMap.get("userUid") != null ? eventMap.get("userUid").toString() : null).putColumnIfNotNull("is_group_owner", eventMap.get("isGroupOwner") != null ? Integer.valueOf(eventMap.get("isGroupOwner").toString()) : null);
 			try {
 				m.execute();
 			} catch (Exception e) {

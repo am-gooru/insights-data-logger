@@ -24,8 +24,6 @@
 package org.logger.event.web.controller;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,7 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
@@ -161,12 +158,10 @@ public class EventController {
 				}
 			} else {
 				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				JsonObject jsonObj = eventJson.getAsJsonObject();
-				eventObjects.setFields(jsonObj.toString());
 				JSONObject useObj = new JSONObject(eventObjects.getUser());
 				useObj.put("userIp", userIp);
 				useObj.put("userAgent", userAgent);
-				JSONObject fieldsObj = new JSONObject(eventObjects.getFields());
+				JSONObject fieldsObj = new JSONObject(eventObj.toString());
 				fieldsObj.put("user", useObj.toString());
 				eventObjects.setFields(fieldsObj.toString());
 				eventObjects.setApiKey(apiKey);
@@ -181,6 +176,14 @@ public class EventController {
 		return;
 	}
 
+	/**
+	 * Create eventData object by iterating json
+	 * 
+	 * @param responseDTO
+	 * @param eventData
+	 * @param eventObj
+	 * @return
+	 */
 	private ActionResponseDTO<EventData> createEventData(ActionResponseDTO<EventData> responseDTO, EventData eventData, JsonObject eventObj) {
 
 		if (eventObj.get("eventName") != null) {
@@ -263,6 +266,13 @@ public class EventController {
 		return responseDTO;
 	}
 
+	/**
+	 * Validating apiKey
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	private boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response) {
 
 		String apiKeyToken = request.getParameter("apiKey");
@@ -276,6 +286,13 @@ public class EventController {
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @param responseStatus
+	 * @param message
+	 */
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
 		response.setStatus(responseStatus);
 		response.setContentType("application/json");
@@ -297,7 +314,6 @@ public class EventController {
 	 * @param request
 	 * @param response
 	 */
-
 	@RequestMapping(value = "/authenticate", method = RequestMethod.POST)
 	public void authenticateRequest(HttpServletRequest request, HttpServletResponse response) {
 
@@ -331,6 +347,14 @@ public class EventController {
 		return;
 	}
 
+	/**
+	 * Read events from event detail
+	 * 
+	 * @param request
+	 * @param apiKey
+	 * @param eventId
+	 * @param response
+	 */
 	@RequestMapping(value = "/tail", method = RequestMethod.GET)
 	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventId", required = true) String eventId, HttpServletResponse response) {
 
@@ -372,6 +396,12 @@ public class EventController {
 
 	}
 
+	/**
+	 * Clearing cached data
+	 * 
+	 * @param request
+	 * @param response
+	 */
 	@RequestMapping(value = "/clear/cache", method = RequestMethod.GET)
 	public void clearCache(HttpServletRequest request, HttpServletResponse response) {
 		try {
@@ -382,6 +412,14 @@ public class EventController {
 		}
 	}
 
+	/**
+	 * Get last few events
+	 * 
+	 * @param request
+	 * @param apiKey
+	 * @param totalRows
+	 * @param response
+	 */
 	@RequestMapping(value = "/latest/tail", method = RequestMethod.GET)
 	public void readLastNevents(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "totalRows", defaultValue = "20", required = false) Integer totalRows, HttpServletResponse response) {
 
@@ -429,15 +467,25 @@ public class EventController {
 
 	}
 
+	/**
+	 * Scheduler to feed view count for search
+	 * 
+	 * @throws Exception
+	 */
 	public void updateViews() throws Exception {
+		/**
+		 * Just to check this method can run from server whenever multiple
+		 * server using the same code
+		 */
 		if (!validateSchedular()) {
 			return;
 		}
-		System.out.println("Executing every five mintues");
 		eventService.updateProdViews();
 	}
 
-	// scheduled for every 1 minute
+	/**
+	 * run micro aggregation for the given time range
+	 */
 	public void executeForEveryMinute() {
 		if (!validateSchedular()) {
 			return;
@@ -445,7 +493,9 @@ public class EventController {
 		eventService.executeForEveryMinute(null, null);
 	}
 
-	// run micro aggregation for the given time range
+	/**
+	 * run micro aggregation for the given time range
+	 */
 	public void executeForEveryMinute(String startTime, String endTime) {
 		if (!validateSchedular()) {
 			return;
@@ -453,10 +503,16 @@ public class EventController {
 		eventService.executeForEveryMinute(startTime, endTime);
 	}
 
+	/**
+	 * Unused method
+	 */
 	public void runAggregation() {
 
 	}
 
+	/**
+	 * Indexing events in ES
+	 */
 	public void indexActivity() {
 		if (!validateSchedular()) {
 			return;
@@ -464,11 +520,24 @@ public class EventController {
 		eventService.indexActivity();
 	}
 
+	/**
+	 * Unused method
+	 */
 	public void postMigration() {
 
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * 
+	 * @param userUid
+	 * @param apiKey
+	 * @param eventName
+	 * @param minutesToRead
+	 * @param eventsToRead
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
 	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = "eventName", required = false) String eventName, @RequestParam(value = "minutesToRead", required = false, defaultValue = "30") Integer minutesToRead,
 			@RequestParam(value = "eventsToRead", required = false, defaultValue = "30") Integer eventsToRead, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -492,6 +561,14 @@ public class EventController {
 		return;
 	}
 
+	/**
+	 * 
+	 * @param request
+	 * @param apiKey
+	 * @param eventName
+	 * @param response
+	 * @throws IOException
+	 */
 	@RequestMapping(method = RequestMethod.PUT)
 	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = "eventName", required = true) String eventName, HttpServletResponse response) throws IOException {
 
