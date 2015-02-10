@@ -108,16 +108,13 @@ public class CassandraDataLoader implements Constants {
 	private boolean canRunSchduler = false;
 
 	private boolean canRunIndexing = true;
-	
-	private int indexMinLoopCount = 100;
-	
+
 	/**
 	 * Get Kafka properties from Environment
 	 */
 	public CassandraDataLoader() {
 		this(null);
 
-		// micro Aggregator producer IP
 		// micro Aggregator producer IP
 		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAIP);
 		String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2KAFKAMICROPRODUCER).get(KAFKAPORT);
@@ -133,6 +130,10 @@ public class CassandraDataLoader implements Constants {
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 	}
 
+	/**
+	 * 
+	 * @param configOptionsMap
+	 */
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
 		// micro Aggregator producer IP
@@ -156,12 +157,9 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	/**
-	 * *
 	 * 
 	 * @param configOptionsMap
-	 *            Initialize CoulumnFamily
 	 */
-
 	private void init(Map<String, String> configOptionsMap) {
 
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -186,7 +184,7 @@ public class CassandraDataLoader implements Constants {
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(BATCH_SIZE, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), BATCH_SIZE, DEFAULTCOLUMN, 0).getStringValue());
-		
+
 		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCHSTATUS, 0);
 		for (int i = 0; i < schdulersStatus.size(); i++) {
 			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
@@ -208,14 +206,14 @@ public class CassandraDataLoader implements Constants {
 		}
 
 		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REALTIMEINDEXING, 0).getStringValue(DEFAULTCOLUMN, null);
-		if(realTimeIndexing.equalsIgnoreCase(STOP)){
+		if (realTimeIndexing.equalsIgnoreCase(STOP)) {
 			canRunIndexing = false;
 		}
 		if (kafkaConfigurationCache == null) {
 
 			kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 			String[] kafkaMessager = new String[] { V2KAFKACONSUMER, V2KAFKALOGWRITERPRODUCER, V2KAFKALOGWRITERCONSUMER, V2KAFKAMICROPRODUCER, V2KAFKAMICROCONSUMER };
-			Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
+			Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, 0, kafkaMessager);
 			for (Row<String, String> row : result) {
 				Map<String, String> properties = new HashMap<String, String>();
 				for (Column<String> column : row.getColumns()) {
@@ -226,6 +224,9 @@ public class CassandraDataLoader implements Constants {
 		}
 	}
 
+	/**
+	 * This method is doing clear map and getting laster data.
+	 */
 	public void clearCache() {
 		cache.clear();
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
@@ -239,7 +240,7 @@ public class CassandraDataLoader implements Constants {
 		cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN, 0).getStringValue());
 		cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
-		
+
 		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
 		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATMETRICS, 0);
 
@@ -253,7 +254,7 @@ public class CassandraDataLoader implements Constants {
 
 		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 		String[] kafkaMessager = new String[] { V2KAFKACONSUMER, V2KAFKALOGWRITERPRODUCER, V2KAFKALOGWRITERCONSUMER, V2KAFKAMICROPRODUCER, V2KAFKAMICROCONSUMER };
-		Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
+		Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, 0, kafkaMessager);
 		for (Row<String, String> row : result) {
 			Map<String, String> properties = new HashMap<String, String>();
 			for (Column<String> column : row.getColumns()) {
@@ -274,7 +275,7 @@ public class CassandraDataLoader implements Constants {
 			e.printStackTrace();
 		}
 		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REALTIMEINDEXING, 0).getStringValue(DEFAULTCOLUMN, null);
-		if(realTimeIndexing.equalsIgnoreCase(STOP)){
+		if (realTimeIndexing.equalsIgnoreCase(STOP)) {
 			canRunIndexing = false;
 		}
 	}
@@ -387,7 +388,7 @@ public class CassandraDataLoader implements Constants {
 			records.put("api_key", eventData.getApiKey() != null ? eventData.getApiKey() : DEFAULT_API_KEY);
 			Collection<String> existingEventRecord = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(), records);
 
-			if (existingEventRecord == null && existingEventRecord.isEmpty()) {
+			if (existingEventRecord == null || existingEventRecord.isEmpty()) {
 				logger.info("Please add new event in to events table ");
 				return;
 			}
@@ -412,9 +413,8 @@ public class CassandraDataLoader implements Constants {
 			// Insert into event_timeline column family
 			Date eventDateTime = new Date(eventData.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-			if (eventData.getEventType() == null || !eventData.getEventType().equalsIgnoreCase("completed-event")) {
+			if (eventData.getEventType() == null || !eventData.getEventType().equalsIgnoreCase(COMPLETED_EVENT)) {
 				eventData.setEventKeyUUID(eventKeyUUID.toString());
-				String duplicatekey = eventRowKey + "~" + eventRowKey;
 				baseDao.updateTimeline(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventData, eventRowKey);
 			}
 			try {
@@ -427,6 +427,15 @@ public class CassandraDataLoader implements Constants {
 		}
 	}
 
+	/**
+	 * This is the manin the method that process all the events.
+	 * 
+	 * @param eventObject
+	 * @throws JSONException
+	 * @throws ConnectionException
+	 * @throws IOException
+	 * @throws GeoIp2Exception
+	 */
 	public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
 		Map<String, String> eventMap2 = new LinkedHashMap<String, String>();
@@ -437,7 +446,6 @@ public class CassandraDataLoader implements Constants {
 			eventMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
 			eventMap2 = JSONDeserializer.deserializeEventObject(eventObject);
 			if (eventObject.getFields() != null) {
-				//logger.info("CORE: Writing to activity log - :" + eventObject.getFields().toString());
 				kafkaLogWriter.sendEventLog(eventObject.getFields());
 
 			}
@@ -477,7 +485,7 @@ public class CassandraDataLoader implements Constants {
 				liveAggregator.realTimeMetrics(eventMap2, aggregatorJson);
 			}
 
-			liveDashBoardDAOImpl.callCountersV2(eventMap);
+			liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 
 			if (eventObject.getFields() != null) {
 				microAggregator.sendEventForAggregation(eventObject.getFields());
@@ -491,10 +499,10 @@ public class CassandraDataLoader implements Constants {
 			kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
 			logger.error("Writing error log : {} ", eventObject.getEventId());
 		}
-		if(canRunIndexing){
+		if (canRunIndexing) {
 			indexer.indexEvents(eventObject.getFields());
 		}
-		
+
 		try {
 
 			if (cache.get(VIEWEVENTS).contains(eventMap.get("eventName").toString())) {
@@ -523,7 +531,7 @@ public class CassandraDataLoader implements Constants {
 			 */
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:" + e);
 		}
 
 	}
@@ -535,8 +543,6 @@ public class CassandraDataLoader implements Constants {
 	 * @throws ConnectionException
 	 *             If the host is unavailable
 	 */
-
-	@Async
 	private void updateEventObjectCompletion(EventObject eventObject) throws ConnectionException {
 
 		Long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();
@@ -582,7 +588,7 @@ public class CassandraDataLoader implements Constants {
 
 		if (eventComplete) {
 			eventObject.setTimeInMillSec(timeInMillisecs);
-			eventObject.setEventType("completed-event");
+			eventObject.setEventType(COMPLETED_EVENT);
 			eventObject.setEndTime(endTime);
 			eventObject.setStartTime(startTime);
 		}
@@ -598,9 +604,13 @@ public class CassandraDataLoader implements Constants {
 
 	}
 
+	/**
+	 * 
+	 * @throws Exception
+	 */
 	public void callAPIViewCount() throws Exception {
 		if (cache.get("stat_job").equalsIgnoreCase("stop")) {
-			logger.info("job stopped");
+			logger.debug("job stopped");
 			return;
 		}
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEWSLASTUPDATED, DEFAULTCOLUMN, 0).getStringValue();
@@ -630,16 +640,6 @@ public class CassandraDataLoader implements Constants {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEWSLASTUPDATED, DEFAULTCOLUMN, minuteDateFormatter.format(rowValues));
 			}
 		}
-
-		/*
-		 * 
-		 * Disabling this code to avoid hitting search index performance more
-		 * 
-		 * 
-		 * logger.info("2-processing curr mins : {}",minuteDateFormatter.format(
-		 * currDate)); boolean status =
-		 * this.getRecordsToProcess(currDate,CURRINDEXINGLIMIT);
-		 */
 
 	}
 
@@ -707,7 +707,6 @@ public class CassandraDataLoader implements Constants {
 				}
 			}
 			if (indexCollectionType != null || indexResourceType != null) {
-				// m.execute();
 				m2.execute();
 				int indexingStatus = 0;
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
@@ -724,7 +723,7 @@ public class CassandraDataLoader implements Constants {
 					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXWAITINGCOUNT, DEFAULTCOLUMN, "0");
 					return true;
 				} else {
-					logger.info("Statistical data update failed");
+					logger.error("Statistical data update failed");
 					return false;
 				}
 			} else if (IndexingStatus != null && IndexingStatus.equalsIgnoreCase(INPROGRESS)) {
@@ -753,7 +752,7 @@ public class CassandraDataLoader implements Constants {
 	private int callStatAPI(String resourceType, String ids) {
 
 		try {
-			String url = cache.get(VIEWUPDATEENDPOINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields="+cache.get(STATFIELDS);
+			String url = cache.get(VIEWUPDATEENDPOINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSIONTOKEN) + "&indexableIds=" + ids + "&fields=" + cache.get(STATFIELDS);
 			DefaultHttpClient httpClient = new DefaultHttpClient();
 			HttpPost postRequest = new HttpPost(url);
 			logger.info("Indexing url : {} ", url);
@@ -761,38 +760,12 @@ public class CassandraDataLoader implements Constants {
 			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
 			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
 			if (response.getStatusLine().getStatusCode() != 200) {
-				logger.info("Stat Indexing failed...");
 				return response.getStatusLine().getStatusCode();
 			} else {
-				logger.info("Stat Indexing call Success...");
 				return response.getStatusLine().getStatusCode();
 			}
 		} catch (Exception e) {
 			logger.error("Stat Indexing failed..." + e);
-			return 500;
-		}
-	}
-	
-	private int callIndexingAPI(String resourceType, String ids) {
-
-		try {
-			String sessionToken = cache.get(SESSIONTOKEN);
-			String url = cache.get(SEARCHINDEXAPI) + resourceType + "/index?sessionToken=" + sessionToken + "&ids=" + ids;
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost postRequest = new HttpPost(url);
-			logger.info("Indexing url : {} ", url);
-			HttpResponse response = httpClient.execute(postRequest);
-			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
-			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
-			if (response.getStatusLine().getStatusCode() != 200) {
-				logger.info("Search Indexing failed...");
-				return response.getStatusLine().getStatusCode();
-			} else {
-				logger.info("Search Indexing call Success...");
-				return response.getStatusLine().getStatusCode();
-			}
-		} catch (Exception e) {
-			logger.info("Search Indexing failed..." + e);
 			return 500;
 		}
 	}
@@ -818,7 +791,7 @@ public class CassandraDataLoader implements Constants {
 			if (existingRecord.get("isExists").equals(true) && existingRecord.get("jsonString").toString() != null) {
 				jsonElement = new JsonParser().parse(existingRecord.get("jsonString").toString());
 				existingEventObj = jsonElement.getAsJsonObject();
-				if ("completed-event".equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
+				if (COMPLETED_EVENT.equalsIgnoreCase(eventType) || "stop".equalsIgnoreCase(eventType)) {
 					existingColumnName = existingRecord.get("existingColumnName").toString();
 					startTime = existingEventObj.get(START_TIME).getAsLong();
 				} else {
@@ -865,14 +838,12 @@ public class CassandraDataLoader implements Constants {
 		microAggregator.sendEventForStaticAggregation(jsonObject.toString());
 	}
 
-	public void watchSession() {
-		try {
-			liveDashBoardDAOImpl.watchApplicationSession();
-		} catch (ParseException e) {
-			logger.info("Exception : {} ", e);
-		}
-	}
-
+	/**
+	 * 
+	 * @param eventName
+	 * @param apiKey
+	 * @return
+	 */
 	public boolean createEvent(String eventName, String apiKey) {
 
 		Map<String, Object> records = new HashMap<String, Object>();
@@ -895,6 +866,13 @@ public class CassandraDataLoader implements Constants {
 		return canRunSchduler;
 	}
 
+	/**
+	 * Formating eventMap
+	 * 
+	 * @param eventObject
+	 * @param eventMap
+	 * @return
+	 */
 	private Map<String, String> formatEventMap(EventObject eventObject, Map<String, String> eventMap) {
 
 		String userUid = null;
@@ -934,6 +912,13 @@ public class CassandraDataLoader implements Constants {
 		return eventMap;
 	}
 
+	/**
+	 * Format eventMap
+	 * 
+	 * @param eventObject
+	 * @param eventMap
+	 * @return
+	 */
 	private <T> T formatEventObjectMap(EventObject eventObject, Map<String, T> eventMap) {
 
 		String userUid = null;
@@ -978,6 +963,10 @@ public class CassandraDataLoader implements Constants {
 		return (T) eventMap;
 	}
 
+	/**
+	 * 
+	 * @param eventData
+	 */
 	private void getAndSetAnswerStatus(EventData eventData) {
 		if (eventData.getEventName().equalsIgnoreCase(LoaderConstants.CQRPD.getName()) || eventData.getEventName().equalsIgnoreCase(LoaderConstants.QPD.getName())) {
 			String answerStatus = null;
@@ -1071,7 +1060,7 @@ public class CassandraDataLoader implements Constants {
 
 		if (eventComplete) {
 			eventData.setTimeInMillSec(timeInMillisecs);
-			eventData.setEventType("completed-event");
+			eventData.setEventType(COMPLETED_EVENT);
 			eventData.setEndTime(endTime);
 			eventData.setStartTime(startTime);
 		}
@@ -1088,6 +1077,11 @@ public class CassandraDataLoader implements Constants {
 
 	}
 
+	/**
+	 * 
+	 * @param eventId
+	 * @throws JSONException
+	 */
 	private void updateActivityStream(String eventId) throws JSONException {
 
 		if (eventId != null) {
@@ -1104,8 +1098,6 @@ public class CassandraDataLoader implements Constants {
 
 			ColumnList<String> activityRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 0);
 			if (activityRow != null) {
-				String fields = activityRow.getStringValue(FIELDS, null);
-
 				SimpleDateFormat minuteDateFormatter = new SimpleDateFormat(MINUTEDATEFORMATTER);
 				HashMap<String, Object> activityMap = new HashMap<String, Object>();
 				Map<String, Object> eventMap = new HashMap<String, Object>();
@@ -1214,25 +1206,28 @@ public class CassandraDataLoader implements Constants {
 		}
 	}
 
-
 	/**
-	 * Index all events between a given start and end times. 
+	 * Index all events between a given start and end times.
+	 * 
 	 * @param startTime
 	 * @param endTime
 	 * @param customEventName
-	 * @param isScheduledJob true if called from scheduler. false when called from real-time indexing.
+	 * @param isScheduledJob
+	 *            true if called from scheduler. false when called from
+	 *            real-time indexing.
 	 * @throws ParseException
 	 */
 	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
 
 		if (isScheduledJob) {
-			// Called from Scheduled job. Mark the status as in-progress so that no other activity will overlap.
+			// Called from Scheduled job. Mark the status as in-progress so that
+			// no other activity will overlap.
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, INPROGRESS);
 		}
 
 		String timeLineKey = null;
 		final long batchEndDate = minuteDateFormatter.parse(endTime).getTime();
-		
+
 		for (long batchStartDate = minuteDateFormatter.parse(startTime).getTime(); batchStartDate < batchEndDate;) {
 			String currentDate = minuteDateFormatter.format(new Date(batchStartDate));
 			logger.info("Processing Date : {}", currentDate);
@@ -1251,7 +1246,7 @@ public class CassandraDataLoader implements Constants {
 					ColumnList<String> event = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), column.getStringValue(), 0);
 					indexer.indexEvents(event.getStringValue("fields", null));
 				}
-				
+
 			}
 			// Incrementing time - one minute
 			batchStartDate = new Date(batchStartDate).getTime() + 60000;
@@ -1266,14 +1261,15 @@ public class CassandraDataLoader implements Constants {
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, COMPLETED);
 		}
 
-		logger.info("Indexing completed..........");
+		logger.debug("Indexing completed..........");
 	}
 
-    
-	@Async
+	/**
+	 * 
+	 * @param eventData
+	 * @return
+	 */
 	private String updateEvent(EventData eventData) {
-		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamily.APIKEY.getColumnFamily(), eventData.getApiKey(), 0);
-		String appOid = apiKeyValues.getStringValue("app_oid", null);
 		if (eventData.getTimeSpentInMs() != null) {
 			eventData.setTimeInMillSec(eventData.getTimeSpentInMs());
 		}
