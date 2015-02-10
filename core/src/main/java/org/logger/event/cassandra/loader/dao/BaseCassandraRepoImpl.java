@@ -1164,7 +1164,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		String dateId = "0";
 		String columnName = null;
 		String eventName = null;
-		rowKey = activities.get(USER_UID) != null ? activities.get(USER_UID).toString() : null;
+		rowKey = activities.get(USERUID) != null ? activities.get(USERUID).toString() : null;
 		dateId = activities.get("dateId") != null ? activities.get("dateId").toString() : null;
 		eventName = activities.get("eventName") != null ? activities.get("eventName").toString() : null;
 		if (activities.get("existingColumnName") == null) {
