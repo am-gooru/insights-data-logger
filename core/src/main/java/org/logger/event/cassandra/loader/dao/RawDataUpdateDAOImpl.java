@@ -625,16 +625,17 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public void updateClasspage(Map<String, Object> dataMap, Map<String, Object> classpageMap) {
 
 		classpageMap.put("classId", ((dataMap.containsKey(GOORUOID) && dataMap.get(GOORUOID) != null) ? dataMap.get(GOORUOID).toString() : null));
-		classpageMap.put("username", ((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? 
-						((Map<String, String>) dataMap.get("user")).get("username") : null));
-		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") 
-				: (dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? 
-						((Map<String, String>) dataMap.get("user")).get("gooruUId") : null));
+		classpageMap.put("username",
+				((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? ((Map<String, String>) dataMap.get("user")).get("username") : null));
+		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") : (dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? ((Map<String, String>) dataMap.get("user")).get("gooruUId")
+				: null));
 		if (classpageMap.get("classId") != null && classpageMap.get("groupUId") != null && classpageMap.get("userUid") != null) {
+
 			classpageMap.put("rKey", classpageMap.get("classId").toString() + SEPERATOR + classpageMap.get("groupUId").toString() + SEPERATOR + classpageMap.get("userUid").toString());
-			
+
 			Set<Entry<String, String>> entrySet = DataUtils.classpageTableKeyMap.entrySet();
 			updateColumnFamily(ColumnFamily.CLASSPAGE.getColumnFamily(), this.generateCFMap(ColumnFamily.CLASSPAGE.getColumnFamily(), entrySet, classpageMap));
+
 		}
 	}
 	
