@@ -50,9 +50,9 @@ public class DataUtils {
 
 	public static Map<String, String> classpageCFDataTypeMap;
 
-	public static Map<String, String> collectionCFDataType;
+	public static Map<String, String> collectionCFDataTypeMap;
 
-	public static Map<String, String> collectionItemCFDataType;
+	public static Map<String, String> collectionItemCFDataTypeMap;
 
 	static {
 		formatedEventNameMap = new HashMap<String, String>();
@@ -226,47 +226,47 @@ public class DataUtils {
 		classpageCFDataTypeMap.put("rKey", "String");
 	}
 	static {
-		collectionCFDataType = new HashMap<String, String>();
-		collectionCFDataType.put("gooru_oid", "String");
-		collectionCFDataType.put("content_id", "Long");
-		collectionCFDataType.put("collection_type", "String");
-		collectionCFDataType.put("grade", "String");
-		collectionCFDataType.put("goals", "String");
-		collectionCFDataType.put("ideas", "String");
-		collectionCFDataType.put("performance_tasks", "String");
-		collectionCFDataType.put("language", "String");
-		collectionCFDataType.put("key_points", "String");
-		collectionCFDataType.put("notes", "String");
-		collectionCFDataType.put("language_objective", "String");
-		collectionCFDataType.put("network", "String");
-		collectionCFDataType.put("mail_notification", "Boolean");
-		collectionCFDataType.put("build_type_id", "Long");
-		collectionCFDataType.put("narration_link", "String");
-		collectionCFDataType.put("estimated_time", "String");
-		collectionCFDataType.put("rKey", "String");
+		collectionCFDataTypeMap = new HashMap<String, String>();
+		collectionCFDataTypeMap.put("gooru_oid", "String");
+		collectionCFDataTypeMap.put("content_id", "Long");
+		collectionCFDataTypeMap.put("collection_type", "String");
+		collectionCFDataTypeMap.put("grade", "String");
+		collectionCFDataTypeMap.put("goals", "String");
+		collectionCFDataTypeMap.put("ideas", "String");
+		collectionCFDataTypeMap.put("performance_tasks", "String");
+		collectionCFDataTypeMap.put("language", "String");
+		collectionCFDataTypeMap.put("key_points", "String");
+		collectionCFDataTypeMap.put("notes", "String");
+		collectionCFDataTypeMap.put("language_objective", "String");
+		collectionCFDataTypeMap.put("network", "String");
+		collectionCFDataTypeMap.put("mail_notification", "Boolean");
+		collectionCFDataTypeMap.put("build_type_id", "Long");
+		collectionCFDataTypeMap.put("narration_link", "String");
+		collectionCFDataTypeMap.put("estimated_time", "String");
+		collectionCFDataTypeMap.put("rKey", "String");
 	}
 	static {
-		collectionItemCFDataType = new HashMap<String, String>();
-		collectionItemCFDataType.put("deleted", "Integer");
-		collectionItemCFDataType.put("item_type", "String");
-		collectionItemCFDataType.put("resource_content_id", "Long");
-		collectionItemCFDataType.put("collection_content_id", "Long");
-		collectionItemCFDataType.put("collection_gooru_oid", "String");
-		collectionItemCFDataType.put("resource_gooru_oid", "String");
-		collectionItemCFDataType.put("item_sequence", "Integer");
-		collectionItemCFDataType.put("collection_item_id", "String");
-		collectionItemCFDataType.put("question_type", "String");
-		collectionItemCFDataType.put("minimum_score", "String");
-		collectionItemCFDataType.put("narration", "String");
-		collectionItemCFDataType.put("estimated_time", "String");
-		collectionItemCFDataType.put("start", "String");
-		collectionItemCFDataType.put("stop", "String");
-		collectionItemCFDataType.put("narration_type", "String");
-		collectionItemCFDataType.put("planned_end_date", "Timestamp");
-		collectionItemCFDataType.put("association_date", "Timestamp");
-		collectionItemCFDataType.put("associated_by_uid", "String");
-		collectionItemCFDataType.put("is_required", "Integer");
-		collectionItemCFDataType.put("rKey", "String");
+		collectionItemCFDataTypeMap = new HashMap<String, String>();
+		collectionItemCFDataTypeMap.put("deleted", "Integer");
+		collectionItemCFDataTypeMap.put("item_type", "String");
+		collectionItemCFDataTypeMap.put("resource_content_id", "Long");
+		collectionItemCFDataTypeMap.put("collection_content_id", "Long");
+		collectionItemCFDataTypeMap.put("collection_gooru_oid", "String");
+		collectionItemCFDataTypeMap.put("resource_gooru_oid", "String");
+		collectionItemCFDataTypeMap.put("item_sequence", "Integer");
+		collectionItemCFDataTypeMap.put("collection_item_id", "String");
+		collectionItemCFDataTypeMap.put("question_type", "String");
+		collectionItemCFDataTypeMap.put("minimum_score", "String");
+		collectionItemCFDataTypeMap.put("narration", "String");
+		collectionItemCFDataTypeMap.put("estimated_time", "String");
+		collectionItemCFDataTypeMap.put("start", "String");
+		collectionItemCFDataTypeMap.put("stop", "String");
+		collectionItemCFDataTypeMap.put("narration_type", "String");
+		collectionItemCFDataTypeMap.put("planned_end_date", "Timestamp");
+		collectionItemCFDataTypeMap.put("association_date", "Timestamp");
+		collectionItemCFDataTypeMap.put("associated_by_uid", "String");
+		collectionItemCFDataTypeMap.put("is_required", "Integer");
+		collectionItemCFDataTypeMap.put("rKey", "String");
 	}
 
 	public static String makeCombinedEventName(String eventName) {

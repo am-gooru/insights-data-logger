@@ -362,4 +362,5 @@ public interface Constants {
 	
 	public static final String DELETE_EXCEPTION = "Exception while delete in  ColumnFamily:";
 
+	public static final String ASSOCIATION_DATE = "associationDate";
 }

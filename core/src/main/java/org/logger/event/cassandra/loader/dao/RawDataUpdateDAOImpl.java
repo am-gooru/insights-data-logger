@@ -52,7 +52,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
 	}
 	
-	public ResourceCo updateResource(Map<String, Object> eventMap, ResourceCo resourceCo) {
+	@SuppressWarnings("unchecked")
+	public ResourceCo processResource(Map<String, Object> eventMap, ResourceCo resourceCo) {
 
 		Map<String, Object> resourceMap = (Map<String, Object>) eventMap.get("resource");
 		if (resourceMap != null) {
@@ -153,10 +154,10 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 				}
 			}
 			if (resourceMap.get("creator") != null) {
-				resourceCo.setCreator(this.getUser((Map<String, Object>) resourceMap.get("creator")));
+				resourceCo.setCreator(this.setUser((Map<String, Object>) resourceMap.get("creator")));
 			}
 			if (resourceMap.get("user") != null) {
-				resourceCo.setCreator(this.getUser((Map<String, Object>) resourceMap.get("user")));
+				resourceCo.setCreator(this.setUser((Map<String, Object>) resourceMap.get("user")));
 			}
 			if (resourceMap.containsKey("resourceSource") && resourceMap.get("resourceSource") != null) {
 				Map<String, String> resourceSource = ((Map<String, Map<String, String>>) eventMap.get("resource")).get("resourceSource");
@@ -290,7 +291,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	}
 
-	public ResourceCo updateCollection(Map<String, Object> eventMap, ResourceCo resourceCo) {
+	@SuppressWarnings("unchecked")
+	public ResourceCo processCollection(Map<String, Object> eventMap, ResourceCo resourceCo) {
 
 		SCollectionCo collectionCo = new SCollectionCo();
 		resourceCo.setId(eventMap.get("gooruOid").toString());
@@ -338,10 +340,10 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			resourceCo.setTypeEscaped(resourceTypeEscaped);
 		}
 		if (eventMap.containsKey("creator") && eventMap.get("creator") != null) {
-			resourceCo.setCreator(this.getUser((Map<String, Object>) eventMap.get("creator")));
+			resourceCo.setCreator(this.setUser((Map<String, Object>) eventMap.get("creator")));
 		}
 		if (eventMap.containsKey("user") && eventMap.get("user") != null) {
-			resourceCo.setOwner(this.getUser((Map<String, Object>) eventMap.get("user")));
+			resourceCo.setOwner(this.setUser((Map<String, Object>) eventMap.get("user")));
 		}
 		if (eventMap.containsKey("depthOfKnowledges") && eventMap.get("depthOfKnowledges") != null) {
 			List<Map<String, Object>> depthOfKnowledgeList = ((List<Map<String, Object>>) eventMap.get("depthOfKnowledges"));
@@ -419,7 +421,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	}
 
 	@SuppressWarnings("unchecked")
-	public UserCo updateUser(Map<String, Object> eventMap, UserCo userCo) {
+	public UserCo processUser(Map<String, Object> eventMap, UserCo userCo) {
 		
 		userCo.setUserUid(eventMap.get("gooruUId").toString());
 		userCo.setGooruUid(eventMap.get("gooruUId").toString());
@@ -506,7 +508,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		return userCo;
 	}
 	
-	private UserCo getUser(Map<String, Object> user) {
+	private UserCo setUser(Map<String, Object> user) {
 		Map<String, Object> userPo = user;
 		UserCo userCo = new UserCo();
 		userCo.setUsername(userPo.get("username").toString());
@@ -580,7 +582,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public void updateCollectionTable(Map<String, Object> eventMap, Map<String, Object> collectionMap) {
 
 		for(String field : COLLECTION_TABLE_FIELDS.split(",")) {
-			if (field.equalsIgnoreCase("contentId") || field.equalsIgnoreCase("gooruOid")) {
+			if (field.equalsIgnoreCase(CONTENTID) || field.equalsIgnoreCase("gooruOid")) {
 				collectionMap.put(field, ((collectionMap.containsKey(field) && collectionMap.get(field) != null) ? collectionMap.get(field).toString()
 						: ((eventMap.containsKey(field) && eventMap.get(field) != null) ? eventMap.get(field).toString() : null)));
 			} else { 
@@ -643,9 +645,9 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		if(cfName.equalsIgnoreCase(ColumnFamily.CLASSPAGE.getColumnFamily())) {
 			dataTypeEntrySet = DataUtils.classpageCFDataTypeMap.entrySet();
 		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTION.getColumnFamily())) {
-			dataTypeEntrySet = DataUtils.collectionCFDataType.entrySet();
+			dataTypeEntrySet = DataUtils.collectionCFDataTypeMap.entrySet();
 		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTIONITEM.getColumnFamily())) {
-			dataTypeEntrySet = DataUtils.collectionItemCFDataType.entrySet();
+			dataTypeEntrySet = DataUtils.collectionItemCFDataTypeMap.entrySet();
 		}
 		if(dataTypeEntrySet != null) {
 			for(Entry<String, String> entry : entrySetToInsert) {

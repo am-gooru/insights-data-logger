@@ -84,8 +84,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
         cache = new LinkedHashMap<String, Object>();
         this.rawUpdateDAO = new RawDataUpdateDAOImpl(this.connectionProvider);
     }
-    
-    @Async
+
+	@Async
     public void callCounters(Map<String,String> eventMap) throws JSONException, ParseException {
     	String contentGooruOId = "";
 		String eventName = "";
@@ -1021,16 +1021,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void generateCollectionCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		ResourceCo collection = new ResourceCo();
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-			collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		try {
-			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(eventDataMap, collection));
-		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get("gooruOid").toString(), ex);
-		}
-		/** Update insights collection CF for collection mapping **/
+		/**
+		 * Update Resource CF
+		 */
+		
+		updateResource(eventDataMap, eventMap, collection, collectionMap);
+		/** 
+		 * Update insights collection CF for collection mapping 
+		 */
 		rawUpdateDAO.updateCollectionTable(eventDataMap, collectionMap);
 		
 		/**Update Insights colectionItem CF for shelf-collection/folder-collection/shelf-folder mapping**/
@@ -1050,7 +1048,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	}
 	
 	private void generateCollectionMove(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
-		/** Update Insights colectionItem CF for folder-collection mapping **/
+		/** 
+		 * Here insights colectionItem CF gets updated for folder-collection mapping 
+		 */
 		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {
 		});
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
@@ -1082,16 +1082,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		});
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
 		ResourceCo collection = new ResourceCo();
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-			collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(dataMap, collection));
+		
+		/**
+		 * Update Resource CF
+		 */
+		updateResource(eventDataMap, eventMap, collection, collectionMap);
 
-		/** Update insights collection CF for collection mapping **/
+		/** 
+		 * Here insights collection CF gets updated for collection mapping 
+		 */
 		rawUpdateDAO.updateCollectionTable(dataMap, collectionMap);
 
-		/** Update Insights colectionItem CF for shelf-collection mapping **/
+		/** 
+		 * Here Insights colectionItem CF gets updated for shelf-collection mapping 
+		 */
 		String collectionGooruOid = dataMap.containsKey("gooruOid") ? dataMap.get("gooruOid").toString() : null;
 		if (collectionGooruOid != null) {
 			List<Map<String, Object>> collectionItemList = (List<Map<String, Object>>) dataMap.get("collectionItems");
@@ -1127,15 +1131,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		ResourceCo collection = new ResourceCo();
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
 		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-			collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		try {
-			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(dataMap, collection));
-		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to exception {}", dataMap.get("gooruOid").toString(), ex);
-		}
+		/**
+		 * Update Resource CF
+		 */
+		updateResource(eventDataMap, eventMap, collection, collectionMap);
 
 		Map<String, Object> classpageMap = new HashMap<String, Object>();
 		classpageMap.put("classCode", ((eventMap.containsKey("classCode") && eventMap.get("classCode") != null) ? eventMap.get("classCode").toString() : null));
@@ -1199,7 +1198,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		List<Map<String, Object>> dataMapList = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<ArrayList<Map<String, Object>>>() {});
 		for (Map<String, Object> dataMap : dataMapList) {
 			if (((eventMap.containsKey(DATA)) && ((Map<String, Object>) dataMap.get(RESOURCE)).containsKey(RESOURCETYPE) && (((Map<String, String>) ((Map<String, Object>) dataMap.get(RESOURCE))
-					.get(RESOURCETYPE)).get(NAME).toString().equalsIgnoreCase("scollection")))) {
+					.get(RESOURCETYPE)).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)))) {
 				/** Update insights collection CF for collection mapping **/
 				Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
 				Map<String, Object> collectionMap = new HashMap<String, Object>();
@@ -1230,14 +1229,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
 		Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
 		ResourceCo collection = new ResourceCo();
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		try {
-			baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(resourceMap, collection));
-		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", dataMap.get("gooruOid").toString(), ex);
-		}
+		/**
+		 * Update Resource CF
+		 */
+		
+		updateResource(resourceMap, eventMap, collection, null);
 		
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
@@ -1255,46 +1251,52 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void generateShelfCollectionOrClasspageEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		/** Collection/Classpage Edit **/
 		
+		/**
+		 * Update Resource CF
+		 */
 		ResourceCo collection = new ResourceCo();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {
-		});
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			collection.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
-		}
-		baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateCollection(dataMap, collection));
+		updateResource(eventDataMap, eventMap, collection, null);
+		
 	}
 	private void generateResourceCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** Resource Create **/
 		
-		/** Update Resource CF for resource data **/
+		/** 
+		 * Update Resource CF for resource data
+		 */
 		ResourceCo resourceCo = new ResourceCo();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		rawUpdateDAO.updateResource(dataMap, resourceCo);
+		rawUpdateDAO.processResource(eventDataMap, resourceCo);
 		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
 			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
 		}
 		baseCassandraDao.updateResourceEntity(resourceCo);
 
-		Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
+		Map<String, Object> resourceMap = (Map<String, Object>) eventDataMap.get(RESOURCE);
 
-		if (dataMap.containsKey(COLLECTION) && dataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
-				&& (((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase("scollection"))) {
-			Map<String, Object> collectionMap = (Map<String, Object>) dataMap.get(COLLECTION);
-			/** Update Resource CF for collection data **/
-			ResourceCo collection = new ResourceCo();
-			rawUpdateDAO.updateCollection(collectionMap, collection);
-			collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
-			collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
-			baseCassandraDao.updateResourceEntity(collection);
+		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
+				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase(SCOLLECTION))) {
+			Map<String, Object> collectionMap = (Map<String, Object>) eventDataMap.get(COLLECTION);
+			/** 
+			 * Update Resource CF for collection data 
+			 */
+			if (!collectionMap.isEmpty()) {
+				ResourceCo collection = new ResourceCo();
+				rawUpdateDAO.processCollection(collectionMap, collection);
+				collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
+				collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
+				baseCassandraDao.updateResourceEntity(collection);
+			} else {
+				logger.info("Collection data is empty on resource create event");
+			}
 		}
 		
 		/** Update Insights colectionItem CF **/
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
@@ -1326,12 +1328,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
 			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
 		}
-		baseCassandraDao.updateResourceEntity(rawUpdateDAO.updateResource(dataMap, resourceCo));
+		baseCassandraDao.updateResourceEntity(rawUpdateDAO.processResource(dataMap, resourceCo));
 		if (dataMap.containsKey(COLLECTION) && dataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
 				&& (((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase("scollection"))) {
 			Map<String, Object> collectionMap = (Map<String, Object>) dataMap.get(COLLECTION);
 			ResourceCo collection = new ResourceCo();
-			rawUpdateDAO.updateCollection(collectionMap, collection);
+			rawUpdateDAO.processCollection(collectionMap, collection);
 			collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
 			collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
 			baseCassandraDao.updateResourceEntity(collection);
@@ -1377,7 +1379,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			organizationMap.put("partyUid", (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganization(organizationMap);
 		}
-		baseCassandraDao.updateUserEntity(rawUpdateDAO.updateUser(dataMap, userCo));
+		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser(dataMap, userCo));
 	
 	}
 	private void generateProfileEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
@@ -1397,7 +1399,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			organizationMap.put("partyUid", (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganization(organizationMap);
 		}
-		baseCassandraDao.updateUserEntity(rawUpdateDAO.updateUser((Map<String, Object>) dataMap.get("user"), userCo));
+		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser((Map<String, Object>) dataMap.get("user"), userCo));
 	
 	}
 	
@@ -1408,4 +1410,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 	
+	private void updateResource(Map<String, Object> eventDataMap, Map<String, Object> eventMap, ResourceCo resourceCo, Map<String, Object> collectionMap){
+		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
+			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
+			if (collectionMap != null) collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
+		}
+		try {
+			baseCassandraDao.updateResourceEntity(rawUpdateDAO.processCollection(eventDataMap, resourceCo));
+		} catch (Exception ex) {
+			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get("gooruOid").toString(), ex);
+		}
+	}
 }
