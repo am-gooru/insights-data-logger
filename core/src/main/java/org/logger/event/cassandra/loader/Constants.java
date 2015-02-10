@@ -166,7 +166,7 @@ public interface Constants {
 	
 	public static final  String RESOURCE = "resource";
 	
-	public static final  String GOORUOID = "gooru_oid";
+	public static final  String GOORU_OID = "gooru_oid";
 	
 	public static final  String USERID = "gooru_uid";
 	
@@ -363,4 +363,12 @@ public interface Constants {
 	public static final String DELETE_EXCEPTION = "Exception while delete in  ColumnFamily:";
 
 	public static final String ASSOCIATION_DATE = "associationDate";
+	
+	public static final String ITEM_ID = "itemId";
+	
+	public static final String DELETED = "deleted";
+	
+	public static final String SOURCE_ITEM_ID = "sourceItemId";
+	
+	public static final String GOORUOID = "gooruOid";
 }

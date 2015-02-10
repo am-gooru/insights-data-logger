@@ -580,7 +580,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, COLLECTION + SEPERATOR + GOORUOID, eventMap.get(CONTENTGOORUOID), m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, COLLECTION + SEPERATOR + GOORU_OID, eventMap.get(CONTENTGOORUOID), m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + "completion_progress", collectionStatus, m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + QUESTION_COUNT, questionCountInQuiz, m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + SCORE_IN_PERCENTAGE, scoreInPercentage, m);
@@ -623,7 +623,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + TIMESTAMP, Long.valueOf(eventMap.get(STARTTIME)), m);
 			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + ACTIVE, eventMap.containsKey(ACTIVE) ? eventMap.get(ACTIVE) : "false", m);
 		}
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + GOORUOID, eventMap.get(CONTENTGOORUOID), m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + GOORU_OID, eventMap.get(CONTENTGOORUOID), m);
 		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, USERID, eventMap.get(GOORUID), m);
 		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, CLASSPAGEID, eventMap.get(CLASSPAGEGOORUOID), m);
 
@@ -917,6 +917,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 	}
+	@SuppressWarnings("unchecked")
 	@Async
 	public void updateRawData(Map<String, Object> eventMap) {
 		logger.info("Into Raw Data Update");
@@ -947,28 +948,28 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						if (eventMap.get(MODE).toString().equalsIgnoreCase(CREATE)
 								&& (eventDataMap.containsKey(RESOURCETYPE) && ((((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME)
 										.toString().matches(RESOURCETYPES_SF))))) {
-							this.generateCollectionCreate(eventDataMap, eventMap);
+							this.createCollection(eventDataMap, eventMap);
 						} else if (eventMap.get(MODE).toString().equalsIgnoreCase(MOVE)) {
-							this.generateCollectionMove(eventDataMap, eventMap);
+							this.moveCollection(eventDataMap, eventMap);
 						} else if (eventMap.get(MODE).toString().equalsIgnoreCase(COPY)) {
-							this.generateCollectionCopy(eventDataMap, eventMap);
+							this.copyCollection(eventDataMap, eventMap);
 						}
 
 					} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASSPAGE))
 							&& (eventDataMap.containsKey(RESOURCETYPE) && ((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME)
 									.toString().equalsIgnoreCase(CLASSPAGE))) {
-						this.generateClasspageCreate(eventDataMap, eventMap);
+						this.createClasspage(eventDataMap, eventMap);
 
 					} else if (((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())))
 							&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
 							&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString()
 									.equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE))
 									.get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
-						this.generateResourceCreate(eventDataMap, eventMap);
+						this.createResource(eventDataMap, eventMap);
 					}
 				} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())) 
 						&& eventDataMapList.size() > 0) {
-					this.generateClasspageAssignmentCreate(eventDataMapList, eventMap);
+					this.createClasspageAssignment(eventDataMapList, eventMap);
 				} 
 			} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName()) && (eventMap.containsKey(ITEM_TYPE)) && !eventDataMap.isEmpty()) {
 				if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())
@@ -977,12 +978,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						&& (((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString()
 								.equalsIgnoreCase(LoaderConstants.SCOLLECTION.getName())))) {
 
-					this.generateClasspageAssignmentEdit(eventDataMap, eventMap);
+					this.updateClasspageAssignment(eventDataMap, eventMap);
 
 				} else if (((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.SHELF_DOT_COLLECTION
 								.getName())) || eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASSPAGE)) && (eventMap.containsKey(DATA))) {
 
-					this.generateShelfCollectionOrClasspageEdit(eventDataMap, eventMap);
+					this.updateShelfCollectionOrClasspage(eventDataMap, eventMap);
 
 				} else if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())
 						&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
@@ -990,16 +991,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 								.equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE)
 								.get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
 
-					this.generateResourceEdit(eventDataMap, eventMap);
+					this.updateResource(eventDataMap, eventMap);
 
 				}
-			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName())) {
+			} else if (!eventDataMapList.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName())) {
 
-				this.generateClasspageUserAdd(eventDataMap, eventMap);
+				this.addClasspageUser(eventDataMapList, eventMap);
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLP_USER_REMOVE.getName())) {
 
-				this.generateClasspageUserRemove(eventDataMap, eventMap);
+				this.markDeletedClasspageUser(eventDataMap, eventMap);
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
 
@@ -1007,18 +1008,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
 
-				this.generateRegisterUser(eventDataMap, eventMap);
+				this.updateRegisteredUser(eventDataMap, eventMap);
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.PROFILE_DOT_ACTION.getName())
 					&& eventMap.get(ACTION_TYPE).toString().equalsIgnoreCase(EDIT)) {
 
-				this.generateProfileEdit(eventDataMap, eventMap);
+				this.updateUserProfileData(eventDataMap, eventMap);
 
 			}
 		}
 	}
 	
-	private void generateCollectionCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void createCollection(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		ResourceCo collection = new ResourceCo();
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
 		/**
@@ -1037,49 +1038,45 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for(Entry<String, String> entry : entrySet) {
 			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
 				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
-			} else if (entry.getKey().equalsIgnoreCase("ItemId") || entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)){
-				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey("ItemId") && eventMap.get("ItemId") != null) ? eventMap.get("ItemId").toString() : null);
+			} else if (entry.getKey().equalsIgnoreCase(ITEM_ID) || entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)){
+				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 	
-	private void generateCollectionMove(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void moveCollection(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		/** 
 		 * Here insights colectionItem CF gets updated for folder-collection mapping 
 		 */
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {
-		});
+
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else if (entry.getKey().equalsIgnoreCase(ITEMSEQUENCE)) {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? Integer.valueOf(eventMap.get(entry.getKey()).toString()) : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), ((eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null));
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 
 		Map<String, Object> markSourceItemMap = new HashMap<String, Object>();
-		markSourceItemMap.put("collectionItemId", ((eventMap.containsKey("sourceItemId") && eventMap.get("sourceItemId") != null) ? eventMap.get("sourceItemId").toString() : null));
-		markSourceItemMap.put("deleted", Integer.valueOf(1));
+		markSourceItemMap.put(COLLECTIONITEMID, ((eventMap.containsKey(SOURCE_ITEM_ID) && eventMap.get(SOURCE_ITEM_ID) != null) ? eventMap.get(SOURCE_ITEM_ID).toString() : null));
+		markSourceItemMap.put(DELETED, Integer.valueOf(1));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, markSourceItemMap);
 
 	}
 	
-	private void generateCollectionCopy(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void copyCollection(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** Collection Copy **/
-
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {
-		});
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
 		ResourceCo collection = new ResourceCo();
 		
@@ -1091,46 +1088,45 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		/** 
 		 * Here insights collection CF gets updated for collection mapping 
 		 */
-		rawUpdateDAO.updateCollectionTable(dataMap, collectionMap);
+		rawUpdateDAO.updateCollectionTable(eventDataMap, collectionMap);
 
 		/** 
 		 * Here Insights colectionItem CF gets updated for shelf-collection mapping 
 		 */
-		String collectionGooruOid = dataMap.containsKey("gooruOid") ? dataMap.get("gooruOid").toString() : null;
+		String collectionGooruOid = eventDataMap.containsKey(GOORUOID) ? eventDataMap.get(GOORUOID).toString() : null;
 		if (collectionGooruOid != null) {
-			List<Map<String, Object>> collectionItemList = (List<Map<String, Object>>) dataMap.get("collectionItems");
+			List<Map<String, Object>> collectionItemList = (List<Map<String, Object>>) eventDataMap.get("collectionItems");
 			for (Map<String, Object> collectionItem : collectionItemList) {
 				Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 				Map<String, Object> collectionItemResourceMap = (Map<String, Object>) collectionItem.get("resource");
 				Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 				for(Entry<String, String> entry : entrySet) {
-					if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
+					if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
 						collectionItemMap.put(entry.getValue(), (collectionItem.containsKey(entry.getKey()) && collectionItem.get(entry.getKey()) != null) ? collectionItem.get(entry.getKey()).toString() : null);
 					} else if(entry.getKey().equalsIgnoreCase("questionType")){
 						collectionItemMap.put(entry.getValue(),
 								((collectionItemResourceMap.containsKey(entry.getKey()) && collectionItemResourceMap.get(entry.getKey()) != null) ? 
 										collectionItemResourceMap.get(entry.getKey()).toString() : null));
 					} else if(entry.getKey().equalsIgnoreCase(CONTENTGOORUOID)){
-						collectionItemMap.put(entry.getValue(), (collectionItemResourceMap.containsKey("gooruOid") ? collectionItemResourceMap.get("gooruOid").toString() : null));
+						collectionItemMap.put(entry.getValue(), (collectionItemResourceMap.containsKey(GOORUOID) ? collectionItemResourceMap.get(GOORUOID).toString() : null));
 					} else if(entry.getKey().equalsIgnoreCase(PARENTGOORUOID)){
 						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(CONTENTGOORUOID) ? eventMap.get(CONTENTGOORUOID).toString() : null));
 					} else {
 						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 					}
 				}
-				collectionItemMap.put("deleted", Integer.valueOf(0));
+				collectionItemMap.put(DELETED, Integer.valueOf(0));
 				rawUpdateDAO.updateCollectionItemTable(collectionItem, collectionItemMap);
 			}
 		}
 	}
 	
-	private void generateClasspageCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void createClasspage(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** classpage create **/
 
 		ResourceCo collection = new ResourceCo();
 		Map<String, Object> collectionMap = new HashMap<String, Object>();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
 		/**
 		 * Update Resource CF
 		 */
@@ -1143,33 +1139,32 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		classpageMap.put("organizationUId", ((eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null));
 		classpageMap.put("userUid", ((eventMap.containsKey(GOORUID) && eventMap.get(GOORUID) != null) ? eventMap.get(GOORUID).toString() : null));
 		classpageMap.put("isGroupOwner", 1);
-		classpageMap.put("deleted", Integer.valueOf(0));
+		classpageMap.put(DELETED, Integer.valueOf(0));
 		classpageMap.put("activeFlag", 1);
 		classpageMap.put("userGroupType", SYSTEM);
-		rawUpdateDAO.updateClasspage(dataMap, classpageMap);
+		rawUpdateDAO.updateClasspage(eventDataMap, classpageMap);
 		
 		/** Update insights collection CF for collection mapping **/
-		rawUpdateDAO.updateCollectionTable(dataMap, collectionMap);
+		rawUpdateDAO.updateCollectionTable(eventDataMap, collectionMap);
 
 		/** Update Insights colectionItem CF for shelf-collection mapping **/
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
 			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else if (entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)){
-				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey("ItemId") && eventMap.get("ItemId") != null) ? eventMap.get("ItemId").toString() : null);
+				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 	
-	private void generateClasspageUserAdd(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void addClasspageUser(List<Map<String, Object>> dataMapList, Map<String, Object> eventMap) {
 		/** classpage user add **/
-		List<Map<String, Object>> dataMapList = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<ArrayList<Map<String, Object>>>() {});
 		for (Map<String, Object> dataMap : dataMapList) {
 			Map<String, Object> classpageMap = new HashMap<String, Object>();
 			classpageMap.put("classId", ((eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) ? eventMap.get(CONTENTGOORUOID).toString() : null));
@@ -1178,24 +1173,23 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			classpageMap.put(CONTENTID, ((eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) ? Long.valueOf(eventMap.get(CONTENTID).toString()) : null));
 			classpageMap.put(ORGANIZATIONUID, ((eventMap.containsKey(ORGANIZATIONUID) && eventMap.get(ORGANIZATIONUID) != null) ? eventMap.get(ORGANIZATIONUID).toString() : null));
 			classpageMap.put("isGroupOwner",  Integer.valueOf(0));
-			classpageMap.put("deleted", Integer.valueOf(0));
+			classpageMap.put(DELETED, Integer.valueOf(0));
 			classpageMap.put("activeFlag", (dataMap.containsKey("status") && dataMap.get("status") != null && dataMap.get("status").toString().equalsIgnoreCase("active")) ? Integer.valueOf(1) : Integer.valueOf(0));
 			classpageMap.put("username", ((dataMap.containsKey("username") && dataMap.get("username") != null) ? dataMap.get("username") : null));
 			classpageMap.put("userUid", ((dataMap.containsKey("gooruUid") && dataMap.get("gooruUid") != null) ? dataMap.get("gooruUid") : null));
 			baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
 		}
 	}
-	private void generateClasspageUserRemove(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void markDeletedClasspageUser(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		Map<String, Object> classpageMap = new HashMap<String, Object>();
 		classpageMap.put("groupUId", ((eventMap.containsKey("groupUId") && eventMap.get("groupUId") != null) ? eventMap.get("groupUId").toString() : null));
-		classpageMap.put("deleted", Integer.valueOf(1));
+		classpageMap.put(DELETED, Integer.valueOf(1));
 		classpageMap.put("classId", ((eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) ? eventMap.get(CONTENTGOORUOID).toString() : null));
 		classpageMap.put("userUid", ((eventMap.containsKey("removedGooruUId") && eventMap.get("removedGooruUId") != null) ? eventMap.get("removedGooruUId") : null));
 		baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
 	}
-	private void generateClasspageAssignmentCreate(List<Map<String, Object>> eventDataMapList, Map<String, Object> eventMap) {
+	private void createClasspageAssignment(List<Map<String, Object>> dataMapList, Map<String, Object> eventMap) {
 		/** classpage assignment create **/
-		List<Map<String, Object>> dataMapList = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<ArrayList<Map<String, Object>>>() {});
 		for (Map<String, Object> dataMap : dataMapList) {
 			if (((eventMap.containsKey(DATA)) && ((Map<String, Object>) dataMap.get(RESOURCE)).containsKey(RESOURCETYPE) && (((Map<String, String>) ((Map<String, Object>) dataMap.get(RESOURCE))
 					.get(RESOURCETYPE)).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)))) {
@@ -1205,50 +1199,52 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
 					collectionMap.put("contentId", Long.valueOf(eventMap.get(CONTENTID).toString()));
 				}
-				collectionMap.put("gooruOid", eventMap.get(PARENTGOORUOID));
+				collectionMap.put(GOORUOID, eventMap.get(PARENTGOORUOID));
 				rawUpdateDAO.updateCollectionTable(resourceMap, collectionMap);
 
 				/** Update Insights colectionItem CF for shelf-collection mapping **/
 				Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 				Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 				for(Entry<String, String> entry : entrySet) {
-					if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
+					if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
 						collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
 					} else {
 						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 					}
 				}
-				collectionItemMap.put("deleted", Integer.valueOf(0));
+				collectionItemMap.put(DELETED, Integer.valueOf(0));
 				rawUpdateDAO.updateCollectionItemTable(dataMap, collectionItemMap);
 			}
 		}
 	}
-	private void generateClasspageAssignmentEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void updateClasspageAssignment(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** Update Insights colectionItem CF for shelf-collection mapping **/
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
+		Map<String, Object> resourceMap = (Map<String, Object>) eventDataMap.get(RESOURCE);
 		ResourceCo collection = new ResourceCo();
 		/**
 		 * Update Resource CF
 		 */
-		
-		updateResource(resourceMap, eventMap, collection, null);
+		if(!resourceMap.isEmpty()) {
+			updateResource(resourceMap, eventMap, collection, null);
+		} else {
+			logger.info("Resource data is empty for assignement edit");
+		}
 		
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate")) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
-		rawUpdateDAO.updateCollectionItemTable(dataMap, collectionItemMap);
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
+		rawUpdateDAO.updateCollectionItemTable(eventDataMap, collectionItemMap);
 	}
 	
-	private void generateShelfCollectionOrClasspageEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void updateShelfCollectionOrClasspage(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		/** Collection/Classpage Edit **/
 		
 		/**
@@ -1258,7 +1254,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		updateResource(eventDataMap, eventMap, collection, null);
 		
 	}
-	private void generateResourceCreate(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void createResource(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** Resource Create **/
 		
@@ -1301,7 +1297,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(resourceMap, collectionItemMap);
 		
 		/** Update Insights Assessment Answer CF **/
@@ -1318,20 +1314,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			rawUpdateDAO.updateAssessmentAnswer(resourceMap, assessmentAnswerMap);
 		}
 	}
-	private void generateResourceEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void updateResource(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		/** Resource Edit **/
 
 		ResourceCo resourceCo = new ResourceCo();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
+		Map<String, Object> resourceMap = (Map<String, Object>) eventDataMap.get(RESOURCE);
 		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
 			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
 		}
-		baseCassandraDao.updateResourceEntity(rawUpdateDAO.processResource(dataMap, resourceCo));
-		if (dataMap.containsKey(COLLECTION) && dataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
-				&& (((Map<String, Map<String, String>>) dataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase("scollection"))) {
-			Map<String, Object> collectionMap = (Map<String, Object>) dataMap.get(COLLECTION);
+		baseCassandraDao.updateResourceEntity(rawUpdateDAO.processResource(eventDataMap, resourceCo));
+		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
+				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase("scollection"))) {
+			Map<String, Object> collectionMap = (Map<String, Object>) eventDataMap.get(COLLECTION);
 			ResourceCo collection = new ResourceCo();
 			rawUpdateDAO.processCollection(collectionMap, collection);
 			collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
@@ -1343,13 +1338,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		Set<Entry<String, String>> entrySet = DataUtils.collectionItemKeys.entrySet();
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
 		for(Entry<String, String> entry : entrySet) {
-			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase("associationDate") || entry.getKey().equalsIgnoreCase("typeName")) {
-				collectionItemMap.put(entry.getValue(), (dataMap.containsKey(entry.getKey()) && dataMap.get(entry.getKey()) != null) ? dataMap.get(entry.getKey()).toString() : null);
+			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE) || entry.getKey().equalsIgnoreCase("typeName")) {
+				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
 		}
-		collectionItemMap.put("deleted", Integer.valueOf(0));
+		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(resourceMap, collectionItemMap);
 		
 		if (((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
@@ -1362,16 +1357,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			assessmentAnswerMap.put("questionGooruOid", questionGooruOid);
 			assessmentAnswerMap.put("questionId", questionId);
 			assessmentAnswerMap.put("collectionContentId", collectionContentId);
-			rawUpdateDAO.updateAssessmentAnswer((Map<String, Object>) dataMap.get("questionInfo"), assessmentAnswerMap);
+			rawUpdateDAO.updateAssessmentAnswer((Map<String, Object>) eventDataMap.get("questionInfo"), assessmentAnswerMap);
 		}
 	
 	}
-	private void generateRegisterUser(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void updateRegisteredUser(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		UserCo userCo = new UserCo();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {
-		});
-		userCo.setAccountId((dataMap.containsKey("organizationUId") && dataMap.get("organizationUId") != null) ? dataMap.get("organizationUId").toString() : null);
+		userCo.setAccountId((eventDataMap.containsKey("organizationUId") && eventDataMap.get("organizationUId") != null) ? eventDataMap.get("organizationUId").toString() : null);
 		if (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) {
 			userCo.setAccountId((eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganizationUid((eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
@@ -1379,19 +1372,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			organizationMap.put("partyUid", (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganization(organizationMap);
 		}
-		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser(dataMap, userCo));
+		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser(eventDataMap, userCo));
 	
 	}
-	private void generateProfileEdit(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
+	private void updateUserProfileData(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 
 		UserCo userCo = new UserCo();
-		Map<String, Object> dataMap = JSONDeserializer.deserialize(eventMap.get(DATA).toString(), new TypeReference<HashMap<String, Object>>() {});
-		userCo.setOrganizationUid((dataMap.containsKey("organizationUId") && dataMap.get("organizationUId") != null) ? dataMap.get("organizationUId").toString() : null);
-		userCo.setAboutMe((dataMap.containsKey("aboutMe") && dataMap.get("aboutMe") != null) ? dataMap.get("aboutMe").toString() : null);
-		userCo.setAccountId((dataMap.containsKey("organizationUId") && dataMap.get("organizationUId") != null) ? dataMap.get("organizationUId").toString() : null);
-		userCo.setGrade((dataMap.containsKey("grade") && dataMap.get("grade") != null) ? dataMap.get("grade").toString() : null);
-		userCo.setNetwork((dataMap.containsKey("school") && dataMap.get("school") != null) ? dataMap.get("school").toString() : null);
-		userCo.setNotes((dataMap.containsKey("notes") && dataMap.get("notes") != null) ? dataMap.get("notes").toString() : null);
+		userCo.setOrganizationUid((eventDataMap.containsKey("organizationUId") && eventDataMap.get("organizationUId") != null) ? eventDataMap.get("organizationUId").toString() : null);
+		userCo.setAboutMe((eventDataMap.containsKey("aboutMe") && eventDataMap.get("aboutMe") != null) ? eventDataMap.get("aboutMe").toString() : null);
+		userCo.setAccountId((eventDataMap.containsKey("organizationUId") && eventDataMap.get("organizationUId") != null) ? eventDataMap.get("organizationUId").toString() : null);
+		userCo.setGrade((eventDataMap.containsKey("grade") && eventDataMap.get("grade") != null) ? eventDataMap.get("grade").toString() : null);
+		userCo.setNetwork((eventDataMap.containsKey("school") && eventDataMap.get("school") != null) ? eventDataMap.get("school").toString() : null);
+		userCo.setNotes((eventDataMap.containsKey("notes") && eventDataMap.get("notes") != null) ? eventDataMap.get("notes").toString() : null);
 		if (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) {
 			userCo.setAccountId((eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganizationUid((eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
@@ -1399,14 +1391,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			organizationMap.put("partyUid", (eventMap.containsKey("organizationUId") && eventMap.get("organizationUId") != null) ? eventMap.get("organizationUId").toString() : null);
 			userCo.setOrganization(organizationMap);
 		}
-		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser((Map<String, Object>) dataMap.get("user"), userCo));
+		baseCassandraDao.updateUserEntity(rawUpdateDAO.processUser((Map<String, Object>) eventDataMap.get("user"), userCo));
 	
 	}
 	
 	private void markItemDelete(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
-		collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey("ItemId") ? eventMap.get("ItemId").toString() : null));
-		collectionItemMap.put("deleted", Integer.valueOf(1));
+		collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) ? eventMap.get(ITEM_ID).toString() : null));
+		collectionItemMap.put(DELETED, Integer.valueOf(1));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 	
@@ -1418,7 +1410,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			baseCassandraDao.updateResourceEntity(rawUpdateDAO.processCollection(eventDataMap, resourceCo));
 		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get("gooruOid").toString(), ex);
+			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get(GOORUOID).toString(), ex);
 		}
 	}
 }
