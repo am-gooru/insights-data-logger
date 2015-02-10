@@ -60,8 +60,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			if (resourceMap.containsKey("version")) {
 				resourceCo.setVersion(Integer.valueOf(resourceMap.get("version").toString()));
 			}
-			resourceCo.setId(resourceMap.get("gooruOid").toString());
-			resourceCo.setGooruOId(resourceMap.get("gooruOid").toString());
+			resourceCo.setId(resourceMap.get(GOORUOID).toString());
+			resourceCo.setGooruOId(resourceMap.get(GOORUOID).toString());
 			resourceCo.setTitle(resourceMap.get("title").toString());
 			resourceCo.setUrl(resourceMap.get("url").toString());
 			resourceCo.setDescription(resourceMap.get("description").toString());
@@ -295,8 +295,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public ResourceCo processCollection(Map<String, Object> eventMap, ResourceCo resourceCo) {
 
 		SCollectionCo collectionCo = new SCollectionCo();
-		resourceCo.setId(eventMap.get("gooruOid").toString());
-		resourceCo.setGooruOId(eventMap.get("gooruOid").toString());
+		resourceCo.setId(eventMap.get(GOORUOID).toString());
+		resourceCo.setGooruOId(eventMap.get(GOORUOID).toString());
 
 		resourceCo.setTitle(eventMap.get("title").toString());
 		resourceCo.setVersion(Integer.valueOf(eventMap.get("version").toString()));
@@ -582,7 +582,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public void updateCollectionTable(Map<String, Object> eventMap, Map<String, Object> collectionMap) {
 
 		for(String field : COLLECTION_TABLE_FIELDS.split(",")) {
-			if (field.equalsIgnoreCase(CONTENTID) || field.equalsIgnoreCase("gooruOid")) {
+			if (field.equalsIgnoreCase(CONTENTID) || field.equalsIgnoreCase(GOORUOID)) {
 				collectionMap.put(field, ((collectionMap.containsKey(field) && collectionMap.get(field) != null) ? collectionMap.get(field).toString()
 						: ((eventMap.containsKey(field) && eventMap.get(field) != null) ? eventMap.get(field).toString() : null)));
 			} else { 
@@ -590,8 +590,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			}
 			
 		}
-		if (collectionMap.containsKey("gooruOid") && collectionMap.get("gooruOid") != null) {
-			collectionMap.put("rKey", collectionMap.get("gooruOid").toString());
+		if (collectionMap.containsKey(GOORUOID) && collectionMap.get(GOORUOID) != null) {
+			collectionMap.put("rKey", collectionMap.get(GOORUOID).toString());
 			Set<Entry<String, String>> collectionCFKeySet = DataUtils.collectionCFKeys.entrySet();
 			updateColumnFamily(ColumnFamily.COLLECTION.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTION.getColumnFamily(), collectionCFKeySet, collectionMap));
 		}
@@ -624,7 +624,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	public void updateClasspage(Map<String, Object> dataMap, Map<String, Object> classpageMap) {
 
-		classpageMap.put("classId", ((dataMap.containsKey("gooruOid") && dataMap.get("gooruOid") != null) ? dataMap.get("gooruOid").toString() : null));
+		classpageMap.put("classId", ((dataMap.containsKey(GOORUOID) && dataMap.get(GOORUOID) != null) ? dataMap.get(GOORUOID).toString() : null));
 		classpageMap.put("username",
 				((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? ((Map<String, String>) dataMap.get("user")).get("username") : null));
 		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") : (dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("gooruUId") != null) ? ((Map<String, String>) dataMap.get("user")).get("gooruUId")
