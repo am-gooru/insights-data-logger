@@ -393,4 +393,19 @@ public interface Constants {
 	public static final String SOURCE_ITEM_ID = "sourceItemId";
 	
 	public static final String GOORUOID = "gooruOid";
+	
+	public static final String _USER_GROUP_TYPE = "user_group_type";
+	
+	public static final String USER_GROUP_TYPE = "userGroupType";
+	
+	public static final  String CLASS_ID = "classId";
+		
+	public static final  String ACTIVE_FLAG = "activeFlag";
+
+	public static final  String _ACTIVE_FLAG = "active_flag";
+		
+	public static final String IS_GROUP_OWNER = "isGroupOwner";
+
+	public static final String _IS_GROUP_OWNER = "is_group_owner";
+
 }
