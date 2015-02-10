@@ -1164,7 +1164,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		String dateId = "0";
 		String columnName = null;
 		String eventName = null;
-		rowKey = activities.get("userUid") != null ? activities.get("userUid").toString() : null;
+		rowKey = activities.get(USER_UID) != null ? activities.get(USER_UID).toString() : null;
 		dateId = activities.get("dateId") != null ? activities.get("dateId").toString() : null;
 		eventName = activities.get("eventName") != null ? activities.get("eventName").toString() : null;
 		if (activities.get("existingColumnName") == null) {
@@ -1317,10 +1317,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		int isGroupOwner = 0;
 		int deleted = 0;
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GROUPUID) + SEPERATOR + eventMap.get(GOORUID))
-				.putColumnIfNotNull(USER_GROUP_UID, eventMap.get(GROUPUID)).putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get(CONTENTGOORUOID)).putColumnIfNotNull("is_group_owner", isGroupOwner)
-				.putColumnIfNotNull("deleted", deleted).putColumnIfNotNull(GOORU_UID, eventMap.get(GOORUID)).putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get(CLASSCODE))
-				.putColumnIfNotNull(USER_GROUP_CODE, eventMap.get(CONTENT_GOORU_OID)).putColumnIfNotNull(ORGANIZATION_UID, eventMap.get(ORGANIZATIONUID))
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GROUPUID) + SEPERATOR + eventMap.get(GOORUID)).putColumnIfNotNull(USER_GROUP_UID, eventMap.get(GROUPUID)).putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get(CONTENTGOORUOID))
+				.putColumnIfNotNull(_IS_GROUP_OWNER, isGroupOwner).putColumnIfNotNull(DELETED, deleted).putColumnIfNotNull(GOORU_UID, eventMap.get(GOORUID)).putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get(CLASSCODE)).putColumnIfNotNull(USER_GROUP_CODE, eventMap.get(CONTENT_GOORU_OID))
+				.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get(ORGANIZATIONUID))
 
 		;
 
@@ -1520,21 +1519,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param eventMap
 	 */
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.get("classId") != null && eventMap.get("groupUId") != null && eventMap.get("userUid") != null) {
+		if (eventMap.get(CLASS_ID) != null && eventMap.get(GROUPUID) != null && eventMap.get(USERUID) != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get("classId").toString() + SEPERATOR + eventMap.get("groupUid").toString() + SEPERATOR + eventMap.get("userUid").toString())
-					.putColumnIfNotNull("deleted", eventMap.get("deleted") != null ? Integer.valueOf(eventMap.get("deleted").toString()) : 0)
-					.putColumnIfNotNull("classpage_content_id", eventMap.get("contentId") != null ? Long.valueOf(eventMap.get("contentId").toString()) : null)
-					.putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get("classId") != null ? eventMap.get("classId").toString() : null)
-					.putColumnIfNotNull("username", eventMap.get("username") != null ? eventMap.get("username").toString() : null)
-					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get("groupUId") != null ? eventMap.get("groupUId").toString() : null)
-					.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get("organizationUId") != null ? eventMap.get("organizationUId").toString() : null)
-					.putColumnIfNotNull("user_group_type", eventMap.get("userGroupType") != null ? eventMap.get("userGroupType").toString() : null)
-					.putColumnIfNotNull("active_flag", eventMap.get("activeFlag") != null ? Integer.valueOf(eventMap.get("activeFlag").toString()) : null)
-					.putColumnIfNotNull(USER_GROUP_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null)
-					.putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get("classCode") != null ? eventMap.get("classCode").toString() : null)
-					.putColumnIfNotNull(GOORU_UID, eventMap.get("userUid") != null ? eventMap.get("userUid").toString() : null)
-					.putColumnIfNotNull("is_group_owner", eventMap.get("isGroupOwner") != null ? Integer.valueOf(eventMap.get("isGroupOwner").toString()) : null);
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get(CLASS_ID).toString() + SEPERATOR + eventMap.get(GROUPUID).toString() + SEPERATOR + eventMap.get(USERUID).toString())
+					.putColumnIfNotNull(DELETED, eventMap.get(DELETED) != null ? Integer.valueOf(eventMap.get(DELETED).toString()) : 0)
+					.putColumnIfNotNull(CLASSPAGE_CONTENT_ID, eventMap.get(CONTENTID) != null ? Long.valueOf(eventMap.get(CONTENTID).toString()) : null)
+					.putColumnIfNotNull(CLASSPAGE_GOORU_OID, eventMap.get(CLASS_ID) != null ? eventMap.get(CLASS_ID).toString() : null)
+					.putColumnIfNotNull(USERNAME, eventMap.get(USERNAME) != null ? eventMap.get(USERNAME).toString() : null)
+					.putColumnIfNotNull(USER_GROUP_UID, eventMap.get(GROUPUID) != null ? eventMap.get(GROUPUID).toString() : null)
+					.putColumnIfNotNull(ORGANIZATION_UID, eventMap.get(ORGANIZATIONUID) != null ? eventMap.get(ORGANIZATIONUID).toString() : null)
+					.putColumnIfNotNull(_USER_GROUP_TYPE, eventMap.get(USER_GROUP_TYPE) != null ? eventMap.get(USER_GROUP_TYPE).toString() : null)
+					.putColumnIfNotNull(_ACTIVE_FLAG, eventMap.get(ACTIVE_FLAG) != null ? Integer.valueOf(eventMap.get(ACTIVE_FLAG).toString()) : null)
+					.putColumnIfNotNull(USER_GROUP_CODE, eventMap.get(CLASSCODE) != null ? eventMap.get(CLASSCODE).toString() : null)
+					.putColumnIfNotNull(CLASSPAGE_CODE, eventMap.get(CLASSCODE) != null ? eventMap.get(CLASSCODE).toString() : null)
+					.putColumnIfNotNull(GOORU_UID, eventMap.get(USERUID) != null ? eventMap.get(USERUID).toString() : null)
+					.putColumnIfNotNull(_IS_GROUP_OWNER, eventMap.get(IS_GROUP_OWNER) != null ? Integer.valueOf(eventMap.get(IS_GROUP_OWNER).toString()) : null);
 			try {
 				m.execute();
 			} catch (Exception e) {
