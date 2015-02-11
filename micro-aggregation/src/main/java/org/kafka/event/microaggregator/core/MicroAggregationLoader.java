@@ -40,7 +40,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.dao.CounterDetailsDAOCassandraImpl;
 import org.kafka.event.microaggregator.dao.RealTimeOperationConfigDAOImpl;
-import org.kafka.event.microaggregator.model.EventObject;
+import org.kafka.event.microaggregator.model.Event;
 import org.kafka.event.microaggregator.model.JSONDeserializer;
 import org.kafka.event.microaggregator.model.TypeConverter;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
@@ -168,26 +168,26 @@ public class MicroAggregationLoader implements Constants{
     	String userUid = null;
     	String organizationUid = null;
     	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
-    	EventObject eventObject = gson.fromJson(eventObj, EventObject.class);
-    	Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
+    	Event event = gson.fromJson(eventObj, Event.class);
+    	Map<String,String> eventMap = JSONDeserializer.deserializeEvent(event);
     	
-    	eventObject.setParentGooruId(eventMap.get("parentGooruId"));
-    	eventObject.setContentGooruId(eventMap.get("contentGooruId"));
-    	eventObject.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
-    	eventObject.setEventType(eventMap.get("type"));
+    	event.setParentGooruId(eventMap.get("parentGooruId"));
+    	event.setContentGooruId(eventMap.get("contentGooruId"));
+    	event.setTimeInMillSec(Long.parseLong(eventMap.get("totalTimeSpentInMs")));
+    	event.setEventType(eventMap.get("type"));
     	if (eventMap != null && eventMap.get("gooruUId") != null) {
 				 try {
 					 userUid = eventMap.get("gooruUId");
 					 organizationUid = dimUser.getOrganizationUid(userUid);
-					 eventObject.setOrganizationUid(organizationUid);
+					 event.setOrganizationUid(organizationUid);
 				 } catch (Exception e) {
 						logger.info("Error while fetching User uid ");
 				 }
 			 }
-    	eventMap.put("organizationUId",eventObject.getOrganizationUid());
-    	eventMap.put("eventName", eventObject.getEventName());
-    	eventMap.put("eventId", eventObject.getEventId());
-    	 logger.info("eventName : {} -  eventId : {} ",eventObject.getEventName(),eventObject.getEventId() );
+    	eventMap.put("organizationUId",event.getOrganizationUid());
+    	eventMap.put("eventName", event.getEventName());
+    	eventMap.put("eventId", event.getEventId());
+    	 logger.info("eventName : {} -  eventId : {} ",event.getEventName(),event.getEventId() );
     /*	String aggregatorJson = realTimeOperators.get(eventMap.get("eventName"));
     	counterDetailsDao.realTimeMetrics(eventMap, aggregatorJson);*/
 		
@@ -202,7 +202,7 @@ public class MicroAggregationLoader implements Constants{
  public void updateActivityStream(String eventJSON) throws JSONException {
     	
     	JsonObject eventObj = new JsonParser().parse(eventJSON).getAsJsonObject();
-    	EventObject rootEventObject = gson.fromJson(eventObj, EventObject.class);
+    	Event rootEventObject = gson.fromJson(eventObj, Event.class);
     	String eventId = rootEventObject.getEventId();
     	if (eventId != null){
 
@@ -225,8 +225,8 @@ public class MicroAggregationLoader implements Constants{
 	    	if(activityRow != null & activityRow.size() > 0){
 	    	if (fields != null){
 		    		JsonObject rawJson = new JsonParser().parse(fields).getAsJsonObject();
-		        	EventObject eventObject = gson.fromJson(rawJson, EventObject.class);
-			    	rawMap = JSONDeserializer.deserializeEventObject(eventObject);
+		        	Event eventObject = gson.fromJson(rawJson, Event.class);
+			    	rawMap = JSONDeserializer.deserializeEvent(eventObject);
 	    	} else {
 	    		logger.error("Fields is empty or invalid");
 	    	}
