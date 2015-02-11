@@ -26,19 +26,19 @@ package org.logger.event.cassandra.loader;
 import java.util.Map;
 
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.json.JSONException;
 
 
-public class EventObjectParser  {
+public class EventParser  {
 
     private CassandraConnectionProvider connectionProvider;
 
-	public EventObjectParser() {
+	public EventParser() {
         this(null);
     }
 
-    public EventObjectParser(Map<String, String> configOptionsMap) {
+    public EventParser(Map<String, String> configOptionsMap) {
         init(configOptionsMap);
     }
     private void init(Map<String, String> configOptionsMap) {
@@ -47,7 +47,7 @@ public class EventObjectParser  {
         //To intialize columnFamlies in future
     }
 
-	public void parseObject(EventData eventData , EventObject eventObject) throws JSONException {
+	public void parseObject(EventData eventData , Event eventObject) throws JSONException {
 
 	
 	}

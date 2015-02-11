@@ -40,7 +40,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.ednovo.data.model.JSONDeserializer;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -431,29 +431,29 @@ public class CassandraDataLoader implements Constants {
 	/**
 	 * This is the manin the method that process all the events.
 	 * 
-	 * @param eventObject
+	 * @param event
 	 * @throws JSONException
 	 * @throws ConnectionException
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
-	public void handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
+	public void processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
 		Map<String, String> eventMap2 = new LinkedHashMap<String, String>();
 
 		String aggregatorJson = null;
 
 		try {
-			eventMap = JSONDeserializer.deserializeEventObjectv2(eventObject);
-			eventMap2 = JSONDeserializer.deserializeEventObject(eventObject);
-			if (eventObject.getFields() != null) {
-				kafkaLogWriter.sendEventLog(eventObject.getFields());
+			eventMap = JSONDeserializer.deserializeEventv2(event);
+			eventMap2 = JSONDeserializer.deserializeEvent(event);
+			if (event.getFields() != null) {
+				kafkaLogWriter.sendEventLog(event.getFields());
 
 			}
 
-			eventMap = (Map<String, Object>) this.formatEventObjectMap(eventObject, eventMap);
-			eventMap2 = this.formatEventMap(eventObject, eventMap2);
-			String apiKey = eventObject.getApiKey() != null ? eventObject.getApiKey() : DEFAULT_API_KEY;
+			eventMap = (Map<String, Object>) this.formatEventObjectMap(event, eventMap);
+			eventMap2 = this.formatEventMap(event, eventMap2);
+			String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 
 			Map<String, Object> records = new HashMap<String, Object>();
 			records.put(EVENT_NAME, eventMap.get(EVENTNAME));
@@ -467,18 +467,18 @@ public class CassandraDataLoader implements Constants {
 				baseDao.saveBulkList(ColumnFamily.DIMEVENTS.getColumnFamily(), key, records);
 			}
 
-			updateEventObjectCompletion(eventObject);
+			updateEventObjectCompletion(event);
 
-			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(), null, eventObject);
+			String eventKeyUUID = baseDao.saveEventObject(ColumnFamily.EVENTDETAIL.getColumnFamily(), null, event);
 
 			if (eventKeyUUID == null) {
 				return;
 			}
 
-			Date eventDateTime = new Date(eventObject.getEndTime());
+			Date eventDateTime = new Date(event.getEndTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 
-			baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), eventObject);
+			baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
 			aggregatorJson = cache.get(eventMap.get("eventName").toString());
 
@@ -488,8 +488,8 @@ public class CassandraDataLoader implements Constants {
 
 			liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 
-			if (eventObject.getFields() != null) {
-				microAggregator.sendEventForAggregation(eventObject.getFields());
+			if (event.getFields() != null) {
+				microAggregator.sendEventForAggregation(event.getFields());
 			}
 
 			if (aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAWUPDATE)) {
@@ -497,11 +497,11 @@ public class CassandraDataLoader implements Constants {
 			}
 
 		} catch (Exception e) {
-			kafkaLogWriter.sendErrorEventLog(eventObject.getFields());
-			logger.error("Writing error log : {} ", eventObject.getEventId());
+			kafkaLogWriter.sendErrorEventLog(event.getFields());
+			logger.error("Writing error log : {} ", event.getEventId());
 		}
 		if (canRunIndexing) {
-			indexer.indexEvents(eventObject.getFields());
+			indexer.indexEvents(event.getFields());
 		}
 
 		try {
@@ -539,7 +539,7 @@ public class CassandraDataLoader implements Constants {
 	 * @throws ConnectionException
 	 *             If the host is unavailable
 	 */
-	private void updateEventObjectCompletion(EventObject eventObject) throws ConnectionException {
+	private void updateEventObjectCompletion(Event eventObject) throws ConnectionException {
 
 		Long endTime = eventObject.getEndTime(), startTime = eventObject.getStartTime();
 		long timeInMillisecs = 0L;
@@ -873,7 +873,7 @@ public class CassandraDataLoader implements Constants {
 	 * @param eventMap
 	 * @return
 	 */
-	private Map<String, String> formatEventMap(EventObject eventObject, Map<String, String> eventMap) {
+	private Map<String, String> formatEventMap(Event eventObject, Map<String, String> eventMap) {
 
 		String userUid = null;
 		String organizationUid = DEFAULT_ORGANIZATION_UID;
@@ -919,7 +919,7 @@ public class CassandraDataLoader implements Constants {
 	 * @param eventMap
 	 * @return
 	 */
-	private <T> T formatEventObjectMap(EventObject eventObject, Map<String, T> eventMap) {
+	private <T> T formatEventObjectMap(Event eventObject, Map<String, T> eventMap) {
 
 		String userUid = null;
 		String organizationUid = DEFAULT_ORGANIZATION_UID;

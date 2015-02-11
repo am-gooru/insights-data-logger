@@ -28,8 +28,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
-import org.ednovo.data.model.EventObjectValidator;
+import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventValidator;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
@@ -44,13 +44,13 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
 	private final String EVENT_SOURCE = "file-logged";
-	private EventObjectValidator eventObjectValidator;
+	private EventValidator eventValidator;
 	
 	public CassandraProcessor(Map<String,String> configOptionsMap){
 		
 		gson = new Gson();
 		dataLoader = new CassandraDataLoader(configOptionsMap);
-		eventObjectValidator = new EventObjectValidator(configOptionsMap);
+		eventValidator = new EventValidator(configOptionsMap);
 	}
 
         @Override
@@ -87,21 +87,20 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
             
             handleRowByNextHandler(eventData);
         }
-         if (row != null && (row instanceof EventObject)) {
+         if (row != null && (row instanceof Event)) {
         	
-        	 EventObject eventObject = (EventObject) row;
+        	 Event event = (Event) row;
          	
-        	 if(eventObject.getVersion() == null){
+        	 if(event.getVersion() == null){
              	return;
              }
         	 
-        	if (eventObject.getEventName() == null || eventObject.getEventName().isEmpty() || eventObject.getContext() == null) {
+        	if (event.getEventName() == null || event.getEventName().isEmpty() || event.getContext() == null) {
         		logger.warn("EventName or Context is empty. This is an error in EventObject");
         		return;
          	}
 
-        	eventObjectValidator.validateEventObject(eventObject);
-         	dataLoader.handleEventObjectMessage(eventObject);
+         	dataLoader.processMessage(event);
          }
 	}
         

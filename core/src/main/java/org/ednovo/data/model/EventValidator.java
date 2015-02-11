@@ -41,16 +41,16 @@ import com.netflix.astyanax.model.Rows;
 
 
 
-public class EventObjectValidator  {
+public class EventValidator  {
 
-	private static final Logger logger = LoggerFactory.getLogger(EventObjectValidator.class);
+	private static final Logger logger = LoggerFactory.getLogger(EventValidator.class);
 	private  static BaseCassandraRepoImpl baseDao;
 	private  CassandraConnectionProvider connectionProvider;
 	private static Map<String,String> acceptedFileds;
-	public EventObjectValidator() {
+	public EventValidator() {
 	this(null);
 	}
-	public EventObjectValidator(Map<String ,String> object) {
+	public EventValidator(Map<String ,String> object) {
 		init(object);
 	}
 	private void init(Map<String ,String> object) {
@@ -64,8 +64,8 @@ public class EventObjectValidator  {
         }
 	}
 
-	public static <T> T validateEventObject(EventObject eventObject) throws JSONException  {
-			Map<String,String> eventMap = JSONDeserializer.deserializeEventObject(eventObject);
+	public static <T> T validateEventObject(Event event) throws JSONException  {
+			Map<String,String> eventMap = JSONDeserializer.deserializeEvent(event);
 			for (String fieldName : eventMap.keySet()){
 				if(!acceptedFileds.containsKey(fieldName)){
 					throw new NoSuchElementException("Please make sure this attribute:"+fieldName+". Or contact Adminstrator to add this attribute in event JSON list. ");

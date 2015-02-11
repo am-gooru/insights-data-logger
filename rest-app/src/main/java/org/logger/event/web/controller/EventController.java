@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
@@ -102,11 +102,11 @@ public class EventController {
 		}
 
 		EventData eventData = null;
-		EventObject eventObject = null;
+		Event event = null;
 		JsonElement jsonElement = null;
 		JsonArray eventJsonArr = null;
 		ActionResponseDTO<EventData> responseDTO = null;
-		ActionResponseDTO<EventObject> eventObjDTO = null;
+		ActionResponseDTO<Event> eventResultDTO = null;
 
 		if (!fields.isEmpty()) {
 
@@ -137,7 +137,7 @@ public class EventController {
 
 		for (JsonElement eventJson : eventJsonArr) {
 			eventData = new EventData();
-			eventObject = new EventObject();
+			event = new Event();
 			eventData.setStartTime(timeStamp);
 			eventData.setEndTime(timeStamp);
 			eventData.setApiKey(apiKey);
@@ -145,8 +145,8 @@ public class EventController {
 			eventData.setUserIp(userIp);
 			eventData.setEventSource(EVENT_SOURCE);
 			eventData.setFields(eventJson.getAsJsonObject().toString());
-			eventObject.setStartTime(timeStamp);
-			eventObject.setEndTime(timeStamp);
+			event.setStartTime(timeStamp);
+			event.setEndTime(timeStamp);
 			JsonObject eventObj = eventJson.getAsJsonObject();
 			if (eventObj.get("version") == null) {
 				responseDTO = this.createEventData(responseDTO, eventData, eventObj);
@@ -156,18 +156,18 @@ public class EventController {
 					throw new IllegalArgumentException(responseDTO.getErrors().getFieldError().getDefaultMessage());
 				}
 			} else {
-				EventObject eventObjects = gson.fromJson(eventObj, EventObject.class);
-				JSONObject useObj = new JSONObject(eventObjects.getUser());
+				Event events = gson.fromJson(eventObj, Event.class);
+				JSONObject useObj = new JSONObject(events.getUser());
 				useObj.put("userIp", userIp);
 				useObj.put("userAgent", userAgent);
 				JSONObject fieldsObj = new JSONObject(eventObj.toString());
 				fieldsObj.put("user", useObj.toString());
-				eventObjects.setFields(fieldsObj.toString());
-				eventObjects.setApiKey(apiKey);
-				eventObjDTO = eventService.handleEventObjectMessage(eventObjects);
-				if (eventObjDTO != null && eventObjDTO.getErrors().getErrorCount() > 0) {
+				events.setFields(fieldsObj.toString());
+				events.setApiKey(apiKey);
+				eventResultDTO = eventService.processMessage(events);
+				if (eventResultDTO != null && eventResultDTO.getErrors().getErrorCount() > 0) {
 					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					throw new IllegalArgumentException(eventObjDTO.getErrors().getFieldError().getDefaultMessage());
+					throw new IllegalArgumentException(eventResultDTO.getErrors().getFieldError().getDefaultMessage());
 				}
 			}
 		}
