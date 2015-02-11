@@ -94,7 +94,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			cache = new LinkedHashMap<String, Object>();
 		}
 		List<String> classPages = this.getClassPages(eventMap);
-		String key = eventMap.get(CONTENTGOORUOID);
+		String key = eventMap.get(CONTENT_GOORU_OID);
 		List<String> keysList = new ArrayList<String>();
 
 		boolean isStudent = false;
@@ -102,33 +102,33 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		 * 
 		 * Update last accessed time/user
 		 */
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
 
-		} else if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
-			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+		} else if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
 		} else {
-			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENTGOORUOID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
+			baseCassandraDao.saveLongValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID), "lastAccessed", Long.parseLong(eventMap.get("endTime")));
 		}
-		baseCassandraDao.saveStringValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENTGOORUOID), "lastAccessedUser", eventMap.get(GOORUID));
+		baseCassandraDao.saveStringValue(ColumnFamily.RESOURCE.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID), "lastAccessedUser", eventMap.get(GOORUID));
 
 		/* Maintain session - Start */
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(START)) {
-			Date eventDateTime = new Date(Long.parseLong(eventMap.get(STARTTIME)));
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(TYPE).equalsIgnoreCase(START)) {
+			Date eventDateTime = new Date(Long.parseLong(eventMap.get(START_TIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 
-			if (eventMap.get(PARENTGOORUOID) != null && !eventMap.get(PARENTGOORUOID).isEmpty()) {
+			if (eventMap.get(PARENT_GOORU_OID) != null && !eventMap.get(PARENT_GOORU_OID).isEmpty()) {
 				baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(),
-						eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+						eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 
 			}
-			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
+			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION), eventRowKey);
 		}
 
 		/* Maintain session - END */
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			questionCountInQuiz = this.getQuestionCount(eventMap);
 			if (classPages != null && classPages.size() > 0) {
 				for (String classPage : classPages) {
@@ -155,24 +155,24 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 					eventMap.put(CLASSPAGEGOORUOID, classPage);
 					if (!isOwner && isStudent) {
-						keysList.add(ALLSESSION + classPage + SEPERATOR + key);
-						keysList.add(ALLSESSION + classPage + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + key);
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
 					}
 
 					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
 					logger.info("Recent Key 1: {} ", eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENTSESSION + classPage + SEPERATOR + key, eventMap.get(GOORUID), eventMap.get(SESSION));
+					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classPage + SEPERATOR + key, eventMap.get(GOORUID), eventMap.get(SESSION));
 
 				}
 			}
-			keysList.add(ALLSESSION + eventMap.get(CONTENTGOORUOID));
-			keysList.add(ALLSESSION + eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-			keysList.add(eventMap.get(SESSION) + SEPERATOR + eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-			logger.debug("Recent Key 2: {} ", eventMap.get(SESSION) + SEPERATOR + eventMap.get(CONTENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENTSESSION + eventMap.get(CONTENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
+			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID));
+			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+			keysList.add(eventMap.get(SESSION) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+			logger.debug("Recent Key 2: {} ", eventMap.get(SESSION) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + eventMap.get(CONTENT_GOORU_OID), eventMap.get(GOORUID), eventMap.get(SESSION));
 		}
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 
 			if (classPages != null && classPages.size() > 0) {
 				for (String classPage : classPages) {
@@ -196,27 +196,27 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.debug("isStudent : {}", isStudent);
 
 					if (!isOwner && isStudent) {
-						keysList.add(ALLSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID));
-						keysList.add(ALLSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 					}
-					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENTSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID),
+					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+					baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID), eventMap.get(GOORUID),
 							eventMap.get(SESSION));
 
 				}
 			}
-			keysList.add(ALLSESSION + eventMap.get(PARENTGOORUOID));
-			keysList.add(ALLSESSION + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-			keysList.add(eventMap.get(SESSION) + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENTSESSION + eventMap.get(PARENTGOORUOID), eventMap.get(GOORUID), eventMap.get(SESSION));
+			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID));
+			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+			keysList.add(eventMap.get(SESSION) + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+			baseCassandraDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + eventMap.get(PARENT_GOORU_OID), eventMap.get(GOORUID), eventMap.get(SESSION));
 
 		}
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
 			if (classPages != null && classPages.size() > 0) {
 				for (String classPage : classPages) {
-					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
-					keysList.add(ALLSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+					keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 				}
 			}
 		}
@@ -250,16 +250,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)) {
 					if (!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE))
 							&& !(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP))
-							&& !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
+							&& !eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 						long value = this.getCounterLongValue(localKey, key + SEPERATOR + entry.getKey().toString());
 						baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey().toString(), value, m);
 
 					}
 
-					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)
+					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
-						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ));
-						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS));
+						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_TRY_SEQ));
+						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_STATUS));
 						String answerStatus = null;
 						int status = 0;
 						status = Integer.parseInt(eventMap.get("attemptCount"));
@@ -276,7 +276,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							answerStatus = option;
 						}
 						String openEndedText = eventMap.get(TEXT);
-						if (eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()) {
+						if (eventMap.get(QUESTION_TYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()) {
 							option = "A";
 						}
 						boolean answered = this.isUserAlreadyAnswered(localKey, key);
@@ -290,7 +290,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							long value = this.getCounterLongValue(localKey, key + SEPERATOR + option);
 							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + option, value, m);
 						}
-						if (!eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
+						if (!eventMap.get(QUESTION_TYPE).equalsIgnoreCase(OE) && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
 							long values = this.getCounterLongValue(localKey, key + SEPERATOR + answerStatus);
 							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + answerStatus, values, m);
 						}
@@ -330,15 +330,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			for (String localKey : keysList) {
 				if (e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(AGG)) {
 					if (e.get(AGGMODE) != null && e.get(AGGMODE).toString().equalsIgnoreCase(AVG)) {
-						this.calculateAvg(localKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + e.get(DIVISOR).toString(), eventMap.get(CONTENTGOORUOID) + SEPERATOR + e.get(DIVIDEND).toString(),
-								eventMap.get(CONTENTGOORUOID) + SEPERATOR + entry.getKey().toString());
+						this.calculateAvg(localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + e.get(DIVISOR).toString(), eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + e.get(DIVIDEND).toString(),
+								eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + entry.getKey().toString());
 					}
 
 					if (e.get(AGGMODE) != null && e.get(AGGMODE).toString().equalsIgnoreCase(SUMOFAVG)) {
 						long averageC = this.iterateAndFindAvg(localKey);
-						baseCassandraDao.saveLongValue(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(PARENTGOORUOID) + SEPERATOR + entry.getKey().toString(), averageC);
-						long averageR = this.iterateAndFindAvg(localKey + SEPERATOR + eventMap.get(CONTENTGOORUOID));
-						baseCassandraDao.saveLongValue(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + entry.getKey().toString(), averageR);
+						baseCassandraDao.saveLongValue(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(PARENT_GOORU_OID) + SEPERATOR + entry.getKey().toString(), averageC);
+						long averageR = this.iterateAndFindAvg(localKey + SEPERATOR + eventMap.get(CONTENT_GOORU_OID));
+						baseCassandraDao.saveLongValue(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + entry.getKey().toString(), averageR);
 					}
 					if (e.get(AGGMODE) != null && e.get(AGGMODE).toString().equalsIgnoreCase(SUM)) {
 						baseCassandraDao.saveLongValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey + SEPERATOR + key + SEPERATOR + entry.getKey().toString(), eventMap.get(GOORUID), 1L);
@@ -355,7 +355,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
 					}
-					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + "completion_progress",
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + "completion_progress",
 							collectionStatus, m);
 				}
 			}
@@ -389,21 +389,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (e.get(AGGTYPE) != null && e.get(AGGTYPE).toString().equalsIgnoreCase(COUNTER)) {
 					if (!(entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE))
 							&& !(entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName()) && eventMap.get(TYPE).equalsIgnoreCase(STOP))
-							&& !eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
+							&& !eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 						baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),
 								e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()), m);
 					}
 
 					if (entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName())
-							&& (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()))
+							&& (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()))
 							&& eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
 
 						ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
 
-						long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(
-								eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
-						long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(
-								eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TS.getName(), 0L) : 0L;
+						long views = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(
+								eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
+						long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(
+								eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName(), 0L) : 0L;
 
 						if (views == 0L && timeSpent > 0L) {
 							baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),
@@ -411,11 +411,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 
-					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCETYPE).equalsIgnoreCase(QUESTION)
+					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
 
-						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ));
-						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS));
+						int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_TRY_SEQ));
+						int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_STATUS));
 						String answerStatus = null;
 						int status = 0;
 
@@ -435,7 +435,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							answerStatus = option;
 						}
 						String openEndedText = eventMap.get(TEXT);
-						if (eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()) {
+						if (eventMap.get(QUESTION_TYPE).equalsIgnoreCase(OE) && openEndedText != null && !openEndedText.isEmpty()) {
 							option = "A";
 						}
 						boolean answered = this.isUserAlreadyAnswered(localKey, key);
@@ -452,7 +452,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							updatePostAggregator(localKey, key + SEPERATOR + option);
 						}
 
-						if (eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
+						if (eventMap.get(QUESTION_TYPE).equalsIgnoreCase(OE) && answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
 							baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + answerStatus, 1L, m);
 							updatePostAggregator(localKey, key + SEPERATOR + answerStatus);
 						} else if (answerStatus != null && !answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
@@ -460,7 +460,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							updatePostAggregator(localKey, key + SEPERATOR + answerStatus);
 						}
 					}
-					if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null) {
+					if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && e.get(AGGMODE) != null) {
 						baseCassandraDao.saveLongValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey, key + SEPERATOR + eventMap.get(GOORUID) + SEPERATOR + entry.getKey().toString(), e
 								.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : DataUtils.formatReactionString(eventMap.get(e.get(AGGMODE)).toString()));
 						baseCassandraDao.saveLongValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), localKey + SEPERATOR + key, eventMap.get(GOORUID) + SEPERATOR + entry.getKey().toString(), e
@@ -518,8 +518,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	public void realTimeAggregator(String keyValue, Map<String, String> eventMap) throws JSONException {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		String resourceType = eventMap.get(RESOURCETYPE);
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+		String resourceType = eventMap.get(RESOURCE_TYPE);
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			long scoreInPercentage = 0L;
 			long score = 0L;
 			String collectionStatus = INPROGRESS;
@@ -530,84 +530,84 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, COLLECTION + SEPERATOR + GOORU_OID, eventMap.get(CONTENTGOORUOID), m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + "completion_progress", collectionStatus, m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + QUESTION_COUNT, questionCountInQuiz, m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + SCORE_IN_PERCENTAGE, scoreInPercentage, m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + SCORE, score, m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, COLLECTION + SEPERATOR + _GOORU_OID, eventMap.get(CONTENT_GOORU_OID), m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + "completion_progress", collectionStatus, m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _QUESTION_COUNT, questionCountInQuiz, m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _SCORE_IN_PERCENTAGE, scoreInPercentage, m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + SCORE, score, m);
 		}
 
 		// For user feed back
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
 			if (eventMap.get(SESSION).equalsIgnoreCase("AS")) {
 				String sessionKey = null;
 				String sessionId = null;
 				String newKey = null;
 				if ((eventMap.get(CLASSPAGEGOORUOID) != null) && (!eventMap.get(CLASSPAGEGOORUOID).isEmpty())) {
-					sessionKey = "RS" + SEPERATOR + eventMap.get(CLASSPAGEGOORUOID) + SEPERATOR + eventMap.get(PARENTGOORUOID);
+					sessionKey = "RS" + SEPERATOR + eventMap.get(CLASSPAGEGOORUOID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID);
 				} else if ((eventMap.get("classId") != null) && (!eventMap.get("classId").isEmpty())) {
-					sessionKey = "RS" + SEPERATOR + eventMap.get("classId") + SEPERATOR + eventMap.get(PARENTGOORUOID);
+					sessionKey = "RS" + SEPERATOR + eventMap.get("classId") + SEPERATOR + eventMap.get(PARENT_GOORU_OID);
 				} else {
-					sessionKey = "RS" + SEPERATOR + eventMap.get(PARENTGOORUOID);
+					sessionKey = "RS" + SEPERATOR + eventMap.get(PARENT_GOORU_OID);
 				}
 				logger.debug("sessionKey:" + sessionKey);
 				Column<String> session = baseCassandraDao.readWithKeyColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), sessionKey, eventMap.get(GOORUID), 0);
 				sessionId = session != null ? session.getStringValue() : null;
 
 				if ((sessionId != null) && (!sessionId.isEmpty())) {
-					newKey = keyValue.replaceFirst(ALLSESSION, sessionId + SEPERATOR);
+					newKey = keyValue.replaceFirst(ALL_SESSION, sessionId + SEPERATOR);
 					logger.info("newKey:" + newKey);
-					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + FEEDBACK,
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEEDBACK,
 							eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null, m);
-					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + FEEDBACKPROVIDER,
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEED_BACK_PROVIDER,
 							eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null, m);
-					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + TIMESTAMP,
-							Long.valueOf(eventMap.get(STARTTIME)), m);
-					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENTGOORUOID) + SEPERATOR + ACTIVE,
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEED_BACK_TIMESTAMP,
+							Long.valueOf(eventMap.get(START_TIME)), m);
+					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), newKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + ACTIVE,
 							eventMap.containsKey(ACTIVE) ? eventMap.get(ACTIVE) : "false", m);
 
 				}
 			}
 
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + FEEDBACK,
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEEDBACK,
 					eventMap.containsKey(TEXT) ? eventMap.get(TEXT) : null, m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + FEEDBACKPROVIDER,
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEED_BACK_PROVIDER,
 					eventMap.containsKey(PROVIDER) ? eventMap.get(PROVIDER) : null, m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + TIMESTAMP,
-					Long.valueOf(eventMap.get(STARTTIME)), m);
-			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + ACTIVE,
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _FEED_BACK_TIMESTAMP,
+					Long.valueOf(eventMap.get(START_TIME)), m);
+			baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + ACTIVE,
 					eventMap.containsKey(ACTIVE) ? eventMap.get(ACTIVE) : "false", m);
 		}
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + GOORU_OID, eventMap.get(CONTENTGOORUOID), m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, GOORU_UID, eventMap.get(GOORUID), m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, CLASSPAGEID, eventMap.get(CLASSPAGEGOORUOID), m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _GOORU_OID, eventMap.get(CONTENT_GOORU_OID), m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, _GOORU_UID, eventMap.get(GOORUID), m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, _CLASSPAGEID, eventMap.get(CLASSPAGEGOORUOID), m);
 
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
 
-			Column<String> totalTimeSpentValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID) + SEPERATOR
+			Column<String> totalTimeSpentValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENT_GOORU_OID) + SEPERATOR
 					+ LoaderConstants.TS.getName(), 0);
 			long totalTimeSpent = totalTimeSpentValues != null ? totalTimeSpentValues.getLongValue() : 0L;
 
-			Column<String> viewsValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID) + SEPERATOR
+			Column<String> viewsValues = baseCassandraDao.readWithKeyColumn(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENT_GOORU_OID) + SEPERATOR
 					+ LoaderConstants.TOTALVIEWS.getName(), 0);
 			long views = viewsValues != null ? viewsValues.getLongValue() : 0L;
 
 			if (views == 0L && totalTimeSpent > 0L) {
-				baseCassandraDao.increamentCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 1L);
+				baseCassandraDao.increamentCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(PARENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 1L);
 				views = 1;
 			}
 
 			if (views != 0L) {
-				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID) + SEPERATOR + LoaderConstants.TS.getName(),
+				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName(),
 						totalTimeSpent, m);
-				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENTGOORUOID) + SEPERATOR + LoaderConstants.AVGTS.getName(),
+				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(PARENT_GOORU_OID) + SEPERATOR + LoaderConstants.AVGTS.getName(),
 						(totalTimeSpent / views), m);
 			}
 		}
 		if (resourceType != null && resourceType.equalsIgnoreCase(QUESTION)) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
-				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPTTRYSEQ));
-				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPTSTATUS));
+				int[] attemptTrySequence = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_TRY_SEQ));
+				int[] attempStatus = TypeConverter.stringToIntArray(eventMap.get(ATTMPT_STATUS));
 				// String answerStatus = null;
 				int status = 0;
 				status = Integer.parseInt(eventMap.get("attemptCount"));
@@ -619,7 +619,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				/*
 				 * if (option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) { answerStatus = option; }
 				 */
-				if (eventMap.get(QUESTIONTYPE).equalsIgnoreCase(OE)) {
+				if (eventMap.get(QUESTION_TYPE).equalsIgnoreCase(OE)) {
 					String openEndedtextValue = eventMap.get(TEXT);
 					if (openEndedtextValue != null && !openEndedtextValue.isEmpty()) {
 						option = "A";
@@ -627,7 +627,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				} else {
 					option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 				}
-				boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENTGOORUOID));
+				boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENT_GOORU_OID));
 				if (answered) {
 					if (!option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
 						m = this.addObjectForAggregator(eventMap, keyValue, m, option, attemptStatus);
@@ -635,7 +635,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				} else {
 					m = this.addObjectForAggregator(eventMap, keyValue, m, option, attemptStatus);
 				}
-				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + TYPE, eventMap.get(QUESTIONTYPE), m);
+				baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + TYPE, eventMap.get(QUESTION_TYPE), m);
 
 			}
 		}
@@ -664,8 +664,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long scoreL = 0L;
 
 		textValue = eventMap.get(TEXT);
-		if (eventMap.containsKey(ANSWEROBECT)) {
-			answerObject = eventMap.get(ANSWEROBECT).toString();
+		if (eventMap.containsKey(ANSWER_OBECT)) {
+			answerObject = eventMap.get(ANSWER_OBECT).toString();
 		}
 		String answers = eventMap.get(ANS);
 		JSONObject answersJson = new JSONObject(answers);
@@ -680,13 +680,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			scoreL = Long.parseLong(eventMap.get(SCORE).toString());
 		}
 
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + CHOICE, textValue, m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + ACTIVE, "false", m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + SCORE, scoreL, m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + OPTIONS, options, m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + STATUS, Long.valueOf(attemptStatus), m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + ANSWER_OBECT, answerObject, m);
-		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + CHOICE, firstChoosenAns, m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + CHOICE, textValue, m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + ACTIVE, "false", m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + SCORE, scoreL, m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + OPTIONS, options, m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _QUESTION_STATUS, Long.valueOf(attemptStatus), m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + _ANSWER_OBECT, answerObject, m);
+		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + CHOICE, firstChoosenAns, m);
 
 		return m;
 	}
@@ -718,7 +718,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @return
 	 */
 	public long getQuestionCount(Map<String, String> eventMap) {
-		String contentGooruOId = eventMap.get(CONTENTGOORUOID);
+		String contentGooruOId = eventMap.get(CONTENT_GOORU_OID);
 		ColumnList<String> questionLists = null;
 		long totalQuestion = 0L;
 		long oeQuestion = 0L;
@@ -741,61 +741,61 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	public List<String> getClassPages(Map<String, String> eventMap) {
 		List<String> classPages = new ArrayList<String>();
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENTGOORUOID) == null) {
-			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENTGOORUOID), 0);
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.get(PARENT_GOORU_OID) == null) {
+			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID), 0);
 			if (!parents.isEmpty()) {
 				classPages = this.getClassPagesFromItems(parents);
 			}
-		} else if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			classPages.add(eventMap.get(PARENTGOORUOID));
+		} else if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+			classPages.add(eventMap.get(PARENT_GOORU_OID));
 		}
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(PARENTGOORUOID) != null) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.get(PARENT_GOORU_OID) != null) {
 			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
-				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENTEVENTID), 0);
+				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID), 0);
 				if (eventDetail != null && eventDetail.size() > 0) {
-					if (eventDetail.getStringValue(EVENT_NAME, null) != null && (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-						if (eventDetail.getStringValue(PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(PARENT_GOORU_OID, null).isEmpty()) {
-							List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventDetail.getStringValue(CONTENT_GOORU_OID, null), 0);
+					if (eventDetail.getStringValue(_EVENT_NAME, null) != null && (eventDetail.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+						if (eventDetail.getStringValue(_PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(_PARENT_GOORU_OID, null).isEmpty()) {
+							List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventDetail.getStringValue(_CONTENT_GOORU_OID, null), 0);
 							if (!parents.isEmpty()) {
 								classPages = this.getClassPagesFromItems(parents);
 							}
 						} else {
-							classPages.add(eventDetail.getStringValue(PARENT_GOORU_OID, null));
+							classPages.add(eventDetail.getStringValue(_PARENT_GOORU_OID, null));
 						}
 					}
 				} else {
-					List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENTGOORUOID), 0);
+					List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENT_GOORU_OID), 0);
 					if (!parents.isEmpty()) {
 						classPages = this.getClassPagesFromItems(parents);
 					}
 				}
 			}
 		}
-		if ((eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)) {
+		if ((eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)) {
 			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
-				ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENTEVENTID), 0);
+				ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID), 0);
 				if (R != null && R.size() > 0) {
-					String parentEventId = R.getStringValue(PARENT_EVENT_ID, null);
+					String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
 					if (parentEventId != null) {
 						ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
-						if (C.getStringValue(EVENT_NAME, null) != null && (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())) {
-							classPages.add(C.getStringValue(CONTENT_GOORU_OID, null));
+						if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())) {
+							classPages.add(C.getStringValue(_CONTENT_GOORU_OID, null));
 						}
-						if (C.getStringValue(EVENT_NAME, null) != null && (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-							if (C.getStringValue(PARENT_GOORU_OID, null) == null || C.getStringValue(PARENT_GOORU_OID, null).isEmpty()) {
-								List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), C.getStringValue(CONTENT_GOORU_OID, null), 0);
+						if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+							if (C.getStringValue(_PARENT_GOORU_OID, null) == null || C.getStringValue(_PARENT_GOORU_OID, null).isEmpty()) {
+								List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), C.getStringValue(_CONTENT_GOORU_OID, null), 0);
 								if (!parents.isEmpty()) {
 									classPages = this.getClassPagesFromItems(parents);
 								}
 							} else {
-								classPages.add(C.getStringValue(PARENT_GOORU_OID, null));
+								classPages.add(C.getStringValue(_PARENT_GOORU_OID, null));
 							}
 						}
 					}
 				}
 			}
 		}
-		if (eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
+		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
 			if (eventMap.containsKey("classId") && StringUtils.isNotBlank(eventMap.get("classId"))) {
 				classPages.add(eventMap.get("classId"));
 			}
@@ -880,10 +880,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID), classPage, 0);
 					boolean isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID), classPage, 0);
 					if (!isOwner && isStudent) {
-						keysList.add(ALLSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID));
-						keysList.add(ALLSESSION + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
+						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 					}
-					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENTGOORUOID) + SEPERATOR + eventMap.get(GOORUID));
+					keysList.add(eventMap.get(SESSION) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 					// keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
 				}
 			}
@@ -903,14 +903,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (keysList != null && keysList.size() > 0) {
 			for (String keyValue : keysList) {
 				ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, 0);
-				long views = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(
-						eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 0L) : 0L;
-				long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(
-						eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.TS.getName(), 0L) : 0L;
+				long views = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(
+						eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 0L) : 0L;
+				long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(
+						eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName(), 0L) : 0L;
 				logger.info("views : {} : timeSpent : {} ", views, timeSpent);
 
 				if (views == 0L && timeSpent > 0L) {
-					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(CONTENTGOORUOID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 1L, m);
+					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 1L, m);
 				}
 			}
 		}
@@ -940,13 +940,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 
-		if ((!eventDataMap.isEmpty() || !eventDataMapList.isEmpty()) && eventMap.containsKey(EVENTNAME) && StringUtils.isNotBlank(eventMap.get(EVENTNAME).toString())) {
-			if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_CREATE.getName()) && eventMap.containsKey(ITEM_TYPE)) {
+		if ((!eventDataMap.isEmpty() || !eventDataMapList.isEmpty()) && eventMap.containsKey(EVEN_TNAME) && StringUtils.isNotBlank(eventMap.get(EVEN_TNAME).toString())) {
+			if (eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_CREATE.getName()) && eventMap.containsKey(ITEM_TYPE)) {
 				if (!eventDataMap.isEmpty()) {
 					if ((eventMap.get(ITEM_TYPE).toString().matches(ITEMTYPES_SCSFFC)) && eventMap.containsKey(MODE)) {
 						/** Collection/Folder Create **/
 						if (eventMap.get(MODE).toString().equalsIgnoreCase(CREATE)
-								&& (eventDataMap.containsKey(RESOURCETYPE) && ((((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME).toString().matches(RESOURCETYPES_SF))))) {
+								&& (eventDataMap.containsKey(RESOURCE_TYPE) && ((((Map<String, String>) eventDataMap.get(RESOURCE_TYPE)).get(NAME).toString().matches(RESOURCETYPES_SF))))) {
 							this.createCollection(eventDataMap, eventMap);
 						} else if (eventMap.get(MODE).toString().equalsIgnoreCase(MOVE)) {
 							this.moveCollection(eventDataMap, eventMap);
@@ -955,22 +955,22 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 
 					} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASSPAGE))
-							&& (eventDataMap.containsKey(RESOURCETYPE) && ((Map<String, String>) eventDataMap.get(RESOURCETYPE)).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
+							&& (eventDataMap.containsKey(RESOURCE_TYPE) && ((Map<String, String>) eventDataMap.get(RESOURCE_TYPE)).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
 						this.createClasspage(eventDataMap, eventMap);
 
 					} else if (((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())))
-							&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
-							&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap
-									.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
+							&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCE_TYPE)
+							&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCE_TYPE).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap
+									.get(RESOURCE)).get(RESOURCE_TYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
 						this.createResource(eventDataMap, eventMap);
 					}
 				} else if ((eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())) && eventDataMapList.size() > 0) {
 					this.createClasspageAssignment(eventDataMapList, eventMap);
 				}
-			} else if (eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName()) && (eventMap.containsKey(ITEM_TYPE)) && !eventDataMap.isEmpty()) {
+			} else if (eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName()) && (eventMap.containsKey(ITEM_TYPE)) && !eventDataMap.isEmpty()) {
 				if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.CLASSPAGE_DOT_COLLECTION.getName())
-						&& (eventDataMap.containsKey(RESOURCE) && ((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE) && (((Map<String, Map<String, Object>>) eventDataMap
-								.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(LoaderConstants.SCOLLECTION.getName())))) {
+						&& (eventDataMap.containsKey(RESOURCE) && ((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).containsKey(RESOURCE_TYPE) && (((Map<String, Map<String, Object>>) eventDataMap
+								.get(RESOURCE)).get(RESOURCE_TYPE).get(NAME).toString().equalsIgnoreCase(LoaderConstants.SCOLLECTION.getName())))) {
 
 					this.updateClasspageAssignment(eventDataMap, eventMap);
 
@@ -980,30 +980,30 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					this.updateShelfCollectionOrClasspage(eventDataMap, eventMap);
 
 				} else if (eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(LoaderConstants.COLLECTION_DOT_RESOURCE.getName())
-						&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCETYPE)
-						&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap
-								.get(RESOURCE)).get(RESOURCETYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
+						&& ((Map<String, Object>) eventDataMap.get(RESOURCE)).containsKey(RESOURCE_TYPE)
+						&& (!(((Map<String, Map<String, Object>>) eventDataMap.get(RESOURCE)).get(RESOURCE_TYPE).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)) && !((Map<String, Map<String, Object>>) eventDataMap
+								.get(RESOURCE)).get(RESOURCE_TYPE).get(NAME).toString().equalsIgnoreCase(CLASSPAGE))) {
 
 					this.updateResource(eventDataMap, eventMap);
 
 				}
-			} else if (!eventDataMapList.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName())) {
+			} else if (!eventDataMapList.isEmpty() && eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.CLUAV1.getName())) {
 
 				this.addClasspageUser(eventDataMapList, eventMap);
 
-			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.CLP_USER_REMOVE.getName())) {
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.CLP_USER_REMOVE.getName())) {
 
 				this.markDeletedClasspageUser(eventDataMap, eventMap);
 
-			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
 
 				this.markItemDelete(eventDataMap, eventMap);
 
-			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
 
 				this.updateRegisteredUser(eventDataMap, eventMap);
 
-			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENTNAME).toString().equalsIgnoreCase(LoaderConstants.PROFILE_DOT_ACTION.getName())
+			} else if (!eventDataMap.isEmpty() && eventMap.get(EVEN_TNAME).toString().equalsIgnoreCase(LoaderConstants.PROFILE_DOT_ACTION.getName())
 					&& eventMap.get(ACTION_TYPE).toString().equalsIgnoreCase(EDIT)) {
 
 				this.updateUserProfileData(eventDataMap, eventMap);
@@ -1038,8 +1038,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for (Entry<String, String> entry : entrySet) {
 			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
 				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
-			} else if (entry.getKey().equalsIgnoreCase(ITEM_ID) || entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)) {
-				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
+			} else if (entry.getKey().equalsIgnoreCase(ITEM_ID) || entry.getKey().equalsIgnoreCase(COLLECTION_ITEM_ID)) {
+				collectionItemMap.put(COLLECTION_ITEM_ID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
@@ -1063,7 +1063,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for (Entry<String, String> entry : entrySet) {
 			if (entry.getKey().matches(COLLECTION_ITEM_FIELDS) || entry.getKey().equalsIgnoreCase(ASSOCIATION_DATE)) {
 				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
-			} else if (entry.getKey().equalsIgnoreCase(ITEMSEQUENCE)) {
+			} else if (entry.getKey().equalsIgnoreCase(ITEM_SEQUENCE)) {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? Integer.valueOf(eventMap.get(entry.getKey()).toString())
 						: null);
 			} else {
@@ -1074,7 +1074,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 
 		Map<String, Object> markSourceItemMap = new HashMap<String, Object>();
-		markSourceItemMap.put(COLLECTIONITEMID, ((eventMap.containsKey(SOURCE_ITEM_ID) && eventMap.get(SOURCE_ITEM_ID) != null) ? eventMap.get(SOURCE_ITEM_ID).toString() : null));
+		markSourceItemMap.put(COLLECTION_ITEM_ID, ((eventMap.containsKey(SOURCE_ITEM_ID) && eventMap.get(SOURCE_ITEM_ID) != null) ? eventMap.get(SOURCE_ITEM_ID).toString() : null));
 		markSourceItemMap.put(DELETED, Integer.valueOf(1));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, markSourceItemMap);
 
@@ -1104,7 +1104,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		/**
 		 * Here Insights colectionItem CF gets updated for shelf-collection mapping
 		 */
-		String collectionGooruOid = eventDataMap.containsKey(GOORUOID) ? eventDataMap.get(GOORUOID).toString() : null;
+		String collectionGooruOid = eventDataMap.containsKey(GOORU_OID) ? eventDataMap.get(GOORU_OID).toString() : null;
 		if (collectionGooruOid != null) {
 			List<Map<String, Object>> collectionItemList = (List<Map<String, Object>>) eventDataMap.get("collectionItems");
 			for (Map<String, Object> collectionItem : collectionItemList) {
@@ -1119,10 +1119,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						collectionItemMap.put(entry.getValue(),
 								((collectionItemResourceMap.containsKey(entry.getKey()) && collectionItemResourceMap.get(entry.getKey()) != null) ? collectionItemResourceMap.get(entry.getKey())
 										.toString() : null));
-					} else if (entry.getKey().equalsIgnoreCase(CONTENTGOORUOID)) {
-						collectionItemMap.put(entry.getValue(), (collectionItemResourceMap.containsKey(GOORUOID) ? collectionItemResourceMap.get(GOORUOID).toString() : null));
-					} else if (entry.getKey().equalsIgnoreCase(PARENTGOORUOID)) {
-						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(CONTENTGOORUOID) ? eventMap.get(CONTENTGOORUOID).toString() : null));
+					} else if (entry.getKey().equalsIgnoreCase(CONTENT_GOORU_OID)) {
+						collectionItemMap.put(entry.getValue(), (collectionItemResourceMap.containsKey(GOORU_OID) ? collectionItemResourceMap.get(GOORU_OID).toString() : null));
+					} else if (entry.getKey().equalsIgnoreCase(PARENT_GOORU_OID)) {
+						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(CONTENT_GOORU_OID) ? eventMap.get(CONTENT_GOORU_OID).toString() : null));
 					} else {
 						collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 					}
@@ -1150,11 +1150,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		updateResource(eventDataMap, eventMap, collection, collectionMap);
 
 		Map<String, Object> classpageMap = new HashMap<String, Object>();
-		classpageMap.put(CLASSCODE, ((eventMap.containsKey(CLASSCODE) && eventMap.get(CLASSCODE) != null) ? eventMap.get(CLASSCODE).toString() : null));
+		classpageMap.put(CLASS_CODE, ((eventMap.containsKey(CLASS_CODE) && eventMap.get(CLASS_CODE) != null) ? eventMap.get(CLASS_CODE).toString() : null));
 		classpageMap.put("groupUId", ((eventMap.containsKey("groupUId") && eventMap.get("groupUId") != null) ? eventMap.get("groupUId").toString() : null));
-		classpageMap.put(CONTENTID, ((eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) ? Long.valueOf(eventMap.get(CONTENTID).toString()) : null));
-		classpageMap.put(ORGANIZATIONUID, ((eventMap.containsKey(ORGANIZATIONUID) && eventMap.get(ORGANIZATIONUID) != null) ? eventMap.get(ORGANIZATIONUID).toString() : null));
-		classpageMap.put(USERUID, ((eventMap.containsKey(GOORUID) && eventMap.get(GOORUID) != null) ? eventMap.get(GOORUID).toString() : null));
+		classpageMap.put(CONTENT_ID, ((eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) ? Long.valueOf(eventMap.get(CONTENT_ID).toString()) : null));
+		classpageMap.put(ORGANIZATION_UID, ((eventMap.containsKey(ORGANIZATION_UID) && eventMap.get(ORGANIZATION_UID) != null) ? eventMap.get(ORGANIZATION_UID).toString() : null));
+		classpageMap.put(USER_UID, ((eventMap.containsKey(GOORUID) && eventMap.get(GOORUID) != null) ? eventMap.get(GOORUID).toString() : null));
 		classpageMap.put("isGroupOwner", 1);
 		classpageMap.put(DELETED, Integer.valueOf(0));
 		classpageMap.put("activeFlag", 1);
@@ -1170,8 +1170,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		for (Entry<String, String> entry : entrySet) {
 			if (entry.getKey().equalsIgnoreCase(ITEM_TYPE)) {
 				collectionItemMap.put(entry.getValue(), (eventDataMap.containsKey(entry.getKey()) && eventDataMap.get(entry.getKey()) != null) ? eventDataMap.get(entry.getKey()).toString() : null);
-			} else if (entry.getKey().equalsIgnoreCase(COLLECTIONITEMID)) {
-				collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
+			} else if (entry.getKey().equalsIgnoreCase(COLLECTION_ITEM_ID)) {
+				collectionItemMap.put(COLLECTION_ITEM_ID, (eventMap.containsKey(ITEM_ID) && eventMap.get(ITEM_ID) != null) ? eventMap.get(ITEM_ID).toString() : null);
 			} else {
 				collectionItemMap.put(entry.getValue(), (eventMap.containsKey(entry.getKey()) && eventMap.get(entry.getKey()) != null) ? eventMap.get(entry.getKey()).toString() : null);
 			}
@@ -1189,20 +1189,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		/** classpage user add **/
 		for (Map<String, Object> dataMap : dataMapList) {
 			Map<String, Object> classpageMap = new HashMap<String, Object>();
-			classpageMap.put("classId", ((eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) ? eventMap.get(CONTENTGOORUOID).toString() : null));
-			classpageMap.put(CLASSCODE, ((eventMap.containsKey(CLASSCODE) && eventMap.get(CLASSCODE) != null) ? eventMap.get(CLASSCODE).toString() : null));
+			classpageMap.put("classId", ((eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) ? eventMap.get(CONTENT_GOORU_OID).toString() : null));
+			classpageMap.put(CLASS_CODE, ((eventMap.containsKey(CLASS_CODE) && eventMap.get(CLASS_CODE) != null) ? eventMap.get(CLASS_CODE).toString() : null));
 			classpageMap.put("groupUId", ((eventMap.containsKey("groupUId") && eventMap.get("groupUId") != null) ? eventMap.get("groupUId").toString() : null));
 			classpageMap.put(
-					CONTENTID,
-					((eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) ? Long
-							.valueOf(eventMap.get(CONTENTID).toString()) : null));
-			classpageMap.put(ORGANIZATIONUID, ((eventMap.containsKey(ORGANIZATIONUID) && eventMap.get(ORGANIZATIONUID) != null) ? eventMap.get(ORGANIZATIONUID).toString() : null));
+					CONTENT_ID,
+					((eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) ? Long
+							.valueOf(eventMap.get(CONTENT_ID).toString()) : null));
+			classpageMap.put(ORGANIZATION_UID, ((eventMap.containsKey(ORGANIZATION_UID) && eventMap.get(ORGANIZATION_UID) != null) ? eventMap.get(ORGANIZATION_UID).toString() : null));
 			classpageMap.put("isGroupOwner", Integer.valueOf(0));
 			classpageMap.put(DELETED, Integer.valueOf(0));
 			classpageMap.put("activeFlag", (dataMap.containsKey("status") && dataMap.get("status") != null && dataMap.get("status").toString().equalsIgnoreCase("active")) ? Integer.valueOf(1)
 					: Integer.valueOf(0));
 			classpageMap.put("username", ((dataMap.containsKey("username") && dataMap.get("username") != null) ? dataMap.get("username") : null));
-			classpageMap.put(USERUID, ((dataMap.containsKey("gooruUid") && dataMap.get("gooruUid") != null) ? dataMap.get("gooruUid") : null));
+			classpageMap.put(USER_UID, ((dataMap.containsKey("gooruUid") && dataMap.get("gooruUid") != null) ? dataMap.get("gooruUid") : null));
 			baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
 		}
 	}
@@ -1216,8 +1216,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		Map<String, Object> classpageMap = new HashMap<String, Object>();
 		classpageMap.put("groupUId", ((eventMap.containsKey("groupUId") && eventMap.get("groupUId") != null) ? eventMap.get("groupUId").toString() : null));
 		classpageMap.put(DELETED, Integer.valueOf(1));
-		classpageMap.put("classId", ((eventMap.containsKey(CONTENTGOORUOID) && eventMap.get(CONTENTGOORUOID) != null) ? eventMap.get(CONTENTGOORUOID).toString() : null));
-		classpageMap.put(USERUID, ((eventMap.containsKey("removedGooruUId") && eventMap.get("removedGooruUId") != null) ? eventMap.get("removedGooruUId") : null));
+		classpageMap.put("classId", ((eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) ? eventMap.get(CONTENT_GOORU_OID).toString() : null));
+		classpageMap.put(USER_UID, ((eventMap.containsKey("removedGooruUId") && eventMap.get("removedGooruUId") != null) ? eventMap.get("removedGooruUId") : null));
 		baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
 	}
 
@@ -1229,15 +1229,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void createClasspageAssignment(List<Map<String, Object>> dataMapList, Map<String, Object> eventMap) {
 		/** classpage assignment create **/
 		for (Map<String, Object> dataMap : dataMapList) {
-			if (((eventMap.containsKey(DATA)) && ((Map<String, Object>) dataMap.get(RESOURCE)).containsKey(RESOURCETYPE) && (((Map<String, String>) ((Map<String, Object>) dataMap.get(RESOURCE))
-					.get(RESOURCETYPE)).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)))) {
+			if (((eventMap.containsKey(DATA)) && ((Map<String, Object>) dataMap.get(RESOURCE)).containsKey(RESOURCE_TYPE) && (((Map<String, String>) ((Map<String, Object>) dataMap.get(RESOURCE))
+					.get(RESOURCE_TYPE)).get(NAME).toString().equalsIgnoreCase(SCOLLECTION)))) {
 				/** Update insights collection CF for collection mapping **/
 				Map<String, Object> resourceMap = (Map<String, Object>) dataMap.get(RESOURCE);
 				Map<String, Object> collectionMap = new HashMap<String, Object>();
-				if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-					collectionMap.put("contentId", Long.valueOf(eventMap.get(CONTENTID).toString()));
+				if (eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) {
+					collectionMap.put("contentId", Long.valueOf(eventMap.get(CONTENT_ID).toString()));
 				}
-				collectionMap.put(GOORUOID, eventMap.get(PARENTGOORUOID));
+				collectionMap.put(GOORU_OID, eventMap.get(PARENT_GOORU_OID));
 				rawUpdateDAO.updateCollectionTable(resourceMap, collectionMap);
 
 				/**
@@ -1319,15 +1319,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		 */
 		ResourceCo resourceCo = new ResourceCo();
 		rawUpdateDAO.processResource(eventDataMap, resourceCo);
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
+		if (eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) {
+			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENT_ID).toString()));
 		}
 		baseCassandraDao.updateResourceEntity(resourceCo);
 
 		Map<String, Object> resourceMap = (Map<String, Object>) eventDataMap.get(RESOURCE);
 
-		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
-				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase(SCOLLECTION))) {
+		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCE_TYPE)
+				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCE_TYPE).get(NAME).equalsIgnoreCase(SCOLLECTION))) {
 			Map<String, Object> collectionMap = (Map<String, Object>) eventDataMap.get(COLLECTION);
 			/**
 			 * Update Resource CF for collection data
@@ -1335,7 +1335,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (!collectionMap.isEmpty()) {
 				ResourceCo collection = new ResourceCo();
 				rawUpdateDAO.processCollection(collectionMap, collection);
-				collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
+				collection.setContentId(Long.valueOf(eventMap.get(PARENT_CONTENT_ID).toString()));
 				collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
 				baseCassandraDao.updateResourceEntity(collection);
 			} else {
@@ -1357,12 +1357,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		rawUpdateDAO.updateCollectionItemTable(resourceMap, collectionItemMap);
 
 		/** Update Insights Assessment Answer CF **/
-		if (((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
+		if (((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
 			Map<String, Object> assessmentAnswerMap = new HashMap<String, Object>();
 			String collectionGooruOid = eventMap.get("parentGooruId").toString();
 			String questionGooruOid = eventMap.get("contentGooruId").toString();
-			Long collectionContentId = ((eventMap.containsKey(PARENTCONTENTID) && eventMap.get(PARENTCONTENTID) != null) ? Long.valueOf(eventMap.get(PARENTCONTENTID).toString()) : null);
-			Long questionId = ((eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) ? Long.valueOf(eventMap.get(CONTENTID)
+			Long collectionContentId = ((eventMap.containsKey(PARENT_CONTENT_ID) && eventMap.get(PARENT_CONTENT_ID) != null) ? Long.valueOf(eventMap.get(PARENT_CONTENT_ID).toString()) : null);
+			Long questionId = ((eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) ? Long.valueOf(eventMap.get(CONTENT_ID)
 					.toString()) : null);
 			assessmentAnswerMap.put("collectionGooruOid", collectionGooruOid);
 			assessmentAnswerMap.put("questionGooruOid", questionGooruOid);
@@ -1383,16 +1383,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		ResourceCo resourceCo = new ResourceCo();
 		Map<String, Object> resourceMap = (Map<String, Object>) eventDataMap.get(RESOURCE);
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
+		if (eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) {
+			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENT_ID).toString()));
 		}
 		baseCassandraDao.updateResourceEntity(rawUpdateDAO.processResource(eventDataMap, resourceCo));
-		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCETYPE)
-				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCETYPE).get(NAME).equalsIgnoreCase(SCOLLECTION))) {
+		if (eventDataMap.containsKey(COLLECTION) && eventDataMap.get(COLLECTION) != null && ((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).containsKey(RESOURCE_TYPE)
+				&& (((Map<String, Map<String, String>>) eventDataMap.get(COLLECTION)).get(RESOURCE_TYPE).get(NAME).equalsIgnoreCase(SCOLLECTION))) {
 			Map<String, Object> collectionMap = (Map<String, Object>) eventDataMap.get(COLLECTION);
 			ResourceCo collection = new ResourceCo();
 			rawUpdateDAO.processCollection(collectionMap, collection);
-			collection.setContentId(Long.valueOf(eventMap.get(PARENTCONTENTID).toString()));
+			collection.setContentId(Long.valueOf(eventMap.get(PARENT_CONTENT_ID).toString()));
 			collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
 			baseCassandraDao.updateResourceEntity(collection);
 		}
@@ -1410,12 +1410,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		collectionItemMap.put(DELETED, Integer.valueOf(0));
 		rawUpdateDAO.updateCollectionItemTable(resourceMap, collectionItemMap);
 
-		if (((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
+		if (((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
 			Map<String, Object> assessmentAnswerMap = new HashMap<String, Object>();
-			String collectionGooruOid = eventMap.get(CONTENTGOORUOID).toString();
-			String questionGooruOid = eventMap.get(PARENTGOORUOID).toString();
-			Long collectionContentId = ((eventMap.containsKey(PARENTCONTENTID) && eventMap.get(PARENTCONTENTID) != null) ? Long.valueOf(eventMap.get(PARENTCONTENTID).toString()) : null);
-			Long questionId = ((eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) ? Long.valueOf(eventMap.get(CONTENTID)
+			String collectionGooruOid = eventMap.get(CONTENT_GOORU_OID).toString();
+			String questionGooruOid = eventMap.get(PARENT_GOORU_OID).toString();
+			Long collectionContentId = ((eventMap.containsKey(PARENT_CONTENT_ID) && eventMap.get(PARENT_CONTENT_ID) != null) ? Long.valueOf(eventMap.get(PARENT_CONTENT_ID).toString()) : null);
+			Long questionId = ((eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) ? Long.valueOf(eventMap.get(CONTENT_ID)
 					.toString()) : null);
 			assessmentAnswerMap.put("collectionGooruOid", collectionGooruOid);
 			assessmentAnswerMap.put("questionGooruOid", questionGooruOid);
@@ -1435,10 +1435,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		UserCo userCo = new UserCo();
 		String organizationUId = null;
-		if(eventDataMap.containsKey(ORGANIZATIONUID) && eventDataMap.get(ORGANIZATIONUID) != null) {
-			organizationUId = eventDataMap.get(ORGANIZATIONUID).toString();
-		} else if (eventMap.containsKey(ORGANIZATIONUID) && eventMap.get(ORGANIZATIONUID) != null) {
-			organizationUId = eventMap.get(ORGANIZATIONUID).toString();
+		if(eventDataMap.containsKey(ORGANIZATION_UID) && eventDataMap.get(ORGANIZATION_UID) != null) {
+			organizationUId = eventDataMap.get(ORGANIZATION_UID).toString();
+		} else if (eventMap.containsKey(ORGANIZATION_UID) && eventMap.get(ORGANIZATION_UID) != null) {
+			organizationUId = eventMap.get(ORGANIZATION_UID).toString();
 			Map<String, String> organizationMap = new HashMap<String, String>();
 			organizationMap.put("partyUid", organizationUId);
 			userCo.setOrganization(organizationMap);
@@ -1458,10 +1458,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		UserCo userCo = new UserCo();
 		String organizationUId = null;
-		if(eventDataMap.containsKey(ORGANIZATIONUID) && eventDataMap.get(ORGANIZATIONUID) != null) {
-			organizationUId = eventDataMap.get(ORGANIZATIONUID).toString();
-		} else if (eventMap.containsKey(ORGANIZATIONUID) && eventMap.get(ORGANIZATIONUID) != null) {
-			organizationUId = eventMap.get(ORGANIZATIONUID).toString();
+		if(eventDataMap.containsKey(ORGANIZATION_UID) && eventDataMap.get(ORGANIZATION_UID) != null) {
+			organizationUId = eventDataMap.get(ORGANIZATION_UID).toString();
+		} else if (eventMap.containsKey(ORGANIZATION_UID) && eventMap.get(ORGANIZATION_UID) != null) {
+			organizationUId = eventMap.get(ORGANIZATION_UID).toString();
 			Map<String, String> organizationMap = new HashMap<String, String>();
 			organizationMap.put("partyUid", organizationUId);
 			userCo.setOrganization(organizationMap);
@@ -1483,21 +1483,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	private void markItemDelete(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
-		collectionItemMap.put(COLLECTIONITEMID, (eventMap.containsKey(ITEM_ID) ? eventMap.get(ITEM_ID).toString() : null));
+		collectionItemMap.put(COLLECTION_ITEM_ID, (eventMap.containsKey(ITEM_ID) ? eventMap.get(ITEM_ID).toString() : null));
 		collectionItemMap.put(DELETED, Integer.valueOf(1));
 		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
 	}
 
 	private void updateResource(Map<String, Object> eventDataMap, Map<String, Object> eventMap, ResourceCo resourceCo, Map<String, Object> collectionMap) {
-		if (eventMap.containsKey(CONTENTID) && eventMap.get(CONTENTID) != null && !StringUtils.isBlank(eventMap.get(CONTENTID).toString())) {
-			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENTID).toString()));
+		if (eventMap.containsKey(CONTENT_ID) && eventMap.get(CONTENT_ID) != null && !StringUtils.isBlank(eventMap.get(CONTENT_ID).toString())) {
+			resourceCo.setContentId(Long.valueOf(eventMap.get(CONTENT_ID).toString()));
 			if (collectionMap != null)
-				collectionMap.put(CONTENTID, Long.valueOf(eventMap.get(CONTENTID).toString()));
+				collectionMap.put(CONTENT_ID, Long.valueOf(eventMap.get(CONTENT_ID).toString()));
 		}
 		try {
 			baseCassandraDao.updateResourceEntity(rawUpdateDAO.processCollection(eventDataMap, resourceCo));
 		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get(GOORUOID).toString(), ex);
+			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get(GOORU_OID).toString(), ex);
 		}
 	}
 }

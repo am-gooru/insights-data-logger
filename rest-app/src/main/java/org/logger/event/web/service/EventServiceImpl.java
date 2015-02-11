@@ -118,7 +118,7 @@ public class EventServiceImpl implements EventService, Constants {
 			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", "Fields must not be empty");
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENTNAME, "LA001", "eventName must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVEN_TNAME, "LA001", "eventName must not be empty");
 		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), "eventId", "LA002", "eventId must not be empty");
 
 		return errors;
@@ -126,23 +126,23 @@ public class EventServiceImpl implements EventService, Constants {
 
 	/**
 	 * 
-	 * @param eventObject
+	 * @param event
 	 * @return
 	 */
-	private Errors validateInsertEventObject(Event eventObject) {
-		final Errors errors = new BindException(eventObject, "EventObject");
-		if (eventObject == null) {
-			ServerValidationUtils.rejectIfNull(errors, eventObject, "eventData.all", "Fields must not be empty");
+	private Errors validateInsertEvent(Event event) {
+		final Errors errors = new BindException(event, "Event");
+		if (event == null) {
+			ServerValidationUtils.rejectIfNull(errors, event, "event.all", "Fields must not be empty");
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getEventName(), EVENTNAME, "LA001", "eventName must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getEventId(), "eventId", "LA002", "eventId must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getVersion(), "version", "LA003", "version must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getUser(), "user", "LA004", "User Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getSession(), "session", "LA005", "Session Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getMetrics(), "metrics", "LA006", "Mestrics Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getContext(), "context", "LA007", "context Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventObject.getPayLoadObject(), "payLoadObject", "LA008", "pay load Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVEN_TNAME, "LA001", "eventName must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", "eventId must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", "version must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004", "User Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getSession(), "session", "LA005", "Session Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getMetrics(), "metrics", "LA006", "Mestrics Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getContext(), "context", "LA007", "context Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getPayLoadObject(), "payLoadObject", "LA008", "pay load Object must not be empty");
 		return errors;
 	}
 
@@ -163,7 +163,7 @@ public class EventServiceImpl implements EventService, Constants {
 		try {
 			dataLoaderService.callAPIViewCount();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:" +e);
 		}
 	}
 
@@ -199,17 +199,17 @@ public class EventServiceImpl implements EventService, Constants {
 					jsonElement = new JsonParser().parse(activity.toString());
 					JsonObject eventObj = jsonElement.getAsJsonObject();
 
-					if (eventObj.get(CONTENT_GOORU_OID) != null) {
-						valueMap.put(RESOURCE_ID, eventObj.get(CONTENT_GOORU_OID).toString().replaceAll("\"", ""));
+					if (eventObj.get(_CONTENT_GOORU_OID) != null) {
+						valueMap.put(RESOURCE_ID, eventObj.get(_CONTENT_GOORU_OID).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(PARENT_GOORU_OID) != null) {
-						valueMap.put(PARENT_ID, eventObj.get(PARENT_GOORU_OID).toString().replaceAll("\"", ""));
+					if (eventObj.get(_PARENT_GOORU_OID) != null) {
+						valueMap.put(PARENT_ID, eventObj.get(_PARENT_GOORU_OID).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(EVENT_NAME) != null) {
-						valueMap.put(EVENTNAME, eventObj.get(EVENT_NAME).toString().replaceAll("\"", ""));
+					if (eventObj.get(_EVENT_NAME) != null) {
+						valueMap.put(EVEN_TNAME, eventObj.get(_EVENT_NAME).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(USER_UID) != null) {
-						valueMap.put(USERUID, eventObj.get(USER_UID).toString().replaceAll("\"", ""));
+					if (eventObj.get(_USER_UID) != null) {
+						valueMap.put(USER_UID, eventObj.get(_USER_UID).toString().replaceAll("\"", ""));
 					}
 					if (eventObj.get(USERNAME) != null) {
 						valueMap.put(USERNAME, eventObj.get(USERNAME).toString().replaceAll("\"", ""));
@@ -217,14 +217,14 @@ public class EventServiceImpl implements EventService, Constants {
 					if (eventObj.get(SCORE) != null) {
 						valueMap.put(SCORE, eventObj.get(SCORE).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(SESSION_ID) != null) {
-						valueMap.put(SESSION, eventObj.get(SESSION_ID).toString().replaceAll("\"", ""));
+					if (eventObj.get(_SESSION_ID) != null) {
+						valueMap.put(SESSION, eventObj.get(_SESSION_ID).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(FIRST_ATTEMPT_STATUS) != null) {
-						valueMap.put(FIRSTATTEMPTSTATUS, eventObj.get(FIRST_ATTEMPT_STATUS).toString().replaceAll("\"", ""));
+					if (eventObj.get(_FIRST_ATTEMPT_STATUS) != null) {
+						valueMap.put(FIRST_ATTEMPT_STATUS, eventObj.get(_FIRST_ATTEMPT_STATUS).toString().replaceAll("\"", ""));
 					}
-					if (eventObj.get(ANSWER_STATUS) != null) {
-						valueMap.put(ANSWERSTATUS, eventObj.get(ANSWER_STATUS).toString().replaceAll("\"", ""));
+					if (eventObj.get(_ANSWER_STATUS) != null) {
+						valueMap.put(ANSWERSTATUS, eventObj.get(_ANSWER_STATUS).toString().replaceAll("\"", ""));
 					}
 
 				} catch (JsonParseException e) {
@@ -241,7 +241,7 @@ public class EventServiceImpl implements EventService, Constants {
 	@Override
 	public ActionResponseDTO<Event> processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 
-		Errors errors = validateInsertEventObject(event);
+		Errors errors = validateInsertEvent(event);
 		if (!errors.hasErrors()) {
 			dataLoaderService.processMessage(event);
 		}
@@ -266,12 +266,12 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public void indexActivity() {
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXLASTUPDATED, DEFAULTCOLUMN, 0).getStringValue();
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN, 0).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date()).toString();
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;
-		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, 0).getStringValue();
+		String status = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, 0).getStringValue();
 		if (status.equalsIgnoreCase(COMPLETED)) {
 			// All past indexing complete. Start new.
 			try {
@@ -289,13 +289,13 @@ public class EventServiceImpl implements EventService, Constants {
 		} else if (status.equalsIgnoreCase("stop")) {
 			logger.debug("Event indexing stopped...");
 		} else {
-			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, 0).getStringValue();
-			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXMAXCOUNT, DEFAULTCOLUMN, 0).getStringValue();
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, 0).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 
 			if (Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXCHECKEDCOUNT, DEFAULTCOLUMN, "" + (Integer.valueOf(lastCheckedCount) + 1));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + (Integer.valueOf(lastCheckedCount) + 1));
 			} else {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITYINDEXSTATUS, DEFAULTCOLUMN, COMPLETED);
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
 			}
 		}
 	}
