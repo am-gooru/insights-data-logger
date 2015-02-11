@@ -793,7 +793,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 				}else{
-					logger.debug("Rection parent:"+ eventMap.get(PARENT_GOORU_OID));
 					List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENT_GOORU_OID), 0);
 					if (!parents.isEmpty()) {
 						classPages = this.getClassPagesFromItems(parents);
