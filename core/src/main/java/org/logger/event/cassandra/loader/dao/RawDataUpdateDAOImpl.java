@@ -60,8 +60,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			if (resourceMap.containsKey("version")) {
 				resourceCo.setVersion(Integer.valueOf(resourceMap.get("version").toString()));
 			}
-			resourceCo.setId(resourceMap.get(GOORUOID).toString());
-			resourceCo.setGooruOId(resourceMap.get(GOORUOID).toString());
+			resourceCo.setId(resourceMap.get(GOORU_OID).toString());
+			resourceCo.setGooruOId(resourceMap.get(GOORU_OID).toString());
 			resourceCo.setTitle(resourceMap.get("title").toString());
 			resourceCo.setUrl(resourceMap.get("url").toString());
 			resourceCo.setDescription(resourceMap.get("description").toString());
@@ -98,8 +98,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			resourceCo.setThumbnail(thumbnail);
 
 			String resourceType = null;
-			if (resourceMap.containsKey(RESOURCETYPE) && (resourceMap.get(RESOURCETYPE) != null && ((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME) != null)) {
-				resourceType = ((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME);
+			if (resourceMap.containsKey(RESOURCE_TYPE) && (resourceMap.get(RESOURCE_TYPE) != null && ((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME) != null)) {
+				resourceType = ((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME);
 				String resourceTypeEscaped = null;
 				if (resourceType.contains("-")) {
 					resourceTypeEscaped = resourceType.replace("-", "");
@@ -175,8 +175,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			int invalidResource = 0;
 			Integer hasNoThumbnail = 0;
 			int hasNoDescription = 0;
-			if (resourceMap.containsKey(RESOURCETYPE) && (resourceMap.get(RESOURCETYPE) != null && ((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME) != null)
-					&& !((Map<String, String>) resourceMap.get(RESOURCETYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
+			if (resourceMap.containsKey(RESOURCE_TYPE) && (resourceMap.get(RESOURCE_TYPE) != null && ((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME) != null)
+					&& !((Map<String, String>) resourceMap.get(RESOURCE_TYPE)).get(NAME).equalsIgnoreCase("assessment-question")) {
 
 				if (StringUtils.trimToNull(resourceMap.get("title").toString()) == null) {
 					invalidResource = 1;
@@ -295,8 +295,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public ResourceCo processCollection(Map<String, Object> eventMap, ResourceCo resourceCo) {
 
 		SCollectionCo collectionCo = new SCollectionCo();
-		resourceCo.setId(eventMap.get(GOORUOID).toString());
-		resourceCo.setGooruOId(eventMap.get(GOORUOID).toString());
+		resourceCo.setId(eventMap.get(GOORU_OID).toString());
+		resourceCo.setGooruOId(eventMap.get(GOORU_OID).toString());
 
 		resourceCo.setTitle(eventMap.get("title").toString());
 		resourceCo.setVersion(Integer.valueOf(eventMap.get("version").toString()));
@@ -328,8 +328,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		resourceCo.setThumbnail(thumbnail);
 
 		String resourceType = null;
-		if (eventMap.containsKey(RESOURCETYPE) && eventMap.get(RESOURCETYPE) != null && ((Map<String, String>) eventMap.get(RESOURCETYPE)).get(NAME) != null) {
-			resourceType = ((Map<String, String>) eventMap.get(RESOURCETYPE)).get(NAME);
+		if (eventMap.containsKey(RESOURCE_TYPE) && eventMap.get(RESOURCE_TYPE) != null && ((Map<String, String>) eventMap.get(RESOURCE_TYPE)).get(NAME) != null) {
+			resourceType = ((Map<String, String>) eventMap.get(RESOURCE_TYPE)).get(NAME);
 			String resourceTypeEscaped = null;
 			if (resourceType.contains("-")) {
 				resourceTypeEscaped = resourceType.replace("-", "");
@@ -582,7 +582,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	public void updateCollectionTable(Map<String, Object> eventMap, Map<String, Object> collectionMap) {
 
 		for(String field : COLLECTION_TABLE_FIELDS.split(",")) {
-			if (field.equalsIgnoreCase(CONTENTID) || field.equalsIgnoreCase(GOORUOID)) {
+			if (field.equalsIgnoreCase(CONTENT_ID) || field.equalsIgnoreCase(GOORU_OID)) {
 				collectionMap.put(field, ((collectionMap.containsKey(field) && collectionMap.get(field) != null) ? collectionMap.get(field).toString()
 						: ((eventMap.containsKey(field) && eventMap.get(field) != null) ? eventMap.get(field).toString() : null)));
 			} else { 
@@ -590,8 +590,8 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			}
 			
 		}
-		if (collectionMap.containsKey(GOORUOID) && collectionMap.get(GOORUOID) != null) {
-			collectionMap.put("rKey", collectionMap.get(GOORUOID).toString());
+		if (collectionMap.containsKey(GOORU_OID) && collectionMap.get(GOORU_OID) != null) {
+			collectionMap.put("rKey", collectionMap.get(GOORU_OID).toString());
 			Set<Entry<String, String>> collectionCFKeySet = DataUtils.collectionCFKeys.entrySet();
 			updateColumnFamily(ColumnFamily.COLLECTION.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTION.getColumnFamily(), collectionCFKeySet, collectionMap));
 		}
@@ -600,7 +600,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 
 	public void updateCollectionItemTable(Map<String, Object> eventMap, Map<String, Object> collectionItemMap) {
 		
-		if (collectionItemMap.get(COLLECTIONITEMID) != null) {
+		if (collectionItemMap.get(COLLECTION_ITEM_ID) != null) {
 			Set<Entry<String, String>> entrySet = DataUtils.collectionItemTableKeys.entrySet();
 			for(Entry<String, String> entry : entrySet) {
 				if (entry.getKey().equalsIgnoreCase("questionType")) {
@@ -618,13 +618,13 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			Set<Entry<String, String>> collectionItemCFKeySet = DataUtils.collectionItemCFKeys.entrySet();
 			updateColumnFamily(ColumnFamily.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
 		} else {
-			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVENTNAME));
+			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVEN_TNAME));
 		}
 	}
 
 	public void updateClasspage(Map<String, Object> dataMap, Map<String, Object> classpageMap) {
 
-		classpageMap.put("classId", ((dataMap.containsKey(GOORUOID) && dataMap.get(GOORUOID) != null) ? dataMap.get(GOORUOID).toString() : null));
+		classpageMap.put("classId", ((dataMap.containsKey(GOORU_OID) && dataMap.get(GOORU_OID) != null) ? dataMap.get(GOORU_OID).toString() : null));
 		classpageMap.put("username", ((dataMap.containsKey("user") && ((Map<String, String>) dataMap.get("user")).get("username") != null) ? 
 						((Map<String, String>) dataMap.get("user")).get("username") : null));
 		classpageMap.put("userUid", ((classpageMap.containsKey("userUid") && classpageMap.get("userUid") != null) ? classpageMap.get("userUid") 

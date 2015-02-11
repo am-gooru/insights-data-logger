@@ -2,11 +2,11 @@ package org.logger.event.cassandra.loader;
 
 public interface Constants {
 	
-	public static final String FIRSTSESSION = "FS~";
+	public static final String FIRST_SESSION = "FS~";
     
-    public static final  String RECENTSESSION = "RS~";
+    public static final  String RECENT_SESSION = "RS~";
     
-    public static final  String ALLSESSION = "AS~";
+    public static final  String ALL_SESSION = "AS~";
     
     public static final  String SEPERATOR = "~";
     
@@ -14,35 +14,35 @@ public interface Constants {
 	
 	public static final  String USER = "user";
 	
-	public static final  String PAYLOAD = "payLoadObject";
+	public static final  String PAY_LOAD = "payLoadObject";
 	
 	public static final  String METRICS = "metrics";
 	
-	public static final  String LASTACCESSEDUSERUID = "last~accessed~useruid";
+	public static final  String LAST_ACCESSED_USER_UID = "last~accessed~useruid";
 	
-	public static final  String LASTACCESSEDUSER = "last~accessed~user";
+	public static final  String LAST_ACCESSED_USER = "last~accessed~user";
 	
-	public static final  String LASTACCESSED = "last~accessed";
+	public static final  String LAST_ACCESSED = "last~accessed";
 	
-	public static final  String EVENTNAME = "eventName";
+	public static final  String EVEN_TNAME = "eventName";
 	
-	public static final  String CONTENTGOORUOID = "contentGooruId";
+	public static final  String CONTENT_GOORU_OID = "contentGooruId";
 	
-	public static final  String SOURCEGOORUOID = "sourceGooruId";
+	public static final  String SOURCE_GOORU_OID = "sourceGooruId";
 	
-	public static final  String PARENTGOORUOID = "parentGooruId";
+	public static final  String PARENT_GOORU_OID = "parentGooruId";
 	
 	public static final  String TIMEINMS = "timeInMillSec";
 	
 	public static final  String TOTALTIMEINMS = "totalTimeSpentInMs";
 	
-	public static final  String EVENT_ID = "event_id";
+	public static final  String _EVENT_ID = "event_id";
 	
-	public static final  String EVENTID = "eventId";
+	public static final  String EVENT_ID = "eventId";
 	
-	public static final  String PARENTEVENTID = "parentEventId";
+	public static final  String PARENT_EVENT_ID = "parentEventId";
 	
-	public static final  String PARENT_EVENT_ID = "parent_event_id";
+	public static final  String _PARENT_EVENT_ID = "parent_event_id";
 	
 	//public static final  String CLASSPAGEGOORUOID= "classPageGooruId";
 	
@@ -50,25 +50,25 @@ public interface Constants {
 	
 	public static final  String VERSION = "version";
 
-	public static final  String EVENTTYPE = "eventType";
+	public static final  String EVENT_TYPE = "eventType";
 	
 	public static final  String SESSION = "sessionId";
 	
-	public static final  String FIRST_ATTEMPT_STATUS = "first_attempt_status";
+	public static final  String _FIRST_ATTEMPT_STATUS = "first_attempt_status";
 	
-	public static final  String FIRSTATTEMPTSTATUS = "firstAttemptStatus";
+	public static final  String FIRST_ATTEMPT_STATUS = "firstAttemptStatus";
 	
-	public static final  String ANSWER_STATUS = "answer_status";
+	public static final  String _ANSWER_STATUS = "answer_status";
 	
 	public static final  String ANSWERSTATUS = "answerStatus";
 	
-	public static final  String SESSION_ID = "session_id";
+	public static final  String _SESSION_ID = "session_id";
 	
-	public static final  String SESSIONTOKEN = "sessionToken";
+	public static final  String SESSION_TOKEN = "sessionToken";
 	
-	public static final  String STATFIELDS = "statFields";
+	public static final  String STAT_FIELDS = "statFields";
 	
-	public static final  String BATCH_SIZE = "index~loop~count";
+	public static final  String _BATCH_SIZE = "index~loop~count";
 	
 	public static final  String GOORUID = "gooruUId" ;
 	
@@ -90,11 +90,11 @@ public interface Constants {
 
 	public static final  String CHOICE = "choice";
 	
-	public static final  String STATUS = "question_status";
+	public static final  String _QUESTION_STATUS = "question_status";
 	
-	public static final  String ANSWER_OBECT = "answer_object";
+	public static final  String _ANSWER_OBECT = "answer_object";
 	
-	public static final  String ANSWEROBECT = "answerObject";
+	public static final  String ANSWER_OBECT = "answerObject";
 	
 	public static final  String ATTEMPTS = "attempts";
 	
@@ -102,15 +102,19 @@ public interface Constants {
 	
 	public static final  String COUNTER = "counter";
 	
-	public static final  String RESOURCETYPE = "resourceType";
+	public static final  String RESOURCE_TYPE = "resourceType";
 	
-	public static final  String QUESTIONTYPE = "questionType";
+	public static final  String QUESTION_TYPE = "questionType";
 
 	public static final  String OE = "OE";
 	
 	public static final  String TYPE = "type";
 	
 	public static final  String ITEM_TYPE = "itemType";
+	
+	public static final  String COLLECTION_ITEM_TYPE = "collectionItemType";
+	
+	public static final  String _ITEM_TYPE = "item_type";
 	
 	public static final  String ACTION_TYPE = "actionType";
 	
@@ -126,17 +130,25 @@ public interface Constants {
 	
 	public static final  String START = "start";
 	
+	public static final  String COLLECTION_ITEM_START = "collectionItemStart";
+	
+	public static final  String COLLECTION_ITEM_STOP = "collectionItemStop";
+	
 	public static final  String ANS = "answers";
 	
 	public static final  String TEXT = "text";
 	
-	public static final  String FEEDBACK = "feed_back";
+	public static final  String _FEEDBACK = "feed_back";
 	
-	public static final  String FEEDBACKPROVIDER = "feed_back_provider";
+	public static final  String _FEED_BACK_PROVIDER = "feed_back_provider";
 	
 	public static final  String PROVIDER = "feedbackProviderUId";
 	
-	public static final  String TIMESTAMP = "feed_back_timestamp";
+	public static final  String _FEED_BACK_TIMESTAMP = "feed_back_timestamp";
+	
+	public static final  String _RESOURCE_CONTENT_ID = "resource_content_id";
+	
+	public static final  String RESOURCE_CONTENT_ID = "resourceContentId";
 	
 	public static final  String VIEWS = "views";
 	
@@ -146,79 +158,79 @@ public interface Constants {
 	
 	public static final  String INPROGRESS = "in-progress";
 	
-	public static final  String INDEXWAITINGLIMIT = "index~waiting~limit";
+	public static final  String INDEX_WAITING_LIMIT = "index~waiting~limit";
 	
-	public static final  String INDEXWAITINGCOUNT = "index~waiting~count";
+	public static final  String INDEX_WAITING_COUNT = "index~waiting~count";
 	
-	public static final  String INDEXEDLIMIT = "indexed~limit";
+	public static final  String INDEXED_LIMIT = "indexed~limit";
 	
-	public static final  String INDEXLIMIT = "index~limit";
+	public static final  String INDEX_LIMIT = "index~limit";
 	
-	public static final  String INDEXSTATUS = "search~index~status";
+	public static final  String INDEX_STATUS = "search~index~status";
 	
-	public static final  String CURRINDEXINGLIMIT = "curr~indexing~limit";
+	public static final  String CURR_INDEXING_LIMIT = "curr~indexing~limit";
 	
-	public static final  String VIEWSLASTUPDATED = "view~count~last~updated";
+	public static final  String VIEWS_LAST_UPDATED = "view~count~last~updated";
 	
-	public static final  String VIEWEVENTS = "viewEvents";
+	public static final  String VIEW_EVENTS = "viewEvents";
 	
-	public static final  String ATMOSPHERENDPOINT = "atmosphereEndPoint";
+	public static final  String ATMOSPHERE_END_POINT = "atmosphereEndPoint";
 	
-	public static final  String VIEWUPDATEENDPOINT = "viewCountAPI";
+	public static final  String VIEW_UPDATE_END_POINT = "viewCountAPI";
 	
-	public static final  String SEARCHINDEXAPI = "searchIndexAPI";
+	public static final  String SEARCH_INDEX_API = "searchIndexAPI";
 	
 	public static final  String QUESTION = "question";
 
-	public static final  String ATTMPTTRYSEQ = "attemptTrySequence";
+	public static final  String ATTMPT_TRY_SEQ = "attemptTrySequence";
 	
-	public static final  String ATTMPTSTATUS = "attemptStatus";
+	public static final  String ATTMPT_STATUS = "attemptStatus";
 	
 	public static final  String COLLECTION = "collection";
 	
 	public static final  String RESOURCE = "resource";
 	
-	public static final  String GOORU_OID = "gooru_oid";
+	public static final  String _GOORU_OID = "gooru_oid";
 	
-	public static final  String GOORU_UID = "gooru_uid";
+	public static final  String _GOORU_UID = "gooru_uid";
 	
-	public static final  String USER_UID = "user_uid";
+	public static final  String _USER_UID = "user_uid";
 	
-	public static final  String USERUID = "userUid";
+	public static final  String USER_UID = "userUid";
 	
 	public static final  String USERNAME = "username";
 	
-	public static final  String CLASSPAGEID = "classpage_id";
+	public static final  String _CLASSPAGEID = "classpage_id";
 	
-	public static final  String MINUTEDATEFORMATTER = "yyyyMMddkkmm";
+	public static final  String MINUTE_DATE_FORMATTER = "yyyyMMddkkmm";
 
 	public static final  String FIELDS = "fields";
 		
-	public static final  String START_TIME = "start_time";
+	public static final  String _START_TIME = "start_time";
 	
-	public static final  String STARTTIME = "startTime";
+	public static final  String START_TIME = "startTime";
 	
-	public static final  String END_TIME = "end_time";
+	public static final  String _END_TIME = "end_time";
 	
-	public static final  String APIKEY = "apiKey";
+	public static final  String API_KEY = "apiKey";
 	
-	public static final  String API_KEY = "api_key";
+	public static final  String _API_KEY = "api_key";
 	
-	public static final  String ORGANIZATIONUID = "organizationUId";
+	public static final  String ORGANIZATION_UID = "organizationUId";
 	
-	public static final  String EVENT_VALUE = "event_value";
+	public static final  String _EVENT_VALUE = "event_value";
 	
-	public static final  String CONTENT_GOORU_OID = "content_gooru_oid";
+	public static final  String _CONTENT_GOORU_OID = "content_gooru_oid";
 
 	public static final  String RESOURCE_ID = "resourceId";
 	
-	public static final  String PARENT_GOORU_OID = "parent_gooru_oid";
+	public static final  String _PARENT_GOORU_OID = "parent_gooru_oid";
 	
 	public static final  String PARENT_ID = "parentId";
 	
-	public static final  String EVENT_TYPE = "event_type";
+	public static final  String _EVENT_TYPE = "event_type";
 	
-	public static final  String EVENT_NAME = "event_name";
+	public static final  String _EVENT_NAME = "event_name";
 	
 	public static final  String MODE = "mode";
 
@@ -226,55 +238,85 @@ public interface Constants {
 	
 	public static final  String PREVIEW = "preview";
 	
-	public static final  String USER_GROUP_UID =	"user_group_uid"; 
+	public static final  String _USER_GROUP_UID =	"user_group_uid"; 
 	
-	public static final  String CLASSPAGE_CONTENT_ID = "classpage_content_id";
+	public static final  String _CLASSPAGE_CONTENT_ID = "classpage_content_id";
 	
-	public static final  String CLASSPAGE_CODE = "classpage_code";				
+	public static final  String _CLASSPAGE_CODE = "classpage_code";				
 	
-	public static final  String USER_GROUP_CODE = "user_group_code";
+	public static final  String _USER_GROUP_CODE = "user_group_code";
 	
-	public static final  String CLASSPAGE_GOORU_OID = "classpage_gooru_oid"; 
+	public static final  String _CLASSPAGE_GOORU_OID = "classpage_gooru_oid"; 
 	
-	public static final  String ORGANIZATION_UID = "organization_uid";
+	public static final  String _ORGANIZATION_UID = "organization_uid";
 	
-	public static final  String RAWUPDATE = "rawupdate";
+	public static final  String RAW_UPDATE = "rawupdate";
 	
-	public static final  String GROUPUID = "groupUId";
+	public static final  String GROUP_UID = "groupUId";
 	
-	public static final  String CLASSCODE = "classCode";
+	public static final  String CLASS_CODE = "classCode";
 	
-	public static final  String CONTENTID = "contentId";
+	public static final  String CONTENT_ID = "contentId";
 	
-	public static final  String CONTENT_ID = "content_id";
+	public static final  String _CONTENT_ID = "content_id";
 	
-	public static final  String COLLECTIONITEMID = "collectionItemId";
+	public static final  String COLLECTION_ITEM_ID = "collectionItemId";
 	
-	public static final  String COLLECTION_ITEM_ID = "collection_item_id";
+	public static final  String _COLLECTION_ITEM_ID = "collection_item_id";
 	
-	public static final  String PARENTCONTENTID = "parentContentId";
+	public static final  String _COLLECTION_CONTENT_ID = "collection_content_id";
 	
-	public static final  String PARENT_CONTENT_ID = "parent_content_id";
+	public static final  String COLLECTION_CONTENT_ID = "collectionContentId";
 	
-	public static final  String ITEMSEQUENCE = "itemSequence";
+	public static final  String PARENT_CONTENT_ID = "parentContentId";
 	
-	public static final  String ITEM_SEQUENCE = "item_sequence";
+	public static final  String _PARENT_CONTENT_ID = "parent_content_id";
+	
+	public static final  String _MINIMUM_SCORE = "minimum_score";
+	
+	public static final  String MINIMUM_SCORE = "minimumScore";
+	
+	public static final  String COLLECTION_ITEM_MINIMUM_SCORE = "collectionItemMinimumScore";
+	
+	public static final  String NARRATION = "narration";
+	
+	public static final  String COLLECTION_ITEM_NARRATION = "collectionItemNarration";
+	
+	public static final  String _ESTIMATED_TIME = "estimated_time";
+	
+	public static final  String ESTIMATED_TIME = "estimatedTime";
+	
+	public static final  String COLLECTION_ITEM_ESTIMATED_TIME = "collectionItemEstimatedTime";
+	
+	public static final  String _QUESTION_TYPE = "question_type";	
+	
+	public static final  String COLLECTION_ITEM_QUESTION_TYPE = "collectionItemQuestionType";
+	
+	public static final  String ITEM_SEQUENCE = "itemSequence";
+	
+	public static final  String _ITEM_SEQUENCE = "item_sequence";
 
-	public static final  String COLLECTION_GOORU_OID = "collection_gooru_oid";
+	public static final  String COLLECTION_ITEM_SEQUENCE = "collectionItemSequence";
 	
-	public static final  String RESOURCE_GOORU_OID = "resource_gooru_oid";
+	public static final  String _COLLECTION_GOORU_OID = "collection_gooru_oid";
+	
+	public static final  String COLLECTION_GOORU_OID = "collectionGooruOid";
+	
+	public static final  String _RESOURCE_GOORU_OID = "resource_gooru_oid";
 
+	public static final  String RESOURCE_GOORU_OID = "resourceGooruOid";
+	
 	public static final  String SCORE = "score";
 	
-	public static final  String QUESTION_COUNT = "question_count";
+	public static final  String _QUESTION_COUNT = "question_count";
 	
-	public static final  String SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	public static final  String _SCORE_IN_PERCENTAGE = "grade_in_percentage";
 	
 	public static final  String ACTIVE = "active";
 	
 	public static final  String COUNT = "count";
 	
-	public static final  String TIMESPENT = "time_spent";
+	public static final  String _TIME_SPENT = "time_spent";
 	
 	public static final  String DIFF = "diff";
 	
@@ -282,49 +324,49 @@ public interface Constants {
 	
 	public static final  String DEFAULT_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
 	
-	public static final  String DEFAULTCOLUMN = "constant_value";
+	public static final  String DEFAULT_COLUMN = "constant_value";
 	
 	public static final  String DEFAULTKEY = "default~key";
 	
-	public static final  String STATMETRICS = "stat~metrics";
+	public static final  String STAT_METRICS = "stat~metrics";
 	
-	public static final  String SCHSTATUS = "schdulers~status";
+	public static final  String SCH_STATUS = "schdulers~status";
 	
-	public static final  String SCHHOST = "schedular~host";
+	public static final  String SCH_HOST = "schedular~host";
 	
 	public static final  String HOST = "host";
 	
-	public static final  String REALTIMEINDEXING = "real~time~indexing";
+	public static final  String REAL_TIME_INDEXING = "real~time~indexing";
 	
-	public static final  String VIEW_EVENTS = "views~events";
+	public static final  String _VIEW_EVENTS = "views~events";
 	
-	public static final  String ATMOENDPOINT = "atmosphere.end.point";
+	public static final  String ATM_END_POINT = "atmosphere.end.point";
 	
-	public static final  String ACTIVITYINDEXMAXCOUNT = "activity~indexing~max~count";
+	public static final  String ACTIVITY_INDEX_MAX_COUNT = "activity~indexing~max~count";
 	
-	public static final  String ACTIVITYINDEXCHECKEDCOUNT = "activity~indexing~checked~count";
+	public static final  String ACTIVITY_INDEX_CHECKED_COUNT = "activity~indexing~checked~count";
 	
-	public static final  String ACTIVITYINDEXLASTUPDATED = "activity~indexing~last~updated";
+	public static final  String ACTIVITY_INDEX_LAST_UPDATED = "activity~indexing~last~updated";
 	
-	public static final  String ACTIVITYINDEXSTATUS = "activity~indexing~status";
+	public static final  String ACTIVITY_INDEX_STATUS = "activity~indexing~status";
 	
-	public static final  String USERSESSION = "user~session";
+	public static final  String USER_SESSION = "user~session";
 	
-	public static final  String AGGJSON = "aggregator_json";
+	public static final  String AGG_JSON = "aggregator_json";
 	
-	public static final  String ANONYMOUSSESSION = "anonymous~session";
+	public static final  String ANONYMOUS_SESSION = "anonymous~session";
 	
-	public static final  String ALLUSERSESSION = "all~user~session";
+	public static final  String ALL_USER_SESSION = "all~user~session";
 	
-	public static final  String ACTIVESESSION = "active~session";
+	public static final  String ACTIVE_SESSION = "active~session";
 	
-	public static final  String ACTIVECOLLECTIONPLAYS = "active~collection~plays";
+	public static final  String ACTIVE_COLLECTION_PLAYS = "active~collection~plays";
 	
-	public static final  String ACTIVERESOURCEPLAYS = "active~resource~plays";
+	public static final  String ACTIVE_RESOURCE_PLAYS = "active~resource~plays";
 	
-	public static final  String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
+	public static final  String ACTIVE_COLLECTION_RESOURCE_PLAYS = "active~collection~resource~plays";
 	
-	public static final  String ACTIVEPLAYS = "active~content~plays";
+	public static final  String ACTIVE_PLAYS = "active~content~plays";
 	
 	public static final  String CONFIG_SETTINGS = "config_settings";
 	
@@ -352,27 +394,27 @@ public interface Constants {
 	
 	public static final  String CLASSPAGE = "classpage";
 	
-	public static final  String INDEXINGVERSION = "index_version";
+	public static final  String INDEXING_VERSION = "index_version";
 	
-	public static final  String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
+	public static final  String INDEX_EVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
 	
-	public static final  String V2KAFKAMICROPRODUCER = "v2~kafka~microaggregator~producer";
+	public static final  String V2_KAFKA_MICRO_PRODUCER = "v2~kafka~microaggregator~producer";
 	
-	public static final  String V2KAFKALOGWRITERPRODUCER = "v2~kafka~logwritter~producer";
+	public static final  String V2_KAFKA_LOG_WRITER_PRODUCER = "v2~kafka~logwritter~producer";
 	
-	public static final  String V2KAFKACONSUMER = "v2~kafka~consumer";
+	public static final  String V2_KAFKA_CONSUMER = "v2~kafka~consumer";
 	
-	public static final  String V2KAFKALOGWRITERCONSUMER = "v2~kafka~logwritter~consumer";
+	public static final  String V2_KAFKA_LOG_WRITER_CONSUMER = "v2~kafka~logwritter~consumer";
 	
-	public static final  String V2KAFKAMICROCONSUMER = "v2~kafka~microaggregator~consumer";
+	public static final  String V2_KAFKA_MICRO_CONSUMER = "v2~kafka~microaggregator~consumer";
 	
-	public static final  String KAFKAIP =  "kafka_ip";
+	public static final  String KAFKA_IP =  "kafka_ip";
 	
-	public static final  String KAFKAPORT = "kafka_portno";
+	public static final  String KAFKA_PORT = "kafka_portno";
 	
-	public static final  String KAFKATOPIC = "kafka_topic";
+	public static final  String KAFKA_TOPIC = "kafka_topic";
 	
-	public static final  String KAFKAPRODUCERTYPE = "kafka_producertype";
+	public static final  String KAFKA_PRODUCER_TYPE = "kafka_producertype";
 
 	public static final int RECURSION_MAX_DEPTH = 20;
 	
@@ -392,7 +434,7 @@ public interface Constants {
 	
 	public static final String SOURCE_ITEM_ID = "sourceItemId";
 	
-	public static final String GOORUOID = "gooruOid";
+	public static final String GOORU_OID = "gooruOid";
 	
 	public static final String _USER_GROUP_TYPE = "user_group_type";
 	
@@ -408,4 +450,31 @@ public interface Constants {
 
 	public static final String _IS_GROUP_OWNER = "is_group_owner";
 
+	public static final String _NARRATION_TYPE = "narration_type";
+	
+	public static final String NARRATION_TYPE = "narrationType";
+	
+	public static final String COLLECTION_NARRATION_TYPE = "collectionItemNarrationType";
+	
+	public static final String _PLANNED_END_DATE = "planned_end_date";
+	
+	public static final String PLANNED_END_DATE = "plannedEndDate";
+	
+	public static final String COLLECTION_ITEM_PLANNED_END_DATE = "collectionItemPlannedEndDate";
+	
+	public static final String _ASSOCIATION_DATE = "association_date";
+	
+	public static final String COLLECTION_ITEM_ASSOCIATION_DATE = "collectionItemAssociationDate";
+	
+	public static final String COLLECTION_ITEM_ASSOCIATE_BY_UID = "collectionItemAssociatedByUid";
+	
+	public static final String _ASSOCIATED_BY_UID = "associated_by_uid";
+	
+	public static final String ASSOCIATED_BY_UID = "associatedByUid";
+	
+	public static final String _IS_REQUIRED = "is_required";
+	
+	public static final String IS_REQUIRED = "isRequired";
+	
+	public static final String COLLECTION_ITEM_IS_REQUIRED = "collectionItemIsRequired";
 }
