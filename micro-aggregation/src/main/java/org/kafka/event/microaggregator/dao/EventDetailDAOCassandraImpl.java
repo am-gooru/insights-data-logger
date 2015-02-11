@@ -25,7 +25,7 @@ package org.kafka.event.microaggregator.dao;
 import java.util.UUID;
 
 import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
-import org.kafka.event.microaggregator.model.EventObject;
+import org.kafka.event.microaggregator.model.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,34 +67,34 @@ public class EventDetailDAOCassandraImpl extends BaseDAOCassandraImpl implements
      *             if the host is unavailable 
      */
     
-    public String  saveEventObject(EventObject eventObject){
+    public String  saveEventt(Event event){
     	
     	String key = null;
-    	if(eventObject.getEventId() == null){
+    	if(event.getEventId() == null){
     		UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
     		key = eventKeyUUID.toString();
     	}else{
-    		key	= eventObject.getEventId(); 
+    		key	= event.getEventId(); 
     	}
     
     	MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
     	
         m.withRow(eventDetailsCF, key)
-                .putColumnIfNotNull("start_time", eventObject.getStartTime(), null)
-                .putColumnIfNotNull("end_time", eventObject.getEndTime(),null)
-                .putColumnIfNotNull("fields", eventObject.getFields(),null)
-                .putColumnIfNotNull("time_spent_in_millis",eventObject.getTimeInMillSec(),null)
-                .putColumnIfNotNull("content_gooru_oid",eventObject.getContentGooruId(),null)
-                .putColumnIfNotNull("parent_gooru_oid",eventObject.getParentGooruId(),null)
-                .putColumnIfNotNull("event_name", eventObject.getEventName(),null)
-                .putColumnIfNotNull("session",eventObject.getSession().toString(),null)
-                .putColumnIfNotNull("metrics",eventObject.getMetrics().toString(),null)
-                .putColumnIfNotNull("pay_load_object",eventObject.getPayLoadObject().toString(),null)
-                .putColumnIfNotNull("user",eventObject.getUser().toString(),null)
-                .putColumnIfNotNull("context",eventObject.getContext().toString(),null)
-        		.putColumnIfNotNull("event_type",eventObject.getEventType().toString(),null)
-        		.putColumnIfNotNull("organization_uid",eventObject.getOrganizationUid(),null)
-        		.putColumnIfNotNull("parent_event_id",eventObject.getParentEventId(), null);
+                .putColumnIfNotNull("start_time", event.getStartTime(), null)
+                .putColumnIfNotNull("end_time", event.getEndTime(),null)
+                .putColumnIfNotNull("fields", event.getFields(),null)
+                .putColumnIfNotNull("time_spent_in_millis",event.getTimeInMillSec(),null)
+                .putColumnIfNotNull("content_gooru_oid",event.getContentGooruId(),null)
+                .putColumnIfNotNull("parent_gooru_oid",event.getParentGooruId(),null)
+                .putColumnIfNotNull("event_name", event.getEventName(),null)
+                .putColumnIfNotNull("session",event.getSession().toString(),null)
+                .putColumnIfNotNull("metrics",event.getMetrics().toString(),null)
+                .putColumnIfNotNull("pay_load_object",event.getPayLoadObject().toString(),null)
+                .putColumnIfNotNull("user",event.getUser().toString(),null)
+                .putColumnIfNotNull("context",event.getContext().toString(),null)
+        		.putColumnIfNotNull("event_type",event.getEventType().toString(),null)
+        		.putColumnIfNotNull("organization_uid",event.getOrganizationUid(),null)
+        		.putColumnIfNotNull("parent_event_id",event.getParentEventId(), null);
         try {
             m.execute();
         } catch (ConnectionException e) {
