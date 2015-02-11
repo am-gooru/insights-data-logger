@@ -96,10 +96,7 @@
 "type":"Long",
 "index":"not_analyzed"
 },"is_deleted":{
-"type":"Integer",
-"index":"not_analyzed"
-},"is_deleted":{
-"type":"Integer",
+"type":"Boolean",
 "index":"not_analyzed"
 },"import_code":{
 "type":"String",
@@ -128,12 +125,6 @@
 },"external_id":{
 "type":"String",
 "index":"not_analyzed"
-},"gooru_uid_alias": {
-"index": "not_analyzed",
-"type": "string"
-},"external_id_alias": {
-"index": "not_analyzed",
-"type": "string"
 },"firstname_alias": {
 "index": "not_analyzed",
 "type": "string"
