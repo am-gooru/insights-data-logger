@@ -25,7 +25,7 @@ package org.ednovo.kafka.consumer;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 
 import com.google.gson.Gson;
 
@@ -53,20 +53,20 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		
 		// Override and set fields to be the original log message / JSON. 
 	      EventData eventData = null;
-	        EventObject eventObject = null;
+	        Event event = null;
 	        try {
 	            eventData = gson.fromJson(jsonRowObject, EventData.class);
 	            eventData.setFields(jsonRowObject);
 	            getNextRowHandler().processRow(eventData);
-	            eventObject = gson.fromJson(jsonRowObject, EventObject.class);
+	            event = gson.fromJson(jsonRowObject, Event.class);
 	        } catch (Exception e) {
 	            LOG.error("Had a problem trying to parse JSON from the raw line {}", jsonRowObject, e);
 	            return;
 	        }
 	        try {
-	            eventObject = gson.fromJson(jsonRowObject, EventObject.class);
-	            eventObject.setFields(jsonRowObject);        
-	            getNextRowHandler().processRow(eventObject);
+	            event = gson.fromJson(jsonRowObject, Event.class);
+	            event.setFields(jsonRowObject);        
+	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {
 	            LOG.error("Had a problem trying to parse EventObject JSON from the raw line {}", jsonRowObject, e);
 	            return;

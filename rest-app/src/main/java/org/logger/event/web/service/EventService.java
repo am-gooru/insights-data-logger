@@ -29,7 +29,7 @@ import java.util.Map;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.json.JSONException;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public interface EventService {
 
 	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
 
-	public ActionResponseDTO<EventObject> handleEventObjectMessage(EventObject eventObject) throws JSONException, ConnectionException, IOException, GeoIp2Exception;
+	public ActionResponseDTO<Event> processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception;
 
 	public AppDO verifyApiKey(String apiKeyToken);
 

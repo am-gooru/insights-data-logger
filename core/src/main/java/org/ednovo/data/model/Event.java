@@ -26,7 +26,7 @@ package org.ednovo.data.model;
 import java.io.Serializable;
 
 
-public class EventObject implements Serializable {
+public class Event implements Serializable {
 	
 	/**
 	 * @author daniel

@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -154,17 +154,17 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 		}
 		if (jsonField.has("version")) {
-			EventObject eventObjects = new Gson().fromJson(fields, EventObject.class);
+			Event events = new Gson().fromJson(fields, Event.class);
 			Map<String, Object> eventMap = new HashMap<String, Object>();
 			try {
-				eventMap = JSONDeserializer.deserializeEventObjectv2(eventObjects);
+				eventMap = JSONDeserializer.deserializeEventv2(events);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 
-			eventMap.put("eventName", eventObjects.getEventName());
-			eventMap.put("eventId", eventObjects.getEventId());
-			eventMap.put("eventTime", String.valueOf(eventObjects.getStartTime()));
+			eventMap.put("eventName", events.getEventName());
+			eventMap.put("eventId", events.getEventId());
+			eventMap.put("eventTime", String.valueOf(events.getStartTime()));
 			if (eventMap.get(CONTENTGOORUOID) != null) {
 				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));
 				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENTGOORUOID)));

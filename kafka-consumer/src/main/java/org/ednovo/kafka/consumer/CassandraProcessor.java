@@ -29,8 +29,8 @@ import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
-import org.ednovo.data.model.EventObjectValidator;
+import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventValidator;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "5673eaa7-15e3-4d6b-b3ef-5f7729c82de3";
 	private final String EVENT_SOURCE = "kafka-logged";
-	private EventObjectValidator eventObjectValidator;
+	private EventValidator eventValidator;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
 	public CassandraProcessor() {
@@ -54,7 +54,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	protected void init() {
 		gson = new Gson();
 		dataLoader = new CassandraDataLoader();
-		eventObjectValidator = new EventObjectValidator(null);
+		eventValidator = new EventValidator(null);
 	}
 
 	@Override
@@ -91,21 +91,21 @@ public class CassandraProcessor extends BaseDataProcessor implements
            
            handleRowByNextHandler(eventData);
        }
-        if (row != null && (row instanceof EventObject)) {
+        if (row != null && (row instanceof Event)) {
        	
-       	 EventObject eventObject = (EventObject) row;
+       	 Event event = (Event) row;
         	
-       	 if(eventObject.getVersion() == null){
+       	 if(event.getVersion() == null){
             	return;
             }
        	 
-       	if (eventObject.getEventName() == null || eventObject.getEventName().isEmpty() || eventObject.getContext() == null) {
+       	if (event.getEventName() == null || event.getEventName().isEmpty() || event.getContext() == null) {
        		logger.warn("EventName or Context is empty. This is an error in EventObject");
        		return;
         	}
 
 //       	eventObjectValidator.validateEventObject(eventObject);
-        	dataLoader.handleEventObjectMessage(eventObject);
+        	dataLoader.processMessage(event);
         }
 	}
         public void updateToStaging(String statTime,String endTime,String eventName,String apiKey){

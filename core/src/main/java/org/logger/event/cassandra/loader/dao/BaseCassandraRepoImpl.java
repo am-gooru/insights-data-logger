@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.EventObject;
+import org.ednovo.data.model.Event;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -1067,28 +1067,28 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * 
 	 * @param cfName
 	 * @param key
-	 * @param eventObject
+	 * @param event
 	 * @return
 	 */
-	public String saveEventObject(String cfName, String key, EventObject eventObject) {
+	public String saveEventObject(String cfName, String key, Event event) {
 
-		if (eventObject.getEventId() == null) {
+		if (event.getEventId() == null) {
 			UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 			key = eventKeyUUID.toString();
 		} else {
-			key = eventObject.getEventId();
+			key = event.getEventId();
 		}
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull("start_time", eventObject.getStartTime(), null).putColumnIfNotNull("end_time", eventObject.getEndTime(), null)
-				.putColumnIfNotNull("fields", eventObject.getFields(), null).putColumnIfNotNull("time_spent_in_millis", eventObject.getTimeInMillSec(), null)
-				.putColumnIfNotNull("content_gooru_oid", eventObject.getContentGooruId(), null).putColumnIfNotNull("parent_gooru_oid", eventObject.getParentGooruId(), null)
-				.putColumnIfNotNull("event_name", eventObject.getEventName(), null).putColumnIfNotNull("session", eventObject.getSession(), null)
-				.putColumnIfNotNull("metrics", eventObject.getMetrics(), null).putColumnIfNotNull("pay_load_object", eventObject.getPayLoadObject(), null)
-				.putColumnIfNotNull("user", eventObject.getUser(), null).putColumnIfNotNull("context", eventObject.getContext(), null)
-				.putColumnIfNotNull("event_type", eventObject.getEventType(), null).putColumnIfNotNull("organization_uid", eventObject.getOrganizationUid(), null)
-				.putColumnIfNotNull("parent_event_id", eventObject.getParentEventId(), null);
+		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull("start_time", event.getStartTime(), null).putColumnIfNotNull("end_time", event.getEndTime(), null)
+				.putColumnIfNotNull("fields", event.getFields(), null).putColumnIfNotNull("time_spent_in_millis", event.getTimeInMillSec(), null)
+				.putColumnIfNotNull("content_gooru_oid", event.getContentGooruId(), null).putColumnIfNotNull("parent_gooru_oid", event.getParentGooruId(), null)
+				.putColumnIfNotNull("event_name", event.getEventName(), null).putColumnIfNotNull("session", event.getSession(), null)
+				.putColumnIfNotNull("metrics", event.getMetrics(), null).putColumnIfNotNull("pay_load_object", event.getPayLoadObject(), null)
+				.putColumnIfNotNull("user", event.getUser(), null).putColumnIfNotNull("context", event.getContext(), null)
+				.putColumnIfNotNull("event_type", event.getEventType(), null).putColumnIfNotNull("organization_uid", event.getOrganizationUid(), null)
+				.putColumnIfNotNull("parent_event_id", event.getParentEventId(), null);
 		try {
 			m.execute();
 		} catch (Exception e) {
@@ -1107,7 +1107,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param CoulmnValue
 	 * @param eventObject
 	 */
-	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, EventObject eventObject) {
+	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, Event eventObject) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 

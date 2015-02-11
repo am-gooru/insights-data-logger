@@ -46,16 +46,16 @@ public class JSONDeserializer {
 		return null;
 	}
 	
-	public static <T> T deserializeEventObject(EventObject eventObject) throws JSONException {
+	public static <T> T deserializeEvent(Event event) throws JSONException {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String,String> map = new HashMap<String,String>();
 		try {
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getUser().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getMetrics().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(eventObject.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getUser().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getMetrics().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
+			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
 		} catch (JsonParseException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
@@ -65,16 +65,16 @@ public class JSONDeserializer {
 		}
 		return (T) map;
 	}
-	public static <T> T deserializeEventObjectv2(EventObject eventObject) throws JSONException {
+	public static <T> T deserializeEventv2(Event event) throws JSONException {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String,Object> map = new HashMap<String,Object>();
 		try {
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getUser(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getMetrics(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getPayLoadObject(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getContext(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(eventObject.getSession(), new TypeReference<HashMap<String, Object>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getUser(), new TypeReference<HashMap<String, Object>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getMetrics(), new TypeReference<HashMap<String, Object>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getPayLoadObject(), new TypeReference<HashMap<String, Object>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getContext(), new TypeReference<HashMap<String, Object>>(){}));
+			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getSession(), new TypeReference<HashMap<String, Object>>(){}));
 		
 		} catch (Exception e) {
 			e.printStackTrace();
