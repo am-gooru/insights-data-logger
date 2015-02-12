@@ -480,7 +480,11 @@ public class EventController {
 		if (!validateSchedular()) {
 			return;
 		}
-		eventService.updateProdViews();
+		/**
+		 * Disabling this method for this release.In the next release it will be removed completely.
+		 * eventService.updateProdViews();
+		 */
+		
 	}
 
 	/**
