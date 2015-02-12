@@ -1046,7 +1046,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    	}
 	    	
 	    	contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);

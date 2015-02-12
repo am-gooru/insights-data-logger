@@ -8,6 +8,8 @@ public enum ESIndexices {
 	
 	USERCATALOG("user_catalog" , new String[] {"dim_user"}),
 	
+	USERCATALOGINFO("user_catalog_info" , new String[] {"dim_user"}),
+	
 	TAXONOMYCATALOG("taxonomy_catalog" , new String[] {"taxonomy_code"}),
 
 	;
