@@ -922,7 +922,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				}
 			}
 			if(userInfos.getColumnByName("confirmStatus") != null){
-				contentBuilder.field("confirm_status",userInfos.getColumnByName("confirmStatus").getStringValue());
+				contentBuilder.field("confirm_status",Long.valueOf(userInfos.getColumnByName("confirmStatus").getStringValue()));
 			}
 			if(userInfos.getColumnByName("createdOn") != null){
 				contentBuilder.field("registered_on",userInfos.getColumnByName("createdOn").getDateValue());
@@ -943,7 +943,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				contentBuilder.field("deactivated_on",userInfos.getColumnByName("deactivatedOn").getDateValue());
 			}
 			if(userInfos.getColumnByName("active") != null){
-				contentBuilder.field("active",userInfos.getColumnByName("active").getStringValue());
+				contentBuilder.field("active",Integer.valueOf(userInfos.getColumnByName("active").getShortValue()));
 			}
 			if(userInfos.getColumnByName("lastLogin") != null){
 				contentBuilder.field("last_login",userInfos.getColumnByName("lastLogin").getDateValue());
@@ -990,7 +990,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				contentBuilder.field("account_type_id",userInfos.getColumnByName("accountTypeId").getLongValue());
 			}
 			if(userInfos.getColumnByName("isDeleted") != null){
-				contentBuilder.field("is_deleted",userInfos.getColumnByName("isDeleted").getBooleanValue());
+				contentBuilder.field("is_deleted",userInfos.getColumnByName("isDeleted").getBooleanValue() ? 1 : 0);
 			}
 			if(userInfos.getColumnByName("emailId") != null){
 				contentBuilder.field("external_id",userInfos.getColumnByName("emailId").getStringValue());
