@@ -45,6 +45,7 @@ import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -239,6 +240,7 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	@Override
+	@Async
 	public ActionResponseDTO<Event> processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
 
 		Errors errors = validateInsertEvent(event);
