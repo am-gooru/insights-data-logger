@@ -59,7 +59,7 @@ public class DataLoader  {
     	    }
     	}
     	catch( ParseException exp ) {
-    	    System.out.println( "Unexpected exception:" + exp.getMessage() );
+    		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
     			
 	}

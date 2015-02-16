@@ -104,7 +104,7 @@ public class DataLoader  {
                             timeStampStopMinute = line.getOptionValue( "tsStop");
                         }
                         if(timeStampStartMinute == null || timeStampStartMinute.isEmpty()||timeStampStopMinute == null ||timeStampStopMinute.isEmpty()) {
-                            System.err.println("Timestamp start / stop are mandatory. pass tsStart / tsStop");
+                        	LOG.error("Timestamp start / stop are mandatory. pass tsStart / tsStop");
                         }
                         if(line.hasOption("dryRun")) {
                             String dryRunValue = line.getOptionValue("dryRun");
@@ -167,7 +167,7 @@ public class DataLoader  {
     	    }
     	}
     	catch( ParseException exp ) {
-    	    System.out.println( "Unexpected exception:" + exp.getMessage() );
+    		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
 	}
     

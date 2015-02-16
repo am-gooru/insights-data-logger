@@ -85,15 +85,4 @@ public class EventValidator  {
 	    	this.connectionProvider = connectionProvider;
 	    }
 	    
-		public static void main (String a[]) { 
-	    	SimpleDateFormat minuteDateFormatter;
-
-	    	minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-
-	    	Date eventDateTime = new Date();
-	    	String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-	    	
-	    	System.out.println(eventRowKey);
-	    	
-	    }
 }

@@ -10,10 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EsMappingUtil {
+
+	private static final Logger logger = LoggerFactory.getLogger(EsMappingUtil.class);
 
 	public static String getMappingConfig(String indexType) {
 		return getConfig(indexType, "mappings");
@@ -23,18 +25,17 @@ public class EsMappingUtil {
 		return getConfig(indexType, "settings");
 	}
 
-	public static String getConfig(String indexType,
-			String configFile) {
+	public static String getConfig(String indexType, String configFile) {
 		String content = null;
 		String settingsPath = "/insights-data-logger/config/index/" + indexType + "/_" + configFile + ".json";
-		
+
 		Path currentRelativePath = Paths.get("");
 		String s = currentRelativePath.toAbsolutePath().toString();
-		String filePath = s+settingsPath;
-		System.out.print("Current Location : " + s);
-		File file = new File(filePath);		
+		String filePath = s + settingsPath;
+		logger.info("Current Location : " + s);
+		File file = new File(filePath);
 		try {
-			System.out.print("File Locations : " + file.getAbsolutePath());
+			logger.info("File Locations : " + file.getAbsolutePath());
 			content = FileUtils.readFileToString(file);
 		} catch (FileNotFoundException e) {
 			InputStream resourceStream = EsMappingUtil.class.getClassLoader().getResourceAsStream(settingsPath);

@@ -469,49 +469,23 @@ public class EventController {
 	}
 
 	/**
-	 * Scheduler to feed view count for search
-	 * 
-	 * @throws Exception
+	 * run micro aggregation for the given time range
 	 */
-	public void updateViews() throws Exception {
-		/**
-		 * Just to check this method can run from server whenever multiple server using the same code
-		 */
+	public void runMicroAggregation() {
 		if (!validateSchedular()) {
 			return;
 		}
-		/**
-		 * Disabling this method for this release.In the next release it will be removed completely.
-		 * eventService.updateProdViews();
-		 */
-		
+		eventService.runMicroAggregation(null, null);
 	}
 
 	/**
 	 * run micro aggregation for the given time range
 	 */
-	public void executeForEveryMinute() {
+	public void runMicroAggregation(String startTime, String endTime) {
 		if (!validateSchedular()) {
 			return;
 		}
-		eventService.executeForEveryMinute(null, null);
-	}
-
-	/**
-	 * run micro aggregation for the given time range
-	 */
-	public void executeForEveryMinute(String startTime, String endTime) {
-		if (!validateSchedular()) {
-			return;
-		}
-		eventService.executeForEveryMinute(startTime, endTime);
-	}
-
-	/**
-	 * Unused method
-	 */
-	public void runAggregation() {
-
+		eventService.runMicroAggregation(startTime, endTime);
 	}
 
 	/**
@@ -522,13 +496,6 @@ public class EventController {
 			return;
 		}
 		eventService.indexActivity();
-	}
-
-	/**
-	 * Unused method
-	 */
-	public void postMigration() {
-
 	}
 
 	/**
@@ -606,6 +573,10 @@ public class EventController {
 
 	}
 
+	/**
+	 * Validating for scheduler can run in this server or not
+	 * @return
+	 */
 	public boolean validateSchedular() {
 		return eventService.validateSchedular();
 	}

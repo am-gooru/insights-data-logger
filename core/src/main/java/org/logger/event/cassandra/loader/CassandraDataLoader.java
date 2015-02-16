@@ -36,11 +36,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -99,16 +96,13 @@ public class CassandraDataLoader implements Constants {
 
 	public Collection<String> pushingEvents;
 
-	public Collection<String> statKeys;
-
-	public ColumnList<String> statMetrics;
-
 	private BaseCassandraRepoImpl baseDao;
 
 	private boolean canRunSchduler = false;
 
 	private boolean canRunIndexing = true;
 
+	private DataLoggerCaches loggerCache;
 	/**
 	 * Get Kafka properties from Environment
 	 */
@@ -171,7 +165,8 @@ public class CassandraDataLoader implements Constants {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
-
+		logger.info("CachedData from new class:"  + loggerCache.getLoggerCache());
+		
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
 		cache = new LinkedHashMap<String, String>();
 		for (Row<String, String> row : operators) {
@@ -191,9 +186,7 @@ public class CassandraDataLoader implements Constants {
 			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 		}
 		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STAT_METRICS, 0);
-		statKeys = statMetrics.getColumnNames();
-
+		
 		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, null);
 
 		try {
@@ -203,7 +196,7 @@ public class CassandraDataLoader implements Constants {
 				canRunSchduler = true;
 			}
 		} catch (UnknownHostException e) {
-			e.printStackTrace();
+			logger.error("Exception : " + e);
 		}
 
 		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
@@ -244,9 +237,7 @@ public class CassandraDataLoader implements Constants {
 		cache.put(STAT_FIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STAT_FIELDS, DEFAULT_COLUMN, 0).getStringValue());
 
 		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-		statMetrics = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STAT_METRICS, 0);
-
-		statKeys = statMetrics.getColumnNames();
+	
 		liveDashBoardDAOImpl.clearCache();
 		indexer.clearCache();
 		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_STATUS, 0);
@@ -600,176 +591,6 @@ public class CassandraDataLoader implements Constants {
 
 	}
 
-	/**
-	 * 
-	 * @throws Exception
-	 */
-	public void callAPIViewCount() throws Exception {
-		if (cache.get("stat_job").equalsIgnoreCase("stop")) {
-			logger.debug("job stopped");
-			return;
-		}
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEWS_LAST_UPDATED, DEFAULT_COLUMN, 0).getStringValue();
-		String currentTime = minuteDateFormatter.format(new Date()).toString();
-		Date lastDate = null;
-		Date currDate = null;
-
-		try {
-			lastDate = minuteDateFormatter.parse(lastUpadatedTime);
-			currDate = minuteDateFormatter.parse(currentTime);
-		} catch (ParseException e1) {
-			e1.printStackTrace();
-		}
-
-		Date rowValues = new Date(lastDate.getTime() + 60000);
-
-		logger.info("1-processing mins : {} ,current mins :{} ", minuteDateFormatter.format(rowValues), minuteDateFormatter.format(currDate));
-
-		if ((rowValues.getTime() < currDate.getTime())) {
-			ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + minuteDateFormatter.format(rowValues), 0);
-			ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + INDEXED_LIMIT, 0);
-			int indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-
-			boolean status = this.getRecordsToProcess(rowValues, INDEXED_LIMIT);
-
-			if ((contents.size() == 0 || indexedCount == (contents.size() - 1)) && status) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), VIEWS_LAST_UPDATED, DEFAULT_COLUMN, minuteDateFormatter.format(rowValues));
-			}
-		}
-
-	}
-
-	private boolean getRecordsToProcess(Date rowValues, String indexLabelLimit) throws Exception {
-
-		String indexCollectionType = null;
-		String indexResourceType = null;
-		String IndexingStatus = null;
-		String resourceIds = "";
-		String collectionIds = "";
-		int indexedCount = 0;
-		int indexedLimit = 2;
-		int allowedLimit = 0;
-		MutationBatch m2 = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		ColumnList<String> contents = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + minuteDateFormatter.format(rowValues), 0);
-		ColumnList<String> indexedCountList = baseDao.readWithKey(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + indexLabelLimit, 0);
-		indexedCount = indexedCountList != null ? Integer.valueOf(indexedCountList.getStringValue(minuteDateFormatter.format(rowValues), "0")) : 0;
-
-		logger.info("1:-> size : " + contents.size() + "indexed count : " + indexedCount);
-
-		if (contents.size() > 0) {
-			ColumnList<String> IndexLimitList = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_LIMIT, 0);
-			indexedLimit = IndexLimitList != null ? Integer.valueOf(IndexLimitList.getStringValue(DEFAULT_COLUMN, "0")) : 2;
-			allowedLimit = (indexedCount + indexedLimit);
-			if (allowedLimit > contents.size()) {
-				allowedLimit = indexedCount + (contents.size() - indexedCount);
-			}
-			ColumnList<String> indexingStat = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_STATUS, 0);
-			IndexingStatus = indexingStat.getStringValue(DEFAULT_COLUMN, null);
-			if (IndexingStatus.equalsIgnoreCase(COMPLETED)) {
-				for (int i = indexedCount; i < allowedLimit; i++) {
-					indexedCount = i;
-					ColumnList<String> vluesList = baseDao.readWithKeyColumnList(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), "all~" + contents.getColumnByIndex(i).getStringValue(), statKeys, 0);
-					for (Column<String> detail : vluesList) {
-						JSONObject resourceObj = new JSONObject();
-						resourceObj.put("gooruOid", contents.getColumnByIndex(i).getStringValue());
-						ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), 0);
-						;
-						if (resource.getColumnByName("resourceType") != null && resource.getColumnByName("resourceType").getStringValue().equalsIgnoreCase("scollection")) {
-							indexCollectionType = "scollection";
-							if (!collectionIds.contains(contents.getColumnByIndex(i).getStringValue())) {
-								collectionIds += "," + contents.getColumnByIndex(i).getStringValue();
-							}
-						} else {
-							indexResourceType = "resource";
-							if (!resourceIds.contains(contents.getColumnByIndex(i).getStringValue())) {
-								resourceIds += "," + contents.getColumnByIndex(i).getStringValue();
-							}
-						}
-						for (String column : statKeys) {
-							if (detail.getName().equals(column)) {
-								if (statMetrics.getStringValue(column, null) != null) {
-									baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), statMetrics.getStringValue(column, null),
-											detail.getLongValue(), m2);
-									if (statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.totalTimeSpent") && vluesList.getLongValue("count~views", 0L) != 0L) {
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.averageTimeSpent",
-												(detail.getLongValue() / vluesList.getLongValue("count~views", 0L)), m2);
-									}
-									if (statMetrics.getStringValue(column, null).equalsIgnoreCase("statistics.viewsCountN")) {
-										baseDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contents.getColumnByIndex(i).getStringValue(), "statistics.viewsCount",
-												"" + detail.getLongValue(), m2);
-									}
-								}
-							}
-						}
-
-					}
-				}
-			}
-			if (indexCollectionType != null || indexResourceType != null) {
-				m2.execute();
-				int indexingStatus = 0;
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_STATUS, DEFAULT_COLUMN, INPROGRESS);
-				if (indexCollectionType != null) {
-					indexingStatus = this.callStatAPI(indexCollectionType, collectionIds.substring(1));
-				}
-				if (indexResourceType != null) {
-					indexingStatus = this.callStatAPI(indexResourceType, resourceIds.substring(1));
-				}
-				baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + indexLabelLimit, minuteDateFormatter.format(rowValues), String.valueOf(indexedCount++),
-						86400);
-
-				if (indexingStatus == 200 || indexingStatus == 404) {
-					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
-					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_WAITING_COUNT, DEFAULT_COLUMN, "0");
-					return true;
-				} else {
-					logger.error("Statistical data update failed");
-					return false;
-				}
-			} else if (IndexingStatus != null && IndexingStatus.equalsIgnoreCase(INPROGRESS)) {
-				ColumnList<String> indexWaitingLimit = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_WAITING_LIMIT, 0);
-				String limit = indexWaitingLimit != null ? indexWaitingLimit.getStringValue(DEFAULT_COLUMN, "0") : "0";
-
-				ColumnList<String> indexWaitingCount = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_WAITING_COUNT, 0);
-				String count = indexWaitingCount != null ? indexWaitingCount.getStringValue(DEFAULT_COLUMN, "0") : "0";
-
-				if (Integer.valueOf(count) > Integer.valueOf(limit)) {
-					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
-					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_WAITING_COUNT, DEFAULT_COLUMN, "0");
-				} else {
-					baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEX_WAITING_COUNT, DEFAULT_COLUMN, "" + (Integer.valueOf(count) + 1));
-				}
-				logger.info("Waiting for indexing" + (Integer.valueOf(count) + 1));
-				return false;
-			}
-		} else {
-			logger.info("No content is viewed");
-			return true;
-		}
-		return false;
-	}
-
-	private int callStatAPI(String resourceType, String ids) {
-
-		try {
-			String url = cache.get(VIEW_UPDATE_END_POINT) + resourceType + "/reindex-stas?sessionToken=" + cache.get(SESSION_TOKEN) + "&indexableIds=" + ids + "&fields=" + cache.get(STAT_FIELDS);
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost postRequest = new HttpPost(url);
-			logger.info("Indexing url : {} ", url);
-			HttpResponse response = httpClient.execute(postRequest);
-			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
-			logger.info("Reason : {} ", response.getStatusLine().getReasonPhrase());
-			if (response.getStatusLine().getStatusCode() != 200) {
-				return response.getStatusLine().getStatusCode();
-			} else {
-				return response.getStatusLine().getStatusCode();
-			}
-		} catch (Exception e) {
-			logger.error("Stat Indexing failed..." + e);
-			return 500;
-		}
-	}
-
 	public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap) {
 		Long startTime = activityRow.getLongValue(_START_TIME, 0L), endTime = activityRow.getLongValue(_END_TIME, 0L);
 		String eventType = null;
@@ -826,7 +647,7 @@ public class CassandraDataLoader implements Constants {
 		return connectionProvider;
 	}
 
-	public void executeForEveryMinute(String startTime, String endTime) {
+	public void runMicroAggregation(String startTime, String endTime) {
 		logger.debug("start the static loader");
 		JSONObject jsonObject = new JSONObject();
 		try {

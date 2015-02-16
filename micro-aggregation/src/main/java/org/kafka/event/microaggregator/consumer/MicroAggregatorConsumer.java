@@ -151,7 +151,6 @@ public void updateActivityStream(Map<String, String> messageMap) {
 @Async
 public void staticAggregation(Map<String, String> messageMap) {
 	LOG.info("static Aggregator Consumed");
-	System.out.println("static Aggregator Consumed");
 	String eventJson = (String) messageMap.get("aggregationDetail");
 	if (eventJson != null && !eventJson.isEmpty()) {
 		microAggregationLoader.staticAggregation(eventJson);
