@@ -119,7 +119,7 @@ public class EventServiceImpl implements EventService, Constants {
 			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", "Fields must not be empty");
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVEN_TNAME, "LA001", "eventName must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENT_NAME, "LA001", "eventName must not be empty");
 		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), "eventId", "LA002", "eventId must not be empty");
 
 		return errors;
@@ -136,7 +136,7 @@ public class EventServiceImpl implements EventService, Constants {
 			ServerValidationUtils.rejectIfNull(errors, event, "event.all", "Fields must not be empty");
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVEN_TNAME, "LA001", "eventName must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVENT_NAME, "LA001", "eventName must not be empty");
 		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", "eventId must not be empty");
 		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", "version must not be empty");
 		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004", "User Object must not be empty");
@@ -198,7 +198,7 @@ public class EventServiceImpl implements EventService, Constants {
 						valueMap.put(PARENT_ID, eventObj.get(_PARENT_GOORU_OID).toString().replaceAll("\"", ""));
 					}
 					if (eventObj.get(_EVENT_NAME) != null) {
-						valueMap.put(EVEN_TNAME, eventObj.get(_EVENT_NAME).toString().replaceAll("\"", ""));
+						valueMap.put(EVENT_NAME, eventObj.get(_EVENT_NAME).toString().replaceAll("\"", ""));
 					}
 					if (eventObj.get(_USER_UID) != null) {
 						valueMap.put(USER_UID, eventObj.get(_USER_UID).toString().replaceAll("\"", ""));

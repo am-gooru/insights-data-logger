@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.restlet.data.Form;
@@ -49,40 +50,20 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	private SimpleDateFormat customDateFormatter;
 
 	private BaseCassandraRepoImpl baseDao;
-
-	Map<String, String> fieldDataTypes = null;
-
-	Map<String, String> beFieldName = null;
-
+	
 	ColumnList<String> eventKeys = null;
 
 	Collection<String> esEventFields = null;
 
+	private DataLoggerCaches loggerCache;
+	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		fieldDataTypes = new LinkedHashMap<String, String>();
-		beFieldName = new LinkedHashMap<String, String>();
-
-		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
-		for (Row<String, String> row : fieldDescrption) {
-			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}
-	}
-
-	public void clearCache() {
-
-		fieldDataTypes = new LinkedHashMap<String, String>();
-		beFieldName = new LinkedHashMap<String, String>();
-
-		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
-		for (Row<String, String> row : fieldDescrption) {
-			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}
+		this.setLoggerCache(new DataLoggerCaches());
+		this.getLoggerCache().init();
 	}
 
 	/**
@@ -91,7 +72,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 */
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		if ((eventMap.containsKey(EVEN_TNAME))) {
+		if ((eventMap.containsKey(EVENT_NAME))) {
 			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), String.valueOf(eventMap.get("eventName")), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
@@ -223,7 +204,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		if (columnName != null) {
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
 		}
-		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT + SEPERATOR + eventMap.get(EVEN_TNAME), 1);
+		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT + SEPERATOR + eventMap.get(EVENT_NAME), 1);
 	}
 
 	/**
@@ -246,7 +227,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
 				secondDateFormatter.format(new Date()).toString(), expireTime, m);
 
-		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase("logOut") || eventMap.get(EVEN_TNAME).equalsIgnoreCase("user.logout")) {
+		if (eventMap.get(EVENT_NAME).equalsIgnoreCase("logOut") || eventMap.get(EVENT_NAME).equalsIgnoreCase("user.logout")) {
 			if (eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")) {
 				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
@@ -255,7 +236,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
 		}
 
-		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
 				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
@@ -263,7 +244,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 						secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
-		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.RP1.getName())) {
+		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.RP1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
 				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
@@ -271,7 +252,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 						.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
-		if (eventMap.get(EVEN_TNAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
 				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
@@ -361,13 +342,13 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			String rowKey = null;
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 
-				if (beFieldName.containsKey(entry.getKey()) && rowKey != null) {
-					rowKey = beFieldName.get(entry.getKey());
+				if (getLoggerCache().getBeFieldNames().containsKey(entry.getKey()) && rowKey != null) {
+					rowKey = getLoggerCache().getBeFieldNames().get(entry.getKey());
 				} else {
 					rowKey = entry.getKey();
 				}
 
-				String typeToChange = fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String";
+				String typeToChange = getLoggerCache().getFieldDataTypes().containsKey(entry.getKey()) ? getLoggerCache().getFieldDataTypes().get(entry.getKey()) : "String";
 				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), typeToChange), m);
 			}
 
@@ -415,5 +396,13 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				this.saveGeoLocation(geoData, eventMap);
 			}
 		}
+	}
+
+	public DataLoggerCaches getLoggerCache() {
+		return loggerCache;
+	}
+
+	public void setLoggerCache(DataLoggerCaches loggerCache) {
+		this.loggerCache = loggerCache;
 	}
 }

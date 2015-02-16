@@ -24,7 +24,7 @@ public interface Constants {
 	
 	public static final  String LAST_ACCESSED = "last~accessed";
 	
-	public static final  String EVEN_TNAME = "eventName";
+	public static final  String EVENT_NAME = "eventName";
 	
 	public static final  String CONTENT_GOORU_OID = "contentGooruId";
 	

@@ -618,7 +618,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			Set<Entry<String, String>> collectionItemCFKeySet = DataUtils.collectionItemCFKeys.entrySet();
 			updateColumnFamily(ColumnFamily.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
 		} else {
-			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVEN_TNAME));
+			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVENT_NAME));
 		}
 	}
 

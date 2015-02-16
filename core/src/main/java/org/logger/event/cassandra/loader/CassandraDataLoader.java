@@ -24,8 +24,6 @@
 package org.logger.event.cassandra.loader;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -79,28 +77,16 @@ public class CassandraDataLoader implements Constants {
 	private CassandraConnectionProvider connectionProvider;
 
 	private KafkaLogProducer kafkaLogWriter;
-
+	
+	private MicroAggregatorProducer microAggregator;
+	
 	private MicroAggregatorDAOmpl liveAggregator;
 
 	private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
 	private ELSIndexerImpl indexer;
 
-	public static Map<String, String> cache;
-
-	private static Map<String, Map<String, String>> kafkaConfigurationCache;
-
-	public static Map<String, Object> gooruTaxonomy;
-
-	private MicroAggregatorProducer microAggregator;
-
-	public Collection<String> pushingEvents;
-
 	private BaseCassandraRepoImpl baseDao;
-
-	private boolean canRunSchduler = false;
-
-	private boolean canRunIndexing = true;
 
 	private DataLoggerCaches loggerCache;
 	/**
@@ -144,7 +130,7 @@ public class CassandraDataLoader implements Constants {
 
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-	}
+	} 
 
 	public static long getTimeFromUUID(UUID uuid) {
 		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
@@ -155,124 +141,26 @@ public class CassandraDataLoader implements Constants {
 	 * @param configOptionsMap
 	 */
 	private void init(Map<String, String> configOptionsMap) {
-
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(configOptionsMap);
-
 		this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
 		this.setLoggerCache(new DataLoggerCaches());
 		this.getLoggerCache().init();
-		logger.info("CachedData from new class:"  + getLoggerCache().cache());
-		
-		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
-		cache = new LinkedHashMap<String, String>();
-		for (Row<String, String> row : operators) {
-			cache.put(row.getKey(), row.getColumns().getStringValue(AGG_JSON, null));
-		}
-		cache.put(VIEW_EVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), _VIEW_EVENTS, DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(ATMOSPHERE_END_POINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATM_END_POINT, DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(VIEW_UPDATE_END_POINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULT_COLUMN, 0)
-				.getStringValue());
-		cache.put(SESSION_TOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(SEARCH_INDEX_API, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(STAT_FIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STAT_FIELDS, DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(_BATCH_SIZE, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), _BATCH_SIZE, DEFAULT_COLUMN, 0).getStringValue());
+		logger.info("Cached Data from new class:" + getLoggerCache().getCaches());
 
-		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_STATUS, 0);
-		for (int i = 0; i < schdulersStatus.size(); i++) {
-			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
-		}
-		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-		
-		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, null);
-
-		try {
-			String localHost = "" + InetAddress.getLocalHost();
-			logger.info("Host : " + localHost);
-			if (localHost.contains(host)) {
-				canRunSchduler = true;
-			}
-		} catch (UnknownHostException e) {
-			logger.error("Exception : " + e);
-		}
-
-		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
-		if (realTimeIndexing.equalsIgnoreCase(STOP)) {
-			canRunIndexing = false;
-		}
-		if (kafkaConfigurationCache == null) {
-
-			kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
-			String[] kafkaMessager = new String[] { V2_KAFKA_CONSUMER, V2_KAFKA_LOG_WRITER_PRODUCER, V2_KAFKA_LOG_WRITER_CONSUMER, V2_KAFKA_MICRO_PRODUCER, V2_KAFKA_MICRO_CONSUMER };
-			Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, 0, kafkaMessager);
-			for (Row<String, String> row : result) {
-				Map<String, String> properties = new HashMap<String, String>();
-				for (Column<String> column : row.getColumns()) {
-					properties.put(column.getName(), column.getStringValue());
-				}
-				kafkaConfigurationCache.put(row.getKey(), properties);
-			}
-		}
 	}
 
 	/**
 	 * This method is doing clear map and getting laster data.
 	 */
 	public void clearCache() {
-		cache.clear();
-		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
-		cache = new LinkedHashMap<String, String>();
-		for (Row<String, String> row : operators) {
-			cache.put(row.getKey(), row.getColumns().getStringValue(AGG_JSON, null));
-		}
-		cache.put(VIEW_EVENTS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), _VIEW_EVENTS, DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(ATMOSPHERE_END_POINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATM_END_POINT, DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(VIEW_UPDATE_END_POINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULT_COLUMN, 0)
-				.getStringValue());
-		cache.put(SESSION_TOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(SEARCH_INDEX_API, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULT_COLUMN, 0).getStringValue());
-		cache.put(STAT_FIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STAT_FIELDS, DEFAULT_COLUMN, 0).getStringValue());
-
-		pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-	
-		liveDashBoardDAOImpl.clearCache();
-		indexer.clearCache();
-		ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_STATUS, 0);
-		for (int i = 0; i < schdulersStatus.size(); i++) {
-			cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
-		}
-
-		kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
-		String[] kafkaMessager = new String[] { V2_KAFKA_CONSUMER, V2_KAFKA_LOG_WRITER_PRODUCER, V2_KAFKA_LOG_WRITER_CONSUMER, V2_KAFKA_MICRO_PRODUCER, V2_KAFKA_MICRO_CONSUMER };
-		Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, 0, kafkaMessager);
-		for (Row<String, String> row : result) {
-			Map<String, String> properties = new HashMap<String, String>();
-			for (Column<String> column : row.getColumns()) {
-				properties.put(column.getName(), column.getStringValue());
-			}
-			kafkaConfigurationCache.put(row.getKey(), properties);
-		}
-
-		String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, null);
-
-		try {
-			String localHost = "" + InetAddress.getLocalHost();
-			logger.info("Host : " + localHost);
-			if (localHost.contains(host)) {
-				canRunSchduler = true;
-			}
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
-		if (realTimeIndexing.equalsIgnoreCase(STOP)) {
-			canRunIndexing = false;
-		}
+		this.setLoggerCache(new DataLoggerCaches());
+		this.getLoggerCache().init();
+		logger.info("Cached Data from new class:" + getLoggerCache().getCaches());
 	}
 
 	/**
@@ -449,7 +337,7 @@ public class CassandraDataLoader implements Constants {
 			String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 
 			Map<String, Object> records = new HashMap<String, Object>();
-			records.put(_EVENT_NAME, eventMap.get(EVEN_TNAME));
+			records.put(_EVENT_NAME, eventMap.get(EVENT_NAME));
 			records.put(_API_KEY, apiKey);
 			Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(), records);
 
@@ -473,7 +361,7 @@ public class CassandraDataLoader implements Constants {
 
 			baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
-			aggregatorJson = cache.get(eventMap.get("eventName").toString());
+			aggregatorJson = getLoggerCache().getCaches().get(eventMap.get("eventName").toString());
 
 			if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
 				liveAggregator.realTimeMetrics(eventMap2, aggregatorJson);
@@ -493,13 +381,12 @@ public class CassandraDataLoader implements Constants {
 			kafkaLogWriter.sendErrorEventLog(event.getFields());
 			logger.error("Writing error log : {} ", event.getEventId());
 		}
-		if (canRunIndexing) {
+		if (getLoggerCache().canRunIndexing()) {
 			indexer.indexEvents(event.getFields());
 		}
 
 		try {
-
-			if (cache.get(VIEW_EVENTS).contains(eventMap.get("eventName").toString())) {
+			if (getLoggerCache().getCaches().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
 				liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 			}
 
@@ -685,8 +572,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public boolean validateSchedular() {
-
-		return canRunSchduler;
+		return getLoggerCache().canRunSchduler();
 	}
 
 	/**
@@ -1108,7 +994,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public Map<String, String> getKafkaProperty(String propertyName) {
-		return kafkaConfigurationCache.get(propertyName);
+		return getLoggerCache().getKafkaConfigurationCache().get(propertyName);
 	}
 
 	public DataLoggerCaches getLoggerCache() {
