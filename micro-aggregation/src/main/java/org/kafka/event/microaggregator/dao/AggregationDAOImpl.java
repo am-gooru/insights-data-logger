@@ -221,7 +221,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 							}
 							} catch (Exception e) {
 								logger.error("unable to get formula" + e);
-								System.out.println("exception while getting data" + e);
 							}
 						if (!checkNull(resultMap)) {
 							continue;
@@ -248,7 +247,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			data.put( formulaDetail.STATUS.formulaDetail(), formulaDetail.COMPLETED.formulaDetail());
 			putExpireStringValue(columnFamily.JOB_CONFIG_SETTING.columnFamily(), MINUTE_AGGREGATOR_PROCESSOR_KEY, data,120);
 			logger.info("Minute Aggregator Runned Successfully");
-			System.out.println("Minute Aggregator completed");
 		} catch (Exception e) {
 			logger.error("Minute Runner failed due to " + e);
 		}
@@ -388,8 +386,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while increment the counter in " + columnFamilyName);
-					System.out.println(request + "" + e);
-					e.printStackTrace();
 				}
 		}
 	}
@@ -412,8 +408,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while increment the counter in " + columnFamilyName);
-					System.out.println(request + "" + e);
-					e.printStackTrace();
 				}
 		}
 	}

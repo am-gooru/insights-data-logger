@@ -160,15 +160,6 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	@Override
-	public void updateProdViews() {
-		try {
-			dataLoaderService.callAPIViewCount();
-		} catch (Exception e) {
-			logger.error("Exception:" +e);
-		}
-	}
-
-	@Override
 	public List<Map<String, Object>> readUserLastNEventsResourceIds(String userUid, String startTime, String endTime, String eventName, Integer eventsToRead) {
 		String activity = null;
 		String startColumnPrefix = null;
@@ -250,8 +241,8 @@ public class EventServiceImpl implements EventService, Constants {
 		return new ActionResponseDTO<Event>(event, errors);
 	}
 
-	public void executeForEveryMinute(String startTime, String endTime) {
-		dataLoaderService.executeForEveryMinute(startTime, endTime);
+	public void runMicroAggregation(String startTime, String endTime) {
+		dataLoaderService.runMicroAggregation(startTime, endTime);
 	}
 
 	public boolean createEvent(String eventName, String apiKey) {

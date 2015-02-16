@@ -23,21 +23,25 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import java.util.Date;
-import java.util.Map;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
 public class TypeConverter {
 
-	public static <T> T stringToIntArray(String arrayAsString){
-		if(arrayAsString != null){
+	private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
+
+	public static <T> T stringToIntArray(String arrayAsString) {
+		if (arrayAsString != null) {
 
 			String[] items = arrayAsString.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
 
@@ -46,13 +50,15 @@ public class TypeConverter {
 			for (int i = 0; i < items.length; i++) {
 				try {
 					results[i] = Integer.parseInt(items[i]);
-				} catch (NumberFormatException nfe) {};
+				} catch (NumberFormatException nfe) {
+				}
+				;
 			}
 			return (T) results;
 		}
 		return null;
 	}
-	
+
 	public static <T> T stringToAny(String value, String type) {
 		Object result = null;
 		if (value != null && type != null) {
@@ -81,7 +87,7 @@ public class TypeConverter {
 				try {
 					result = new JSONObject(value.trim());
 				} catch (JSONException e) {
-					System.out.print("Unable to convert to JSONObject");
+					logger.error("Unable to convert to JSONObject");
 					return (T) new JSONObject();
 				}
 			} else if (type.equalsIgnoreCase("Date")) {
@@ -105,7 +111,7 @@ public class TypeConverter {
 								try {
 									result = formatter4.parse(value);
 								} catch (Exception e4) {
-									System.out.print("Error while convert "+ value + " to date");
+									logger.error("Error while convert " + value + " to date");
 								}
 							}
 						}
@@ -128,7 +134,7 @@ public class TypeConverter {
 							results[i] = Integer.parseInt(items[i].trim());
 						}
 					} catch (NumberFormatException nfe) {
-						// nfe.printStackTrace();
+						logger.error("Exeption : " + nfe);
 					}
 					;
 				}
@@ -143,6 +149,7 @@ public class TypeConverter {
 					try {
 						results[i] = items[i].trim();
 					} catch (Exception nfe) {
+						logger.error("Exeption : " + nfe);
 					}
 					;
 				}
@@ -151,7 +158,7 @@ public class TypeConverter {
 				try {
 					result = new JSONArray(value);
 				} catch (JSONException e) {
-					System.out.print("Unable to convert to JSONArray");
+					logger.error("Unable to convert to JSONArray");
 					return (T) new JSONArray();
 				}
 			} else if (type.equalsIgnoreCase("Timestamp")) {
@@ -159,12 +166,11 @@ public class TypeConverter {
 				try {
 					result = new Timestamp(Long.valueOf(value));
 				} catch (Exception e) {
-					System.out.print("Error while convert "+ value + " to timestamp");
+					logger.error("Error while convert " + value + " to timestamp");
 				}
 
 			} else {
-				throw new RuntimeException("Unsupported type " + type
-						+ ". Please Contact Admin!!");
+				throw new RuntimeException("Unsupported type " + type + ". Please Contact Admin!!");
 			}
 
 			return (T) result;
@@ -172,11 +178,9 @@ public class TypeConverter {
 		return null;
 	}
 
-                                                                                                
-	
 	public static String convertMapToJsonString(Map<String, String> map) {
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return json;
-    }
+		Gson gson = new Gson();
+		String json = gson.toJson(map);
+		return json;
+	}
 }

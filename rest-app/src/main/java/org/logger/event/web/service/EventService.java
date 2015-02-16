@@ -52,11 +52,9 @@ public interface EventService {
 
 	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead);
 
-	public void updateProdViews();
-	
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 
-	void executeForEveryMinute(String startTime, String endTime);
+	void runMicroAggregation(String startTime, String endTime);
 	
 	boolean createEvent(String eventName,String apiKey);
 	
