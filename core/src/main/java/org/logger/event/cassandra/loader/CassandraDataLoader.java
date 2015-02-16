@@ -572,7 +572,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public boolean validateSchedular() {
-		return getLoggerCache().canRunSchduler();
+		return getLoggerCache().canRunScheduler();
 	}
 
 	/**
