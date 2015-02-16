@@ -165,6 +165,8 @@ public class CassandraDataLoader implements Constants {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
+		this.setLoggerCache(new DataLoggerCaches());
+		this.getLoggerCache().init();
 		logger.info("CachedData from new class:"  + getLoggerCache().cache());
 		
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
