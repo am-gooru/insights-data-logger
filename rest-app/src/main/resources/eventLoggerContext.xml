@@ -47,7 +47,7 @@
 	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
 	
-	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+<!-- 	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="updateViews" />
        </bean>
@@ -57,7 +57,7 @@
            <property name="repeatInterval" value="60000" />
            <property name="startDelay" value="1000" />
        </bean>
-
+ -->
 	<bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="indexActivity" />
@@ -69,7 +69,7 @@
            <property name="startDelay" value="1000" />
        </bean>
        
-       	<bean id="migrationJobDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+       	<!-- <bean id="migrationJobDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="postMigration" />
        </bean>
@@ -79,10 +79,10 @@
            <property name="repeatInterval" value="5000" />
            <property name="startDelay" value="1000" />
        </bean>
-       
+        -->
        <bean id="minuteRunner" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
-           <property name="targetMethod" value="executeForEveryMinute" />
+           <property name="targetMethod" value="runMicroAggregation" />
        </bean>
        
         <bean id="thirdSimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
@@ -94,18 +94,18 @@
         <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
            <property name="jobDetails">
               <list>
-                 <ref bean="firstTaskJobDetail" />
+                 <!-- <ref bean="firstTaskJobDetail" /> -->
                  <ref bean="minuteRunner" />
                  <ref bean="watchSessionDetails" />
-                 <ref bean="migrationJobDetails" />
+                 <!-- <ref bean="migrationJobDetails" /> -->
               </list>
            </property>
            <property name="triggers">
               <list>
-                 <ref bean="secondSimpleTrigger" />
+                 <!-- <ref bean="secondSimpleTrigger" /> -->
                  <ref bean="thirdSimpleTrigger" />
                  <ref bean="watchSessionTrigger" />
-                 <ref bean="migrationJobTrigger" />
+                 <!-- <ref bean="migrationJobTrigger" /> -->
               </list>
            </property>
        </bean>
