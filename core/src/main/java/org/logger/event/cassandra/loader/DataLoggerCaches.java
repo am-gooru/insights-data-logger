@@ -6,11 +6,13 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.springframework.stereotype.Repository;
 
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
+@Repository
 public final class DataLoggerCaches implements Constants {
 
 
@@ -41,7 +43,7 @@ public final class DataLoggerCaches implements Constants {
 
 	}
 	
-	public Map<String,Object> getLoggerCache(){
+	public Map<String,Object> cache(){
 		return cache;
 	}
 }
