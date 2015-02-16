@@ -109,7 +109,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					} while (!startTime.equalsIgnoreCase(endTime));
 					keys.add(endTime);
 				} catch (ParseException e) {
-					e.printStackTrace();
+					logger.error("Exception:"+e);
 				}
 			} else if (checkNull(startTime) && !checkNull(endTime)) {
 				keys.add(startTime);
@@ -126,7 +126,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					keys.add(endTime);
 					keys.add(startTime);
 				} catch (ParseException e) {
-					e.printStackTrace();
+					logger.error("Exception:"+e);
 				}
 			} else {
 
@@ -151,7 +151,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 							keys.add(startTime);
 						} while (!startTime.equalsIgnoreCase(endTime));
 					} catch (ParseException e) {
-						e.printStackTrace();
+						logger.error("Exception:"+e);
 					}
 				} else {
 					Calendar calender = Calendar.getInstance();
@@ -338,7 +338,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while getting rows data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -363,7 +362,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while getting row data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -431,7 +429,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 			} catch (ConnectionException e) {
 				logger.error("Exception while inserting the Long value in " + columnFamilyName);
-				e.printStackTrace();
 			}
 		}
 	}
@@ -453,7 +450,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				mutationBatch.execute();
 			} catch (ConnectionException e) {
 				logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-				e.printStackTrace();
 		}
 		return true;
 	}
@@ -473,7 +469,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		} catch (ConnectionException e) {
 			logger.error("Exception while checking the column data exists of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-			e.printStackTrace();
 		}
 		return false;
 	}
@@ -510,7 +505,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while Reading all the data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -542,7 +536,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while reading the column with Index of(columnFamily~ColumnName) " + columnFamilyName + SEPERATOR + whereColumns.keySet());
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -577,7 +570,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-					e.printStackTrace();
 				}
 		}
 	}
@@ -598,7 +590,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-					e.printStackTrace();
 					continue;
 				}
 			}
@@ -1059,7 +1050,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		return rowKey;
 	}
@@ -1309,7 +1300,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
 					formedKey = formedKey.replaceAll(columnKey.D.columnKey() + dateFormat[0], customDateFormatter.format(currentDateTime));
 				} catch (ParseException e) {
-					e.printStackTrace();
 					continue;
 				}
 			}

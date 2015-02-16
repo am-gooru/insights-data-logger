@@ -10,6 +10,8 @@ public interface Constants {
     
     public static final  String SEPERATOR = "~";
     
+    public static final  String COMMA = ",";
+    
 	public static final  String CONTEXT = "context";
 	
 	public static final  String USER = "user";
@@ -101,6 +103,8 @@ public interface Constants {
 	public static final  String OPTIONS = "options";
 	
 	public static final  String COUNTER = "counter";
+	
+	public static final  String REACTION_TYPE = "reactionType";
 	
 	public static final  String RESOURCE_TYPE = "resourceType";
 	

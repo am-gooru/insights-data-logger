@@ -572,7 +572,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 						}
 						baseCassandraDao.updateAssessmentAnswer(ColumnFamily.ASSESSMENTANSWER.getColumnFamily(), assessmentAnswerMap);
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error("Exception:Unable to save assessment answer." + e);
 					}
 				}
 			}
@@ -684,7 +684,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			try {
 				m.execute();
 			} catch (ConnectionException e) {
-				e.printStackTrace();
+				logger.info("Exception: {}" ,e );
 			}
 		} else {
 			logger.info("Incoming Key is null to update CF {}" ,cfName );

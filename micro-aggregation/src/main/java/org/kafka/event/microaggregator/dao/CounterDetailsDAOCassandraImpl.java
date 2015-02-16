@@ -538,7 +538,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 					.getKey(key)
 					.execute().getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		count = columns.size();
 		if(columns != null && columns.size() > 0){
@@ -560,7 +560,7 @@ public class CounterDetailsDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 					.getCount()
 					.execute().getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		
 		

@@ -304,7 +304,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to save post aggregated data." + e);
 		}
 	}
 
@@ -353,7 +353,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					try {
 						Thread.sleep(200);
 					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+						logger.error("Exception:Thread interrupted." + e);
 					}
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + "completion_progress",
 							collectionStatus, m);
@@ -363,7 +363,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to save counter aggregated data." + e);
 		}
 	}
 
@@ -474,7 +474,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to save real time class/collection reports data." + e);
 		}
 	}
 
@@ -642,7 +642,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to save real class/collection aggregated data." + e);
 		}
 
 	}

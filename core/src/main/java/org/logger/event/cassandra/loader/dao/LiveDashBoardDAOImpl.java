@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,8 +31,6 @@ import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Row;
-import com.netflix.astyanax.model.Rows;
 
 public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDashBoardDAO, Constants {
 
@@ -73,27 +70,27 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENT_NAME))) {
-			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), String.valueOf(eventMap.get("eventName")), 0);
+			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), String.valueOf(eventMap.get(EVENT_NAME)), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
 				String key = this.formOrginalKeys(columnName, eventMap);
 				if (key != null) {
-					for (String value : columnValue.split(",")) {
+					for (String value : columnValue.split(COMMA)) {
 						String orginalColumn = this.formOrginalKeys(value, eventMap);
 						if (orginalColumn != null) {
 							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
-								if (!orginalColumn.startsWith(_TIME_SPENT + SEPERATOR) && !orginalColumn.startsWith("sum" + SEPERATOR)) {
+								if (!orginalColumn.startsWith(_TIME_SPENT + SEPERATOR) && !orginalColumn.startsWith(SUM + SEPERATOR)) {
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, 1L, m);
 								} else if (orginalColumn.startsWith(_TIME_SPENT + SEPERATOR)) {
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
-								} else if (orginalColumn.startsWith("sum" + SEPERATOR)) {
-									String[] rowKey = orginalColumn.split("~");
+								} else if (orginalColumn.startsWith(SUM + SEPERATOR)) {
+									String[] rowKey = orginalColumn.split(SEPERATOR);
 									baseDao.generateCounter(
 											ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
 											key,
 											orginalColumn,
-											rowKey[1].equalsIgnoreCase("reactionType") ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey[1]))) : Long.valueOf(String.valueOf(eventMap
+											rowKey[1].equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey[1]))) : Long.valueOf(String.valueOf(eventMap
 													.get(rowKey[1].trim()) == null ? "0" : eventMap.get(rowKey[1].trim()))), m);
 
 								}
@@ -106,7 +103,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			try {
 				m.executeAsync();
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("Exception: Real Time counter failed." + e);
 			}
 		}
 	}
@@ -199,7 +196,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			json = ow.writeValueAsString(geoData);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:unable to get geo locations");
 		}
 		if (columnName != null) {
 			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
@@ -264,7 +261,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.executeAsync();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception: saving session time failed" + e);
 		}
 	}
 
@@ -284,7 +281,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:saving data for view count update is failed."+e);
 		}
 	}
 
@@ -324,7 +321,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				try {
 					throw new AccessDeniedException("Unsupported key format : " + splittedKey);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("Exception:Unsupported real time generator Key."+e);
 				}
 			}
 		}
@@ -354,7 +351,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 			mutationBatch.execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Storing data into staging table."+ e);
 		}
 	}
 

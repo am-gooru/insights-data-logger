@@ -543,7 +543,7 @@ public class CassandraDataLoader implements Constants {
 			jsonObject.put("startTime", startTime);
 			jsonObject.put("endTime", endTime);
 		} catch (JSONException e) {
-			e.printStackTrace();
+			logger.error("Exception:" + e);
 		}
 		microAggregator.sendEventForStaticAggregation(jsonObject.toString());
 	}
@@ -713,7 +713,7 @@ public class CassandraDataLoader implements Constants {
 				}
 				m.execute();
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("Exception:" + e);
 			}
 
 		}

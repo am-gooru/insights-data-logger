@@ -41,7 +41,7 @@ public class EsMappingUtil {
 			InputStream resourceStream = EsMappingUtil.class.getClassLoader().getResourceAsStream(settingsPath);
 			content = readFileAsString(resourceStream);
 		} catch (Exception exception) {
-			exception.printStackTrace();
+			logger.error("Exception: Unable to get indexing configuration." + exception);
 		}
 
 		return content;
@@ -60,13 +60,13 @@ public class EsMappingUtil {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("Exception:" + e);
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Exception:" + e);
 				}
 			}
 		}

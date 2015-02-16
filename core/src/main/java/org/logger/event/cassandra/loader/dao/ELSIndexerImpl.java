@@ -73,7 +73,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				jsonField = new JSONObject(fields.substring(14).trim());
 			} catch (JSONException e2) {
-				e2.printStackTrace();
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e2);
 			}
 		}
 		if (jsonField.has("version")) {
@@ -82,7 +82,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				eventMap = JSONDeserializer.deserializeEventv2(events);
 			} catch (JSONException e) {
-				e.printStackTrace();
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e);
 			}
 
 			eventMap.put("eventName", events.getEventName());
@@ -121,7 +121,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("Exception:Unable to index events in the method indexEvents." + e);
 				}
 			}
 		} else {
@@ -679,7 +679,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			indexingES(indexName, indexType, id, contentBuilder, 0);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to index in the method saveInESIndex." + e);
 		}
 
 	}
@@ -727,13 +727,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				try {
 					Thread.sleep(2000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("Exception:Thread interrupted in the method indexingES." + e);
 				}
 				logger.info("Retrying count: {}  ", retryCount);
 				retryCount++;
 				indexingES(indexName, indexType, id, contentBuilder, retryCount);
 			} else {
-				e.printStackTrace();
+				logger.error("Exception:Unable to index in the method indexingES." + e);
 			}
 		}
 
