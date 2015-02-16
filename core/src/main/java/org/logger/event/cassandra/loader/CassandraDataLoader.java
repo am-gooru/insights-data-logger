@@ -165,7 +165,7 @@ public class CassandraDataLoader implements Constants {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
-		logger.info("CachedData from new class:"  + loggerCache.getLoggerCache());
+		logger.info("CachedData from new class:"  + getLoggerCache().cache());
 		
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
 		cache = new LinkedHashMap<String, String>();
@@ -1107,5 +1107,13 @@ public class CassandraDataLoader implements Constants {
 
 	public Map<String, String> getKafkaProperty(String propertyName) {
 		return kafkaConfigurationCache.get(propertyName);
+	}
+
+	public DataLoggerCaches getLoggerCache() {
+		return loggerCache;
+	}
+
+	public void setLoggerCache(DataLoggerCaches loggerCache) {
+		this.loggerCache = loggerCache;
 	}
 }
