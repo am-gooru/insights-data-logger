@@ -121,10 +121,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
     
     @Async
     public void realTimeMetrics(final Map<String,String> eventMap,final String aggregatorJson) throws Exception{
-    	
-    final Thread realTimeThread = new Thread(new Runnable() {
-	  	@Override
-	  	public void run(){
 	  	try{
 	    	
 	    	List<String> pathWays = getPathWaysFromCollection(eventMap);
@@ -208,6 +204,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 			if(eventMap.get(EVENTNAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				questionCountInQuiz = getQuestionCount(eventMap);
+				logger.info("pathWay size : " + pathWays.size());
 				if(pathWays != null && pathWays.size() > 0){
 					for(String pathWay : pathWays){
 						
@@ -354,13 +351,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}catch(Exception e){
 				e.printStackTrace();
 			}
-			
-	  	  }
-    	});
-    
-    	realTimeThread.setDaemon(true);
-    	realTimeThread.start();
-    
      }
 
     public void realTimeMetricsMigration(Map<String,String> eventMap,String aggregatorJson) throws JSONException{

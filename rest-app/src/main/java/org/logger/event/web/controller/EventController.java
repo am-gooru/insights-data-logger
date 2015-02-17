@@ -49,6 +49,7 @@ import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -70,7 +71,7 @@ import com.netflix.astyanax.model.Rows;
 
 @Controller
 @RequestMapping(value="/event")
-//@EnableAsync
+@EnableAsync
 public class EventController {
 
 	protected final Logger logger = LoggerFactory 
