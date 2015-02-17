@@ -1845,7 +1845,7 @@ return false;
     	eventMap.put("eventName", eventObject.getEventName());
     	eventMap.put("eventId", eventObject.getEventId());
     	eventMap.put("startTime",String.valueOf(eventObject.getStartTime()));
-    	
+    	eventMap.put("endTime",String.valueOf(eventObject.getEndTime()));
     	return eventMap;
     }
 
