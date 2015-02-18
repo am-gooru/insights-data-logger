@@ -35,6 +35,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
@@ -154,11 +155,13 @@ public class EventController implements Constants {
 				}
 			} else {
 				Event event = gson.fromJson(eventObj, Event.class);
-				JSONObject user = new JSONObject(event.getUser());
-				user.put(USER_IP, userIp);
-				user.put(USER_AGENT, userAgent);
 				JSONObject field = new JSONObject(eventString);
-				field.put(USER, user.toString());
+				if(StringUtils.isNotBlank(event.getUser())){
+					JSONObject user = new JSONObject(event.getUser());
+					user.put(USER_IP, userIp);
+					user.put(USER_AGENT, userAgent);
+					field.put(USER, user.toString());
+				}
 				event.setFields(field.toString());
 				event.setApiKey(apiKey);
 				eventResultDTO = eventService.processMessage(event);
