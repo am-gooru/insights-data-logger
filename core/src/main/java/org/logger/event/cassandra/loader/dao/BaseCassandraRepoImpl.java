@@ -730,7 +730,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		if (value.getClass().getSimpleName().equalsIgnoreCase("Long")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf("" + value), null);
 		}
-
 		if (value.getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf("" + value), null);
 		} else {
@@ -1068,7 +1067,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param event
 	 * @return
 	 */
-	public String saveEventObject(String cfName, String key, Event event) {
+	public String saveEvent(String cfName, String key, Event event) {
 
 		if (event.getEventId() == null) {
 			UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -1079,19 +1078,27 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull("start_time", event.getStartTime(), null).putColumnIfNotNull("end_time", event.getEndTime(), null)
-				.putColumnIfNotNull("fields", event.getFields(), null).putColumnIfNotNull("time_spent_in_millis", event.getTimeInMillSec(), null)
-				.putColumnIfNotNull("content_gooru_oid", event.getContentGooruId(), null).putColumnIfNotNull("parent_gooru_oid", event.getParentGooruId(), null)
-				.putColumnIfNotNull("event_name", event.getEventName(), null).putColumnIfNotNull("session", event.getSession(), null)
-				.putColumnIfNotNull("metrics", event.getMetrics(), null).putColumnIfNotNull("pay_load_object", event.getPayLoadObject(), null)
-				.putColumnIfNotNull("user", event.getUser(), null).putColumnIfNotNull("context", event.getContext(), null)
-				.putColumnIfNotNull("event_type", event.getEventType(), null).putColumnIfNotNull("organization_uid", event.getOrganizationUid(), null)
-				.putColumnIfNotNull("parent_event_id", event.getParentEventId(), null);
+		m.withRow(this.accessColumnFamily(cfName), key)
+				.putColumnIfNotNull(_START_TIME, event.getStartTime(), null)
+				.putColumnIfNotNull(_END_TIME, event.getEndTime(), null)
+				.putColumnIfNotNull(FIELDS, event.getFields(), null)
+				.putColumnIfNotNull(_TIME_SPENT_IN_MILLIS, event.getTimeInMillSec(), null)
+				.putColumnIfNotNull(_CONTENT_GOORU_OID, event.getContentGooruId(), null)
+				.putColumnIfNotNull(_PARENT_GOORU_OID, event.getParentGooruId(), null)
+				.putColumnIfNotNull(_EVENT_NAME, event.getEventName(), null)
+				.putColumnIfNotNull(SESSION, event.getSession(), null)
+				.putColumnIfNotNull(METRICS, event.getMetrics(), null)
+				.putColumnIfNotNull(_PAYLOAD_OBJECT, event.getPayLoadObject(), null)
+				.putColumnIfNotNull(USER, event.getUser(), null)
+				.putColumnIfNotNull(CONTEXT, event.getContext(), null)
+				.putColumnIfNotNull(_EVENT_TYPE, event.getEventType(), null)
+				.putColumnIfNotNull(_ORGANIZATION_UID, event.getOrganizationUid(), null)
+				.putColumnIfNotNull(_PARENT_EVENT_ID, event.getParentEventId(), null);
 		try {
 			m.execute();
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 		return key;
 
@@ -1103,25 +1110,25 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param cfName
 	 * @param rowKey
 	 * @param CoulmnValue
-	 * @param eventObject
+	 * @param event
 	 */
-	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, Event eventObject) {
+	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, Event event) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
-		MutationBatch eventTimelineMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+		MutationBatch eventTimeline = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-		eventTimelineMutation.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(CoulmnValue, CoulmnValue, null);
+		eventTimeline.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(CoulmnValue, CoulmnValue, null);
 
-		eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey + "~" + eventObject.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
+		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey + SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
 
-		eventTimelineMutation.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8) + "~" + eventObject.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
+		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8) + SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
 
 		try {
-			eventTimelineMutation.execute();
+			eventTimeline.execute();
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
@@ -1148,7 +1155,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			eventTimelineMutation.execute();
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
@@ -1180,7 +1187,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			m.execute();
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
@@ -1215,7 +1222,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(READ_EXCEPTION + cfName);
 		}
 		if (!isExists) {
 			resultMap.put("isExists", isExists);
@@ -1297,9 +1304,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTION_ITEM_ID)).putColumnIfNotNull(_CONTENT_ID, eventMap.get(CONTENT_ID))
-				.putColumnIfNotNull(_PARENT_CONTENT_ID, eventMap.get(PARENT_CONTENT_ID)).putColumnIfNotNull(_RESOURCE_GOORU_OID, eventMap.get(_CONTENT_GOORU_OID))
-				.putColumnIfNotNull(_COLLECTION_GOORU_OID, eventMap.get(_PARENT_GOORU_OID)).putColumnIfNotNull(_ITEM_SEQUENCE, eventMap.get(ITEM_SEQUENCE))
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTION_ITEM_ID))
+				.putColumnIfNotNull(_CONTENT_ID, eventMap.get(CONTENT_ID))
+				.putColumnIfNotNull(_PARENT_CONTENT_ID, eventMap.get(PARENT_CONTENT_ID))
+				.putColumnIfNotNull(_RESOURCE_GOORU_OID, eventMap.get(_CONTENT_GOORU_OID))
+				.putColumnIfNotNull(_COLLECTION_GOORU_OID, eventMap.get(_PARENT_GOORU_OID))
+				.putColumnIfNotNull(_ITEM_SEQUENCE, eventMap.get(ITEM_SEQUENCE))
 				.putColumnIfNotNull(_ORGANIZATION_UID, eventMap.get(ORGANIZATION_UID));
 
 	}
@@ -1315,8 +1325,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		int isGroupOwner = 0;
 		int deleted = 0;
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GROUP_UID) + SEPERATOR + eventMap.get(GOORUID)).putColumnIfNotNull(_USER_GROUP_UID, eventMap.get(GROUP_UID)).putColumnIfNotNull(_CLASSPAGE_GOORU_OID, eventMap.get(CONTENT_GOORU_OID))
-				.putColumnIfNotNull(_IS_GROUP_OWNER, isGroupOwner).putColumnIfNotNull(DELETED, deleted).putColumnIfNotNull(_GOORU_UID, eventMap.get(GOORUID)).putColumnIfNotNull(_CLASSPAGE_CODE, eventMap.get(CLASS_CODE)).putColumnIfNotNull(_USER_GROUP_CODE, eventMap.get(_CONTENT_GOORU_OID))
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GROUP_UID) + SEPERATOR + eventMap.get(GOORUID))
+				.putColumnIfNotNull(_USER_GROUP_UID, eventMap.get(GROUP_UID))
+				.putColumnIfNotNull(_CLASSPAGE_GOORU_OID, eventMap.get(CONTENT_GOORU_OID))
+				.putColumnIfNotNull(_IS_GROUP_OWNER, isGroupOwner)
+				.putColumnIfNotNull(DELETED, deleted)
+				.putColumnIfNotNull(_GOORU_UID, eventMap.get(GOORUID))
+				.putColumnIfNotNull(_CLASSPAGE_CODE, eventMap.get(CLASS_CODE))
+				.putColumnIfNotNull(_USER_GROUP_CODE, eventMap.get(_CONTENT_GOORU_OID))
 				.putColumnIfNotNull(_ORGANIZATION_UID, eventMap.get(ORGANIZATION_UID))
 
 		;
@@ -1325,7 +1341,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			m.execute();
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
-			throw new RuntimeException(DELETE_EXCEPTION + cfName);
+			throw new RuntimeException(WRITE_EXCEPTION + cfName);
 		}
 	}
 
@@ -1536,7 +1552,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				m.execute();
 			} catch (Exception e) {
 				logger.error("Exception:" + e);
-				throw new RuntimeException(DELETE_EXCEPTION + cfName);
+				throw new RuntimeException(WRITE_EXCEPTION + cfName);
 			}
 		}
 	}

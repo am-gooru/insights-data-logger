@@ -36,7 +36,9 @@ public class ServerValidationUtils {
 			errors.rejectValue(field, errorMsg);
 		}
 	}
-
+	public static void rejectIfAnyException(Errors errors, String errorCode, Exception exception) {
+			errors.rejectValue(errorCode, exception.toString());
+	}
 	public static void rejectIfNull(Errors errors, Object data, String field, String errorMsg) {
 		if (data == null) {
 			errors.rejectValue(field, errorMsg);

@@ -23,7 +23,6 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,9 +32,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
-import org.json.JSONException;
+import org.ednovo.data.model.EventData;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
@@ -54,8 +52,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
@@ -116,11 +112,11 @@ public class EventServiceImpl implements EventService, Constants {
 	private Errors validateInsertEventData(EventData eventData) {
 		final Errors errors = new BindException(eventData, "EventData");
 		if (eventData == null) {
-			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", "Fields must not be empty");
+			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", FIELDS+EMPTY_EXCEPTION);
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENT_NAME, "LA001", "eventName must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), "eventId", "LA002", "eventId must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENT_NAME, "LA001", EVENT_NAME+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), EVENT_ID, "LA002", EVENT_ID+EMPTY_EXCEPTION);
 
 		return errors;
 	}
@@ -133,17 +129,17 @@ public class EventServiceImpl implements EventService, Constants {
 	private Errors validateInsertEvent(Event event) {
 		final Errors errors = new BindException(event, "Event");
 		if (event == null) {
-			ServerValidationUtils.rejectIfNull(errors, event, "event.all", "Fields must not be empty");
+			ServerValidationUtils.rejectIfNull(errors, event, "event.all",FIELDS+EMPTY_EXCEPTION);
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVENT_NAME, "LA001", "eventName must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", "eventId must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", "version must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004", "User Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getSession(), "session", "LA005", "Session Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getMetrics(), "metrics", "LA006", "Mestrics Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getContext(), "context", "LA007", "context Object must not be empty");
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getPayLoadObject(), "payLoadObject", "LA008", "pay load Object must not be empty");
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVENT_NAME, "LA001", EVENT_NAME+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", EVENT_ID+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", VERSION+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004",  USER+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getSession(), SESSION, "LA005",SESSION+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getMetrics(), METRICS, "LA006", METRICS+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getContext(), CONTEXT, "LA007", CONTEXT+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getPayLoadObject(), PAY_LOAD, "LA008", PAY_LOAD+EMPTY_EXCEPTION);
 		return errors;
 	}
 
@@ -192,36 +188,36 @@ public class EventServiceImpl implements EventService, Constants {
 					JsonObject eventObj = jsonElement.getAsJsonObject();
 
 					if (eventObj.get(_CONTENT_GOORU_OID) != null) {
-						valueMap.put(RESOURCE_ID, eventObj.get(_CONTENT_GOORU_OID).toString().replaceAll("\"", ""));
+						valueMap.put(RESOURCE_ID, eventObj.get(_CONTENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_PARENT_GOORU_OID) != null) {
-						valueMap.put(PARENT_ID, eventObj.get(_PARENT_GOORU_OID).toString().replaceAll("\"", ""));
+						valueMap.put(PARENT_ID, eventObj.get(_PARENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_EVENT_NAME) != null) {
-						valueMap.put(EVENT_NAME, eventObj.get(_EVENT_NAME).toString().replaceAll("\"", ""));
+						valueMap.put(EVENT_NAME, eventObj.get(_EVENT_NAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_USER_UID) != null) {
-						valueMap.put(USER_UID, eventObj.get(_USER_UID).toString().replaceAll("\"", ""));
+						valueMap.put(USER_UID, eventObj.get(_USER_UID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(USERNAME) != null) {
-						valueMap.put(USERNAME, eventObj.get(USERNAME).toString().replaceAll("\"", ""));
+						valueMap.put(USERNAME, eventObj.get(USERNAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(SCORE) != null) {
-						valueMap.put(SCORE, eventObj.get(SCORE).toString().replaceAll("\"", ""));
+						valueMap.put(SCORE, eventObj.get(SCORE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_SESSION_ID) != null) {
-						valueMap.put(SESSION, eventObj.get(_SESSION_ID).toString().replaceAll("\"", ""));
+						valueMap.put(SESSION_ID, eventObj.get(_SESSION_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_FIRST_ATTEMPT_STATUS) != null) {
-						valueMap.put(FIRST_ATTEMPT_STATUS, eventObj.get(_FIRST_ATTEMPT_STATUS).toString().replaceAll("\"", ""));
+						valueMap.put(FIRST_ATTEMPT_STATUS, eventObj.get(_FIRST_ATTEMPT_STATUS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 					if (eventObj.get(_ANSWER_STATUS) != null) {
-						valueMap.put(ANSWERSTATUS, eventObj.get(_ANSWER_STATUS).toString().replaceAll("\"", ""));
+						valueMap.put(ANSWERSTATUS, eventObj.get(_ANSWER_STATUS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
 					}
 
 				} catch (JsonParseException e) {
 					// Invalid.
-					logger.error("OOPS! Invalid JSON", e);
+					logger.error(INVALID_JSON, e);
 				}
 			}
 			valueList.add(valueMap);
@@ -232,11 +228,15 @@ public class EventServiceImpl implements EventService, Constants {
 
 	@Override
 	@Async
-	public ActionResponseDTO<Event> processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception {
+	public ActionResponseDTO<Event> processMessage(Event event){
 
 		Errors errors = validateInsertEvent(event);
 		if (!errors.hasErrors()) {
-			dataLoaderService.processMessage(event);
+			try {
+				dataLoaderService.processMessage(event);
+			} catch (Exception e) {
+				ServerValidationUtils.rejectIfAnyException(errors, "EX1001", e);
+			} 
 		}
 		return new ActionResponseDTO<Event>(event, errors);
 	}
@@ -286,7 +286,7 @@ public class EventServiceImpl implements EventService, Constants {
 			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 
 			if (Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + (Integer.valueOf(lastCheckedCount) + 1));
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.valueOf(lastCheckedCount) + 1));
 			} else {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
 			}
