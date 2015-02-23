@@ -302,8 +302,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).toString().equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
-						int[] attemptTrySequence = (int[]) eventMap.get(ATTMPT_TRY_SEQ);
-						int[] attempStatus = (int[]) eventMap.get(ATTMPT_STATUS);
+						int[] attemptTrySequence = TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_TRY_SEQ));
+						int[] attempStatus = TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_STATUS));
 						String answerStatus = null;
 						int status = 0;
 						status = (Integer) eventMap.get("attemptCount");
@@ -461,8 +461,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).toString().equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
 
-						int[] attemptTrySequence = (int[]) eventMap.get(ATTMPT_TRY_SEQ);
-						int[] attempStatus = (int[]) eventMap.get(ATTMPT_STATUS);
+						int[] attemptTrySequence =  TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_TRY_SEQ));
+						int[] attempStatus = TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_STATUS));
 						String answerStatus = null;
 						int status = 0;
 
@@ -562,7 +562,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param eventMap
 	 * @throws JSONException
 	 */
-	public void realTimeAggregator(String keyValue, Map<String, Object> eventMap) throws JSONException {
+	public void realTimeAggregator(String keyValue, Map<String, Object> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		String resourceType = eventMap.get(RESOURCE_TYPE).toString();
@@ -653,8 +653,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		if (resourceType != null && resourceType.equalsIgnoreCase(QUESTION)) {
 			if (eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
-				int[] attemptTrySequence = (int[]) eventMap.get(ATTMPT_TRY_SEQ);
-				int[] attempStatus = (int[]) eventMap.get(ATTMPT_STATUS);
+				int[] attemptTrySequence = TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_TRY_SEQ));
+				int[] attempStatus = TypeConverter.stringToIntArray(EMPTY_STRING+eventMap.get(ATTMPT_STATUS));
 				// String answerStatus = null;
 				int status = 0;
 				status = (Integer) eventMap.get("attemptCount");
@@ -704,7 +704,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @return
 	 * @throws JSONException
 	 */
-	public MutationBatch addObjectForAggregator(Map<String, Object> eventMap, String keyValue, MutationBatch m, String options, int attemptStatus) throws JSONException {
+	public MutationBatch addObjectForAggregator(Map<String, Object> eventMap, String keyValue, MutationBatch m, String options, int attemptStatus) {
 
 		String textValue = null;
 		String answerObject = null;
@@ -715,12 +715,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			answerObject = eventMap.get(ANSWER_OBECT).toString();
 		}
 		String answers = eventMap.get(ANS).toString();
-		JSONObject answersJson = new JSONObject(answers);
+		JSONObject answersJson = null;
+		try {
+			answersJson = new JSONObject(answers);
+		} catch (JSONException e) {
+			logger.error("Exception while conversion answer object as JSON");
+		}
 		JSONArray names = answersJson.names();
 		String firstChoosenAns = null;
 
 		if (names != null && names.length() != 0) {
-			firstChoosenAns = names.getString(0);
+			try {
+				firstChoosenAns = names.getString(0);
+			} catch (JSONException e) {
+				logger.error("Exception while conversion answer choice as JSON");
+			}
 		}
 
 		if (eventMap.get(SCORE) != null) {
