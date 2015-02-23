@@ -261,21 +261,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 
 		if (keysList != null && keysList.size() > 0) {
-			try{
-				this.startCounters(eventMap, aggregatorJson, keysList, key);
-			}catch(Exception e){
-				logger.error("Exception while real time counter aggregation.");
+			JSONObject j = null;
+			try {
+				j = new JSONObject(aggregatorJson);
+			} catch (Exception e) {
+				logger.error("Exception while aggregator json conversion.");
 			}
-			try{
-				this.postAggregatorUpdate(eventMap, aggregatorJson, keysList, key);
-			}catch(Exception e){
-				logger.error("Exception while post aggregation.");
-			}
-			try{
-				this.startCounterAggregator(eventMap, aggregatorJson, keysList, key);
-			}catch(Exception e){
-				logger.error("Exception while real time post counter aggregation.");
-			}
+			this.startCounters(eventMap, j, keysList, key);
+			this.postAggregatorUpdate(eventMap, j, keysList, key);
+			this.startCounterAggregator(eventMap, j, keysList, key);
 		}
 	}
 
@@ -287,10 +281,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param key
 	 * @throws JSONException
 	 */
-	public void postAggregatorUpdate(Map<String, Object> eventMap, String aggregatorJson, List<String> keysList, String key) throws JSONException {
-		JSONObject j = new JSONObject(aggregatorJson);
+	public void postAggregatorUpdate(Map<String, Object> eventMap, JSONObject aggregatorJson, List<String> keysList, String key) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {
+		Map<String, Object> m1 = JSONDeserializer.deserialize(aggregatorJson.toString(), new TypeReference<Map<String, Object>>() {
 		});
 		Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
 
@@ -348,7 +341,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 
 				}
-				this.realTimeAggregator(localKey, eventMap);
+				
+				try {
+					this.realTimeAggregator(localKey, eventMap);
+				} catch (Exception e2) {
+					logger.error("Exception:realTimeAggregator." + e2);
+				}
 			}
 
 		}
@@ -367,11 +365,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param key
 	 * @throws JSONException
 	 */
-	public void startCounterAggregator(Map<String, Object> eventMap, String aggregatorJson, List<String> keysList, String key) throws JSONException {
+	public void startCounterAggregator(Map<String, Object> eventMap, JSONObject aggregatorJson, List<String> keysList, String key){
 
-		JSONObject j = new JSONObject(aggregatorJson);
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {
+		Map<String, Object> m1 = JSONDeserializer.deserialize(aggregatorJson.toString(), new TypeReference<Map<String, Object>>() {
 		});
 		Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
 
@@ -426,10 +423,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param key
 	 * @throws JSONException
 	 */
-	public void startCounters(Map<String, Object> eventMap, String aggregatorJson, List<String> keysList, String key) throws JSONException {
-		JSONObject j = new JSONObject(aggregatorJson);
+	public void startCounters(Map<String, Object> eventMap, JSONObject aggregatorJson, List<String> keysList, String key) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		Map<String, Object> m1 = JSONDeserializer.deserialize(j.toString(), new TypeReference<Map<String, Object>>() {
+		Map<String, Object> m1 = JSONDeserializer.deserialize(aggregatorJson.toString(), new TypeReference<Map<String, Object>>() {
 		});
 		Set<Map.Entry<String, Object>> entrySet = m1.entrySet();
 

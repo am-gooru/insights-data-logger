@@ -365,11 +365,7 @@ public class CassandraDataLoader implements Constants {
 
 		aggregatorJson = getLoggerCache().getCaches().get(eventMap.get(EVENT_NAME).toString());
 		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
-			try{
 			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
-			}catch(Exception e){
-				logger.error("Exception:Exception while real time aggregation");
-			}
 		}
 
 		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
