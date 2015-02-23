@@ -232,11 +232,7 @@ public class EventServiceImpl implements EventService, Constants {
 
 		Errors errors = validateInsertEvent(event);
 		if (!errors.hasErrors()) {
-			try {
 				dataLoaderService.processMessage(event);
-			} catch (Exception e) {
-				ServerValidationUtils.rejectIfAnyException(errors, "EX1001", e);
-			} 
 		}
 		return new ActionResponseDTO<Event>(event, errors);
 	}

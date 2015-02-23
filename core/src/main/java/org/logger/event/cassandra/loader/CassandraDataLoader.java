@@ -318,14 +318,18 @@ public class CassandraDataLoader implements Constants {
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
-	public void processMessage(Event event) throws Exception {
+	public void processMessage(Event event){
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
 		//Map<String, String> eventMap2 = new LinkedHashMap<String, String>();
 
 		String aggregatorJson = null;
 
-		eventMap = JSONDeserializer.deserializeEventv2(event);
-		//eventMap2 = JSONDeserializer.deserializeEvent(event);
+		try{
+			eventMap = JSONDeserializer.deserializeEventv2(event);
+			//eventMap2 = JSONDeserializer.deserializeEvent(event);
+		}catch(Exception e){
+			logger.error("Exception while deserializing event");
+		}
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
 
@@ -360,9 +364,12 @@ public class CassandraDataLoader implements Constants {
 		baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
 		aggregatorJson = getLoggerCache().getCaches().get(eventMap.get(EVENT_NAME).toString());
-
 		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
+			try{
 			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+			}catch(Exception e){
+				logger.error("Exception:Exception while real time aggregation");
+			}
 		}
 
 		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);

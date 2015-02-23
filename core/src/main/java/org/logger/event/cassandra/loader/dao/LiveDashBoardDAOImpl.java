@@ -137,7 +137,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 * @param eventMap
 	 * @throws JSONException
 	 */
-	public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String, String> eventMap) throws JSONException {
+	public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String, Object> eventMap) throws JSONException {
 
 		JSONObject filtersObj = new JSONObject();
 		JSONObject paginateObj = new JSONObject();
@@ -174,7 +174,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			clientResource = new ClientResource(atmosphereEndPoint + "/classpage/users/usage");
 			Form forms = new Form();
 			forms.add("data", mainObj.toString());
-			forms.add("collectionId", eventMap.get(PARENT_GOORU_OID));
+			forms.add("collectionId", eventMap.get(PARENT_GOORU_OID).toString());
 			clientResource.post(forms.getWebRepresentation());
 		}
 
