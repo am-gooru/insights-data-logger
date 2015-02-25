@@ -62,6 +62,10 @@ public enum ColumnFamily {
 	
 	RESOURCETYPES("resource_type"),
 	
+	RESOURCEFORMAT("resource_format"),
+
+	INSTRUCTIONAL("instructional_use"),
+	
 	CATEGORY("category"),
 	
 	RESOURCE("resource"),

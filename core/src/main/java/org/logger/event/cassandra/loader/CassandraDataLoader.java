@@ -159,7 +159,6 @@ public class CassandraDataLoader implements Constants {
 	 */
 	public void clearCache() {
 		this.setLoggerCache(new DataLoggerCaches());
-		this.getLoggerCache().init();
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 	}
 

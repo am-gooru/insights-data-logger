@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
@@ -234,7 +235,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			idList.add("GLP~" + id);
 		}
 		logger.debug("Indexing resources : {}", idList);
-		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList, 0);
+		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.RESOURCE.getColumnFamily(), idList, 0);
 	
 			if (resource != null && resource.size() > 0) {
 				this.getResourceAndIndex(resource);
@@ -454,153 +455,122 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @throws ParseException
 	 */
 	public void getResourceAndIndex(Rows<String, String> resource) throws ParseException {
+		{
+			   
+			Map<String,Object> resourceMap = new LinkedHashMap<String, Object>();
 
-		Map<String, Object> resourceMap = new LinkedHashMap<String, Object>();
-
-		for (int a = 0; a < resource.size(); a++) {
-
+			for(int a = 0 ; a < resource.size(); a++){
+				
 			ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
 
-			if (columns == null) {
-				return;
-			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
-				if (contentItems != null && !contentItems.isEmpty()) {
-					resourceMap.put("contentItems", contentItems);
-				}
+			String gooruOid = resource.getRowByIndex(a).getKey();
 
-			}
-			if (columns.getColumnByName("title") != null) {
+			if(columns.getColumnByName("title") != null){
 				resourceMap.put("title", columns.getColumnByName("title").getStringValue());
 			}
-			if (columns.getColumnByName("description") != null) {
+			if(columns.getColumnByName("description") != null){
 				resourceMap.put("description", columns.getColumnByName("description").getStringValue());
 			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
+			if(columns.getColumnByName("lastModified") != null){
+				resourceMap.put("lastModified", columns.getColumnByName("lastModified").getDateValue());
 			}
-			if (columns.getColumnByName("last_modified") != null) {
-				try {
-					resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
-				} catch (Exception e) {
-					try {
-						resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
-					} catch (Exception e2) {
-						resourceMap.put("lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
-					}
-				}
+			if(columns.getColumnByName("createdOn") != null){
+				resourceMap.put("createdOn", columns.getColumnByName("createdOn").getDateValue());
 			}
-			if (columns.getColumnByName("created_on") != null) {
-				try {
-					resourceMap.put(
-							"createdOn",
-							columns.getColumnByName("created_on") != null ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName(
-									"last_modified").getStringValue()));
-				} catch (Exception e) {
-					try {
-						resourceMap.put(
-								"createdOn",
-								columns.getColumnByName("created_on") != null ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName(
-										"last_modified").getStringValue()));
-					} catch (Exception e2) {
-						resourceMap.put(
-								"createdOn",
-								columns.getColumnByName("created_on") != null ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName(
-										"last_modified").getStringValue()));
-					}
-				}
+			if(columns.getColumnByName("creator.userUid") != null){
+				resourceMap.put("creatorUid", columns.getColumnByName("creator.userUid").getStringValue());
 			}
-			if (columns.getColumnByName("creator_uid") != null) {
-				resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
+			if(columns.getColumnByName("owner.userUid") != null){
+				resourceMap.put("userUid", columns.getColumnByName("owner.userUid").getStringValue());
 			}
-			if (columns.getColumnByName("user_uid") != null) {
-				resourceMap.put("userUid", columns.getColumnByName("user_uid").getStringValue());
+			if(columns.getColumnByName("recordSource") != null){
+				resourceMap.put("recordSource", columns.getColumnByName("recordSource").getStringValue());
 			}
-			if (columns.getColumnByName("record_source") != null) {
-				resourceMap.put("recordSource", columns.getColumnByName("record_source").getStringValue());
-			}
-			if (columns.getColumnByName("sharing") != null) {
+			if(columns.getColumnByName("sharing") != null){
 				resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
 			}
-			/*
-			 * if(columns.getColumnByName("views_count") != null){ resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue()); }
-			 */
-			if (columns.getColumnByName("organization_uid") != null) {
-				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization_uid").getStringValue());
+			if(columns.getColumnByName("organization.partyUid") != null){
+				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization.partyUid").getStringValue());
 			}
-			if (columns.getColumnByName("thumbnail") != null) {
-				resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
-			}
-			if (columns.getColumnByName("instructional_id") != null) {
-				resourceMap.put("instructionalId", columns.getColumnByName("instructional_id").getLongValue());
-			}
-			if (columns.getColumnByName("resource_format_id") != null) {
-				resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
-			}
-			if (columns.getColumnByName("grade") != null) {
-				Set<String> gradeArray = new HashSet<String>();
-				for (String gradeId : columns.getColumnByName("grade").getStringValue().split(",")) {
-					gradeArray.add(gradeId);
+			if(columns.getColumnByName("thumbnail") != null && StringUtils.isNotBlank(columns.getColumnByName("thumbnail").getStringValue())){
+				if(columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")){				
+					resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
+				}else{
+					resourceMap.put("thumbnail", getLoggerCache().getREPOPATH()+"/"+columns.getColumnByName("folder").getStringValue()+"/"+columns.getColumnByName("thumbnail").getStringValue());
 				}
-				if (gradeArray != null && gradeArray.isEmpty()) {
+			}
+			if(columns.getColumnByName("grade") != null){
+				Set<String> gradeArray = new HashSet<String>(); 
+				for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
+					gradeArray.add(gradeId);	
+				}
+				if(gradeArray != null && gradeArray.isEmpty() ){
 					resourceMap.put("grade", gradeArray);
 				}
 			}
-			if (columns.getColumnByName("license_name") != null) {
-				if (getLoggerCache().getLicenseCache().containsKey(columns.getColumnByName("license_name").getStringValue())) {
-					resourceMap.put("licenseId", getLoggerCache().getLicenseCache().get(columns.getColumnByName("license_name").getStringValue()));
+			if(columns.getColumnByName("license.name") != null){
+				if(getLoggerCache().getLicenseCache().containsKey(columns.getColumnByName("license.name").getStringValue())){    							
+					resourceMap.put("licenseId", getLoggerCache().getLicenseCache().get(columns.getColumnByName("license.name").getStringValue()));
 				}
 			}
-			if (columns.getColumnByName("type_name") != null) {
-				if (getLoggerCache().getResourceTypesCache().containsKey(columns.getColumnByName("type_name").getStringValue())) {
-					resourceMap.put("resourceTypeId", getLoggerCache().getResourceTypesCache().get(columns.getColumnByName("type_name").getStringValue()));
+			if(columns.getColumnByName("resourceType") != null){
+				if(getLoggerCache().getResourceTypesCache().containsKey(columns.getColumnByName("resourceType").getStringValue())){    							
+					resourceMap.put("resourceTypeId", getLoggerCache().getResourceTypesCache().get(columns.getColumnByName("resourceType").getStringValue()));
 				}
 			}
-			if (columns.getColumnByName("category") != null) {
-				if (getLoggerCache().getCategoryCache().containsKey(columns.getColumnByName("category").getStringValue())) {
+			if(columns.getColumnByName("category") != null){
+				if(getLoggerCache().getCategoryCache().containsKey(columns.getColumnByName("category").getStringValue())){    							
 					resourceMap.put("resourceCategoryId", getLoggerCache().getCategoryCache().get(columns.getColumnByName("category").getStringValue()));
 				}
 			}
-			if (columns.getColumnByName("category") != null) {
+			if(columns.getColumnByName("category") != null){
 				resourceMap.put("category", columns.getColumnByName("category").getStringValue());
 			}
-			if (columns.getColumnByName("type_name") != null) {
-				resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
+			if(columns.getColumnByName("resourceType") != null){
+				resourceMap.put("typeName", columns.getColumnByName("resourceType").getStringValue());
 			}
-			if (columns.getColumnByName("resource_format") != null) {
-				resourceMap.put("resourceFormat", columns.getColumnByName("resource_format").getStringValue());
+			if(columns.getColumnByName("resourceFormat") != null){
+				resourceMap.put("resourceFormat", columns.getColumnByName("resourceFormat").getStringValue());
+				resourceMap.put("resourceFormatId", getLoggerCache().getResourceFormatCache().get(columns.getColumnByName("resourceFormat").getStringValue()));
 			}
-			if (columns.getColumnByName("instructional") != null) {
+			if(columns.getColumnByName("instructional") != null){
 				resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
+				resourceMap.put("instructionalId", getLoggerCache().getInstructionalCache().get(columns.getColumnByName("instructional").getStringValue()));
 			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
-
-				this.getLiveCounterData("all~" + columns.getColumnByName("gooru_oid").getStringValue(), resourceMap);
-
-				if (questionList != null && questionList.size() > 0) {
-					resourceMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
-					resourceMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
-					resourceMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
-					resourceMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
-
-					resourceMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
-					resourceMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
-					resourceMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
-
-					resourceMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
+			if(gooruOid != null){
+				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),gooruOid, 0);
+				if(!contentItems.isEmpty()){
+					resourceMap.put("contentItems",contentItems);
 				}
+				resourceMap.put("gooruOid", gooruOid);	 
+				
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOid,0);
+
+				this.getLiveCounterData("all~"+gooruOid, resourceMap);
+		    	
+		    	if(questionList != null && questionList.size() > 0){
+		    		resourceMap.put("questionCount",questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+		    		resourceMap.put("resourceCount",questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+		    		resourceMap.put("oeCount",questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+		    		resourceMap.put("mcCount",questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+		    		
+		    		resourceMap.put("fibCount",questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+		    		resourceMap.put("maCount",questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+		    		resourceMap.put("tfCount",questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+		    		
+		    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
+		    	}
 			}
-			if (columns.getColumnByName("user_uid") != null) {
-				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
+			if(columns.getColumnByName("owner.userUid") != null){
+				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
 			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + getLoggerCache().getCache().get(INDEXING_VERSION), IndexType.DIMRESOURCE.getIndexType(), columns
-						.getColumnByName("gooru_oid").getStringValue());
+			if(gooruOid != null){
+				resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
+				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+getLoggerCache().getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 			}
-		}
+			}
+			}
+	    
 	}
 
 	/**

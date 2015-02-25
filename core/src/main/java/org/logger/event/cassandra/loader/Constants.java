@@ -542,5 +542,5 @@ public interface Constants {
 	
 	public static final String ITEM_COUNT = "itemCount";
 	
-	
+	public static final String INDEXINGVERSION = "index_version";	
 }
