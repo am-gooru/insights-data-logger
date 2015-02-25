@@ -52,6 +52,8 @@ public interface Constants {
 	
 	public static final  String EVENT_ID = "eventId";
 	
+	public static final  String EVENT_TIME = "eventTime";
+	
 	public static final  String PARENT_EVENT_ID = "parentEventId";
 	
 	public static final  String _PARENT_EVENT_ID = "parent_event_id";
@@ -523,5 +525,22 @@ public interface Constants {
 	public static final String EMPTY_STRING = "";
 	
 	public static final String EMPTY_EXCEPTION = " must not be Emtpy!";
+	
+	public static final String QUESTION_COUNT = "questionCount";
+	
+	public static final String RESOURCE_COUNT = "resourceCount";
+	
+	public static final String OE_COUNT = "oeCount";
+	
+	public static final String MC_COUNT = "mcCount";
+	
+	public static final String FIB_COUNT = "fibCount";
+	
+	public static final String MA_COUNT = "maCount";
+	
+	public static final String TF_COUNT = "tfCount";
+	
+	public static final String ITEM_COUNT = "itemCount";
+	
 	
 }

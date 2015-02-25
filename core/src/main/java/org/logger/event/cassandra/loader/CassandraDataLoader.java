@@ -872,6 +872,7 @@ public class CassandraDataLoader implements Constants {
 			// Called from Scheduled job. Mark the status as in-progress so that
 			// no other activity will overlap.
 			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, INPROGRESS);
+			baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + 0);
 		}
 
 		String timeLineKey = null;
@@ -902,7 +903,6 @@ public class CassandraDataLoader implements Constants {
 
 			if (isScheduledJob) {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN, "" + minuteDateFormatter.format(new Date(batchStartDate)));
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + 0);
 			}
 		}
 

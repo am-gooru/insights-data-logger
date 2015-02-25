@@ -76,7 +76,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e2);
 			}
 		}
-		if (jsonField.has("version")) {
+		if (jsonField.has(VERSION)) {
 			Event events = new Gson().fromJson(fields, Event.class);
 			Map<String, Object> eventMap = new HashMap<String, Object>();
 			try {
@@ -85,9 +85,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e);
 			}
 
-			eventMap.put("eventName", events.getEventName());
-			eventMap.put("eventId", events.getEventId());
-			eventMap.put("eventTime", String.valueOf(events.getStartTime()));
+			eventMap.put(EVENT_NAME, events.getEventName());
+			eventMap.put(EVENT_ID, events.getEventId());
+			eventMap.put(EVENT_TIME, String.valueOf(events.getStartTime()));
 			if (eventMap.get(CONTENT_GOORU_OID) != null) {
 				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
 				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
@@ -98,16 +98,16 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (String.valueOf(eventMap.get(CONTENT_GOORU_OID)) != null) {
 				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
 				if (questionList != null && questionList.size() > 0) {
-					eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-					eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-					eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-					eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
+					eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
+					eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
+					eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
 
-					eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-					eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-					eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+					eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
+					eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
+					eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
 
-					eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 				}
 			}
 			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + getLoggerCache().getCaches().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
@@ -138,43 +138,43 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					 * }
 					 */
 
-					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
-						eventMap.put("eventName", "reaction.create");
+					if (key.equalsIgnoreCase(EVENT_NAME) && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
+						eventMap.put(EVENT_NAME, "reaction.create");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
 
-						eventMap.put("eventName", "collection.play");
+						eventMap.put(EVENT_NAME, "collection.play");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
-						eventMap.put("eventName", "user.login");
+						eventMap.put(EVENT_NAME, "user.login");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
-						eventMap.put("eventName", "user.register");
+						eventMap.put(EVENT_NAME, "user.register");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
 									"collection-resource-question-play-dots"))) {
-						eventMap.put("eventName", "collection.resource.play");
+						eventMap.put(EVENT_NAME, "collection.resource.play");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
-						eventMap.put("eventName", "resource.play");
+						eventMap.put(EVENT_NAME, "resource.play");
 					}
 
 					if (key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")) {
@@ -193,16 +193,16 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
 					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
 					if (questionList != null && questionList.size() > 0) {
-						eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-						eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-						eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-						eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
+						eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
+						eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
+						eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
 
-						eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-						eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-						eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+						eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
+						eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
+						eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
 
-						eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
 				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + getLoggerCache().getCaches().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
@@ -278,7 +278,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	public Map<String, Object> getContentInfo(Map<String, Object> eventMap, String gooruOId) {
 
 		Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
-		if (!contentItems.isEmpty()) {
+		if (contentItems != null && !contentItems.isEmpty()) {
 			eventMap.put("contentItems", contentItems);
 		}
 		ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + gooruOId, 0);
@@ -310,15 +310,15 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId, 0);
 			if (questionCount != null && !questionCount.isEmpty()) {
-				long questionCounts = questionCount.getLongValue("questionCount", 0L);
-				eventMap.put("questionCount", questionCounts);
+				long questionCounts = questionCount.getLongValue(QUESTION_COUNT, 0L);
+				eventMap.put(QUESTION_COUNT, questionCounts);
 				if (questionCounts > 0L) {
 					if (getLoggerCache().getResourceTypes().containsKey(resource.getColumnByName("type_name").getStringValue())) {
 						eventMap.put("resourceTypeId", getLoggerCache().getResourceTypes().get(resource.getColumnByName("type_name").getStringValue()));
 					}
 				}
 			} else {
-				eventMap.put("questionCount", 0L);
+				eventMap.put(QUESTION_COUNT, 0L);
 			}
 		}
 
@@ -468,7 +468,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			if (columns.getColumnByName("gooru_oid") != null) {
 				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
-				if (!contentItems.isEmpty()) {
+				if (contentItems != null && !contentItems.isEmpty()) {
 					resourceMap.put("contentItems", contentItems);
 				}
 
@@ -582,16 +582,16 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				this.getLiveCounterData("all~" + columns.getColumnByName("gooru_oid").getStringValue(), resourceMap);
 
 				if (questionList != null && questionList.size() > 0) {
-					resourceMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-					resourceMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-					resourceMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-					resourceMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+					resourceMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
+					resourceMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
+					resourceMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
+					resourceMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
 
-					resourceMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-					resourceMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-					resourceMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+					resourceMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
+					resourceMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
+					resourceMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
 
-					resourceMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+					resourceMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 				}
 			}
 			if (columns.getColumnByName("user_uid") != null) {
