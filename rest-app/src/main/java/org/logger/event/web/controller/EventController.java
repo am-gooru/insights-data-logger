@@ -37,8 +37,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -411,6 +412,24 @@ public class EventController implements Constants {
 			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
+	
+	/**
+	 * DI Indexing api for all type.
+	 * @param request
+	 * @param indexType
+	 * @param ids
+	 * @param resourceType
+	 * @param response
+	 */
+	@RequestMapping(value = "/index/{type}", method = RequestMethod.GET)
+	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids,@RequestParam(value = "resourceType", required = false) String resourceType ,HttpServletResponse response) {
+			try {
+				eventService.index(ids, indexType);
+			} catch (Exception e) {
+				sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Oops!!Indexing failed!!"+e);
+			}
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
+	}
 
 	/**
 	 * Get last few events
@@ -578,6 +597,8 @@ public class EventController implements Constants {
 	 * @return
 	 */
 	public boolean validateSchedular() {
-		return eventService.validateSchedular();
+		boolean value = eventService.validateSchedular();
+		logger.debug("Can run scheduler? : "+value);
+		return value;
 	}
 }

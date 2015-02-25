@@ -112,11 +112,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + getLoggerCache().getCaches().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
-				indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
-				if (eventMap.containsKey(SOURCE_GOORU_OID)) {
-					indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
-				}
 				try {
+					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
+					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
+						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
+					}
 					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
@@ -226,23 +226,21 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * Indexing resources
 	 * 
 	 * @param ids
+	 * @throws Exception 
 	 */
-	public void indexResource(String ids) {
+	public void indexResource(String ids) throws Exception {
 		Collection<String> idList = new ArrayList<String>();
 		for (String id : ids.split(",")) {
 			idList.add("GLP~" + id);
 		}
 		logger.debug("Indexing resources : {}", idList);
 		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList, 0);
-		try {
+	
 			if (resource != null && resource.size() > 0) {
 				this.getResourceAndIndex(resource);
 			} else {
 				throw new AccessDeniedException("Invalid Id!!");
 			}
-		} catch (Exception e) {
-			logger.error("indexing failed .. :{}", e);
-		}
 	}
 
 	/**
@@ -748,7 +746,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId, 0);
 
 		if (userInfos != null & userInfos.size() > 0) {
-			logger.info("INdexing user : " + userId);
+			logger.debug("INdexing user : " + userId);
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
 			if (userInfos.getColumnByName("gooru_uid") != null) {
 				contentBuilder.field("user_uid", userInfos.getColumnByName("gooru_uid").getStringValue());

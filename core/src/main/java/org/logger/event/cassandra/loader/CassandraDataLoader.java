@@ -914,6 +914,48 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	/**
+	 * Indexing content
+	 * @param ids
+	 * @throws Exception 
+	 */
+    public void indexResource(String ids) throws Exception{
+    	indexer.indexResource(ids);
+    }
+    /**
+     * Indexing user using user uuid.
+     * @param ids
+     * @throws Exception
+     */
+    public void indexUser(String ids) throws Exception{
+    	for(String userId : ids.split(",")){
+    		indexer.getUserAndIndex(userId);
+    	}
+    }
+    /**
+     * Indexing activity using event id
+     * @param ids
+     * @throws Exception
+     */
+    public void indexEvent(String ids) throws Exception{
+    	for(String eventId : ids.split(",")){
+    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);
+    		if(event.size() > 0){
+    			indexer.indexEvents(event.getStringValue("fields", null));
+    		}else{
+    			logger.error("Invalid event id:" + eventId);
+    		}
+    	}
+    }
+    /**
+     * Indexing taxonomy index
+     * @param key
+     * @throws Exception
+     */
+    public void indexTaxonomy(String key) throws Exception{
+    	indexer.indexTaxonomy(key);
+    }
+    
+	/**
 	 * 
 	 * @param eventData
 	 * @return

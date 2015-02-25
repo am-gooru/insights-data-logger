@@ -289,5 +289,21 @@ public class EventServiceImpl implements EventService, Constants {
 			}
 		}
 	}
+	
+	@Override
+	public void index(String ids, String indexType) throws Exception {
+		if (indexType.equalsIgnoreCase("resource")) {
+			dataLoaderService.indexResource(ids);
+		}
+		if (indexType.equalsIgnoreCase("user")) {
+			dataLoaderService.indexUser(ids);
+		}
+		if (indexType.equalsIgnoreCase("event")) {
+			dataLoaderService.indexEvent(ids);
+		}
+		if (indexType.equalsIgnoreCase("code")) {
+			dataLoaderService.indexTaxonomy(ids);
+		}
+	}
 
 }

@@ -63,4 +63,6 @@ public interface EventService {
 	public void clearCache();
 
 	public void indexActivity();
+	
+	public void index(String ids,String indexType) throws Exception;
 }
