@@ -98,7 +98,7 @@ public class DataLoggerCaches implements Constants {
 
 		kafkaConfigurationCache.clear();
 
-		fieldDataTypes = null;
+		fieldDataTypes.clear();
 
 		beFieldName.clear();
 
