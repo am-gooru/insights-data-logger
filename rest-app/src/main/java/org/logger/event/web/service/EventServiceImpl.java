@@ -246,8 +246,7 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public boolean validateSchedular() {
-		logger.debug("Clearing cache : " + dataLoaderService.getLoggerCache().getCanRunScheduler());
-		return dataLoaderService.getLoggerCache().getCanRunScheduler();
+		return dataLoaderService.validateSchedular();
 	}
 
 	public void clearCache() {

@@ -149,17 +149,16 @@ public class CassandraDataLoader implements Constants {
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
 		loggerCache = new DataLoggerCaches();
-		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 
 	}
 
 	/**
-	 * This method is doing clear map and getting laster data.
+	 * This method is doing clear map and getting latest data.
 	 */
 	public void clearCache() {
-		loggerCache.clearCache();
-		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
-		logger.info("\nCached Data from new class:" + getLoggerCache().getCanRunScheduler());
+		init(null);
+		logger.info("Cached Data from new class:" + loggerCache.getCache());
+		logger.info("\nCached Data from new class:" + loggerCache.getCanRunScheduler());
 	}
 
 	/**
@@ -355,7 +354,7 @@ public class CassandraDataLoader implements Constants {
 
 		baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
-		aggregatorJson = getLoggerCache().getCache().get(eventMap.get(EVENT_NAME).toString());
+		aggregatorJson = loggerCache.getCache().get(eventMap.get(EVENT_NAME).toString());
 		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
 			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 		}
@@ -370,11 +369,11 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 
-		if (getLoggerCache().getCanRunIndexing()) {
+		if (loggerCache.getCanRunIndexing()) {
 			indexer.indexEvents(event.getFields());
 		}
 
-		if (getLoggerCache().getCache().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
+		if (loggerCache.getCache().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
 
@@ -556,7 +555,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public boolean validateSchedular() {
-		return getLoggerCache().getCanRunScheduler();
+		return loggerCache.getCanRunScheduler();
 	}
 
 	/**
@@ -975,11 +974,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public Map<String, String> getKafkaProperty(String propertyName) {
-		return getLoggerCache().getKafkaConfigurationCache().get(propertyName);
-	}
-
-	public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
+		return loggerCache.getKafkaConfigurationCache().get(propertyName);
 	}
 
 }
