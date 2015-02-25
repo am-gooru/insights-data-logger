@@ -251,6 +251,7 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public void clearCache() {
+		dataLoaderService = new CassandraDataLoader();
 		dataLoaderService.clearCache();
 	}
 

@@ -148,7 +148,7 @@ public class CassandraDataLoader implements Constants {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
-		this.setLoggerCache(new DataLoggerCaches());
+		loggerCache = new DataLoggerCaches();
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 
 	}
@@ -157,7 +157,7 @@ public class CassandraDataLoader implements Constants {
 	 * This method is doing clear map and getting laster data.
 	 */
 	public void clearCache() {
-		this.setLoggerCache(new DataLoggerCaches());
+		loggerCache = new DataLoggerCaches();
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 		logger.info("\nCached Data from new class:" + getLoggerCache().getCanRunScheduler());
 	}
@@ -982,7 +982,4 @@ public class CassandraDataLoader implements Constants {
 		return loggerCache;
 	}
 
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
-	}
 }
