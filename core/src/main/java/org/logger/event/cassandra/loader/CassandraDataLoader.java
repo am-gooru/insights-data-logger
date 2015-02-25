@@ -149,7 +149,6 @@ public class CassandraDataLoader implements Constants {
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
 		this.setLoggerCache(new DataLoggerCaches());
-		this.getLoggerCache().init();
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 
 	}
@@ -160,6 +159,7 @@ public class CassandraDataLoader implements Constants {
 	public void clearCache() {
 		this.setLoggerCache(new DataLoggerCaches());
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
+		logger.info("\nCached Data from new class:" + getLoggerCache().getCanRunScheduler());
 	}
 
 	/**
