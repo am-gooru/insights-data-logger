@@ -2,6 +2,7 @@ package org.logger.event.cassandra.loader;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,33 +25,33 @@ public class DataLoggerCaches implements Constants {
 
 	private BaseCassandraRepoImpl baseDao;
 
-	public Map<String, String> cache;
+	public Map<String, String> cache = new HashMap<String, String>();
 
-	public Map<String, Object> gooruTaxonomy;
+	public Map<String, Object> gooruTaxonomy = new HashMap<String, Object>();
 
-	public Collection<String> pushingEvents;
+	public Collection<String> pushingEvents = new ArrayList<String>();
 
 	public Boolean canRunScheduler;
 
 	public Boolean canRunIndexing;
 
-	public Map<String, Object> licenseCache;
+	public Map<String, Object> licenseCache = new HashMap<String, Object>();
 
-	public Map<String, Object> resourceTypesCache;
+	public Map<String, Object> resourceTypesCache = new HashMap<String, Object>();
 
-	public Map<String, Object> categoryCache;
+	public Map<String, Object> categoryCache = new HashMap<String, Object>();
 
-	public Map<String, Object> resourceFormatCache;
+	public Map<String, Object> resourceFormatCache = new HashMap<String, Object>();
 	
-	public Map<String, Object> instructionalCache;
+	public Map<String, Object> instructionalCache = new HashMap<String, Object>();
 	
-	public Map<String, String> taxonomyCodeType;
+	public Map<String, String> taxonomyCodeType = new HashMap<String, String>();
 
-	public Map<String, Map<String, String>> kafkaConfigurationCache;
+	public Map<String, Map<String, String>> kafkaConfigurationCache = new HashMap<String, Map<String,String>>();
 
-	public Map<String, String> fieldDataTypes = null;
+	public Map<String, String> fieldDataTypes = new HashMap<String, String>();
 
-	public Map<String, String> beFieldName = null;
+	public Map<String, String> beFieldName = new HashMap<String, String>();
 
 	public String REPOPATH = null;
 	
@@ -68,11 +69,47 @@ public class DataLoggerCaches implements Constants {
 
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(null);
-
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
+		this.getProperties();
+	}
+	
+	public void clearCache(){
+		cache.clear();
 
+		gooruTaxonomy.clear();
+
+		pushingEvents.clear();;
+
+		canRunScheduler = null;
+
+		canRunIndexing = null;
+
+		licenseCache.clear();
+
+		resourceTypesCache.clear();
+
+		categoryCache.clear();
+
+		resourceFormatCache.clear();
+		
+		instructionalCache.clear();
+		
+		taxonomyCodeType.clear();
+
+		kafkaConfigurationCache.clear();
+
+		fieldDataTypes = null;
+
+		beFieldName.clear();
+
+		REPOPATH = null;
+		
+		this.getProperties();
+	}
+	
+	public void getProperties(){
+		
 		Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0);
-		cache = new LinkedHashMap<String, String>();
 		for (Row<String, String> row : operators) {
 			cache.put(row.getKey(), row.getColumns().getStringValue(AGG_JSON, null));
 		}
@@ -115,9 +152,7 @@ public class DataLoggerCaches implements Constants {
 		} else {
 			this.setCanRunIndexing(true);
 		}
-		if (kafkaConfigurationCache == null) {
 
-			kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 			String[] kafkaMessager = new String[] { V2_KAFKA_CONSUMER, V2_KAFKA_LOG_WRITER_PRODUCER, V2_KAFKA_LOG_WRITER_CONSUMER, V2_KAFKA_MICRO_PRODUCER, V2_KAFKA_MICRO_CONSUMER };
 			Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, 0, kafkaMessager);
 			for (Row<String, String> row : result) {
@@ -128,9 +163,7 @@ public class DataLoggerCaches implements Constants {
 				kafkaConfigurationCache.put(row.getKey(), properties);
 			}
 			this.setKafkaConfigurationCache(kafkaConfigurationCache);
-		}
-		beFieldName = new LinkedHashMap<String, String>();
-		fieldDataTypes = new LinkedHashMap<String, String>();
+		
 		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
 		for (Row<String, String> row : fieldDescrption) {
 			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
@@ -140,41 +173,33 @@ public class DataLoggerCaches implements Constants {
 		this.setBeFieldName(beFieldName);
 
 		Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(), 0);
-		licenseCache = new LinkedHashMap<String, Object>();
 		for (Row<String, String> row : licenseRows) {
 			licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
 		this.setLicenseCache(licenseCache);
 		;
 		Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(), 0);
-		resourceTypesCache = new LinkedHashMap<String, Object>();
 		for (Row<String, String> row : resourceTypesRows) {
 			resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
 		this.setResourceTypesCache(resourceTypesCache);
 		Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(), 0);
-		categoryCache = new LinkedHashMap<String, Object>();
 		for (Row<String, String> row : categoryRows) {
 			categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
 		this.setCategoryCache(categoryCache);
-
-		taxonomyCodeType = new LinkedHashMap<String, String>();
-
 		ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code", 0);
 		for (int i = 0; i < taxonomyCodeTypeList.size(); i++) {
 			taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
 		}
 		this.setTaxonomyCodeType(taxonomyCodeType);
 		Rows<String, String> resourceFormatRows = baseDao.readAllRows(ColumnFamily.RESOURCEFORMAT.getColumnFamily(), 0);
-		resourceFormatCache = new LinkedHashMap<String, Object>();
 		for (Row<String, String> row : resourceFormatRows) {
 			resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
 		this.setResourceFormatCache(resourceFormatCache);
 		Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamily.INSTRUCTIONAL.getColumnFamily(), 0);
 
-		instructionalCache = new LinkedHashMap<String, Object>();
 		for (Row<String, String> row : instructionalRows) {
 			instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}

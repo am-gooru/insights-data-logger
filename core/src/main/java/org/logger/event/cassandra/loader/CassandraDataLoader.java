@@ -157,7 +157,7 @@ public class CassandraDataLoader implements Constants {
 	 * This method is doing clear map and getting laster data.
 	 */
 	public void clearCache() {
-		loggerCache = new DataLoggerCaches();
+		loggerCache.clearCache();
 		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 		logger.info("\nCached Data from new class:" + getLoggerCache().getCanRunScheduler());
 	}
