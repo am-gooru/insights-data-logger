@@ -18,7 +18,7 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 @Repository
-public final class DataLoggerCaches implements Constants {
+public class DataLoggerCaches implements Constants {
 
 	private CassandraConnectionProvider connectionProvider;
 
