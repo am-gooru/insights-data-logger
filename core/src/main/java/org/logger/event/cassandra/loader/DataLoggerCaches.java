@@ -90,8 +90,8 @@ public final class DataLoggerCaches implements Constants {
 			logger.debug("canRunScheduler before: "+canRunScheduler);
 			if (localHost.contains(host)) {
 				canRunScheduler = true;
-				this.setCanRunScheduler(canRunScheduler);;
 			}
+			this.setCanRunScheduler(canRunScheduler);;
 			logger.debug("canRunScheduler after: "+canRunScheduler);
 		} catch (UnknownHostException e) {
 			logger.error("Exception : " + e);
@@ -100,8 +100,8 @@ public final class DataLoggerCaches implements Constants {
 		String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
 		if (realTimeIndexing.equalsIgnoreCase(STOP)) {
 			canRunIndexing = false;
-			this.setCanRunIndexing(canRunIndexing);
 		}
+		this.setCanRunIndexing(canRunIndexing);
 		if (kafkaConfigurationCache == null) {
 
 			kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
