@@ -150,7 +150,7 @@ public class CassandraDataLoader implements Constants {
 		indexer = new ELSIndexerImpl(getConnectionProvider());
 		this.setLoggerCache(new DataLoggerCaches());
 		this.getLoggerCache().init();
-		logger.info("Cached Data from new class:" + getLoggerCache().getCaches());
+		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 
 	}
 
@@ -160,7 +160,7 @@ public class CassandraDataLoader implements Constants {
 	public void clearCache() {
 		this.setLoggerCache(new DataLoggerCaches());
 		this.getLoggerCache().init();
-		logger.info("Cached Data from new class:" + getLoggerCache().getCaches());
+		logger.info("Cached Data from new class:" + getLoggerCache().getCache());
 	}
 
 	/**
@@ -356,7 +356,7 @@ public class CassandraDataLoader implements Constants {
 
 		baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
-		aggregatorJson = getLoggerCache().getCaches().get(eventMap.get(EVENT_NAME).toString());
+		aggregatorJson = getLoggerCache().getCache().get(eventMap.get(EVENT_NAME).toString());
 		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
 			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
 		}
@@ -371,11 +371,11 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.updateRawData(eventMap);
 		}
 
-		if (getLoggerCache().canRunIndexing()) {
+		if (getLoggerCache().getCanRunIndexing()) {
 			indexer.indexEvents(event.getFields());
 		}
 
-		if (getLoggerCache().getCaches().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
+		if (getLoggerCache().getCache().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
 
@@ -557,7 +557,7 @@ public class CassandraDataLoader implements Constants {
 	}
 
 	public boolean validateSchedular() {
-		return getLoggerCache().canRunScheduler();
+		return getLoggerCache().getCanRunScheduler();
 	}
 
 	/**

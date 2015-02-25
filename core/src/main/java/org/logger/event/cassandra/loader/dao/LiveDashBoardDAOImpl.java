@@ -339,8 +339,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			String rowKey = null;
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 
-				if (getLoggerCache().getBeFieldNames().containsKey(entry.getKey()) && rowKey != null) {
-					rowKey = getLoggerCache().getBeFieldNames().get(entry.getKey());
+				if (getLoggerCache().getBeFieldName().containsKey(entry.getKey()) && rowKey != null) {
+					rowKey = getLoggerCache().getBeFieldName().get(entry.getKey());
 				} else {
 					rowKey = entry.getKey();
 				}
