@@ -1552,12 +1552,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * 
 	 */
 	public Set<String> getAllLevelParents(String cfName, String childOid, final int depth) {
-		if (depth > RECURSION_MAX_DEPTH) {
-			// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
-			logger.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
-			return null;
-		}
-
 		Rows<String, String> collectionItemParents = null;
 		Set<String> parentIds = new HashSet<String>();
 		try {
@@ -1572,6 +1566,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 						// We have a valid parent other than self.
 						parentId = parentId.trim();
 						parentIds.add(parentId);
+						if (depth > RECURSION_MAX_DEPTH) {
+							// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
+							logger.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
+							return parentIds;
+						}
 						Set<String> grandParents = getAllLevelParents(cfName, parentId, depth + 1);
 						if (grandParents != null) {
 							parentIds.addAll(grandParents);

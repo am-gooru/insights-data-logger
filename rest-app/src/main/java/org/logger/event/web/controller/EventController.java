@@ -35,9 +35,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
@@ -157,11 +158,13 @@ public class EventController {
 				}
 			} else {
 				Event events = gson.fromJson(eventObj, Event.class);
-				JSONObject useObj = new JSONObject(events.getUser());
-				useObj.put("userIp", userIp);
-				useObj.put("userAgent", userAgent);
 				JSONObject fieldsObj = new JSONObject(eventObj.toString());
-				fieldsObj.put("user", useObj.toString());
+				if (StringUtils.isNotBlank(event.getUser())) {
+					JSONObject useObj = new JSONObject(events.getUser());
+					useObj.put("userIp", userIp);
+					useObj.put("userAgent", userAgent);
+					fieldsObj.put("user", useObj.toString());
+				}
 				events.setFields(fieldsObj.toString());
 				events.setApiKey(apiKey);
 				eventResultDTO = eventService.processMessage(events);
