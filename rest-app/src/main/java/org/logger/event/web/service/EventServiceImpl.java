@@ -69,10 +69,10 @@ public class EventServiceImpl implements EventService, Constants {
 	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
+		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
 		this.connectionProvider = dataLoaderService.getConnectionProvider();
 		baseDao = new BaseCassandraRepoImpl(connectionProvider);
-		setLoggerCache(new DataLoggerCaches());
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}

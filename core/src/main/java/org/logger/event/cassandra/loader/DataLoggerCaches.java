@@ -103,9 +103,9 @@ public class DataLoggerCaches implements Constants {
 
 			String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
 			if (realTimeIndexing.equalsIgnoreCase(STOP)) {
-				canRunScheduler = false;
+				canRunIndexing = false;
 			} else {
-				canRunScheduler = true;
+				canRunIndexing = true;
 			}
 			if (kafkaConfigurationCache == null) {
 
