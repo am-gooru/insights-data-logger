@@ -38,6 +38,7 @@ import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -65,11 +66,13 @@ public class EventServiceImpl implements EventService, Constants {
 	private final CassandraConnectionProvider connectionProvider;
 	private BaseCassandraRepoImpl baseDao;
 	private SimpleDateFormat minuteDateFormatter;
-
+	private DataLoggerCaches loggerCache;
+	
 	public EventServiceImpl() {
 		dataLoaderService = new CassandraDataLoader();
 		this.connectionProvider = dataLoaderService.getConnectionProvider();
 		baseDao = new BaseCassandraRepoImpl(connectionProvider);
+		setLoggerCache(new DataLoggerCaches());
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
@@ -250,7 +253,8 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public void clearCache() {
-		dataLoaderService.clearCache();
+		setLoggerCache(new DataLoggerCaches());
+		logger.debug("after clearing cache:"+getLoggerCache().canRunScheduler);
 	}
 
 	public void indexActivity() {
@@ -303,6 +307,14 @@ public class EventServiceImpl implements EventService, Constants {
 		if (indexType.equalsIgnoreCase("code")) {
 			dataLoaderService.indexTaxonomy(ids);
 		}
+	}
+
+	public DataLoggerCaches getLoggerCache() {
+		return loggerCache;
+	}
+
+	public void setLoggerCache(DataLoggerCaches loggerCache) {
+		this.loggerCache = loggerCache;
 	}
 
 }

@@ -21,35 +21,35 @@ public class DataLoggerCaches implements Constants {
 
 	private BaseCassandraRepoImpl baseDao;
 
-	public Map<String, String> cache;
+	public static Map<String, String> cache;
 
-	public Map<String, Object> gooruTaxonomy;
+	public static Map<String, Object> gooruTaxonomy;
 
-	public Collection<String> pushingEvents;
+	public static Collection<String> pushingEvents;
 
 	public static Boolean canRunScheduler;
 
 	public static Boolean canRunIndexing;
 
-	public Map<String, Object> licenseCache;
+	public static Map<String, Object> licenseCache;
 
-	public Map<String, Object> resourceTypesCache;
+	public static Map<String, Object> resourceTypesCache;
 
-	public Map<String, Object> categoryCache;
+	public static Map<String, Object> categoryCache;
 
-	public Map<String, Object> resourceFormatCache;
+	public static Map<String, Object> resourceFormatCache;
 	
-	public Map<String, Object> instructionalCache;
+	public static Map<String, Object> instructionalCache;
 	
-	public Map<String, String> taxonomyCodeType;
+	public static Map<String, String> taxonomyCodeType;
 
-	public Map<String, Map<String, String>> kafkaConfigurationCache;
+	public static Map<String, Map<String, String>> kafkaConfigurationCache;
 
-	public Map<String, String> fieldDataTypes = null;
+	public static Map<String, String> fieldDataTypes = null;
 
-	public Map<String, String> beFieldName = null;
+	public static Map<String, String> beFieldName = null;
 
-	public String REPOPATH = null;
+	public static String REPOPATH = null;
 	
 	private static final Logger logger = LoggerFactory.getLogger(CassandraDataLoader.class);
 
@@ -88,7 +88,6 @@ public class DataLoggerCaches implements Constants {
 				cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 			}
 			pushingEvents = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-			this.setPushingEvents(pushingEvents);
 			String host = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, null);
 
 			String localHost = "" + InetAddress.getLocalHost();
@@ -96,17 +95,17 @@ public class DataLoggerCaches implements Constants {
 			logger.debug("Host: " + host);
 			logger.debug("canRunScheduler before: " + canRunScheduler);
 			if (localHost.contains(host)) {
-				this.setCanRunScheduler(true);
+				canRunScheduler = true;
 			} else {
-				this.setCanRunScheduler(false);
+				canRunScheduler = false;
 			}
 			logger.debug("canRunScheduler after: " + canRunScheduler);
 
 			String realTimeIndexing = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), REAL_TIME_INDEXING, 0).getStringValue(DEFAULT_COLUMN, null);
 			if (realTimeIndexing.equalsIgnoreCase(STOP)) {
-				this.setCanRunIndexing(false);
+				canRunScheduler = false;
 			} else {
-				this.setCanRunIndexing(true);
+				canRunScheduler = true;
 			}
 			if (kafkaConfigurationCache == null) {
 
@@ -120,7 +119,6 @@ public class DataLoggerCaches implements Constants {
 					}
 					kafkaConfigurationCache.put(row.getKey(), properties);
 				}
-				this.setKafkaConfigurationCache(kafkaConfigurationCache);
 			}
 			beFieldName = new LinkedHashMap<String, String>();
 			fieldDataTypes = new LinkedHashMap<String, String>();
@@ -129,28 +127,22 @@ public class DataLoggerCaches implements Constants {
 				fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
 				beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
 			}
-			this.setFieldDataTypes(fieldDataTypes);
-			this.setBeFieldName(beFieldName);
 
 			Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(), 0);
 			licenseCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : licenseRows) {
 				licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			this.setLicenseCache(licenseCache);
-			;
 			Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(), 0);
 			resourceTypesCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : resourceTypesRows) {
 				resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			this.setResourceTypesCache(resourceTypesCache);
 			Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(), 0);
 			categoryCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : categoryRows) {
 				categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			this.setCategoryCache(categoryCache);
 
 			taxonomyCodeType = new LinkedHashMap<String, String>();
 
@@ -158,23 +150,18 @@ public class DataLoggerCaches implements Constants {
 			for (int i = 0; i < taxonomyCodeTypeList.size(); i++) {
 				taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
 			}
-			this.setTaxonomyCodeType(taxonomyCodeType);
 			Rows<String, String> resourceFormatRows = baseDao.readAllRows(ColumnFamily.RESOURCEFORMAT.getColumnFamily(), 0);
 			resourceFormatCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : resourceFormatRows) {
 				resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			this.setResourceFormatCache(resourceFormatCache);
 			Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamily.INSTRUCTIONAL.getColumnFamily(), 0);
 
 			instructionalCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : instructionalRows) {
 				instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			this.setInstructionalCache(instructionalCache);
 			REPOPATH = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULT_COLUMN, 0).getStringValue();
-			this.setREPOPATH(REPOPATH);
-			this.setCache(cache);
 		} catch (Exception e) {
 			logger.error("Exception : " + e);
 		}
@@ -189,124 +176,71 @@ public class DataLoggerCaches implements Constants {
 		this.connectionProvider = connectionProvider;
 	}
 
-	public Map<String, String> getCache() {
+	public static Map<String, String> getCache() {
 		return cache;
 	}
 
-	public void setCache(Map<String, String> cache) {
-		this.cache = cache;
-	}
-
-	public Collection<String> getPushingEvents() {
+	public static Collection<String> getPushingEvents() {
 		return pushingEvents;
 	}
 
-	public void setPushingEvents(Collection<String> pushingEvents) {
-		this.pushingEvents = pushingEvents;
-	}
-
-	public Boolean getCanRunScheduler() {
+	public static Boolean getCanRunScheduler() {
 		return canRunScheduler;
 	}
 
-	public void setCanRunScheduler(Boolean canRunScheduler) {
-		this.canRunScheduler = canRunScheduler;
-	}
-
-	public Boolean getCanRunIndexing() {
+	public static Boolean getCanRunIndexing() {
 		return canRunIndexing;
 	}
 
-	public void setCanRunIndexing(Boolean canRunIndexing) {
-		this.canRunIndexing = canRunIndexing;
-	}
-
-	public Map<String, Object> getLicenseCache() {
+	public static Map<String, Object> getLicenseCache() {
 		return licenseCache;
 	}
 
-	public void setLicenseCache(Map<String, Object> licenseCache) {
-		this.licenseCache = licenseCache;
-	}
 
-	public Map<String, Object> getResourceTypesCache() {
+	public static Map<String, Object> getResourceTypesCache() {
 		return resourceTypesCache;
 	}
 
-	public void setResourceTypesCache(Map<String, Object> resourceTypesCache) {
-		this.resourceTypesCache = resourceTypesCache;
-	}
 
-	public Map<String, Object> getCategoryCache() {
+	public static Map<String, Object> getCategoryCache() {
 		return categoryCache;
 	}
 
-	public void setCategoryCache(Map<String, Object> categoryCache) {
-		this.categoryCache = categoryCache;
-	}
 
-	public Map<String, String> getTaxonomyCodeType() {
+	public static Map<String, String> getTaxonomyCodeType() {
 		return taxonomyCodeType;
 	}
 
-	public void setTaxonomyCodeType(Map<String, String> taxonomyCodeType) {
-		this.taxonomyCodeType = taxonomyCodeType;
-	}
 
-	public Map<String, String> getBeFieldName() {
+	public static Map<String, String> getBeFieldName() {
 		return beFieldName;
 	}
 
-	public void setBeFieldName(Map<String, String> beFieldName) {
-		this.beFieldName = beFieldName;
-	}
-
-	public Map<String, Object> getGooruTaxonomy() {
+	public static Map<String, Object> getGooruTaxonomy() {
 		return gooruTaxonomy;
 	}
 
-	public void setGooruTaxonomy(Map<String, Object> gooruTaxonomy) {
-		this.gooruTaxonomy = gooruTaxonomy;
-	}
-
-	public Map<String, Map<String, String>> getKafkaConfigurationCache() {
+	public static Map<String, Map<String, String>> getKafkaConfigurationCache() {
 		return kafkaConfigurationCache;
 	}
 
-	public void setKafkaConfigurationCache(Map<String, Map<String, String>> kafkaConfigurationCache) {
-		this.kafkaConfigurationCache = kafkaConfigurationCache;
-	}
-
-	public void setFieldDataTypes(Map<String, String> fieldDataTypes) {
-		this.fieldDataTypes = fieldDataTypes;
-	}
 	
-	public Map<String, String> getFieldDataTypes() {
+	public static Map<String, String> getFieldDataTypes() {
 		return fieldDataTypes;
 	}
 
-	public Map<String, Object> getResourceFormatCache() {
+	public static Map<String, Object> getResourceFormatCache() {
 		return resourceFormatCache;
 	}
 
-	public void setResourceFormatCache(Map<String, Object> resourceFormatCache) {
-		this.resourceFormatCache = resourceFormatCache;
-	}
 
-	public Map<String, Object> getInstructionalCache() {
+	public static Map<String, Object> getInstructionalCache() {
 		return instructionalCache;
 	}
 
-	public void setInstructionalCache(Map<String, Object> instructionalCache) {
-		this.instructionalCache = instructionalCache;
-	}
 
-	public String getREPOPATH() {
+	public static String getREPOPATH() {
 		return REPOPATH;
-	}
-
-	public void setREPOPATH(String rEPOPATH) {
-		REPOPATH = rEPOPATH;
 	}
 
 }

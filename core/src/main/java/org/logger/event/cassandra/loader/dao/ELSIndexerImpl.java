@@ -45,8 +45,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	private CassandraConnectionProvider connectionProvider;
 
 	private BaseCassandraRepoImpl baseDao;
-
-	private DataLoggerCaches loggerCache;
 	
 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 
@@ -58,8 +56,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		this.setLoggerCache(new DataLoggerCaches());
-		this.getLoggerCache().init();
 	}
 
 	/**
@@ -111,7 +107,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 				}
 			}
-			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + getLoggerCache().getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 				try {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
@@ -206,7 +202,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
-				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + getLoggerCache().getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 				if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
 					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
@@ -298,13 +294,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 
 			if (resource.getColumnByName("type_name") != null) {
-				if (getLoggerCache().getResourceTypesCache().containsKey(resource.getColumnByName("type_name").getStringValue())) {
-					eventMap.put("resourceTypeId", getLoggerCache().getResourceTypesCache().get(resource.getColumnByName("type_name").getStringValue()));
+				if (DataLoggerCaches.getResourceTypesCache().containsKey(resource.getColumnByName("type_name").getStringValue())) {
+					eventMap.put("resourceTypeId", DataLoggerCaches.getResourceTypesCache().get(resource.getColumnByName("type_name").getStringValue()));
 				}
 			}
 			if (resource.getColumnByName("category") != null) {
-				if (getLoggerCache().getCategoryCache().containsKey(resource.getColumnByName("category").getStringValue())) {
-					eventMap.put("resourceCategoryId", getLoggerCache().getCategoryCache().get(resource.getColumnByName("category").getStringValue()));
+				if (DataLoggerCaches.getCategoryCache().containsKey(resource.getColumnByName("category").getStringValue())) {
+					eventMap.put("resourceCategoryId", DataLoggerCaches.getCategoryCache().get(resource.getColumnByName("category").getStringValue()));
 				}
 			}
 			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId, 0);
@@ -312,8 +308,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				long questionCounts = questionCount.getLongValue(QUESTION_COUNT, 0L);
 				eventMap.put(QUESTION_COUNT, questionCounts);
 				if (questionCounts > 0L) {
-					if (getLoggerCache().getResourceTypesCache().containsKey(resource.getColumnByName("type_name").getStringValue())) {
-						eventMap.put("resourceTypeId", getLoggerCache().getResourceTypesCache().get(resource.getColumnByName("type_name").getStringValue()));
+					if (DataLoggerCaches.getResourceTypesCache().containsKey(resource.getColumnByName("type_name").getStringValue())) {
+						eventMap.put("resourceTypeId", DataLoggerCaches.getResourceTypesCache().get(resource.getColumnByName("type_name").getStringValue()));
 					}
 				}
 			} else {
@@ -496,7 +492,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				if(columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")){				
 					resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 				}else{
-					resourceMap.put("thumbnail", getLoggerCache().getREPOPATH()+"/"+columns.getColumnByName("folder").getStringValue()+"/"+columns.getColumnByName("thumbnail").getStringValue());
+					resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH()+"/"+columns.getColumnByName("folder").getStringValue()+"/"+columns.getColumnByName("thumbnail").getStringValue());
 				}
 			}
 			if(columns.getColumnByName("grade") != null){
@@ -509,18 +505,18 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 			}
 			if(columns.getColumnByName("license.name") != null){
-				if(getLoggerCache().getLicenseCache().containsKey(columns.getColumnByName("license.name").getStringValue())){    							
-					resourceMap.put("licenseId", getLoggerCache().getLicenseCache().get(columns.getColumnByName("license.name").getStringValue()));
+				if(DataLoggerCaches.getLicenseCache().containsKey(columns.getColumnByName("license.name").getStringValue())){    							
+					resourceMap.put("licenseId", DataLoggerCaches.getLicenseCache().get(columns.getColumnByName("license.name").getStringValue()));
 				}
 			}
 			if(columns.getColumnByName("resourceType") != null){
-				if(getLoggerCache().getResourceTypesCache().containsKey(columns.getColumnByName("resourceType").getStringValue())){    							
-					resourceMap.put("resourceTypeId", getLoggerCache().getResourceTypesCache().get(columns.getColumnByName("resourceType").getStringValue()));
+				if(DataLoggerCaches.getResourceTypesCache().containsKey(columns.getColumnByName("resourceType").getStringValue())){    							
+					resourceMap.put("resourceTypeId", DataLoggerCaches.getResourceTypesCache().get(columns.getColumnByName("resourceType").getStringValue()));
 				}
 			}
 			if(columns.getColumnByName("category") != null){
-				if(getLoggerCache().getCategoryCache().containsKey(columns.getColumnByName("category").getStringValue())){    							
-					resourceMap.put("resourceCategoryId", getLoggerCache().getCategoryCache().get(columns.getColumnByName("category").getStringValue()));
+				if(DataLoggerCaches.getCategoryCache().containsKey(columns.getColumnByName("category").getStringValue())){    							
+					resourceMap.put("resourceCategoryId", DataLoggerCaches.getCategoryCache().get(columns.getColumnByName("category").getStringValue()));
 				}
 			}
 			if(columns.getColumnByName("category") != null){
@@ -531,11 +527,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			if(columns.getColumnByName("resourceFormat") != null){
 				resourceMap.put("resourceFormat", columns.getColumnByName("resourceFormat").getStringValue());
-				resourceMap.put("resourceFormatId", getLoggerCache().getResourceFormatCache().get(columns.getColumnByName("resourceFormat").getStringValue()));
+				resourceMap.put("resourceFormatId", DataLoggerCaches.getResourceFormatCache().get(columns.getColumnByName("resourceFormat").getStringValue()));
 			}
 			if(columns.getColumnByName("instructional") != null){
 				resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
-				resourceMap.put("instructionalId", getLoggerCache().getInstructionalCache().get(columns.getColumnByName("instructional").getStringValue()));
+				resourceMap.put("instructionalId", DataLoggerCaches.getInstructionalCache().get(columns.getColumnByName("instructional").getStringValue()));
 			}
 			if(gooruOid != null){
 				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),gooruOid, 0);
@@ -566,7 +562,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			if(gooruOid != null){
 				resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+getLoggerCache().getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
+				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 			}
 			}
 			}
@@ -637,12 +633,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			contentBuilder = jsonBuilder().startObject();
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 				String rowKey = null;
-				if (getLoggerCache().getBeFieldName().containsKey(entry.getKey())) {
-					rowKey = getLoggerCache().getBeFieldName().get(entry.getKey());
+				if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
+					rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 					contentBuilder.field(rowKey,
-							TypeConverter.stringToAny(String.valueOf(entry.getValue()), getLoggerCache().getFieldDataTypes().containsKey(entry.getKey()) ? getLoggerCache().getFieldDataTypes().get(entry.getKey()) : "String"));
+							TypeConverter.stringToAny(String.valueOf(entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
 				}
 			}
 			indexingES(indexName, indexType, id, contentBuilder, 0);
@@ -665,8 +661,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 		for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 			String rowKey = null;
-			if (getLoggerCache().getBeFieldName().containsKey(entry.getKey())) {
-				rowKey = getLoggerCache().getBeFieldName().get(entry.getKey());
+			if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
+				rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 			}
 			if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 				updateRequestBuilder.addScriptParam(rowKey, entry.getValue());
@@ -724,8 +720,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				this.getLiveCounterData("all~" + userInfos.getColumnByName("gooru_uid").getStringValue(), userMap);
 				for (Map.Entry<String, Object> entry : userMap.entrySet()) {
 					String rowKey = null;
-					if (getLoggerCache().getBeFieldName().containsKey(entry.getKey())) {
-						rowKey = getLoggerCache().getBeFieldName().get(entry.getKey());
+					if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
+						rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 						contentBuilder.field(rowKey, entry.getValue());
 					}
 				}
@@ -849,7 +845,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 			}
 			contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex() + "_" + getLoggerCache().getCache().get(INDEXING_VERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder)
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder)
 					.execute().actionGet();
 		} else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
@@ -869,35 +865,27 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (sourceValues != null && sourceValues.size() > 0) {
 				XContentBuilder contentBuilder = jsonBuilder().startObject();
 				for (int i = 0; i < sourceValues.size(); i++) {
-					if (getLoggerCache().getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getStringValue());
 					}
-					if (getLoggerCache().getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getLongValue());
 					}
-					if (getLoggerCache().getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getIntegerValue());
 					}
-					if (getLoggerCache().getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getDoubleValue());
 					}
-					if (getLoggerCache().getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
 					}
 				}
 				contentBuilder.field("index_updated_time", new Date());
-				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + getLoggerCache().getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
+				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
 						.setSource(contentBuilder).execute().actionGet();
 			}
 		}
-	}
-
-	public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
-	}
-
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
 	}
 
 }
