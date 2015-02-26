@@ -1,7 +1,6 @@
 package org.logger.event.cassandra.loader;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,9 +27,9 @@ public class DataLoggerCaches implements Constants {
 
 	public Collection<String> pushingEvents;
 
-	public Boolean canRunScheduler;
+	public static Boolean canRunScheduler;
 
-	public Boolean canRunIndexing;
+	public static Boolean canRunIndexing;
 
 	public Map<String, Object> licenseCache;
 
