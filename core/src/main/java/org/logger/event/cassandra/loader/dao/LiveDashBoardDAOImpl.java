@@ -51,17 +51,12 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	ColumnList<String> eventKeys = null;
 
 	Collection<String> esEventFields = null;
-
-	private DataLoggerCaches loggerCache;
 	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		this.setLoggerCache(new DataLoggerCaches());
-		this.getLoggerCache().init();
-	}
+		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	}
 
 	/**
 	 * 
@@ -339,13 +334,13 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			String rowKey = null;
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 
-				if (getLoggerCache().getBeFieldName().containsKey(entry.getKey()) && rowKey != null) {
-					rowKey = getLoggerCache().getBeFieldName().get(entry.getKey());
+				if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey()) && rowKey != null) {
+					rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 				} else {
 					rowKey = entry.getKey();
 				}
 
-				String typeToChange = getLoggerCache().getFieldDataTypes().containsKey(entry.getKey()) ? getLoggerCache().getFieldDataTypes().get(entry.getKey()) : "String";
+				String typeToChange = DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String";
 				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), typeToChange), m);
 			}
 
@@ -393,13 +388,5 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				this.saveGeoLocation(geoData, eventMap);
 			}
 		}
-	}
-
-	public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
-	}
-
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
 	}
 }
