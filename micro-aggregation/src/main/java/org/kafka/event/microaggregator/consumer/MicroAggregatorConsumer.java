@@ -42,7 +42,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.google.gson.Gson;
 
-public class MicroAggregatorConsumer extends Thread {
+public class MicroAggregatorConsumer extends Thread implements Runnable {
 	
 private final ConsumerConnector consumer;
 private static String topic;

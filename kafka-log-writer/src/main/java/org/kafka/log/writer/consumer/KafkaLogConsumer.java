@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 
 
-public class KafkaLogConsumer extends Thread {
+public class KafkaLogConsumer extends Thread implements Runnable {
 
 	MicroAggregationLoader microAggregationLoader = new MicroAggregationLoader();
 	private final ConsumerConnector consumer;

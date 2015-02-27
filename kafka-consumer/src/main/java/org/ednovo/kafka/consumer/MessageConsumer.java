@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
-public class MessageConsumer extends Thread
+public class MessageConsumer extends Thread implements Runnable
 {
 	CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
 	private final ConsumerConnector consumer;
