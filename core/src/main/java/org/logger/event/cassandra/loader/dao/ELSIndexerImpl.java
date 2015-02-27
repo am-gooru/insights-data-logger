@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.cassandra.db.marshal.Int32Type;
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
@@ -943,7 +944,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 				contentBuilder.field("deactivated_on",userInfos.getColumnByName("deactivatedOn").getDateValue());
 			}
 			if(userInfos.getColumnByName("active") != null){
-				contentBuilder.field("active",Integer.valueOf(userInfos.getColumnByName("active").getShortValue()));
+				contentBuilder.field("active",userInfos.getColumnByName("active").getShortValue());
 			}
 			if(userInfos.getColumnByName("lastLogin") != null){
 				contentBuilder.field("last_login",userInfos.getColumnByName("lastLogin").getDateValue());
@@ -1044,9 +1045,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 	    	if(aliasUserData.getColumnNames().contains("username_alias")){
 	    		contentBuilder.field("username_alias", aliasUserData.getColumnByName("username_alias").getStringValue());
 	    	}
+	    	if(aliasUserData.getColumnNames().contains("external_id_alias")){
+	    		contentBuilder.field("external_id_alias", aliasUserData.getColumnByName("external_id_alias").getStringValue());
+	    	}
 	    	
 	    	contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOGINFO.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+cache.get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
