@@ -96,7 +96,7 @@
 "type":"Long",
 "index":"not_analyzed"
 },"is_deleted":{
-"type":"Boolean",
+"type":"Integer",
 "index":"not_analyzed"
 },"import_code":{
 "type":"String",
@@ -132,6 +132,9 @@
 "index": "not_analyzed",
 "type": "string"
 },"username_alias": {
+"index": "not_analyzed",
+"type": "string"
+},"external_id_alias": {
 "index": "not_analyzed",
 "type": "string"
 }
