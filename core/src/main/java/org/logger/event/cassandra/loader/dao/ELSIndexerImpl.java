@@ -389,11 +389,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (questionCount != null && !questionCount.isEmpty()) {
 				long questionCounts = questionCount.getLongValue("questionCount", 0L);
 				eventMap.put("questionCount", questionCounts);
-				if (questionCounts > 0L) {
-					if (resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())) {
-						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
-					}
-				}
 			} else {
 				eventMap.put("questionCount", 0L);
 			}
