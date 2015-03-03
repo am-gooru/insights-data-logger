@@ -100,7 +100,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
 		}
 		cache = new LinkedHashMap<String, String>();
-		cache.put(INDEXING_VERSION, baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXING_VERSION, 0).getStringValue(DEFAULT_COLUMN, null));
+		cache.put(INDEXING_VERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXING_VERSION, DEFAULT_COLUMN, 0).getStringValue());
 	}
 
 	public void clearCache() {
@@ -353,7 +353,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @return
 	 */
 	public Map<String, Object> getContentInfo(Map<String, Object> eventMap, String gooruOId) {
-		logger.info("indexing content...");
+
 		Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
 		if (!contentItems.isEmpty()) {
 			eventMap.put("contentItems", contentItems);
@@ -389,6 +389,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (questionCount != null && !questionCount.isEmpty()) {
 				long questionCounts = questionCount.getLongValue("questionCount", 0L);
 				eventMap.put("questionCount", questionCounts);
+				if (questionCounts > 0L) {
+					if (resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())) {
+						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+					}
+				}
 			} else {
 				eventMap.put("questionCount", 0L);
 			}
