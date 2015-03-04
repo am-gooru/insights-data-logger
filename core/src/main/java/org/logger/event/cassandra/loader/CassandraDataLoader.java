@@ -1201,12 +1201,12 @@ public class CassandraDataLoader implements Constants {
     public void assementScoreCalculator(){
 
 		try {
-			SearchRequestBuilder searchRequestBuilder = getConnectionProvider().getESClient().prepareSearch(ESIndexices.EVENTLOGGER.getIndex()).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+			SearchRequestBuilder searchRequestBuilder = getConnectionProvider().getESClient().prepareSearch(ESIndexices.EVENTLOGGERINSIGHTS.getIndex()).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
 			
 			searchRequestBuilder.setPostFilter(FilterBuilders.termFilter("eventName", "collection.play"));
 			searchRequestBuilder.addField("event_id");
 			String result =  searchRequestBuilder.execute().actionGet().toString();
-			logger.info("result");
+			logger.info("result"+result);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
