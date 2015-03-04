@@ -393,6 +393,16 @@ public class EventController {
 		}
 	}
 	
+	@RequestMapping(value = "/score", method = RequestMethod.GET)
+	public void calculateServer(HttpServletRequest request,HttpServletResponse response) {
+		try {
+			eventService.clearCacher();
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@RequestMapping(value = "/migrate/stat", method = RequestMethod.GET)
 	public void timeSpentViewsUpdate(HttpServletRequest request,@RequestParam(value = "ids", required = true) String ids,HttpServletResponse response) {
 		try {

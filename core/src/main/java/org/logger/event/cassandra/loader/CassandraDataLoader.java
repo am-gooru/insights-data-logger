@@ -47,6 +47,9 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.FilterBuilders;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1194,6 +1197,22 @@ public class CassandraDataLoader implements Constants {
     	}
 		return eventMap;
     }
+    
+    public void assementScoreCalculator(){
+
+		try {
+			SearchRequestBuilder searchRequestBuilder = getConnectionProvider().getESClient().prepareSearch(ESIndexices.EVENTLOGGER.getIndex()).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+			
+			searchRequestBuilder.setPostFilter(FilterBuilders.termFilter("eventName", "collection.play"));
+			searchRequestBuilder.addField("event_id");
+			String result =  searchRequestBuilder.execute().actionGet().toString();
+			logger.info("result");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+    }
+    
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){
