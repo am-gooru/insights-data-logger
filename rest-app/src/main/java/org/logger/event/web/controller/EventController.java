@@ -394,10 +394,10 @@ public class EventController {
 	}
 	
 	@RequestMapping(value = "/score", method = RequestMethod.GET)
-	public void calculateServer(HttpServletRequest request,HttpServletResponse response) {
+	public void calculateScore(HttpServletRequest request,HttpServletResponse response) {
 		try {
-			eventService.clearCacher();
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+			eventService.assementScoreCalculator();
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "calculating");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
