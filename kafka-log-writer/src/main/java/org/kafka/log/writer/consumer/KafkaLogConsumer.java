@@ -32,7 +32,6 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.Message;
 
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ import com.google.gson.Gson;
 
 public class KafkaLogConsumer extends Thread implements Runnable {
 
-	MicroAggregationLoader microAggregationLoader = new MicroAggregationLoader();
+	private MicroAggregationLoader microAggregationLoader;
 	private final ConsumerConnector consumer;
 	private static String topic;
 
@@ -52,12 +51,11 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_TOPIC;
 	private static String KAFKA_FILE_ERROR_TOPIC;
-
-	static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
-	private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
-	private static final Logger activityErrorLog = LoggerFactory.getLogger("activityErrorLog");
+	
+	private static Logger logger = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
 	public KafkaLogConsumer() {
+		microAggregationLoader = new MicroAggregationLoader();
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~logwritter~consumer");
 		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
@@ -98,7 +96,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 		props.put("zookeeper.session.timeout.ms", "10000");
 		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
-		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		logger.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
 		return new ConsumerConfig(props);
 
@@ -124,20 +122,18 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 				messageMap = gson.fromJson(message, messageMap.getClass());
 
 			} catch (Exception e) {
-				LOG.error("Message Consumer Error: " + e.getMessage());
+				LogWritterFactory.errorActivity.error(message);
 				continue;
 			}
 
 			// TODO We're only getting raw data now. We'll have to use the
 			// server IP as well for extra information.
-			if (messageMap != null) {
-				String eventJson = (String) messageMap.get("raw");
-
+			if (!messageMap.isEmpty()) {
 				// Write the consumed JSON to Log file.
-				LOG.info("Kafka Consumer Log writer  :\n" + eventJson + "\n");
-				activityLogger.info(eventJson);
+				LogWritterFactory.activity.info(message);
+				String eventJson = (String) messageMap.get("raw");
 			} else {
-				LOG.error("Message Consumer Error messageMap : No data found");
+				LogWritterFactory.errorActivity.error(message);
 				continue;
 			}
 		}
@@ -157,20 +153,18 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 			try {
 				messageMap = gson.fromJson(message, messageMap.getClass());
 			} catch (Exception e) {
-				LOG.error("Message Consumer Error: " + e.getMessage());
+				LogWritterFactory.errorActivity.error(message);
 				continue;
 			}
 
 			// TODO We're only getting raw data now. We'll have to use the
 			// server IP as well for extra information.
 			if (messageMap != null) {
-				String eventJson = (String) messageMap.get("raw");
-
 				// Write the consumed JSON to Log file.
-				LOG.info("Kafka Error Log writer  :\n" + eventJson + "\n");
-				activityErrorLog.info(eventJson);
+				LogWritterFactory.errorActivity.info(message);
+				String eventJson = (String) messageMap.get("raw");
 			} else {
-				LOG.error("Message Consumer Error messageMap : No data found");
+				LogWritterFactory.errorActivity.error(message);
 				continue;
 			}
 		}
@@ -179,7 +173,6 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 
 	public static void main(String args[]) {
 		KafkaLogConsumer kafka = new KafkaLogConsumer();
-
 		kafka.run();
 	}
 }

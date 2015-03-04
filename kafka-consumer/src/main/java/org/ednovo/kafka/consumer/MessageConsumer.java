@@ -58,7 +58,7 @@ import com.google.gson.Gson;
 
 public class MessageConsumer extends Thread implements Runnable
 {
-	CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
+	private CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
 	private final ConsumerConnector consumer;
 	private static String topic;
 	private DataProcessor rowDataProcessor;
@@ -66,8 +66,8 @@ public class MessageConsumer extends Thread implements Runnable
 	private static String ZK_PORT;
 	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
-  static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
-  
+	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
+	
   public MessageConsumer(DataProcessor insertRowForLogDB)
   {
 	  Map<String, String> kafkaProperty = new HashMap<String, String>();
@@ -76,7 +76,7 @@ public class MessageConsumer extends Thread implements Runnable
 		ZK_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
-		LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
+		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
 		this.topic = KAFKA_TOPIC;
 		this.rowDataProcessor = insertRowForLogDB;
 
@@ -104,20 +104,18 @@ public class MessageConsumer extends Thread implements Runnable
 		return stringBuffer.toString();
 	}
   
-  private static ConsumerConfig createConsumerConfig(){
-	  
-	  Properties props = new Properties();
+	private static ConsumerConfig createConsumerConfig() {
+
+		Properties props = new Properties();
 		props.put("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
 		props.put("group.id", KAFKA_GROUPID);
 		props.put("zookeeper.session.timeout.ms", "10000");
 		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
+		logger.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		return new ConsumerConfig(props);
 
-		LOG.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
-
-    return new ConsumerConfig(props);
-
-  }
+	}
  
   public void run() {
 	  Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
@@ -135,19 +133,17 @@ public class MessageConsumer extends Thread implements Runnable
     	try {
     		messageMap = gson.fromJson(message, messageMap.getClass());
 		} catch (Exception e) {
-			LOG.error("Message Consumer Error: "+ e.getMessage());
+			ConsumerLogFactory.errorActivity.error(message);
 			continue; 
 		}
     	
     	//TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-    	if(messageMap != null)
+    	if(!messageMap.isEmpty())
     	{
+    		ConsumerLogFactory.activity.info(message);
     		this.rowDataProcessor.processRow(messageMap.get("raw"));
-    		LOG.error("Message Consumer messageMap :\n" + messageMap.get("raw"));
-    	}
-    	else
-    	{
-    		LOG.error("Message Consumer Error messageMap : No data found");
+    	}else{
+      		ConsumerLogFactory.errorActivity.error(message);
     		continue;
     	}
     }

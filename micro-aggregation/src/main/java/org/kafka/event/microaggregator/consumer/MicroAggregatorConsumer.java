@@ -35,6 +35,7 @@ import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.Message;
 
 import org.json.JSONException;
+import org.kafka.event.microaggregator.core.AggregatorLogFactory;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +51,8 @@ private static String ZK_IP;
 private static String ZK_PORT;
 private static String KAFKA_TOPIC;
 private static String KAFKA_GROUPID;
-
 private MicroAggregationLoader microAggregationLoader;
-static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
-private static final Logger activityLogger = LoggerFactory.getLogger("activityLog");
-
+private static Logger logger = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
 public MicroAggregatorConsumer() {
 
 	Map<String,String> kafkaProperty = new HashMap<String, String>();
@@ -77,7 +75,7 @@ private static ConsumerConfig createConsumerConfig() {
     props.put("zookeeper.session.timeout.ms", "10000");
     props.put("zookeeper.sync.time.ms", "200");
     props.put("auto.commit.interval.ms", "1000");
-	LOG.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+    logger.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
 	return new ConsumerConfig(props);
 
@@ -119,17 +117,18 @@ public void run() {
 		try {
 			messageMap = gson.fromJson(message, messageMap.getClass());
 		} catch (Exception e) {
-			LOG.error("Message Consumer Error: " + e.getMessage());
+			AggregatorLogFactory.errorActivity.error(message);
 			continue;
 		}
 
 		// TODO We're only getting raw data now. We'll have to use the
 		// server IP as well for extra information.
-		if (messageMap != null) {
+		if (!messageMap.isEmpty()) {
+			AggregatorLogFactory.activity.info(message);
 			updateActivityStream(messageMap);
 			staticAggregation(messageMap);
 		} else {
-			LOG.error("Message Consumer Error messageMap : No data found");
+			AggregatorLogFactory.errorActivity.error(message);
 			continue;
 		}
 	}
@@ -140,20 +139,24 @@ public void updateActivityStream(Map<String, String> messageMap) {
 	String eventJson = (String) messageMap.get("raw");
 	if (eventJson != null) {
 		try {
-			LOG.info("EventJson:{}", eventJson);
+			logger.info("EventJson:{}", eventJson);
 			microAggregationLoader.updateActivityStream(eventJson);
-		} catch (JSONException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("EventJson:{}", eventJson);
 		}
 	}
 }
 
 @Async
 public void staticAggregation(Map<String, String> messageMap) {
-	LOG.info("static Aggregator Consumed");
+	logger.info("static Aggregator Consumed");
+	try{
 	String eventJson = (String) messageMap.get("aggregationDetail");
 	if (eventJson != null && !eventJson.isEmpty()) {
 		microAggregationLoader.staticAggregation(eventJson);
+	}
+	}catch(Exception e){
+		logger.error("static aggregator:{}",messageMap);
 	}
 }
 }
