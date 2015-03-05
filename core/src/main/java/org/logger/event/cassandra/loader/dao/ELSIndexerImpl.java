@@ -1008,7 +1008,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer,C
 			if(userInfos.getColumnByName("securityGroupUid") != null){
 				contentBuilder.field("security_group_uid",userInfos.getColumnByName("securityGroupUid").getStringValue());
 			}
-			if(userInfos.getColumnByName("userName") != null){
+			if(userInfos.getColumnByName("username") != null){
 				contentBuilder.field("username",userInfos.getColumnByName("username").getStringValue());
 			}
 			if(userInfos.getColumnByName("roleId") != null){
