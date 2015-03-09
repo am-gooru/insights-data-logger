@@ -48,17 +48,22 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.Message;
 
+import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
+import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.netflix.astyanax.model.ColumnList;
 
 public class MessageConsumer extends Thread implements Runnable
 {
 	private CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
+	private BaseCassandraRepoImpl baseCassandraDAO;
 	private final ConsumerConnector consumer;
 	private static String topic;
 	private DataProcessor rowDataProcessor;
@@ -68,8 +73,7 @@ public class MessageConsumer extends Thread implements Runnable
 	private static String KAFKA_GROUPID;
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 	
-  public MessageConsumer(DataProcessor insertRowForLogDB)
-  {
+  public MessageConsumer(DataProcessor insertRowForLogDB){
 	  Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
 		ZK_IP = kafkaProperty.get("zookeeper_ip");
@@ -116,36 +120,88 @@ public class MessageConsumer extends Thread implements Runnable
 		return new ConsumerConfig(props);
 
 	}
- 
-  public void run() {
-	  Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+	
+	public void run() {
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		Integer noOfThread = 1;
-		topicCountMap.put(topic, new Integer(noOfThread));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		int loopCount = 0, status = 1, mailLoopCount;
+		int targetCount = 10;
+		long sleepTime = 0;
+		baseCassandraDAO = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
+		baseCassandraDAO.saveValue(ColumnFamily.JOB_TRACKER.getColumnFamily(), Constants.MONITOR_KAFKA_CONSUMER, Constants.STATUS, status);
+		/**
+		 * Iterate the loop for few times till the kafka get reconnected
+		 */
+		while (loopCount < targetCount) {
+			try {
+				/**
+				 * Get config settings for kafka consumer
+				 */
+				ColumnList<String> columnList = baseCassandraDAO.readWithKey(ColumnFamily.JOB_TRACKER.getColumnFamily(), Constants.MONITOR_KAFKA_CONSUMER, 0);
+				status = columnList.getIntegerValue(Constants.STATUS, 1);
+				mailLoopCount = columnList.getIntegerValue(Constants.MAIL_LOOP_COUNT, 10);
+				targetCount = columnList.getIntegerValue(Constants.THREAD_LOOP_COUNT, 10);
+				sleepTime = columnList.getIntegerValue(Constants.THREAD_SLEEP_TIME, 10000);
 
-		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-		ConsumerIterator<byte[], byte[]> it = stream.iterator();
+				/**
+				 * will kill the thread,if the status is 0
+				 */
+				if (status == 0) {
+					return;
+				}
 
-		while (it.hasNext()) {
-			String message = new String(it.next().message());
-    	Gson gson = new Gson();
-    	Map<String, String> messageMap = new HashMap<String, String>();
-    	try {
-    		messageMap = gson.fromJson(message, messageMap.getClass());
-		} catch (Exception e) {
-			ConsumerLogFactory.errorActivity.error(message);
-			continue; 
+				/**
+				 * will send the mail to developer for kafka failure
+				 * notification
+				 */
+				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
+					logger.info("mail sending logic");
+				}
+
+				/**
+				 * get list of kafka stream from specific topic
+				 */
+				topicCountMap.put(topic, new Integer(noOfThread));
+				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+
+				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+				ConsumerIterator<byte[], byte[]> it = stream.iterator();
+
+				/**
+				 * process consumed data
+				 */
+				while (it.hasNext()) {
+					String message = new String(it.next().message());
+					Gson gson = new Gson();
+					Map<String, String> messageMap = new HashMap<String, String>();
+					try {
+						messageMap = gson.fromJson(message, messageMap.getClass());
+					} catch (Exception e) {
+						ConsumerLogFactory.errorActivity.error(message);
+						continue;
+					}
+
+					// TODO We're only getting raw data now. We'll have to use
+					// the server IP as well for extra information.
+					if (messageMap != null && !messageMap.isEmpty()) {
+						ConsumerLogFactory.activity.info(message);
+						this.rowDataProcessor.processRow(messageMap.get("raw"));
+					} else {
+						ConsumerLogFactory.errorActivity.error(message);
+						continue;
+					}
+				}
+
+			} catch (Exception e) {
+				logger.error("Message Consumer:" + e);
+			} finally {
+				try {
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+					logger.error("Message Consumer Interrupted:" + e);
+				}
+			}
+			loopCount++;
 		}
-    	
-    	//TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-    	if(!messageMap.isEmpty())
-    	{
-    		ConsumerLogFactory.activity.info(message);
-    		this.rowDataProcessor.processRow(messageMap.get("raw"));
-    	}else{
-      		ConsumerLogFactory.errorActivity.error(message);
-    		continue;
-    	}
-    }
-  }
+	}
 }

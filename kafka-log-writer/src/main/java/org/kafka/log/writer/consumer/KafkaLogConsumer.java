@@ -33,17 +33,22 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
+import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
+import org.kafka.event.microaggregator.core.Constants;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
+import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.netflix.astyanax.model.ColumnList;
 
 
-public class KafkaLogConsumer extends Thread implements Runnable {
+public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 
 	private MicroAggregationLoader microAggregationLoader;
 	private final ConsumerConnector consumer;
+	private AggregationDAOImpl aggregationDAOImpl;
 	private static String topic;
 
 	private static String ZOOKEEPER_IP;
@@ -110,32 +115,78 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	void consumedData() {
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		Integer noOfThread = 1;
+		int loopCount = 0, status = 1, mailLoopCount;
+		int targetCount = 10;
+		long sleepTime = 0;
+		aggregationDAOImpl = new AggregationDAOImpl(new CassandraConnectionProvider());
+		aggregationDAOImpl.putValueByType(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_LOG_CONSUMER, Constants.STATUS, status);
 		topicCountMap.put(topic, noOfThread);
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-		ConsumerIterator<byte[], byte[]> it = stream.iterator();
-		while (it.hasNext()) {
-			String message = new String(it.next().message());
-			Gson gson = new Gson();
-			Map<String, String> messageMap = new HashMap<String, String>();
+		/**
+		 * Iterate the loop for few times till the kafka get reconnected
+		 */
+		while (loopCount < targetCount) {
 			try {
-				messageMap = gson.fromJson(message, messageMap.getClass());
+				/**
+				 * Get config settings for kafka consumer
+				 */
+				ColumnList<String> columnList = aggregationDAOImpl.readRow(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_LOG_CONSUMER, null).getResult();
+				status = columnList.getIntegerValue(Constants.STATUS, 1);
+				mailLoopCount = columnList.getIntegerValue(Constants.MAIL_LOOP_COUNT, 10);
+				targetCount = columnList.getIntegerValue(Constants.THREAD_LOOP_COUNT, 10);
+				sleepTime = columnList.getIntegerValue(Constants.THREAD_SLEEP_TIME, 10000);
 
+				/**
+				 * will kill the thread,if the status is 0
+				 */
+				if (status == 0) {
+					return;
+				}
+
+				/**
+				 * will send the mail to developer for kafka failure
+				 * notification
+				 */
+				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
+					logger.info("mail sending logic");
+				}
+
+				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+				ConsumerIterator<byte[], byte[]> it = stream.iterator();
+				while (it.hasNext()) {
+					String message = new String(it.next().message());
+					Gson gson = new Gson();
+					Map<String, String> messageMap = new HashMap<String, String>();
+					try {
+						messageMap = gson.fromJson(message, messageMap.getClass());
+
+					} catch (Exception e) {
+						LogWritterFactory.errorActivity.error(message);
+						continue;
+					}
+
+					// TODO We're only getting raw data now. We'll have to use
+					// the
+					// server IP as well for extra information.
+					if (messageMap != null && !messageMap.isEmpty()) {
+						// Write the consumed JSON to Log file.
+						LogWritterFactory.activity.info(message);
+						String eventJson = (String) messageMap.get("raw");
+					} else {
+						LogWritterFactory.errorActivity.error(message);
+						continue;
+					}
+				}
 			} catch (Exception e) {
-				LogWritterFactory.errorActivity.error(message);
-				continue;
+				logger.error("Message Log Consumer:" + e);
+			} finally {
+				try {
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+					logger.error("Message Log Consumer Interrupted:" + e);
+				}
 			}
-
-			// TODO We're only getting raw data now. We'll have to use the
-			// server IP as well for extra information.
-			if (!messageMap.isEmpty()) {
-				// Write the consumed JSON to Log file.
-				LogWritterFactory.activity.info(message);
-				String eventJson = (String) messageMap.get("raw");
-			} else {
-				LogWritterFactory.errorActivity.error(message);
-				continue;
-			}
+			loopCount++;
 		}
 	}
 

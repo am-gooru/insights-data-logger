@@ -1,28 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  logback.xml
-  insights-event-logger
-  Created by Gooru on 2014
-  Copyright (c) 2014 Gooru. All rights reserved.
-  http://www.goorulearning.org/
-  Permission is hereby granted, free of charge, to any person obtaining
-  a copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-  The above copyright notice and this permission notice shall be
-  included in all copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
--->
 <configuration>
+<!-- logback.xml insights-event-logger Created by Gooru on 2014 Copyright 
+	(c) 2014 Gooru. All rights reserved. http://www.goorulearning.org/ Permission 
+	is hereby granted, free of charge, to any person obtaining a copy of this 
+	software and associated documentation files (the "Software"), to deal in 
+	the Software without restriction, including without limitation the rights 
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+	copies of the Software, and to permit persons to whom the Software is furnished 
+	to do so, subject to the following conditions: The above copyright notice 
+	and this permission notice shall be included in all copies or substantial 
+	portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY 
+	OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+	OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+	DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+	DEALINGS IN THE SOFTWARE. -->
+<!-- Parent LogBack file -->
 	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%5p [%t] %m%n</pattern>
@@ -31,60 +24,158 @@
 			<level>INFO</level>
 		</filter>
 	</appender>
-	<appender name="default-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
-		<param name="File" value="${catalina.home}/event_logs/event-logger-default.log" />
+	<!-- activity appender will append the consumer module related INFO log -->
+	<appender name="consumer-activity-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>event-logger-default.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>logs/consumer_logs/activity.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
+			<!-- keep 30 days' worth of history -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<param name="encoding" value="UTF-8" />
+		<encoder>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
+		</encoder>
+	</appender>
 
-			<!-- keep 30 days' worth of history -->
-			<maxHistory>30</maxHistory>
-		</rollingPolicy>
-		<param name="encoding" value="UTF-8" />
-		<encoder>
-			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
-		</encoder>
-	</appender>
-	
-	<appender name="activity-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
-		<param name="File" value="${catalina.home}/event_api_logs/activity.log" />
+
+	<!-- error appender will append the consumer module related ERROR log -->
+	<appender name="consumer-activity-error-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>${catalina.home}/event_api_logs/activity.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>logs/consumer_logs/activity-error.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<param name="encoding" value="UTF-8" />
 		<encoder>
-			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
 		</encoder>
 	</appender>
-	<logger name="activityLog" level="INFO" additivity="false">
-        <appender-ref ref="activity-out"/>
-    </logger>
-	
-	<!-- writing error logs -->
-	
-		<appender name="activity-error-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
-		<param name="File" value="logs/event_api_logs/activity-error.log" />
+
+	<!-- activity appender will append the log writter module related INFO log -->
+	<appender name="logwritter-activity-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${LOG_WRITTER_STORAGE}/logs/writter_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/event_api_logs/activity-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>logs/writter_logs/activity.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<param name="encoding" value="UTF-8" />
 		<encoder>
-			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
 		</encoder>
 	</appender>
-	<logger name="activityErrorLog" level="INFO" additivity="false">
-        <appender-ref ref="activity-error-out"/>
-    </logger>
-    
+
+	<!-- error appender will append the log writter module related ERROR log -->
+	<appender name="logwritter-activity-error-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${LOG_WRITTER_STORAGE}/logs/writter_logs/activity-error.log" />
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>logs/writter_logs/activity-error.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
+			<!-- keep 30 days' worth of history -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<param name="encoding" value="UTF-8" />
+		<encoder>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- activity appender will append the micro aggregator module related INFO 
+		log -->
+	<appender name="aggregator-activity-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.log" />
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>logs/writter_logs/activity.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
+			<!-- keep 30 days' worth of history -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<param name="encoding" value="UTF-8" />
+		<encoder>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- error appender will append the micro aggregator module related ERROR 
+		log -->
+	<appender name="aggregator-activity-error-out"
+		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File"
+			value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.log" />
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>logs/writter_logs/activity-error.%d{yyyy-MM-dd}.log
+			</fileNamePattern>
+			<!-- keep 30 days' worth of history -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<param name="encoding" value="UTF-8" />
+		<encoder>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
+				- %msg%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<!-- activity logger to log consumer module related INFO log -->
+	<logger name="consumerActivity" level="INFO" additivity="false">
+		<appender-ref ref="consumer-activity-out" />
+	</logger>
+
+	<!-- activity logger to log consumer module related ERROR log -->
+	<logger name="consumerActivityError" level="ERROR" additivity="false">
+		<appender-ref ref="consumer-activity-error-out" />
+	</logger>
+
+	<!-- activity logger to log writter module related INFO log -->
+	<logger name="logWritterActivity" level="INFO" additivity="false">
+		<appender-ref ref="logwritter-activity-out" />
+	</logger>
+
+	<!-- activity logger to log writter module related ERROR log -->
+	<logger name="logWritterActivityError" level="ERROR" additivity="false">
+		<appender-ref ref="logwritter-activity-error-out" />
+	</logger>
+
+	<!-- activity logger to micro aggregator module related INFO log -->
+	<logger name="aggregatorActivity" level="INFO" additivity="false">
+		<appender-ref ref="aggregator-activity-out" />
+	</logger>
+
+	<!-- activity logger to micro aggregator module related ERROR log -->
+	<logger name="aggregatorActivityError" level="ERROR" additivity="false">
+		<appender-ref ref="aggregator-activity-error-out" />
+	</logger>
+
+	<!-- logger configuration for dependency -->
 	<logger name="org.springframework" level="WARN"></logger>
 	<logger name="org.hibernate.cfg.HbmBinder" level="WARN"></logger>
-	<root level="${log.default.level}">
-		<appender-ref ref="default-out" /> 
+	<root level="INFO">
+		<appender-ref ref="default-out" />
 	</root>
 </configuration>

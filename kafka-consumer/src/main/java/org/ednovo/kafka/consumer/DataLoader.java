@@ -28,10 +28,11 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.kafka.log.writer.consumer.KafkaLogConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataLoader  {
+public class DataLoader implements Runnable {
 
     static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
@@ -54,11 +55,7 @@ public class DataLoader  {
     	    
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
-    	        // print the value of block-size
-    	    	DataProcessor[] handlers = {new KafkaInputProcessor(), new JSONProcessor(), new CassandraProcessor()};
-				DataProcessor initialRowHandler = buildHandlerChain(handlers);
-				initialRowHandler.processRow(null);
-    		    
+    		    runThread();
     		    return;
     	    }
     	}
@@ -86,4 +83,16 @@ public class DataLoader  {
 		}
     	return firstHandler;
     }
+    
+    @Override
+    public void run(){
+    	runThread();
+    }
+
+	public static void runThread() {
+		 // print the value of block-size
+    	DataProcessor[] handlers = {new KafkaInputProcessor(), new JSONProcessor(), new CassandraProcessor()};
+		DataProcessor initialRowHandler = buildHandlerChain(handlers);
+		initialRowHandler.processRow(null);
+	}
 }

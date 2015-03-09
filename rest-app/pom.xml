@@ -54,7 +54,7 @@
   </build>
   <dependencies>
   <dependency>
-			<groupId>org.ednovo.kafka.consumer</groupId>
+			<groupId>org.ednovo.data.eventapi</groupId>
 			<artifactId>kafka-consumer</artifactId>
 			<version>1.0</version>
 		</dependency>

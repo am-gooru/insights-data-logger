@@ -36,6 +36,8 @@ public enum ColumnFamily {
 	
 	CONFIGSETTINGS("job_config_settings"),
 	
+	JOB_TRACKER("job_tracker"),
+	
 	REALTIMECONFIG("real_time_operation_config"),
 	
 	RECENTVIEWEDRESOURCES("recent_viewed_resources"),

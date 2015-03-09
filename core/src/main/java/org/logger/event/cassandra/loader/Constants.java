@@ -543,4 +543,15 @@ public interface Constants {
 	public static final String ITEM_COUNT = "itemCount";
 	
 	public static final String INDEXINGVERSION = "index_version";	
+	
+	public static final String MONITOR_KAFKA_CONSUMER = "monitor~kafka~consumer";
+	
+	public static final String STATUS = "status";
+	
+	public static final String MAIL_LOOP_COUNT = "mail_loop_count";
+	
+	public static final String THREAD_LOOP_COUNT = "thread_loop_count";
+	
+	public static final String THREAD_SLEEP_TIME = "thread_sleep_time";
+	
 }
