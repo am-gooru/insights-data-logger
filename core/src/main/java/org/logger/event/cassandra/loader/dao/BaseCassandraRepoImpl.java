@@ -15,14 +15,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
+import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 
+import com.google.common.collect.Lists;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.Keyspace;
@@ -44,6 +47,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	private static CassandraConnectionProvider connectionProvider;
 	
+	private CassandraDataLoader cassandraDataLoader;
+	
+	private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+	
 	private static final Logger logger = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 	
 	
@@ -54,6 +61,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	public BaseCassandraRepoImpl() {
 		super(connectionProvider);
+	}
+	
+	public CassandraDataLoader getCassandraDataLoader() {
+		return this.cassandraDataLoader;
 	}
 
     public Column<String> readWithKeyColumn(String cfName,String key,String columnName,int retryCount){
@@ -1234,5 +1245,42 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     	}
     	return false;
 	
+	}
+	
+	public void saveListData(String cfName, String key, List<Map<String, Object>> resourceList) {
+		Keyspace keySpace = getAwsKeyspace();
+		int partitionSize = 2000;
+		
+		try {
+			Map<String, String> tableDatatype = getCassandraDataLoader().getTablesDataTypeCache().get(cfName);
+			for(List<Map<String,Object>> resourceSubList : Lists.partition(resourceList, partitionSize)){
+				MutationBatch m = keySpace.prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+				for (Map<String, Object> resource : resourceSubList) {
+					if (resource != null && !resource.isEmpty() && resource.containsKey(key) && StringUtils.trimToNull(resource.get(key).toString()) != null) {
+						ColumnListMutation<String> value = m.withRow(this.accessColumnFamily(cfName), resource.get(key).toString());
+						for (Map.Entry<String, Object> entry : resource.entrySet()) {
+							if (tableDatatype.containsKey(entry.getKey())) {
+								if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("int") || tableDatatype.get(entry.getKey()).equalsIgnoreCase("integer")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? Integer.parseInt(entry.getValue().toString()) : null, null);
+								} else if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("string") || tableDatatype.get(entry.getKey()).equalsIgnoreCase("text")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? entry.getValue().toString() : null, null);
+								} else if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("long") || tableDatatype.get(entry.getKey()).equalsIgnoreCase("bigint")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? Long.parseLong(entry.getValue().toString()) : null, null);
+								} else if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("boolean")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? Boolean.valueOf((entry.getValue().toString())) : null, null);
+								} else if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("timestamp")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? dateFormatter.parse(entry.getValue().toString()) : null, null);
+								} else if (tableDatatype.get(entry.getKey()).equalsIgnoreCase("date")) {
+									value.putColumnIfNotNull(entry.getKey(), entry.getValue() != null ? (Date) entry.getValue() : null, null);
+								}
+							}
+						}
+					}
+				}
+				m.execute();
+			}
+		} catch (Exception e) {
+			logger.error("Error while save in method : saveBulkListData {}" + e);
+		}  
 	}
 }

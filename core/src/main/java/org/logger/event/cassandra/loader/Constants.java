@@ -251,4 +251,12 @@ public interface Constants {
 	public String ACTIVECOLLECTIONRESOURCEPLAYS = "active~collection~resource~plays";
 	
 	public String ACTIVEPLAYS = "active~content~plays";
+	
+	public String INDEXINGVERSION = "index_version";
+	
+	public String UNDER_SCORE = "_";
+	
+	public int DEFAULT_RETRY_COUNT = 5;
+	
+	public String EVENT_ID = "event_id";
 }

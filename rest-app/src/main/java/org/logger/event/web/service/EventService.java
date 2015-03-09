@@ -81,4 +81,6 @@ public interface EventService {
 	public void clearCacher();
 	
 	void viewsTsMigration(String ids);
+	
+	void migrateUserEvents(String userId);
 }

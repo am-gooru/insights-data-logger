@@ -587,4 +587,9 @@ public class EventController {
     }
 		return false;
 	}
+	
+	public void migrateUserEvents(HttpServletRequest request, @RequestParam(value = "userId", required = true) String userId, HttpServletResponse response) {
+		eventService.migrateUserEvents(userId);
+	}
+	
 }

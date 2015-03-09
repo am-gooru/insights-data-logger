@@ -319,4 +319,9 @@ public class EventServiceImpl implements EventService {
 	public void viewsTsMigration(String ids) {
 		dataLoaderService.migrateViewCountTs(ids);		
 	}
+
+	@Override
+	public void migrateUserEvents(String userId) {
+		dataLoaderService.migrateUserEventAndIndex(userId);
+	}
 }

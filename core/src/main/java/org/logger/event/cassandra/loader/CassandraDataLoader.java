@@ -34,29 +34,41 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.xalan.xsltc.compiler.util.InternalError;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -136,6 +148,9 @@ public class CassandraDataLoader implements Constants {
 
     private HashMap<String, Map<String, String>> tablesDataTypeCache;
     
+    @Autowired
+    private BaseDAOCassandraImpl baseDaoCassandraImpl;
+    
     /**
      * Get Kafka properties from Environment
      */
@@ -207,6 +222,7 @@ public class CassandraDataLoader implements Constants {
         cache.put(SESSIONTOKEN, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULTCOLUMN,0).getStringValue());
         cache.put(SEARCHINDEXAPI, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULTCOLUMN,0).getStringValue());
         cache.put(STATFIELDS, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), STATFIELDS, DEFAULTCOLUMN, 0).getStringValue());
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
         geo = new GeoLocation();
         
         ColumnList<String> schdulersStatus = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "schdulers~status",0);
@@ -2568,7 +2584,118 @@ public class CassandraDataLoader implements Constants {
     public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
     	this.connectionProvider = connectionProvider;
     }
+
+    /**
+     * This method used to get all the events from index and check that event exist in cassandra, then if it is exist index the event again. 
+     * If the event id is not in new cassandra check in old cassandra and migrate the data then index the event.
+     * 
+     * @param userId To get all the events from index.
+     */
+    public void migrateUserEventAndIndex(String userId) {
+    	String api = "http://104.236.129.198:8080/api/log/event/index/event?ids=";
+    	List<Map<String, Object>> eventList = getDataFromIndex(ESIndexices.EVENTLOGGER.getIndex() + UNDER_SCORE + cache.get(INDEXINGVERSION), ESIndexices.EVENTLOGGER.getType()[0], USERID, userId, 0);
+    	List<Map<String, Object>> eventDetailList = new ArrayList<Map<String,Object>>();
+    	
+    	for(Map<String, Object> event: eventList) {
+    		ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), String.valueOf(event.get(EVENT_ID)), 3);
+    		if(columnList.size() > 0) {
+    			this.excuteHttpGetAPI(api + String.valueOf(event.get(EVENT_ID)));
+    		}else {
+    			ColumnList<String> oldColumnList = this.getBaseCassandraRepoImpl().readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), String.valueOf(event.get(EVENT_ID)), 3);
+    			Map<String, Object> eventDetail = new HashMap<String, Object>();
+    			if(oldColumnList.size() > 0) {
+        			for(Column<String> column : oldColumnList){
+        				eventDetail.put(column.getName(), column.getStringValue());
+        			}
+        			eventDetailList.add(eventDetail);
+    			} else {
+    				logger.info("Event Id not exist in old Cassandra: " + event.get(EVENT_ID));
+    			}
+    		}
+    	}
+    	
+    	if(eventDetailList.size() > 0){
+    		this.getBaseCassandraRepoImpl().saveListData(ColumnFamily.EVENTDETAIL.getColumnFamily(), EVENT_ID, eventDetailList);
+    		for(Map<String, Object> event : eventDetailList) {
+    			this.excuteHttpGetAPI(api + String.valueOf(event.get(EVENT_ID)));
+    		}
+    	}
+    	
+    }
     
+    /**
+     * This method is used to get the data from index using certain filter conditions. This will return List of data from index.
+     * @param index
+     * @param type
+     * @param field
+     * @param value
+     * @param from
+     * @return
+     */
+    public List<Map<String, Object>> getDataFromIndex(String index, String type, String field, String value, int from) {
+    	
+    	List<Map<String, Object>> resultList = new ArrayList<Map<String,Object>>();
+    	int limit = 1000;
+
+    	SearchResponse response = getBaseDAOCassandraImpl().getESClient().prepareSearch(index)
+                .setTypes(type)
+                .setSearchType(SearchType.QUERY_AND_FETCH)
+                .setQuery(fieldQuery(field, value))
+                .setFrom(from).setSize(limit).setExplain(true)
+                .execute()
+                .actionGet();
+    	
+    	SearchHit[] results = response.getHits().getHits();
+
+  		System.out.println("Current results: " + results.length);
+  		for (SearchHit hit : results) {
+	  		Map<String,Object> result = hit.getSource();
+	  		resultList.add(result);
+  		}
+  		
+  		return resultList;
+    }
+  		
+  	private QueryBuilder fieldQuery(String field, String value) {
+  		QueryBuilder queryBuilder = QueryBuilders.termQuery(field, value);
+  		return queryBuilder;
+	}
+
+	public BaseDAOCassandraImpl getBaseDAOCassandraImpl() {
+  		return baseDaoCassandraImpl;
+  	}
+	
+	public BaseCassandraRepoImpl getBaseCassandraRepoImpl() {
+		return baseDao;
+	}
+	
+	/**
+	 * This method is for execute the API calls which has Get method support.
+	 * This will return the Response Object. 
+	 * @param api
+	 * @return
+	 */
+	public HttpResponse excuteHttpGetAPI(String api) {
+		
+		DefaultHttpClient httpClient = new DefaultHttpClient();
+		HttpGet get = new HttpGet(api);
+		HttpResponse response = null;
+		try {
+			response = httpClient.execute(get);
+			logger.info("Executed given API. Response Code: {}", response.getStatusLine().getStatusCode());
+		} catch (Exception e) {
+			logger.error("Failed to excute given API: {}", api);
+			response.setStatusCode(500);
+		}
+		return response;
+	}
+	
+	/**
+	 * This method will return Map which contains the data for field datatypes for specific columnfamily from cache.
+	 * @return
+	 */
+	public Map<String, Map<String, String>> getTablesDataTypeCache() {
+		return tablesDataTypeCache;
+	}
 }
 
-  
