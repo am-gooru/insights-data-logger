@@ -49,9 +49,11 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -146,6 +148,8 @@ public class CassandraDataLoader implements Constants {
     private String KafkaTopic;
 
     private HashMap<String, Map<String, String>> tablesDataTypeCache;
+    
+    private int limit = 100;
     
     @Autowired
     private BaseDAOCassandraImpl baseDaoCassandraImpl;
@@ -1083,38 +1087,9 @@ public class CassandraDataLoader implements Constants {
 	    	}
 	 
 	    	try{
-		    	MutationBatch m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
-		    	for(int i = 0 ; i < eventUUID.size() ; i++) {
-		    	String eventDetailUUID = eventUUID.getColumnByIndex(i).getStringValue();
-		    	
-		    	logger.info("Event Id " + eventDetailUUID) ;
-		    	
-		    	ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
-		    	
-		    if(eventDetailsRow != null && eventDetailsRow.getColumnByName("event_name") != null) {
-		    	
-	    		for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
-	    			if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
-	    				baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
-					}else {
-						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getStringValue(), m);
-					}
-	    		}
-	    		
-	    		String aggregatorJson = null;
-	    		if(eventDetailsRow.getColumnByName("event_name").getStringValue() != null){
-	    			aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
-	    		}
-	    		
-	    		if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
-	    			EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
-	    			this.handleEventObjectMessage(eventObjects);
-	    		}
-
-	    	 }
-		    
-		    }
-		    	m.execute();
+	        	for(int i = 0 ; i < eventUUID.size() ; i++) {
+	        		this.migrateEvent(eventUUID.getColumnByIndex(i).getStringValue());
+	        	}
 	    	}catch(Exception e){
 	    		e.printStackTrace();
 	    	}
@@ -2601,44 +2576,6 @@ public class CassandraDataLoader implements Constants {
     }
 
     /**
-     * This method used to get all the events from index and check that event exist in cassandra, then if it is exist index the event again. 
-     * If the event id is not in new cassandra check in old cassandra and migrate the data then index the event.
-     * 
-     * @param userId To get all the events from index.
-     */
-    public void migrateUserEventAndIndex(String userId) {
-    	String api = "http://104.236.129.198:8080/api/log/event/index/event?ids=";
-    	List<Map<String, Object>> eventList = getDataFromIndex(ESIndexices.EVENTLOGGER.getIndex() + UNDER_SCORE + cache.get(INDEXINGVERSION), ESIndexices.EVENTLOGGER.getType()[0], USERID, userId, 0);
-    	List<Map<String, Object>> eventDetailList = new ArrayList<Map<String,Object>>();
-    	
-    	for(Map<String, Object> event: eventList) {
-    		ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), String.valueOf(event.get(EVENT_ID)), 3);
-    		if(columnList.size() > 0) {
-    			this.excuteHttpGetAPI(api + String.valueOf(event.get(EVENT_ID)));
-    		}else {
-    			ColumnList<String> oldColumnList = this.getBaseCassandraRepoImpl().readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), String.valueOf(event.get(EVENT_ID)), 3);
-    			Map<String, Object> eventDetail = new HashMap<String, Object>();
-    			if(oldColumnList.size() > 0) {
-        			for(Column<String> column : oldColumnList){
-        				eventDetail.put(column.getName(), column.getStringValue());
-        			}
-        			eventDetailList.add(eventDetail);
-    			} else {
-    				logger.info("Event Id not exist in old Cassandra: " + event.get(EVENT_ID));
-    			}
-    		}
-    	}
-    	
-    	if(eventDetailList.size() > 0){
-    		this.getBaseCassandraRepoImpl().saveListData(ColumnFamily.EVENTDETAIL.getColumnFamily(), EVENT_ID, eventDetailList);
-    		for(Map<String, Object> event : eventDetailList) {
-    			this.excuteHttpGetAPI(api + String.valueOf(event.get(EVENT_ID)));
-    		}
-    	}
-    	
-    }
-    
-    /**
      * This method is used to get the data from index using certain filter conditions. This will return List of data from index.
      * @param index
      * @param type
@@ -2647,14 +2584,14 @@ public class CassandraDataLoader implements Constants {
      * @param from
      * @return
      */
-    public List<Map<String, Object>> getDataFromIndex(String index, String type, String field, String value, int from) {
+    public List<String> getDataFromIndex(String index, String type, String field, String value, int from, String fieldToGet) {
     	
-    	List<Map<String, Object>> resultList = new ArrayList<Map<String,Object>>();
-    	int limit = 1000;
-
+    	List<String> resultList = new ArrayList<String>();
+    	
     	SearchResponse response = getBaseDAOCassandraImpl().getESClient().prepareSearch(index)
                 .setTypes(type)
                 .setSearchType(SearchType.QUERY_AND_FETCH)
+                .addField(fieldToGet)
                 .setQuery(fieldQuery(field, value))
                 .setFrom(from).setSize(limit).setExplain(true)
                 .execute()
@@ -2664,10 +2601,8 @@ public class CassandraDataLoader implements Constants {
 
   		System.out.println("Current results: " + results.length);
   		for (SearchHit hit : results) {
-	  		Map<String,Object> result = hit.getSource();
-	  		resultList.add(result);
+	  		resultList.add(hit.getSource().get("fieldToGet").toString());
   		}
-  		
   		return resultList;
     }
   		
@@ -2712,5 +2647,92 @@ public class CassandraDataLoader implements Constants {
 	public Map<String, Map<String, String>> getTablesDataTypeCache() {
 		return tablesDataTypeCache;
 	}
-}
+	
+	public void migrateContentAndIndex(String indexName, String indexType, String lookUpField, String lookUpValue, int limit, boolean migrate) {
+		String api = "http://104.236.129.198:8080/api/log/event/index/";
+		if(indexName.contains("event")) {
+			api +=  "event?ids=";
+			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
+			Long from = 0L;
+			while(from < totalCount) {
+				List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id");
+				for(String eventId : eventIdList) {
+					ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 3);
+		    		if(columnList.size() > 0) {
+		    			this.excuteHttpGetAPI(api + eventId);
+		    		} else if(migrate) {
+		    			this.migrateEvent(eventId);
+		    			this.excuteHttpGetAPI(api + eventId);
+		    		} else {
+		    			logger.error("Given event id not in new Cassandra");
+		    		}
+				}
+				from += limit;
+			}
+		} else if(indexName.contains("content")) {
+			api +=  "resource?ids=";
+			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
+			Long from = 0L;
+			while(from < totalCount) {
+				List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid");
+				for(String contentId : contentIdList) {
+					this.excuteHttpGetAPI(api + contentId);
+				}
+				from += limit;
+			}
+		}
+	}
+	
+	public Long getCount(String index, String type, String field, String value) {
+		CountResponse response = getBaseDAOCassandraImpl().getESClient().prepareCount(index)
+				.setQuery(fieldQuery(field, value))
+				.execute()
+				.actionGet();
+		
+		System.out.println("Total Count: " + response.getCount());
+		return response.getCount();
+	}
+	
+	public void migrateEvent(String eventDetailUUID) {
 
+    	MutationBatch m = null;
+		try {
+			m = getConnectionProvider().getNewAwsKeyspace().prepareMutationBatch().setConsistencyLevel(WRITE_CONSISTENCY_LEVEL);
+			logger.info("Event Id " + eventDetailUUID) ;
+			
+			ColumnList<String> eventDetailsRow = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID,0);
+			
+			if(eventDetailsRow != null && eventDetailsRow.getColumnByName("event_name") != null) {
+				
+				for(int j = 0 ; j < eventDetailsRow.size() ; j++ ){
+					if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("time_spent_in_millis") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
+						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getLongValue(), m);
+					}else {
+						baseDao.generateNonCounter(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventDetailUUID, eventDetailsRow.getColumnByIndex(j).getName(), eventDetailsRow.getColumnByIndex(j).getStringValue(), m);
+					}
+					if ((eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("start_time") || eventDetailsRow.getColumnByIndex(j).getName().equalsIgnoreCase("end_time"))) {
+						Date eventDateTime = new Date(eventDetailsRow.getColumnByIndex(j).getLongValue());
+						String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
+						baseDao.generateNonCounter(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey,eventDetailUUID,eventDetailUUID,m);
+						
+					}
+				}
+				
+				String aggregatorJson = null;
+				if(eventDetailsRow.getColumnByName("event_name").getStringValue() != null){
+					aggregatorJson = cache.get(eventDetailsRow.getColumnByName("event_name").getStringValue());
+				}
+				
+				if(aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAWUPDATE)){		 	
+					EventObject eventObjects = new Gson().fromJson(eventDetailsRow.getColumnByName("fields").getStringValue(), EventObject.class);
+					this.handleEventObjectMessage(eventObjects);
+				}
+				m.execute();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error while migrating event {}",  eventDetailUUID);
+		}
+	}
+
+}
