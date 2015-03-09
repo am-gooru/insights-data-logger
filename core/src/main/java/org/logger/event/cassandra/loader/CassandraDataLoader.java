@@ -38,22 +38,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.xalan.xsltc.compiler.util.InternalError;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventObject;
 import org.ednovo.data.model.JSONDeserializer;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -1210,6 +1209,22 @@ public class CassandraDataLoader implements Constants {
     	}
 		return eventMap;
     }
+    
+    public void assementScoreCalculator(){
+
+		try {
+			SearchRequestBuilder searchRequestBuilder = getConnectionProvider().getESClient().prepareSearch(ESIndexices.EVENTLOGGERINSIGHTS.getIndex()).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+			
+			searchRequestBuilder.setPostFilter(FilterBuilders.termFilter("eventName", "collection.play"));
+			searchRequestBuilder.addField("event_id");
+			String result =  searchRequestBuilder.execute().actionGet().toString();
+			logger.info("result"+result);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+    }
+    
     public Map<String,Object> getContentInfo(Map<String,Object> eventMap,String gooruOId){
     	ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~"+gooruOId,0);
     		if(resource != null){

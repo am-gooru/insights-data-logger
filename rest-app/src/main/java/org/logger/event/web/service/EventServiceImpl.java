@@ -288,6 +288,7 @@ public class EventServiceImpl implements EventService {
 		dataLoaderService.migrateViewsTimespendLiveDashBoard();
 	}
 	
+	
 	@Override
 	public void eventMigration() {		
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "activity~migration~last~updated", "constant_value",0).getStringValue();
@@ -323,5 +324,10 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void migrateUserEvents(String userId) {
 		dataLoaderService.migrateUserEventAndIndex(userId);
+	}
+	
+	@Override
+ 	public void assementScoreCalculator() {
+		dataLoaderService.assementScoreCalculator();
 	}
 }
