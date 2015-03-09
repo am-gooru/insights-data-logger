@@ -149,8 +149,6 @@ public class CassandraDataLoader implements Constants {
 
     private HashMap<String, Map<String, String>> tablesDataTypeCache;
     
-    private int limit = 100;
-    
     @Autowired
     private BaseDAOCassandraImpl baseDaoCassandraImpl;
     
@@ -2584,7 +2582,7 @@ public class CassandraDataLoader implements Constants {
      * @param from
      * @return
      */
-    public List<String> getDataFromIndex(String index, String type, String field, String value, int from, String fieldToGet) {
+    public List<String> getDataFromIndex(String index, String type, String field, String value, int from, String fieldToGet, int limit) {
     	
     	List<String> resultList = new ArrayList<String>();
     	
@@ -2655,7 +2653,7 @@ public class CassandraDataLoader implements Constants {
 			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 			Long from = 0L;
 			while(from < totalCount) {
-				List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id");
+				List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id", limit);
 				for(String eventId : eventIdList) {
 					ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 3);
 		    		if(columnList.size() > 0) {
@@ -2674,7 +2672,7 @@ public class CassandraDataLoader implements Constants {
 			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 			Long from = 0L;
 			while(from < totalCount) {
-				List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid");
+				List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
 				for(String contentId : contentIdList) {
 					this.excuteHttpGetAPI(api + contentId);
 				}

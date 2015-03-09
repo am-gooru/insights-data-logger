@@ -322,8 +322,8 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
-	public void migrateUserEvents(String userId) {
-		dataLoaderService.migrateUserEventAndIndex(userId);
+	public void migrateContentAndIndex(String indexName, String indexType, String lookUpField, String lookUpValue, int limit, boolean migrate) {
+		dataLoaderService.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit, migrate);
 	}
 	
 	@Override

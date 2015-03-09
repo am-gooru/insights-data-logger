@@ -82,7 +82,8 @@ public interface EventService {
 	
 	void viewsTsMigration(String ids);
 	
-	void migrateUserEvents(String userId);
-
 	void assementScoreCalculator();
+
+	void migrateContentAndIndex(String indexName, String indexType,
+			String lookUpField, String lookUpValue, int limit, boolean migrate);
 }

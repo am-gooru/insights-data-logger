@@ -598,8 +598,18 @@ public class EventController {
 		return false;
 	}
 	
-	public void migrateUserEvents(HttpServletRequest request, @RequestParam(value = "userId", required = true) String userId, HttpServletResponse response) {
-		eventService.migrateUserEvents(userId);
+	@RequestMapping(value = "/migrateContentAndIndex", method = RequestMethod.GET)
+	public void migrateContentAndIndex(HttpServletRequest request, @RequestParam(value = "indexName", required = true) String indexName,
+			@RequestParam(value = "indexType", required = true) String indexType,
+			@RequestParam(value = "lookUpField", required = true) String lookUpField,
+			@RequestParam(value = "lookUpValue", required = true) String lookUpValue,
+			@RequestParam(value = "limit", required = false) int limit,
+			@RequestParam(value = "lookUpValue", required = false) boolean migrate,
+			HttpServletResponse response) {
+		if(limit < 1) {
+			limit = 10;
+		}
+		eventService.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit, migrate);
 	}
 	
 }
