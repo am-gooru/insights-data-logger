@@ -69,12 +69,22 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return this.cassandraDataLoader;
 	}
 
-    public Column<String> readWithKeyColumn(String cfName,String key,String columnName,int retryCount){
+	public Column<String> readWithKeyColumn(String cfName,String key,String columnName,int retryCount){
+		return readWithKeyColumn(null, cfName, key, columnName, retryCount);
+	}
+    public Column<String> readWithKeyColumn(String CassandraVersion, String cfName,String key,String columnName,int retryCount){
+    	
+    	Keyspace keyspace = null;
+    	if(CassandraVersion != null && CassandraVersion.equalsIgnoreCase("v2")){
+    		keyspace = getNewAwsKeyspace();
+    	}else{
+    		keyspace = getKeyspace(); 
+    	}
     	
     	Column<String> result = null;
     	ColumnList<String> columnList = null;
     	try {
-    		 columnList = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		 columnList = keyspace.prepareQuery(this.accessColumnFamily(cfName))
                     .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKey(key)
                     .execute()
@@ -523,11 +533,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 	
-    public Rows<String, String> readAllRows(String cfName,int retryCount){
+	public Rows<String, String> readAllRows(String cfName,int retryCount) {
+		return readAllRows(null, cfName, retryCount);
+	}
+	
+    public Rows<String, String> readAllRows(String CassandraVersion, String cfName,int retryCount){
     	
+    	Keyspace keyspace = null;
+        if(CassandraVersion != null && CassandraVersion.equalsIgnoreCase("v2")){
+        	keyspace = getNewAwsKeyspace();
+        }else{
+        	keyspace = getKeyspace();
+        }
     	Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+			result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
 					.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					.getAllRows()
 					.withColumnRange(new RangeBuilder().build())

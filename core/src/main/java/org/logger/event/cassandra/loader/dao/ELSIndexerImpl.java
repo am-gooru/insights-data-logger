@@ -68,6 +68,104 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 	public ELSIndexerImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
+		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+        
+        beFieldName =  new LinkedHashMap<String,String>();
+        fieldDataTypes =  new LinkedHashMap<String,String>();
+        Rows<String, String> fieldDescrption = baseDao.readAllRows("v2",ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		} 
+        
+        Rows<String, String> licenseRows = baseDao.readAllRows("v2",ColumnFamily.LICENSE.getColumnFamily(),0);
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows("v2",ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
+        resourceTypesCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows("v2",ColumnFamily.CATEGORY.getColumnFamily(),0);
+        categoryCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> resourceFormatRows = baseDao.readAllRows("v2",ColumnFamily.RESOURCEFORMAT.getColumnFamily(),0);
+        resourceFormatCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceFormatRows) {
+        	resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> instructionalRows = baseDao.readAllRows("v2",ColumnFamily.INSTRUCTIONAL.getColumnFamily(),0);
+        
+        instructionalCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : instructionalRows) {
+        	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        taxonomyCodeType = new LinkedHashMap<String, String>();
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey("v2", ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        cache = new LinkedHashMap<String, String>();
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn("v2", ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
+        REPOPATH = baseDao.readWithKeyColumn("v2", ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
+
+	}
+	
+	public void clearCache(){
+		beFieldName =  new LinkedHashMap<String,String>();
+        fieldDataTypes =  new LinkedHashMap<String,String>();
+        Rows<String, String> fieldDescrption = baseDao.readAllRows("v2",ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
+        for (Row<String, String> row : fieldDescrption) {
+        	fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+        	beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+		} 
+        
+        Rows<String, String> licenseRows = baseDao.readAllRows("v2",ColumnFamily.LICENSE.getColumnFamily(),0);
+        licenseCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : licenseRows) {
+        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> resourceTypesRows = baseDao.readAllRows("v2",ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
+        resourceTypesCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceTypesRows) {
+        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        Rows<String, String> categoryRows = baseDao.readAllRows("v2",ColumnFamily.CATEGORY.getColumnFamily(),0);
+        categoryCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : categoryRows) {
+        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> resourceFormatRows = baseDao.readAllRows("v2",ColumnFamily.RESOURCEFORMAT.getColumnFamily(),0);
+        resourceFormatCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : resourceFormatRows) {
+        	resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        Rows<String, String> instructionalRows = baseDao.readAllRows("v2",ColumnFamily.INSTRUCTIONAL.getColumnFamily(),0);
+        
+        instructionalCache = new LinkedHashMap<String, Object>();
+        for (Row<String, String> row : instructionalRows) {
+        	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+		}
+        
+        taxonomyCodeType = new LinkedHashMap<String, String>();
+        
+        ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey("v2", ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code",0);
+        for(int i = 0 ; i < taxonomyCodeTypeList.size() ; i++) {
+        	taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
+        }
+        cache = new LinkedHashMap<String, String>();
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn("v2",ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
+        REPOPATH = baseDao.readWithKeyColumn("v2", ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
 	}
 
 	public void indexActivity(String fields) {

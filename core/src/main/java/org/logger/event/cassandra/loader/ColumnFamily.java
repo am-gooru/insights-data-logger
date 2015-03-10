@@ -68,6 +68,10 @@ public enum ColumnFamily {
 	
 	USER("user"),
 	
+	RESOURCEFORMAT("resource_format"),
+	
+	INSTRUCTIONAL("instructional_use"),
+	
 	ANONYMIZEDUSERDATA("anonymized_user_data")
 	;
 	
