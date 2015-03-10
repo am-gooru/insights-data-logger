@@ -36,6 +36,8 @@ public class DataUtils {
 	
 	private static Map<String, Long> formatedReaction;
 	
+	private static Map<String, Long> resourceFormatIdMap;
+	
 	static {
     	formatedEventNameMap = new HashMap<String, String>();
 		formatedEventNameMap.put("collection-search", "search_performed");
@@ -75,6 +77,36 @@ public class DataUtils {
 		formatedReaction.put("i-can-explain", 5L);
 	}
 	
+	static {
+		resourceFormatIdMap = new HashMap<String, Long>();
+		resourceFormatIdMap.put("animation/swf",103L);
+		resourceFormatIdMap.put("animation/kmz",103L);
+		resourceFormatIdMap.put("application",123L);
+		resourceFormatIdMap.put("assessment-exam",130L);
+		resourceFormatIdMap.put("assessment-question",104L);
+		resourceFormatIdMap.put("assessment-quiz",106L);
+		resourceFormatIdMap.put("assignment", 132L);
+		resourceFormatIdMap.put("classpage",131L);
+		resourceFormatIdMap.put("exam/pdf",102L);
+		resourceFormatIdMap.put("folder",133L);
+		resourceFormatIdMap.put("gooru/classbook",124L);
+		resourceFormatIdMap.put("gooru/classplan",123L);
+		resourceFormatIdMap.put("gooru/notebook",126L);
+		resourceFormatIdMap.put("gooru/studyshelf",125L);
+		resourceFormatIdMap.put("handouts", 106L);
+		resourceFormatIdMap.put("image/png",105L);
+		resourceFormatIdMap.put("ppt/pptx", 105L);
+		resourceFormatIdMap.put("qb/question",128L);
+		resourceFormatIdMap.put("qb/response",127L);
+		resourceFormatIdMap.put("question",104L);
+		resourceFormatIdMap.put("resource/url",102L);
+		resourceFormatIdMap.put("scollection",122L);
+		resourceFormatIdMap.put("shelf",122L);
+		resourceFormatIdMap.put("textbook/scribd",106L);
+		resourceFormatIdMap.put("video/youtube",100L);
+		resourceFormatIdMap.put("vimeo/video",100L);
+		resourceFormatIdMap.put("quiz",122L);
+	}
 	
 	public static String makeCombinedEventName(String eventName) {
 		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName), eventName);
@@ -88,5 +120,8 @@ public class DataUtils {
 		return StringUtils.defaultIfEmpty(formatedAnswerSeq.get(String.valueOf(sequence)), String.valueOf(sequence));
 	}
 	
+	public static Long getResourceFormatId(String key) {
+		return resourceFormatIdMap.containsKey(key) ? resourceFormatIdMap.get(key) : null ;
+	}
 
 }

@@ -66,6 +66,9 @@ public enum ColumnFamily {
 	
 	TABLE_DATATYPE("table_datatypes"),
 	
+	USER("user"),
+	
+	ANONYMIZEDUSERDATA("anonymized_user_data")
 	;
 	
 	String name;

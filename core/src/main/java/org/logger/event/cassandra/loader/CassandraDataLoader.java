@@ -65,6 +65,7 @@ import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
+import org.logger.event.cassandra.loader.dao.ELSIndexerImpl;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
@@ -149,9 +150,8 @@ public class CassandraDataLoader implements Constants {
 
     private HashMap<String, Map<String, String>> tablesDataTypeCache;
     
-    @Autowired
-    private BaseDAOCassandraImpl baseDaoCassandraImpl;
-    
+    private ELSIndexerImpl indexer;
+        
     /**
      * Get Kafka properties from Environment
      */
@@ -2585,21 +2585,26 @@ public class CassandraDataLoader implements Constants {
     public List<String> getDataFromIndex(String index, String type, String field, String value, int from, String fieldToGet, int limit) {
     	
     	List<String> resultList = new ArrayList<String>();
-    	
-    	SearchResponse response = getBaseDAOCassandraImpl().getESClient().prepareSearch(index)
-                .setTypes(type)
-                .setSearchType(SearchType.QUERY_AND_FETCH)
-                .addField(fieldToGet)
-                .setQuery(fieldQuery(field, value))
-                .setFrom(from).setSize(limit).setExplain(true)
-                .execute()
-                .actionGet();
-    	
-    	SearchHit[] results = response.getHits().getHits();
-
-  		System.out.println("Current results: " + results.length);
-  		for (SearchHit hit : results) {
-	  		resultList.add(hit.getSource().get("fieldToGet").toString());
+    	try {
+	    	SearchResponse response = getConnectionProvider().getESClient().prepareSearch(index)
+	                .setTypes(type)
+	                .setSearchType(SearchType.QUERY_AND_FETCH)
+	                .addField(fieldToGet)
+	                .setQuery(fieldQuery(field, value))
+	                .setFrom(from).setSize(limit).setExplain(true)
+	                .execute()
+	                .actionGet();
+	    	
+	    	SearchHit[] results = response.getHits().getHits();
+	
+	  		System.out.println("Current results: " + results.length);
+	  		for (SearchHit hit : results) {
+	  			Map<String, Object> result = hit.getSource();
+		  		resultList.add(String.valueOf(result.get(fieldToGet)));
+	  		}
+    	}
+  		catch(IOException e) {
+  			logger.error("Error to get Elastic search connection");
   		}
   		return resultList;
     }
@@ -2609,9 +2614,6 @@ public class CassandraDataLoader implements Constants {
   		return queryBuilder;
 	}
 
-	public BaseDAOCassandraImpl getBaseDAOCassandraImpl() {
-  		return baseDaoCassandraImpl;
-  	}
 	
 	public BaseCassandraRepoImpl getBaseCassandraRepoImpl() {
 		return baseDao;
@@ -2647,34 +2649,36 @@ public class CassandraDataLoader implements Constants {
 	}
 	
 	public void migrateContentAndIndex(String indexName, String indexType, String lookUpField, String lookUpValue, int limit, boolean migrate) {
-		String api = "http://104.236.129.198:8080/api/log/event/index/";
+//		String api = "http://104.236.129.198:8080/api/log/event/index/";
 		if(indexName.contains("event")) {
-			api +=  "event?ids=";
+//			api +=  "event?ids=";
 			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 			Long from = 0L;
-			while(from < totalCount) {
+//			while(from < totalCount) {
 				List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id", limit);
 				for(String eventId : eventIdList) {
 					ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 3);
 		    		if(columnList.size() > 0) {
-		    			this.excuteHttpGetAPI(api + eventId);
+		    			indexer.indexActitvity(eventId);
 		    		} else if(migrate) {
+		    			System.out.println("Migrate Event Id: " + eventId);
 		    			this.migrateEvent(eventId);
-		    			this.excuteHttpGetAPI(api + eventId);
+		    			indexer.indexActitvity(eventId);
 		    		} else {
 		    			logger.error("Given event id not in new Cassandra");
 		    		}
 				}
 				from += limit;
-			}
+//			}
 		} else if(indexName.contains("content")) {
-			api +=  "resource?ids=";
+//			api +=  "resource?ids=";
 			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 			Long from = 0L;
 			while(from < totalCount) {
 				List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
 				for(String contentId : contentIdList) {
-					this.excuteHttpGetAPI(api + contentId);
+//					this.excuteHttpGetAPI(api + contentId);
+					indexer.indexResource(contentId);
 				}
 				from += limit;
 			}
@@ -2682,13 +2686,19 @@ public class CassandraDataLoader implements Constants {
 	}
 	
 	public Long getCount(String index, String type, String field, String value) {
-		CountResponse response = getBaseDAOCassandraImpl().getESClient().prepareCount(index)
-				.setQuery(fieldQuery(field, value))
-				.execute()
-				.actionGet();
-		
-		System.out.println("Total Count: " + response.getCount());
-		return response.getCount();
+		try {
+			CountResponse response = getConnectionProvider().getESClient().prepareCount(index)
+					.setQuery(fieldQuery(field, value))
+					.execute()
+					.actionGet();
+			
+			System.out.println("Total Count: " + response.getCount());
+			return response.getCount();
+		} 
+		catch(IOException e) {
+			logger.error("Error to get Elastic search connection");
+		}
+		return 0L;
 	}
 	
 	public void migrateEvent(String eventDetailUUID) {

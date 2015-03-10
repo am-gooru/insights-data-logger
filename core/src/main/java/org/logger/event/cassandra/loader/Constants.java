@@ -259,4 +259,9 @@ public interface Constants {
 	public int DEFAULT_RETRY_COUNT = 5;
 	
 	public String EVENT_ID = "event_id";
+	
+	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
+	
+	public String SOURCEGOORUOID = "sourceGooruId";
 }
+

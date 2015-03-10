@@ -604,7 +604,7 @@ public class EventController {
 			@RequestParam(value = "lookUpField", required = true) String lookUpField,
 			@RequestParam(value = "lookUpValue", required = true) String lookUpValue,
 			@RequestParam(value = "limit", required = false) int limit,
-			@RequestParam(value = "lookUpValue", required = false) boolean migrate,
+			@RequestParam(value = "migrate", required = false) boolean migrate,
 			HttpServletResponse response) {
 		if(limit < 1) {
 			limit = 10;
