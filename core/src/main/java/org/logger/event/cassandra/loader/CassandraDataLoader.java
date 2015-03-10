@@ -211,7 +211,8 @@ public class CassandraDataLoader implements Constants {
         this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
         this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
         baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
-
+        indexer = new ELSIndexerImpl(getConnectionProvider());
+        
         Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(),0);
         cache = new LinkedHashMap<String, String>();
         for (Row<String, String> row : operators) {
@@ -2589,7 +2590,6 @@ public class CassandraDataLoader implements Constants {
 	    	SearchResponse response = getConnectionProvider().getESClient().prepareSearch(index)
 	                .setTypes(type)
 	                .setSearchType(SearchType.QUERY_AND_FETCH)
-	                .addField(fieldToGet)
 	                .setQuery(fieldQuery(field, value))
 	                .setFrom(from).setSize(limit).setExplain(true)
 	                .execute()
@@ -2651,38 +2651,43 @@ public class CassandraDataLoader implements Constants {
 	
 	public void migrateContentAndIndex(String indexName, String indexType, String lookUpField, String lookUpValue, int limit, boolean migrate) {
 //		String api = "http://104.236.129.198:8080/api/log/event/index/";
-		if(indexName.contains("event")) {
-//			api +=  "event?ids=";
-			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
-			Long from = 0L;
-//			while(from < totalCount) {
-				List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id", limit);
-				for(String eventId : eventIdList) {
-					ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 3);
-		    		if(columnList.size() > 0) {
-		    			indexer.indexActitvity(eventId);
-		    		} else if(migrate) {
-		    			System.out.println("Migrate Event Id: " + eventId);
-		    			this.migrateEvent(eventId);
-		    			indexer.indexActitvity(eventId);
-		    		} else {
-		    			logger.error("Given event id not in new Cassandra");
-		    		}
+		try {
+			if(indexName.contains("event")) {
+	//			api +=  "event?ids=";
+				Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
+				Long from = 0L;
+				while(from < totalCount) {
+					List<String> eventIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "event_id", limit);
+					for(String eventId : eventIdList) {
+						ColumnList<String> columnList = this.getBaseCassandraRepoImpl().readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId, 3);
+			    		if(columnList.size() > 0) {
+			    			this.indexEvent(eventId);
+			    		} else if(migrate) {
+			    			logger.info("Migrate Event Id: {}", eventId);
+			    			this.migrateEvent(eventId);
+			    			this.indexEvent(eventId);
+			    		} else {
+			    			logger.error("Given event id not in new Cassandra");
+			    		}
+					}
+					from += limit;
 				}
-				from += limit;
-//			}
-		} else if(indexName.contains("content")) {
-//			api +=  "resource?ids=";
-			Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
-			Long from = 0L;
-			while(from < totalCount) {
-				List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
-				for(String contentId : contentIdList) {
-//					this.excuteHttpGetAPI(api + contentId);
-					indexer.indexResource(contentId);
+			} else if(indexName.contains("content")) {
+	//			api +=  "resource?ids=";
+				Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
+				Long from = 0L;
+				while(from < totalCount) {
+					List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
+					for(String contentId : contentIdList) {
+	//					this.excuteHttpGetAPI(api + contentId);
+						indexer.indexResource(contentId);
+					}
+					from += limit;
 				}
-				from += limit;
 			}
+		}
+		catch(Exception e) {
+			logger.error("Exception : {}", e.getMessage());
 		}
 	}
 	
@@ -2743,5 +2748,16 @@ public class CassandraDataLoader implements Constants {
 			logger.error("Error while migrating event {}",  eventDetailUUID);
 		}
 	}
+	
+	public void indexEvent(String ids) throws Exception{
+    	for(String eventId : ids.split(",")){
+    		ColumnList<String> event =  baseDao.readWithKey("v2", ColumnFamily.EVENTDETAIL.getColumnFamily(), eventId,0);
+    		if(event.size() > 0){
+    			indexer.indexActivity(event.getStringValue("fields", null));
+    		}else{
+    			logger.info("Invalid event id:" + eventId);
+    		}
+    	}
+    }
 
 }

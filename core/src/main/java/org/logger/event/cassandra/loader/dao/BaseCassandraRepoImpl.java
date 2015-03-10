@@ -226,10 +226,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
     
     public Rows<String, String> readWithKeyList(String cfName,Collection<String> key,int retryCount){
+    	return readWithKeyList(null, cfName, key, retryCount);
+    }
+    
+    public Rows<String, String> readWithKeyList(String version, String cfName,Collection<String> key,int retryCount){
         
+    	Keyspace keyspace = getKeyspace();
+    	if(version != null && version.equalsIgnoreCase("v2")){
+    		keyspace = getNewAwsKeyspace();
+    	}
     	Rows<String, String> result = null;
     	try {
-              result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+              result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
                     .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
                     .getKeySlice(key)
                     .execute()
@@ -400,11 +408,22 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
     
     public Rows<String, String> readIndexedColumnList(String cfName,Map<String,String> columnList,int retryCount){
+    	return this.readIndexedColumnList(null, cfName, columnList, retryCount);
+    }
+    
+    public Rows<String, String> readIndexedColumnList(String CassandraVersion, String cfName,Map<String,String> columnList,int retryCount){
     	
+    	Keyspace keyspace = null;
+        if(CassandraVersion != null && CassandraVersion.equalsIgnoreCase("v2")){
+        	keyspace = getNewAwsKeyspace();
+        }else{
+        	keyspace = getKeyspace();
+        }
+        
     	Rows<String, String> result = null;
     	IndexQuery<String, String> query = null;
 
-    	query = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    	query = keyspace.prepareQuery(this.accessColumnFamily(cfName))
     				.setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
     				.searchWithIndex();
     	
