@@ -2600,6 +2600,7 @@ public class CassandraDataLoader implements Constants {
 	  		System.out.println("Current results: " + results.length);
 	  		for (SearchHit hit : results) {
 	  			Map<String, Object> result = hit.getSource();
+	  			System.out.println(result.get(fieldToGet));
 		  		resultList.add(String.valueOf(result.get(fieldToGet)));
 	  		}
     	}

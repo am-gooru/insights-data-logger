@@ -598,7 +598,7 @@ public class EventController {
 		return false;
 	}
 	
-	@RequestMapping(value = "/migrateContentAndIndex", method = RequestMethod.GET)
+	@RequestMapping(value = "/migrateContentAndIndex", method = RequestMethod.POST)
 	public void migrateContentAndIndex(HttpServletRequest request, @RequestParam(value = "indexName", required = true) String indexName,
 			@RequestParam(value = "indexType", required = true) String indexType,
 			@RequestParam(value = "lookUpField", required = true) String lookUpField,
