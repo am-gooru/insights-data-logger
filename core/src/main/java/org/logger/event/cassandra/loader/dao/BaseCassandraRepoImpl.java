@@ -358,10 +358,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
     }
 
     public Rows<String, String> readIndexedColumnLastNrows(String cfName ,String columnName,String value, Integer rowsToRead,int retryCount) {
+    	return this.readIndexedColumnLastNrows("V2", cfName, columnName, value, rowsToRead, retryCount);
+    }
+    
+    public Rows<String, String> readIndexedColumnLastNrows(String cassandraVersion, String cfName ,String columnName,String value, Integer rowsToRead,int retryCount) {
     	
+    	Keyspace keyspace = null;
+        if(cassandraVersion != null && cassandraVersion.equalsIgnoreCase("v2")){
+        	keyspace = getNewAwsKeyspace();
+        }else{
+        	keyspace = getKeyspace();
+        }
 		Rows<String, String> result = null;
     	try {
-    		result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName))
+    		result = keyspace.prepareQuery(this.accessColumnFamily(cfName))
 			 			   .setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
 					 	   .searchWithIndex().autoPaginateRows(true)
 					 	   .setRowLimit(rowsToRead.intValue())

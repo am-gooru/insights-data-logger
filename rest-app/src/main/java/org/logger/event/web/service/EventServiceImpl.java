@@ -357,7 +357,7 @@ public class EventServiceImpl implements EventService, Constants {
 			try {
 				long startTime = new Date().getTime();
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, ADD);
-				gooruUid = baseDao.readIndexedColumnLastNrows(ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), FIELD_EVENT_STATUS, READY, 1, DEFAULT_RETRY_COUNT).getRowByIndex(0).getKey();
+				gooruUid = baseDao.readIndexedColumnLastNrows(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), FIELD_EVENT_STATUS, READY, 1, DEFAULT_RETRY_COUNT).getRowByIndex(0).getKey();
 				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, INPROGRESS);
 				this.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit.intValue(), isMigrate);
 				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, COMPLETED);
