@@ -352,8 +352,14 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 			if (resource.getColumnByName("instructional_id") != null) {
 				eventMap.put("instructionalId", resource.getColumnByName("instructional_id").getLongValue());
 			}
+			if (resource.getColumnByName("instructional") != null) {
+				eventMap.put("instructional", resource.getColumnByName("instructional").getStringValue());
+			}
 			if (resource.getColumnByName("resource_format_id") != null) {
 				eventMap.put("resourceFormatId", resource.getColumnByName("resource_format_id").getLongValue());
+			}
+			if (resource.getColumnByName("resource_format") != null) {
+				eventMap.put("resourceFormat", resource.getColumnByName("resource_format").getStringValue());
 			}
 
 			if (resource.getColumnByName("type_name") != null) {
@@ -370,11 +376,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 			if (questionCount != null && !questionCount.isEmpty()) {
 				long questionCounts = questionCount.getLongValue("questionCount", 0L);
 				eventMap.put("questionCount", questionCounts);
-				if (questionCounts > 0L) {
-					if (resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())) {
-						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
-					}
-				}
 			} else {
 				eventMap.put("questionCount", 0L);
 			}

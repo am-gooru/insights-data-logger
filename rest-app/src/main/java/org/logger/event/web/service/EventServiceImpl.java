@@ -342,7 +342,6 @@ public class EventServiceImpl implements EventService, Constants {
 		String lookUpField = null;
 		Integer limit = 1000;
 		Boolean isMigrate = true;
-		String lookUpValue = null;
 		
 		ColumnList<String> columns = baseDao.readWithKey(AWS_CASSANDRA_VERSION, ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULT_RETRY_COUNT);
 		numberOfJobsRunning = Long.valueOf(columns.getStringValue(DEFAULTCOLUMN, ZERO));
@@ -359,10 +358,10 @@ public class EventServiceImpl implements EventService, Constants {
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, ADD);
 				gooruUid = baseDao.readIndexedColumnLastNrows(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), FIELD_EVENT_STATUS, READY, 1, DEFAULT_RETRY_COUNT).getRowByIndex(0).getKey();
 				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, INPROGRESS);
-				this.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit.intValue(), isMigrate);
+				this.migrateContentAndIndex(indexName, indexType, lookUpField, gooruUid, limit.intValue(), isMigrate);
 				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, COMPLETED);
 				long endTime = new Date().getTime();
-				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, TIME_TAKEN, String.valueOf(endTime - startTime));
+				baseDao.saveLongValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, TIME_TAKEN, (endTime - startTime));
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, SUB);
 			}
 			catch(Exception e) {
