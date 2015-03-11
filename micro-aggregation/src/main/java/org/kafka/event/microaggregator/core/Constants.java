@@ -248,6 +248,8 @@ public interface Constants {
 	
 	public static final String MONITOR_KAFKA_AGGREGATOR_CONSUMER = "monitor~kafka~aggregator~consumer";
 	
+	public static final String KAFKA_MAIL_HANDLER = "kafka~mail~handler";
+	
 	public enum sortType {
 
 		ASC("ASC"), DESC("DESC");

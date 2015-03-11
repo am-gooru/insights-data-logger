@@ -37,19 +37,20 @@ import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.kafka.event.microaggregator.core.Constants;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
+import org.logger.event.microaggregator.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.netflix.astyanax.model.ColumnList;
 
-
-public class KafkaLogConsumer extends Thread implements Runnable,Constants{
+public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 
 	private MicroAggregationLoader microAggregationLoader;
 	private CassandraConnectionProvider connectionProvider;
-	private final ConsumerConnector consumer;
+	private static ConsumerConnector consumer;
 	private AggregationDAOImpl aggregationDAOImpl;
+	private MailHandler mailHandler;
 	private static String topic;
 
 	private static String ZOOKEEPER_IP;
@@ -57,7 +58,7 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_TOPIC;
 	private static String KAFKA_FILE_ERROR_TOPIC;
-	
+
 	private static Logger logger = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
 	public KafkaLogConsumer() {
@@ -65,6 +66,7 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 		microAggregationLoader = new MicroAggregationLoader();
 		microAggregationLoader.getConnectionProvider().init(null);
 		aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
+		mailHandler = new MailHandler(microAggregationLoader.getConnectionProvider());
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~logwritter~consumer");
 		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
@@ -72,7 +74,7 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 		KAFKA_FILE_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		KAFKA_FILE_ERROR_TOPIC = "error-" + KAFKA_FILE_TOPIC;
-		this.topic = KAFKA_FILE_TOPIC;
+		KafkaLogConsumer.topic = KAFKA_FILE_TOPIC;
 
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	}
@@ -96,9 +98,9 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 		}
 		return stringBuffer.toString();
 	}
-	 
+
 	private static ConsumerConfig createConsumerConfig() {
-	
+
 		Properties props = new Properties();
 		props.put("zookeeper.connect", KafkaLogConsumer.buildEndPoint(ZOOKEEPER_IP, ZOOKEEPER_PORT));
 		props.put("group.id", KAFKA_GROUPID);
@@ -152,7 +154,7 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 				 * notification
 				 */
 				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					logger.info("mail sending logic");
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka log consumer disconnected,so auto reconnect on "+loopCount+" loop");
 				}
 
 				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
@@ -186,10 +188,12 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 				logger.error("Message Log Consumer:" + e);
 			} finally {
 				try {
+					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
-					logger.error("Message Log Consumer Interrupted:" + e);
+					logger.error("Message Consumer Interrupted:" + e);
 				}
+				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 			}
 			loopCount++;
 		}
@@ -231,11 +235,11 @@ public class KafkaLogConsumer extends Thread implements Runnable,Constants{
 		KafkaLogConsumer kafka = new KafkaLogConsumer();
 		kafka.run();
 	}
-	
+
 	public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
-	
+
 	/**
 	 * @return the connectionProvider
 	 */

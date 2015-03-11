@@ -32,15 +32,13 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.Message;
 
-import org.json.JSONException;
 import org.kafka.event.microaggregator.core.AggregatorLogFactory;
-import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.kafka.event.microaggregator.core.Constants;
-import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.kafka.event.microaggregator.core.Constants.columnFamily;
+import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
+import org.logger.event.microaggregator.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -49,34 +47,37 @@ import com.google.gson.Gson;
 import com.netflix.astyanax.model.ColumnList;
 
 public class MicroAggregatorConsumer extends Thread implements Runnable {
+
+	private static ConsumerConnector consumer;
+	private AggregationDAOImpl aggregationDAOImpl;
+	private MicroAggregationLoader microAggregationLoader;
+	private MailHandler mailHandler;
 	
-private final ConsumerConnector consumer;
-private AggregationDAOImpl aggregationDAOImpl;
-private MicroAggregationLoader microAggregationLoader;
+	private static String topic;
+	private static String ZK_IP;
+	private static String ZK_PORT;
+	private static String KAFKA_TOPIC;
+	private static String KAFKA_GROUPID;
 
-private static String topic;
-private static String ZK_IP;
-private static String ZK_PORT;
-private static String KAFKA_TOPIC;
-private static String KAFKA_GROUPID;
+	private static Logger logger = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
 
-private static Logger logger = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
+	public MicroAggregatorConsumer() {
 
-public MicroAggregatorConsumer() {
+		microAggregationLoader = new MicroAggregationLoader();
+		microAggregationLoader.getConnectionProvider().init(null);
+		aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
+		mailHandler = new MailHandler(microAggregationLoader.getConnectionProvider());
+		
+		Map<String, String> kafkaProperty = new HashMap<String, String>();
+		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~microaggregator~consumer");
+		ZK_IP = kafkaProperty.get("zookeeper_ip");
+		ZK_PORT = kafkaProperty.get("zookeeper_portno");
+		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
+		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+		MicroAggregatorConsumer.topic = KAFKA_TOPIC;
 
-	microAggregationLoader = new MicroAggregationLoader();
-	microAggregationLoader.getConnectionProvider().init(null);
-	aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
-	Map<String,String> kafkaProperty = new HashMap<String, String>();
-	kafkaProperty =  microAggregationLoader.getKafkaProperty("v2~kafka~microaggregator~consumer");
-	ZK_IP = kafkaProperty.get("zookeeper_ip");
-	ZK_PORT = kafkaProperty.get("zookeeper_portno");
-	KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
-	KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
-	this.topic = KAFKA_TOPIC;
-	
-	consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
-}
+		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+	}
 
 	private static ConsumerConfig createConsumerConfig() {
 
@@ -147,7 +148,7 @@ public MicroAggregatorConsumer() {
 				 * notification
 				 */
 				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					logger.info("mail sending logic");
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer disconnected,so auto reconnect on "+loopCount+" loop");
 				}
 				topicCountMap.put(topic, new Integer(1));
 				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
@@ -181,38 +182,40 @@ public MicroAggregatorConsumer() {
 				logger.error("Aggregation Consumer:" + e);
 			} finally {
 				try {
+					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
-					logger.error("Aggregation Consumer Interrupted:" + e);
+					logger.error("Message Consumer Interrupted:" + e);
 				}
+				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 			}
 			loopCount++;
 		}
 	}
 
-@Async
-public void updateActivityStream(Map<String, String> messageMap) {
-	String eventJson = (String) messageMap.get("raw");
-	if (eventJson != null) {
-		try {
-			logger.info("EventJson:{}", eventJson);
-			microAggregationLoader.updateActivityStream(eventJson);
-		} catch (Exception e) {
-			logger.error("EventJson:{}", eventJson);
+	@Async
+	public void updateActivityStream(Map<String, String> messageMap) {
+		String eventJson = (String) messageMap.get("raw");
+		if (eventJson != null) {
+			try {
+				logger.info("EventJson:{}", eventJson);
+				microAggregationLoader.updateActivityStream(eventJson);
+			} catch (Exception e) {
+				logger.error("EventJson:{}", eventJson);
+			}
 		}
 	}
-}
 
-@Async
-public void staticAggregation(Map<String, String> messageMap) {
-	logger.info("static Aggregator Consumed");
-	try{
-	String eventJson = (String) messageMap.get("aggregationDetail");
-	if (eventJson != null && !eventJson.isEmpty()) {
-		microAggregationLoader.staticAggregation(eventJson);
+	@Async
+	public void staticAggregation(Map<String, String> messageMap) {
+		logger.info("static Aggregator Consumed");
+		try {
+			String eventJson = (String) messageMap.get("aggregationDetail");
+			if (eventJson != null && !eventJson.isEmpty()) {
+				microAggregationLoader.staticAggregation(eventJson);
+			}
+		} catch (Exception e) {
+			logger.error("static aggregator:{}", messageMap);
+		}
 	}
-	}catch(Exception e){
-		logger.error("static aggregator:{}",messageMap);
-	}
-}
 }

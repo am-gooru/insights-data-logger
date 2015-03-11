@@ -53,6 +53,7 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +64,9 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	private CassandraDataLoader cassandraDataLoader;
 	private BaseCassandraRepoImpl baseCassandraDAO;
-	private final ConsumerConnector consumer;
+	private static ConsumerConnector consumer;
 	private DataProcessor rowDataProcessor;
+	private MailHandler mailHandler;
 
 	private static String topic;
 	private static String ZK_IP;
@@ -78,13 +80,14 @@ public class MessageConsumer extends Thread implements Runnable {
 
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		cassandraDataLoader = new CassandraDataLoader();
+		mailHandler = new MailHandler();
 		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
 		ZK_IP = kafkaProperty.get("zookeeper_ip");
 		ZK_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
-		this.topic = "tester"+KAFKA_TOPIC;
+		MessageConsumer.topic = KAFKA_TOPIC;
 		this.rowDataProcessor = insertRowForLogDB;
 
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
@@ -161,7 +164,7 @@ public class MessageConsumer extends Thread implements Runnable {
 				 * notification
 				 */
 				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					logger.info("mail sending logic");
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer disconnected,so auto reconnect on "+loopCount+" loop");
 				}
 
 				/**
@@ -172,7 +175,6 @@ public class MessageConsumer extends Thread implements Runnable {
 
 				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 				ConsumerIterator<byte[], byte[]> it = stream.iterator();
-
 				/**
 				 * process consumed data
 				 */
@@ -204,10 +206,12 @@ public class MessageConsumer extends Thread implements Runnable {
 				logger.error("Message Consumer:" + e);
 			} finally {
 				try {
+					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
 					logger.error("Message Consumer Interrupted:" + e);
 				}
+				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 			}
 			loopCount++;
 		}
