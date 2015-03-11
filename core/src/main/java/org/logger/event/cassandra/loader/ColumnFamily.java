@@ -72,7 +72,9 @@ public enum ColumnFamily {
 	
 	INSTRUCTIONAL("instructional_use"),
 	
-	ANONYMIZEDUSERDATA("anonymized_user_data")
+	ANONYMIZEDUSERDATA("anonymized_user_data"),
+	
+	USER_EVENT_INDEX_QUEUE("user_event_index_queue")
 	;
 	
 	String name;

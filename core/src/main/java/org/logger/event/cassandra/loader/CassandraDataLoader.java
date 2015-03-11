@@ -2650,10 +2650,8 @@ public class CassandraDataLoader implements Constants {
 	}
 	
 	public void migrateContentAndIndex(String indexName, String indexType, String lookUpField, String lookUpValue, int limit, boolean migrate) {
-//		String api = "http://104.236.129.198:8080/api/log/event/index/";
 		try {
 			if(indexName.contains("event")) {
-	//			api +=  "event?ids=";
 				Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 				Long from = 0L;
 				while(from < totalCount) {
@@ -2667,19 +2665,17 @@ public class CassandraDataLoader implements Constants {
 			    			this.migrateEvent(eventId);
 			    			this.indexEvent(eventId);
 			    		} else {
-			    			logger.error("Given event id not in new Cassandra");
+			    			logger.error("Given event id not in new Cassandra: {}", eventId);
 			    		}
 					}
 					from += limit;
 				}
 			} else if(indexName.contains("content")) {
-	//			api +=  "resource?ids=";
 				Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 				Long from = 0L;
 				while(from < totalCount) {
 					List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
 					for(String contentId : contentIdList) {
-	//					this.excuteHttpGetAPI(api + contentId);
 						indexer.indexResource(contentId);
 					}
 					from += limit;

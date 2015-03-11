@@ -41,6 +41,7 @@ import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
@@ -62,7 +63,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
 @Service
-public class EventServiceImpl implements EventService {
+public class EventServiceImpl implements EventService, Constants {
 	
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
@@ -329,5 +330,67 @@ public class EventServiceImpl implements EventService {
 	@Override
  	public void assementScoreCalculator() {
 		dataLoaderService.assementScoreCalculator();
+	}
+	
+	@Async
+	@Override
+	public void migrateEventAndIndex() {
+		Long numberOfJobsRunning = 0L;
+		Long maxJobs = 0L;
+		String indexName = null;
+		String indexType = null;
+		String lookUpField = null;
+		Integer limit = 1000;
+		Boolean isMigrate = true;
+		String lookUpValue = null;
+		
+		ColumnList<String> columns = baseDao.readWithKey(AWS_CASSANDRA_VERSION, ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULT_RETRY_COUNT);
+		numberOfJobsRunning = Long.valueOf(columns.getStringValue(DEFAULTCOLUMN, ZERO));
+		maxJobs = Long.valueOf(columns.getStringValue(MAX_JOBS, ZERO));
+		indexName = columns.getStringValue(INDEX_NAME, null);
+		indexType = columns.getStringValue(INDEX_TYPE, null);
+		lookUpField = columns.getStringValue(LOOK_UP_FIELD, null);
+		limit = Integer.valueOf(columns.getStringValue(LIMIT_NAME, DEFAULT_EVENT_LIMIT.toString()));
+		isMigrate = Boolean.valueOf(columns.getStringValue(MIGRATE, TRUE));
+		String gooruUid = null;
+		if(numberOfJobsRunning < maxJobs && indexName != null && indexType != null && lookUpField != null) {
+			try {
+				long startTime = new Date().getTime();
+				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, ADD);
+				gooruUid = baseDao.readIndexedColumnLastNrows(ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), FIELD_EVENT_STATUS, READY, 1, DEFAULT_RETRY_COUNT).getRowByIndex(0).getKey();
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, INPROGRESS);
+				this.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit.intValue(), isMigrate);
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, COMPLETED);
+				long endTime = new Date().getTime();
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, TIME_TAKEN, String.valueOf(endTime - startTime));
+				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, SUB);
+			}
+			catch(Exception e) {
+				logger.error("Error in event migrate and indexing job... {}", e.getMessage());
+				if(gooruUid != null) {
+					baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.USER_EVENT_INDEX_QUEUE.getColumnFamily(), gooruUid, FIELD_EVENT_STATUS, ERROR);
+				}
+				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), EVENT_MIGRATION_AND_INDEX, DEFAULTCOLUMN, SUB);
+			}
+		} 
+		else {
+			logger.info("Migration Event And Index Job - Reached Max Limit: {}", maxJobs);
+		}
+	}
+	
+	private synchronized void arithmeticOperations(String cfName, String key, String columnName, String operation) {
+		Column<String> column = baseDao.readWithKeyColumn(AWS_CASSANDRA_VERSION, cfName, key, columnName, DEFAULT_RETRY_COUNT);
+		if(column != null) {
+			if(operation.equalsIgnoreCase(ADD)) {
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, cfName, key, columnName, String.valueOf(Long.valueOf(column.getStringValue()) + 1));
+			} else if(operation.equalsIgnoreCase(SUB)) {
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, cfName, key, columnName, String.valueOf(Long.valueOf(column.getStringValue()) - 1));
+			} else {
+				logger.error("InValid Operation...");
+			}
+		}
+		else {
+			logger.error("Column {} not exist.", columnName);
+		}
 	}
 }

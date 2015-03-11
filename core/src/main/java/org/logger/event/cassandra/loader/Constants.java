@@ -263,5 +263,42 @@ public interface Constants {
 	public String INDEXEVENTS = ".*collection.play.*|.*collection.resource.play.*|.*resource.play.*|.*reaction.create.*|.*item.rate.*|.*item.flag.*|.*item.create.*";
 	
 	public String SOURCEGOORUOID = "sourceGooruId";
+	
+	String EVENT_MIGRATION_AND_INDEX = "event_migration_and_index";
+	
+	String ADD = "ADD";
+	
+	String SUB = "SUB";
+	
+	String LIMIT_NAME = "limit";
+	
+	String MIGRATE = "migrate";
+	
+	String INDEX_NAME = "index_name";
+	
+	String INDEX_TYPE = "index_type";
+	
+	String LOOK_UP_FIELD = "look_up_field";
+	
+	String MAX_JOBS = "max_jobs";
+	
+	String FIELD_EVENT_STATUS = "status";
+	
+	String AWS_CASSANDRA_VERSION = "V2";
+	
+	String ZERO = "0";
+	
+	String TRUE = "true";
+	
+	Integer DEFAULT_EVENT_LIMIT = 1000;
+	
+	String READY = "ready";
+	
+	String INPROGRESS = "inprogress";
+	
+	String COMPLETED = "completed";
+	
+	String ERROR = "error";
+	
+	String TIME_TAKEN = "time_taken";
 }
-

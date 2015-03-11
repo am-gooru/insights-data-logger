@@ -612,4 +612,9 @@ public class EventController {
 		eventService.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit, migrate);
 	}
 	
+	public void migrateEventAndIndex() {
+		logger.info("Started job to migrate Event and Index for user");
+		eventService.migrateEventAndIndex();
+	}
+	
 }

@@ -86,4 +86,6 @@ public interface EventService {
 
 	void migrateContentAndIndex(String indexName, String indexType,
 			String lookUpField, String lookUpValue, int limit, boolean migrate);
+
+	void migrateEventAndIndex();
 }
