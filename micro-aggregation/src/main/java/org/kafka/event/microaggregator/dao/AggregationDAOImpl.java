@@ -458,7 +458,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, columnValue.toString());
 				}
 					mutationBatch.execute();
-			} catch (ConnectionException e) {
+			} catch (Exception e) {
 				logger.error("Exception while inserting the value in " + columnFamilyName);
 			}
 		}

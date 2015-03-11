@@ -240,6 +240,8 @@ public interface Constants {
 	
 	public static final String THREAD_LOOP_COUNT = "thread_loop_count";
 	
+	public static final String THREAD_STATUS = "status";
+	
 	public static final String THREAD_SLEEP_TIME = "thread_sleep_time";
 	
 	public static final String MONITOR_KAFKA_LOG_CONSUMER = "monitor~kafka~log~consumer";

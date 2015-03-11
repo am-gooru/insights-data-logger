@@ -64,7 +64,7 @@
     <constructor-arg ref="consumerThread"/>
 </bean>
 
-<bean id="consumerThread" class="org.ednovo.kafka.consumer.MessageConsumer"/>
+<bean id="consumerThread" class="org.ednovo.kafka.consumer.DataLoader"/>
 
  <!-- kafka log-writter thread -->
 
@@ -72,7 +72,7 @@
     <constructor-arg ref="LogWritterThread"/>
 </bean>
 
-<bean id="LogWritterThread" class="org.kafka.log.writer.consumer.KafkaLogConsumer"/>
+<bean id="LogWritterThread" class="org.kafka.log.writer.consumer.DataLoader"/>
 
  <!-- kafka micro-aggregator thread -->
 
@@ -80,7 +80,7 @@
     <constructor-arg ref="microAggregatorThread"/>
 </bean>
 
-<bean id="microAggregatorThread" class="org.kafka.event.microaggregator.consumer.MicroAggregatorConsumer"/>
+<bean id="microAggregatorThread" class="org.kafka.event.microaggregator.consumer.DataLoader"/>
  
 	<bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />

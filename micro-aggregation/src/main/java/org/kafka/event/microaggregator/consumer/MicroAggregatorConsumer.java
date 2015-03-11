@@ -52,68 +52,75 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 	
 private final ConsumerConnector consumer;
 private AggregationDAOImpl aggregationDAOImpl;
+private MicroAggregationLoader microAggregationLoader;
+
 private static String topic;
 private static String ZK_IP;
 private static String ZK_PORT;
 private static String KAFKA_TOPIC;
 private static String KAFKA_GROUPID;
-private MicroAggregationLoader microAggregationLoader;
+
 private static Logger logger = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
 
 public MicroAggregatorConsumer() {
+
+	microAggregationLoader = new MicroAggregationLoader();
+	microAggregationLoader.getConnectionProvider().init(null);
+	aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
 	Map<String,String> kafkaProperty = new HashMap<String, String>();
-	microAggregationLoader = new MicroAggregationLoader(null);
 	kafkaProperty =  microAggregationLoader.getKafkaProperty("v2~kafka~microaggregator~consumer");
 	ZK_IP = kafkaProperty.get("zookeeper_ip");
 	ZK_PORT = kafkaProperty.get("zookeeper_portno");
 	KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
 	KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 	this.topic = KAFKA_TOPIC;
+	
 	consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 }
 
-private static ConsumerConfig createConsumerConfig() {
-	Properties props = new Properties();
+	private static ConsumerConfig createConsumerConfig() {
 
-	props.put("zookeeper.connect",MicroAggregatorConsumer.buildEndPoint(ZK_IP, ZK_PORT));
-    props.put("group.id", KAFKA_GROUPID);
-    props.put("zookeeper.session.timeout.ms", "10000");
-    props.put("zookeeper.sync.time.ms", "200");
-    props.put("auto.commit.interval.ms", "1000");
-    logger.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		Properties props = new Properties();
+		props.put("zookeeper.connect", MicroAggregatorConsumer.buildEndPoint(ZK_IP, ZK_PORT));
+		props.put("group.id", KAFKA_GROUPID);
+		props.put("zookeeper.session.timeout.ms", "10000");
+		props.put("zookeeper.sync.time.ms", "200");
+		props.put("auto.commit.interval.ms", "1000");
+		logger.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
-	return new ConsumerConfig(props);
-}
-
-public static String buildEndPoint(String ip, String portNo){
-	
-	StringBuffer stringBuffer  = new StringBuffer();
-	String[] ips = ip.split(",");
-	String[] ports = portNo.split(",");
-	for( int count = 0; count<ips.length; count++){
-		
-		if(stringBuffer.length() > 0){
-			stringBuffer.append(",");
-		}
-		
-		if(count < ports.length){
-			stringBuffer.append(ips[count]+":"+ports[count]);
-		}else{
-			stringBuffer.append(ips[count]+":"+ports[0]);
-		}
+		return new ConsumerConfig(props);
 	}
-	return stringBuffer.toString();
-}
+
+	public static String buildEndPoint(String ip, String portNo) {
+
+		StringBuffer stringBuffer = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for (int count = 0; count < ips.length; count++) {
+
+			if (stringBuffer.length() > 0) {
+				stringBuffer.append(",");
+			}
+
+			if (count < ports.length) {
+				stringBuffer.append(ips[count] + ":" + ports[count]);
+			} else {
+				stringBuffer.append(ips[count] + ":" + ports[0]);
+			}
+		}
+		return stringBuffer.toString();
+	}
 
 	public void run() {
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+
 		Integer noOfThread = 1;
 		int loopCount = 0, status = 1, mailLoopCount;
 		int targetCount = 10;
 		long sleepTime = 0;
-		aggregationDAOImpl = new AggregationDAOImpl(new CassandraConnectionProvider());
-		aggregationDAOImpl.putValueByType(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_AGGREGATOR_CONSUMER, Constants.STATUS, status);
+		aggregationDAOImpl.putValueByType(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_AGGREGATOR_CONSUMER, Constants.THREAD_STATUS, status);
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		topicCountMap.put(topic, noOfThread);
+
 		/**
 		 * Iterate the loop for few times till the kafka get reconnected
 		 */
@@ -122,11 +129,11 @@ public static String buildEndPoint(String ip, String portNo){
 				/**
 				 * Get config settings for kafka consumer
 				 */
-				ColumnList<String> columnList = aggregationDAOImpl.readRow(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_LOG_CONSUMER, null).getResult();
-				status = columnList.getIntegerValue(Constants.STATUS, 1);
+				ColumnList<String> columnList = aggregationDAOImpl.readRow(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_AGGREGATOR_CONSUMER, null).getResult();
+				status = columnList.getIntegerValue(Constants.THREAD_STATUS, 1);
 				mailLoopCount = columnList.getIntegerValue(Constants.MAIL_LOOP_COUNT, 10);
 				targetCount = columnList.getIntegerValue(Constants.THREAD_LOOP_COUNT, 10);
-				sleepTime = columnList.getIntegerValue(Constants.THREAD_SLEEP_TIME, 10000);
+				sleepTime = columnList.getLongValue(Constants.THREAD_SLEEP_TIME, 10000L);
 
 				/**
 				 * will kill the thread,if the status is 0
@@ -161,7 +168,7 @@ public static String buildEndPoint(String ip, String portNo){
 					// TODO We're only getting raw data now. We'll have to use
 					// the
 					// server IP as well for extra information.
-					if (!messageMap.isEmpty()) {
+					if (messageMap != null && !messageMap.isEmpty()) {
 						AggregatorLogFactory.activity.info(message);
 						updateActivityStream(messageMap);
 						staticAggregation(messageMap);
@@ -171,12 +178,12 @@ public static String buildEndPoint(String ip, String portNo){
 					}
 				}
 			} catch (Exception e) {
-				logger.error("Message Log Consumer:" + e);
+				logger.error("Aggregation Consumer:" + e);
 			} finally {
 				try {
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
-					logger.error("Message Log Consumer Interrupted:" + e);
+					logger.error("Aggregation Consumer Interrupted:" + e);
 				}
 			}
 			loopCount++;

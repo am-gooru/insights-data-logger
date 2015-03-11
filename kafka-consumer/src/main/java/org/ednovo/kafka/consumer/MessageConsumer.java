@@ -23,7 +23,6 @@
  ******************************************************************************/
 package org.ednovo.kafka.consumer;
 
-
 /*
  * Copyright 2010 LinkedIn
  * 
@@ -60,54 +59,58 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.netflix.astyanax.model.ColumnList;
 
-public class MessageConsumer extends Thread implements Runnable
-{
-	private CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
+public class MessageConsumer extends Thread implements Runnable {
+
+	private CassandraDataLoader cassandraDataLoader;
 	private BaseCassandraRepoImpl baseCassandraDAO;
 	private final ConsumerConnector consumer;
-	private static String topic;
 	private DataProcessor rowDataProcessor;
+
+	private static String topic;
 	private static String ZK_IP;
 	private static String ZK_PORT;
 	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
+
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
-	
-  public MessageConsumer(DataProcessor insertRowForLogDB){
-	  Map<String, String> kafkaProperty = new HashMap<String, String>();
+
+	public MessageConsumer(DataProcessor insertRowForLogDB) {
+
+		Map<String, String> kafkaProperty = new HashMap<String, String>();
+		cassandraDataLoader = new CassandraDataLoader();
 		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
 		ZK_IP = kafkaProperty.get("zookeeper_ip");
 		ZK_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
-		this.topic = KAFKA_TOPIC;
+		this.topic = "tester"+KAFKA_TOPIC;
 		this.rowDataProcessor = insertRowForLogDB;
 
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
-    
-  }
 
-  public static String buildEndPoint(String ip, String portNo){
-		
-		StringBuffer stringBuffer  = new StringBuffer();
+	}
+
+	public static String buildEndPoint(String ip, String portNo) {
+
+		StringBuffer stringBuffer = new StringBuffer();
 		String[] ips = ip.split(",");
 		String[] ports = portNo.split(",");
-		for( int count = 0; count<ips.length; count++){
-			
-			if(stringBuffer.length() > 0){
+		for (int count = 0; count < ips.length; count++) {
+
+			if (stringBuffer.length() > 0) {
 				stringBuffer.append(",");
 			}
-			
-			if(count < ports.length){
-				stringBuffer.append(ips[count]+":"+ports[count]);
-			}else{
-				stringBuffer.append(ips[count]+":"+ports[0]);
+
+			if (count < ports.length) {
+				stringBuffer.append(ips[count] + ":" + ports[count]);
+			} else {
+				stringBuffer.append(ips[count] + ":" + ports[0]);
 			}
 		}
 		return stringBuffer.toString();
 	}
-  
+
 	private static ConsumerConfig createConsumerConfig() {
 
 		Properties props = new Properties();
@@ -120,15 +123,17 @@ public class MessageConsumer extends Thread implements Runnable
 		return new ConsumerConfig(props);
 
 	}
-	
+
 	public void run() {
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+
 		Integer noOfThread = 1;
 		int loopCount = 0, status = 1, mailLoopCount;
 		int targetCount = 10;
 		long sleepTime = 0;
 		baseCassandraDAO = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
 		baseCassandraDAO.saveValue(ColumnFamily.JOB_TRACKER.getColumnFamily(), Constants.MONITOR_KAFKA_CONSUMER, Constants.STATUS, status);
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+
 		/**
 		 * Iterate the loop for few times till the kafka get reconnected
 		 */
@@ -141,12 +146,13 @@ public class MessageConsumer extends Thread implements Runnable
 				status = columnList.getIntegerValue(Constants.STATUS, 1);
 				mailLoopCount = columnList.getIntegerValue(Constants.MAIL_LOOP_COUNT, 10);
 				targetCount = columnList.getIntegerValue(Constants.THREAD_LOOP_COUNT, 10);
-				sleepTime = columnList.getIntegerValue(Constants.THREAD_SLEEP_TIME, 10000);
+				sleepTime = columnList.getLongValue(Constants.THREAD_SLEEP_TIME, 10000L);
 
 				/**
 				 * will kill the thread,if the status is 0
 				 */
 				if (status == 0) {
+					logger.error("kafka consumer stopped");
 					return;
 				}
 
@@ -181,8 +187,10 @@ public class MessageConsumer extends Thread implements Runnable
 						continue;
 					}
 
-					// TODO We're only getting raw data now. We'll have to use
-					// the server IP as well for extra information.
+					/**
+					 * TODO We're only getting raw data now. We'll have to use
+					 * the server IP as well for extra information.
+					 **/
 					if (messageMap != null && !messageMap.isEmpty()) {
 						ConsumerLogFactory.activity.info(message);
 						this.rowDataProcessor.processRow(messageMap.get("raw"));

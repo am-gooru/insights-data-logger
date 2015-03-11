@@ -58,7 +58,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public BaseCassandraRepoImpl() {
 		super(connectionProvider);
 	}
-
+	
 	/**
 	 * This method using to read data with single Key&Indexed column.
 	 * 
@@ -698,20 +698,15 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 		if (value.getClass().getSimpleName().equalsIgnoreCase("String")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
-		}
-		if (value.getClass().getSimpleName().equalsIgnoreCase("Integer")) {
+		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Integer")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Integer.valueOf("" + value), null);
-		}
-		if (value.getClass().getSimpleName().equalsIgnoreCase("Long")) {
+		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Long")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf("" + value), null);
-		}
-		if (value.getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
+		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf("" + value), null);
 		} else {
 			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
 		}
-
-		;
 
 		try {
 			m.execute();
