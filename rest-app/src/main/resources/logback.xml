@@ -23,7 +23,24 @@
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>INFO</level>
 		</filter>
+		
 	</appender>
+	
+	   <appender name="default-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+                <param name="File" value="${CATALINA_HOME}/event_api_logs/activity.log" />
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                        <!-- daily rollover -->
+                        <fileNamePattern>activity-%d{yyyy-MM-dd}.log</fileNamePattern>
+
+                        <!-- keep 30 days' worth of history -->
+                        <maxHistory>30</maxHistory>
+                </rollingPolicy>
+                <param name="encoding" value="UTF-8" />
+                <encoder>
+                        <pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
+                </encoder>
+        </appender>
+        
 	<!-- activity appender will append the consumer module related INFO log -->
 	<appender name="consumer-activity-out"
 		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
@@ -31,7 +48,7 @@
 			value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/consumer_logs/activity.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -51,7 +68,7 @@
 			value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/consumer_logs/activity-error.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-error-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -70,7 +87,7 @@
 			value="${LOG_WRITTER_STORAGE}/logs/writter_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -89,7 +106,7 @@
 			value="${LOG_WRITTER_STORAGE}/logs/writter_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity-error.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-error-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -109,7 +126,7 @@
 			value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -129,7 +146,7 @@
 			value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity-error.%d{yyyy-MM-dd}.log
+			<fileNamePattern>activity-error-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
