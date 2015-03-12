@@ -23,6 +23,9 @@
  ******************************************************************************/
 package org.kafka.log.writer.consumer;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,6 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
-import org.kafka.event.microaggregator.core.CassandraConnectionProvider;
 import org.kafka.event.microaggregator.core.Constants;
 import org.kafka.event.microaggregator.core.MicroAggregationLoader;
 import org.kafka.event.microaggregator.dao.AggregationDAOImpl;
@@ -47,7 +49,6 @@ import com.netflix.astyanax.model.ColumnList;
 public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 
 	private MicroAggregationLoader microAggregationLoader;
-	private CassandraConnectionProvider connectionProvider;
 	private static ConsumerConnector consumer;
 	private AggregationDAOImpl aggregationDAOImpl;
 	private MailHandler mailHandler;
@@ -57,7 +58,7 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 	private static String ZOOKEEPER_PORT;
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_TOPIC;
-	private static String KAFKA_FILE_ERROR_TOPIC;
+	private static String SERVER_NAME;
 
 	private static Logger logger = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
@@ -67,13 +68,22 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 		microAggregationLoader.getConnectionProvider().init(null);
 		aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
 		mailHandler = new MailHandler(microAggregationLoader.getConnectionProvider());
+		getKafkaConsumer();
+		try {
+			SERVER_NAME = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			SERVER_NAME = "UnKnownHost";
+		}
+	}
+
+	private void getKafkaConsumer() {
+
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~logwritter~consumer");
 		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
 		ZOOKEEPER_PORT = kafkaProperty.get("zookeeper_portno");
 		KAFKA_FILE_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
-		KAFKA_FILE_ERROR_TOPIC = "error-" + KAFKA_FILE_TOPIC;
 		KafkaLogConsumer.topic = KAFKA_FILE_TOPIC;
 
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
@@ -134,7 +144,7 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 		while (loopCount < targetCount) {
 			try {
 				/**
-				 * Get config settings for kafka consumer
+				 * Get config settings for kafka log-writter consumer
 				 */
 				ColumnList<String> columnList = aggregationDAOImpl.readRow(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_LOG_CONSUMER, null).getResult();
 				status = columnList.getIntegerValue(Constants.THREAD_STATUS, 1);
@@ -146,6 +156,7 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 				 * will kill the thread,if the status is 0
 				 */
 				if (status == 0) {
+					logger.error("kafka log writter consumer stopped due to status:0");
 					return;
 				}
 
@@ -153,13 +164,19 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 				 * will send the mail to developer for kafka failure
 				 * notification
 				 */
-				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka log consumer disconnected,so auto reconnect on "+loopCount+" loop");
+				if (loopCount != 0 && mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka log consumer disconnected,so auto reconnect at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 				}
 
+				/**
+				 * get list of kafka stream from specific topic
+				 */
 				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 				ConsumerIterator<byte[], byte[]> it = stream.iterator();
+				/**
+				 * process consumed data
+				 */
 				while (it.hasNext()) {
 					String message = new String(it.next().message());
 					Gson gson = new Gson();
@@ -172,78 +189,38 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 						continue;
 					}
 
-					// TODO We're only getting raw data now. We'll have to use
-					// the
-					// server IP as well for extra information.
+					/**
+					 * TODO We're only getting raw data now. We'll have to use
+					 * the server IP as well for extra information.
+					 */
 					if (messageMap != null && !messageMap.isEmpty()) {
-						// Write the consumed JSON to Log file.
+						/**
+						 * Write the consumed JSON to Log file.
+						 */
 						LogWritterFactory.activity.info(message);
-						String eventJson = (String) messageMap.get("raw");
 					} else {
 						LogWritterFactory.errorActivity.error(message);
-						continue;
 					}
 				}
 			} catch (Exception e) {
-				logger.error("Message Log Consumer:" + e);
+				logger.error("Log writter Message  Consumer:" + e);
 			} finally {
 				try {
-					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
 					logger.error("Message Consumer Interrupted:" + e);
 				}
-				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+				/**
+				 * Restart the consumer thread
+				 */
+				consumer.shutdown();
+				getKafkaConsumer();
 			}
 			loopCount++;
 		}
-	}
 
-	void consumedError() {
-		Map<String, Integer> topicErrorCountMap = new HashMap<String, Integer>();
-		Integer noOfThread = 1;
-		topicErrorCountMap.put(KAFKA_FILE_ERROR_TOPIC, new Integer(noOfThread));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerErrorMap = consumer.createMessageStreams(topicErrorCountMap);
-		KafkaStream<byte[], byte[]> errStream = consumerErrorMap.get(KAFKA_FILE_ERROR_TOPIC).get(0);
-		ConsumerIterator<byte[], byte[]> itErr = errStream.iterator();
-		while (itErr.hasNext()) {
-			String message = new String(itErr.next().message());
-			Gson gson = new Gson();
-			Map<String, String> messageMap = new HashMap<String, String>();
-			try {
-				messageMap = gson.fromJson(message, messageMap.getClass());
-			} catch (Exception e) {
-				LogWritterFactory.errorActivity.error(message);
-				continue;
-			}
-
-			// TODO We're only getting raw data now. We'll have to use the
-			// server IP as well for extra information.
-			if (messageMap != null && !messageMap.isEmpty()) {
-				// Write the consumed JSON to Log file.
-				LogWritterFactory.errorActivity.info(message);
-				String eventJson = (String) messageMap.get("raw");
-			} else {
-				LogWritterFactory.errorActivity.error(message);
-				continue;
-			}
+		if (loopCount == targetCount) {
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka log writter consumer stopped at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 		}
-
-	}
-
-	public static void main(String args[]) {
-		KafkaLogConsumer kafka = new KafkaLogConsumer();
-		kafka.run();
-	}
-
-	public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
-		this.connectionProvider = connectionProvider;
-	}
-
-	/**
-	 * @return the connectionProvider
-	 */
-	public CassandraConnectionProvider getConnectionProvider() {
-		return connectionProvider;
 	}
 }

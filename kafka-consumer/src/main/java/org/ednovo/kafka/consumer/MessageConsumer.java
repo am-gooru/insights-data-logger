@@ -38,6 +38,9 @@ package org.ednovo.kafka.consumer;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,14 +76,25 @@ public class MessageConsumer extends Thread implements Runnable {
 	private static String ZK_PORT;
 	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
-
+	private static String SERVER_NAME;
+	
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
 
-		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		cassandraDataLoader = new CassandraDataLoader();
 		mailHandler = new MailHandler();
+		this.rowDataProcessor = insertRowForLogDB;
+		getKafkaConsumer();
+		try {
+			SERVER_NAME = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			SERVER_NAME = "UnKnownHost";
+		}
+	}
+
+	private void getKafkaConsumer() {
+		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
 		ZK_IP = kafkaProperty.get("zookeeper_ip");
 		ZK_PORT = kafkaProperty.get("zookeeper_portno");
@@ -88,13 +102,10 @@ public class MessageConsumer extends Thread implements Runnable {
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
 		MessageConsumer.topic = KAFKA_TOPIC;
-		this.rowDataProcessor = insertRowForLogDB;
-
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
-
 	}
 
-	public static String buildEndPoint(String ip, String portNo) {
+	private static String buildEndPoint(String ip, String portNo) {
 
 		StringBuffer stringBuffer = new StringBuffer();
 		String[] ips = ip.split(",");
@@ -130,7 +141,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	public void run() {
 
 		Integer noOfThread = 1;
-		int loopCount = 0, status = 1, mailLoopCount;
+		int loopCount = 0, status = 1, mailLoopCount = 0;
 		int targetCount = 10;
 		long sleepTime = 0;
 		baseCassandraDAO = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
@@ -155,7 +166,7 @@ public class MessageConsumer extends Thread implements Runnable {
 				 * will kill the thread,if the status is 0
 				 */
 				if (status == 0) {
-					logger.error("kafka consumer stopped");
+					logger.error("kafka consumer stopped due to status:0");
 					return;
 				}
 
@@ -163,8 +174,8 @@ public class MessageConsumer extends Thread implements Runnable {
 				 * will send the mail to developer for kafka failure
 				 * notification
 				 */
-				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer disconnected,so auto reconnect on "+loopCount+" loop");
+				if (loopCount != 0 && mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer disconnected,so auto reconnect at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 				}
 
 				/**
@@ -172,7 +183,6 @@ public class MessageConsumer extends Thread implements Runnable {
 				 */
 				topicCountMap.put(topic, new Integer(noOfThread));
 				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-
 				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 				ConsumerIterator<byte[], byte[]> it = stream.iterator();
 				/**
@@ -198,7 +208,6 @@ public class MessageConsumer extends Thread implements Runnable {
 						this.rowDataProcessor.processRow(messageMap.get("raw"));
 					} else {
 						ConsumerLogFactory.errorActivity.error(message);
-						continue;
 					}
 				}
 
@@ -206,14 +215,22 @@ public class MessageConsumer extends Thread implements Runnable {
 				logger.error("Message Consumer:" + e);
 			} finally {
 				try {
-					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
 					logger.error("Message Consumer Interrupted:" + e);
 				}
-				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+
+				/**
+				 * Restart the consumer thread
+				 */
+				consumer.shutdown();
+				getKafkaConsumer();
 			}
 			loopCount++;
+		}
+
+		if (loopCount == targetCount) {
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 		}
 	}
 }

@@ -46,14 +46,18 @@ public class MailHandler implements Constants {
 	});	
 	}
 	
+	/**
+	 * This will send the kafka status notification using configuration
+	 * @param message The external message needs to be used in mail body.
+	 */
 	public void sendKafkaNotification(String message){
 		try{
 		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER, 0);
-		String userName = columnList.getColumnByName("user_name").getStringValue();
-		String password = columnList.getColumnByName("password").getStringValue();
-		String toAddress = columnList.getColumnByName("to_address").getStringValue();
-		String ccAddress = columnList.getColumnByName("cc_address").getStringValue();
-		String bccAddress = columnList.getColumnByName("bcc_address").getStringValue();
+		String userName = columnList.getStringValue("user_name", null);
+		String password = columnList.getStringValue("password", null);
+		String toAddress = columnList.getStringValue("to_address", null);
+		String ccAddress = columnList.getStringValue("cc_address", null);
+		String bccAddress = columnList.getStringValue("bcc_address", null);
 		sendMail(userName, password, toAddress, ccAddress, bccAddress,"Kafka Notification",message);
 		}catch(Exception e){
 			logger.error("unable to send kafka notification");

@@ -23,6 +23,9 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.consumer;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 	private static String ZK_PORT;
 	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
+	private static String SERVER_NAME;
 
 	private static Logger logger = LoggerFactory.getLogger(MicroAggregatorConsumer.class);
 
@@ -67,6 +71,15 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		microAggregationLoader.getConnectionProvider().init(null);
 		aggregationDAOImpl = new AggregationDAOImpl(microAggregationLoader.getConnectionProvider());
 		mailHandler = new MailHandler(microAggregationLoader.getConnectionProvider());
+		getKafkaConsumer();
+		try {
+			SERVER_NAME = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			SERVER_NAME = "UnKnownHost";
+		}
+	}
+	
+	private void getKafkaConsumer() {
 		
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~microaggregator~consumer");
@@ -92,7 +105,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		return new ConsumerConfig(props);
 	}
 
-	public static String buildEndPoint(String ip, String portNo) {
+	private static String buildEndPoint(String ip, String portNo) {
 
 		StringBuffer stringBuffer = new StringBuffer();
 		String[] ips = ip.split(",");
@@ -102,7 +115,6 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 			if (stringBuffer.length() > 0) {
 				stringBuffer.append(",");
 			}
-
 			if (count < ports.length) {
 				stringBuffer.append(ips[count] + ":" + ports[count]);
 			} else {
@@ -128,7 +140,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		while (loopCount < targetCount) {
 			try {
 				/**
-				 * Get config settings for kafka consumer
+				 * Get config settings for micro-aggregator consumer
 				 */
 				ColumnList<String> columnList = aggregationDAOImpl.readRow(columnFamily.JOB_TRACKER.columnFamily(), Constants.MONITOR_KAFKA_AGGREGATOR_CONSUMER, null).getResult();
 				status = columnList.getIntegerValue(Constants.THREAD_STATUS, 1);
@@ -140,6 +152,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 				 * will kill the thread,if the status is 0
 				 */
 				if (status == 0) {
+					logger.error("kafka micro-aggregator consumer stopped due to status:0");
 					return;
 				}
 
@@ -147,15 +160,20 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 				 * will send the mail to developer for kafka failure
 				 * notification
 				 */
-				if (mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer disconnected,so auto reconnect on "+loopCount+" loop");
+				if (loopCount != 0 && mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
+					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer disconnected,so auto reconnect at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 				}
+				/**
+				 * get list of kafka stream from specific topic
+				 */
 				topicCountMap.put(topic, new Integer(1));
 				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 				ConsumerIterator<byte[], byte[]> it = stream.iterator();
+				/**
+				 * process consumed data
+				 */
 				while (it.hasNext()) {
-					// String message = ExampleUtils.getMessage(it.next());
 					String message = new String(it.next().message());
 					Gson gson = new Gson();
 					Map<String, String> messageMap = new HashMap<String, String>();
@@ -166,30 +184,37 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 						continue;
 					}
 
-					// TODO We're only getting raw data now. We'll have to use
-					// the
-					// server IP as well for extra information.
+					/**
+					 *  TODO We're only getting raw data now. We'll have to use
+					 *  the server IP as well for extra information.
+					 */
 					if (messageMap != null && !messageMap.isEmpty()) {
 						AggregatorLogFactory.activity.info(message);
 						updateActivityStream(messageMap);
 						staticAggregation(messageMap);
 					} else {
 						AggregatorLogFactory.errorActivity.error(message);
-						continue;
 					}
 				}
 			} catch (Exception e) {
 				logger.error("Aggregation Consumer:" + e);
 			} finally {
 				try {
-					consumer.shutdown();
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
 					logger.error("Message Consumer Interrupted:" + e);
 				}
-				consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+				/**
+				 * Restart the consumer thread
+				 */
+				consumer.shutdown();
+				getKafkaConsumer();
 			}
 			loopCount++;
+		}
+		
+		if (loopCount == targetCount) {
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer stopped at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
 		}
 	}
 
