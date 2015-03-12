@@ -39,7 +39,7 @@
 		<param name="File" value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/consumer_logs/activity.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
@@ -55,7 +55,7 @@
 		<param name="File" value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/consumer_logs/activity-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>

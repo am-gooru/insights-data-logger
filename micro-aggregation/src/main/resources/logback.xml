@@ -40,7 +40,7 @@
 		<param name="File" value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity.%d{yyyy-MM-dd}.log
+			<fileNamePattern>${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
@@ -58,7 +58,7 @@
 		<param name="File" value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>logs/writter_logs/activity-error.%d{yyyy-MM-dd}.log
+			<fileNamePattern>${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
