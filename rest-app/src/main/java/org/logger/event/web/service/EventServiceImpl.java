@@ -60,6 +60,7 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 @Service
@@ -431,9 +432,16 @@ public class EventServiceImpl implements EventService, Constants {
 				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, INDEXED_CONTENT, String.valueOf(indexedContent + limit));
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, ADD);
 				for(Long index = indexedContent; index <= (indexedContent + limit); index ++) {
-					String gooruOid = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), CONTENT_ID, index, DEFAULT_RETRY_COUNT).getRowByIndex(0).getColumns().getStringValue(GOORUOID, null);
-					if(gooruOid != null && gooruOid != EMPTY_STRING) {
-						dataLoaderService.indexResource(gooruOid);
+					Rows<String, String> rows = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), CONTENT_ID, index, DEFAULT_RETRY_COUNT);
+					if(rows != null && !rows.isEmpty()) {
+						for(Row<String, String> row : rows) {
+							String gooruOid = row.getColumns().getStringValue(GOORUOID, null);
+							if(gooruOid != null && gooruOid != EMPTY_STRING) {
+								dataLoaderService.indexResource(gooruOid);
+							}
+						}
+					} else {
+						logger.info("Content not found: {}", index);
 					}
 				}
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, SUB);

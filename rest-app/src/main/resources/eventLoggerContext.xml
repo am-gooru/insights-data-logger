@@ -134,6 +134,18 @@
 		<property name="repeatInterval" value="20000" />
 		<property name="startDelay" value="1000" />
 	</bean>
+	
+		<bean id="contentIndexingJob"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="eventController" />
+		<property name="targetMethod" value="indexContentJob" />
+	</bean>
+
+	<bean id="contentIndexingJobTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+		<property name="jobDetail" ref="contentIndexingJob" />
+		<property name="repeatInterval" value="5000" />
+		<property name="startDelay" value="1000" />
+	</bean>
 
 	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
 		<property name="jobDetails">
@@ -145,7 +157,8 @@
 				<ref bean="liveDashboardMigrationJob" />
 				<ref bean="liveDashboardVTMigrationJob" />
 				<ref bean="eventMigrationJob" /> -->
-				<ref bean="eventMigrationAndIndexJob" />
+<!-- 				<ref bean="eventMigrationAndIndexJob" /> -->
+				<ref bean="contentIndexingJob" />
 			</list>
 		</property>
 		<property name="triggers">
@@ -157,7 +170,8 @@
 				<ref bean="liveDashboardMigrationTrigger" />
 				<ref bean="liveDashboardVTMigrationTrigger" />
 				<ref bean="eventMigrationTrigger" /> -->
-				<ref bean="eventMigrationAndIndexTrigger" />
+<!-- 				<ref bean="eventMigrationAndIndexTrigger" /> -->
+				<ref bean="contentIndexingJobTrigger" />
 			</list>
 		</property>
 	</bean>
