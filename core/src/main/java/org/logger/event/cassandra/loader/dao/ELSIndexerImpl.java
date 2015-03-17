@@ -919,10 +919,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 				resourceMap.put("description", columns.getColumnByName("description").getStringValue());
 			}
 			if (columns.getColumnByName("last_modified") != null) {
-				resourceMap.put("lastModified", columns.getColumnByName("last_modified").getDateValue());
+				resourceMap.put("lastModified", columns.getColumnByName("last_modified").getStringValue());
 			}
 			if (columns.getColumnByName("created_on") != null) {
-				resourceMap.put("createdOn", columns.getColumnByName("created_on").getDateValue());
+				resourceMap.put("createdOn", columns.getColumnByName("created_on").getStringValue());
 			}
 			if (columns.getColumnByName("creator_uid") != null) {
 				resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
