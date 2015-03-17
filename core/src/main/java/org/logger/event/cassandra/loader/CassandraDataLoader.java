@@ -2674,9 +2674,9 @@ public class CassandraDataLoader implements Constants {
 				Long totalCount = this.getCount(indexName, indexType, lookUpField, lookUpValue);
 				Long from = 0L;
 				while(from < totalCount) {
-					List<String> contentIdList = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
-					for(String contentId : contentIdList) {
-						indexer.indexResource(contentId);
+					List<String> contentGooruOIds = this.getDataFromIndex(indexName, indexType, lookUpField, lookUpValue, 0, "gooru_oid", limit);
+					for(String contenGooruOId : contentGooruOIds) {
+						indexer.indexResource(contenGooruOId);
 					}
 					from += limit;
 				}
