@@ -301,4 +301,14 @@ public interface Constants {
 	String ERROR = "error";
 	
 	String TIME_TAKEN = "time_taken";
+	
+	String CONTENT_INDEXING_JOB = "content_indexing_job";
+	
+	String RUNNING_JOBS = "running_jobs";
+	
+	String MAX_COUNT = "max_count";
+	
+	String INDEXED_CONTENT = "indexed_content";
+	
+	String EMPTY_STRING = "";
 }

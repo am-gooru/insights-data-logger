@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -612,9 +613,20 @@ public class EventController {
 		eventService.migrateContentAndIndex(indexName, indexType, lookUpField, lookUpValue, limit, migrate);
 	}
 	
+	@RequestMapping(value = "/migrateContentAndIndexJob", method = RequestMethod.POST)
 	public void migrateEventAndIndex() {
 		logger.info("Started job to migrate Event and Index for user");
 		eventService.migrateEventAndIndex();
 	}
 	
+	@RequestMapping(value = "/index/{type}", method = RequestMethod.GET)
+	public void indexResource(HttpServletRequest request,@PathVariable(value="type") String indexType, @RequestParam(value = "ids", required = true) String ids,@RequestParam(value = "resourceType", required = false) String resourceType ,HttpServletResponse response) {
+			eventService.index(ids,indexType);
+			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
+	}
+	
+	public void indexContentJob() {
+		logger.info("Started content indexing job");
+		eventService.indexContent();
+	}
 }

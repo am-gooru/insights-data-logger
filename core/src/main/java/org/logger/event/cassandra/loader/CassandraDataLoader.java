@@ -2756,4 +2756,13 @@ public class CassandraDataLoader implements Constants {
     	}
     }
 
+    public void indexResource(String ids){
+    	indexer.indexResource(ids);
+    }
+    
+    public void indexUser(String ids) throws Exception{
+    	for(String userId : ids.split(",")){
+    		indexer.getUserAndIndex(userId);
+    	}
+    }
 }

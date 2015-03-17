@@ -332,6 +332,23 @@ public class EventServiceImpl implements EventService, Constants {
 		dataLoaderService.assementScoreCalculator();
 	}
 	
+	@Override
+	public void index(String ids,String indexType){
+		try {
+			if(indexType.equalsIgnoreCase("resource")){
+				dataLoaderService.indexResource(ids);
+			}
+			if(indexType.equalsIgnoreCase("user")){
+				dataLoaderService.indexUser(ids);
+			}
+			if(indexType.equalsIgnoreCase("event")){
+				dataLoaderService.indexEvent(ids);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@Async
 	@Override
 	public void migrateEventAndIndex() {
@@ -390,6 +407,42 @@ public class EventServiceImpl implements EventService, Constants {
 		}
 		else {
 			logger.error("Column {} not exist.", columnName);
+		}
+	}
+	
+	@Override
+	@Async
+	public void indexContent() {
+		Long numberOfJobsRunning = 0L;
+		Long maxJobs = 0L;
+		Integer limit = 1000;
+		Long indexedContent = 0L;
+		Long maxContent = 0L;
+		
+		ColumnList<String> columns = baseDao.readWithKey(AWS_CASSANDRA_VERSION, ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, DEFAULT_RETRY_COUNT);
+		indexedContent = Long.valueOf(columns.getStringValue(INDEXED_CONTENT, ZERO));
+		maxContent = Long.valueOf(columns.getStringValue(MAX_COUNT, ZERO));
+		numberOfJobsRunning = Long.valueOf(columns.getStringValue(RUNNING_JOBS, ZERO));
+		maxJobs = Long.valueOf(columns.getStringValue(MAX_JOBS, ZERO));
+		limit = Integer.valueOf(columns.getStringValue(LIMIT_NAME, DEFAULT_EVENT_LIMIT.toString()));
+		try {
+			if((indexedContent < maxContent) && (numberOfJobsRunning < maxJobs)) {
+				logger.info("Started content indexing job. Job number: {}, Indexing content from : {}", numberOfJobsRunning, indexedContent);
+				baseDao.saveStringValue(AWS_CASSANDRA_VERSION, ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, INDEXED_CONTENT, String.valueOf(indexedContent + limit));
+				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, ADD);
+				for(Long index = indexedContent; index <= (indexedContent + limit); index ++) {
+					String gooruOid = baseDao.readIndexedColumn(ColumnFamily.DIMRESOURCE.getColumnFamily(), CONTENT_ID, index, DEFAULT_RETRY_COUNT).getRowByIndex(0).getColumns().getStringValue(GOORUOID, null);
+					if(gooruOid != null && gooruOid != EMPTY_STRING) {
+						dataLoaderService.indexResource(gooruOid);
+					}
+				}
+				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, SUB);
+				logger.info("Completed the content indexing job. Job number: {}", numberOfJobsRunning);
+			}
+		}
+		catch(Exception e) {
+			logger.error("Error in content indexing job... {}", e.getMessage());
+			arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, SUB);
 		}
 	}
 }
