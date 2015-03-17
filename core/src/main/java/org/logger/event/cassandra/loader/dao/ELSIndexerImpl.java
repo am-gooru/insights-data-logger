@@ -949,7 +949,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 			if (columns.getColumnByName("grade") != null) {
 				Set<String> gradeArray = new HashSet<String>();
 				for (String gradeId : columns.getColumnByName("grade").getStringValue().split(",")) {
-					if(gradeId != "null") {
+					if(!gradeId.equalsIgnoreCase("null")) {
 						gradeArray.add(gradeId);
 					}
 				}
