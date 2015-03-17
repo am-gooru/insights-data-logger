@@ -440,8 +440,6 @@ public class EventServiceImpl implements EventService, Constants {
 								dataLoaderService.indexResource(gooruOid);
 							}
 						}
-					} else {
-						logger.info("Content not found: {}", index);
 					}
 				}
 				arithmeticOperations(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), CONTENT_INDEXING_JOB, RUNNING_JOBS, SUB);
