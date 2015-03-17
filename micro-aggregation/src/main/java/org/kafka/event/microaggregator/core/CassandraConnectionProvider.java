@@ -50,7 +50,7 @@ import org.springframework.stereotype.Repository;
 public class CassandraConnectionProvider {
 
     private Properties properties;
-    private Keyspace cassandraKeyspace;
+    private static Keyspace cassandraKeyspace;
     private static final Logger logger = LoggerFactory.getLogger(CassandraConnectionProvider.class);
     private static String CASSANDRA_IP;
     private static String CASSANDRA_PORT;

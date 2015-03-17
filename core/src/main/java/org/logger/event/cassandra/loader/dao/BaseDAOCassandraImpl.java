@@ -44,11 +44,11 @@ public class BaseDAOCassandraImpl {
 	
     protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
     
-    private CassandraConnectionProvider connectionProvider;
+    private static CassandraConnectionProvider connectionProvider;
     
-    private Keyspace keyspace;
+    private static Keyspace keyspace;
         
-    private Client client;
+    private static Client client;
     
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
 	
