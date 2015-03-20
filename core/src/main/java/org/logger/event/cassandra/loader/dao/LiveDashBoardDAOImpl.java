@@ -96,7 +96,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			}
 
 			try {
-				m.executeAsync();
+				m.execute();
 			} catch (Exception e) {
 				logger.error("Exception: Real Time counter failed." + e);
 			}
@@ -261,18 +261,17 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	}
 
 	/**
-	 * 
+	 * Adding Queue for viewed resources/collections
 	 * @param eventMaps
 	 */
-	public <T> void addContentForPostViews(Map<String, T> eventMaps) {
-		Map<String, String> eventMap = (Map<String, String>) eventMaps;
+	public <T> void addContentForPostViews(Map<String, T> eventMap) {
 		String dateKey = minDateFormatter.format(new Date()).toString();
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		logger.info("Key- view : {} ", VIEWS + SEPERATOR + dateKey);
-
-		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + dateKey, eventMap.get(CONTENT_GOORU_OID), eventMap.get(CONTENT_GOORU_OID), 2592000, m);
-
+		if(eventMap.get(CONTENT_GOORU_OID) != null){
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + dateKey, eventMap.get(CONTENT_GOORU_OID).toString(), eventMap.get(CONTENT_GOORU_OID).toString(), 2592000, m);
+		}
 		try {
 			m.execute();
 		} catch (Exception e) {

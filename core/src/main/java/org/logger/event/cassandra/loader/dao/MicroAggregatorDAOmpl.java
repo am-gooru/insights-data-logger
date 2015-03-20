@@ -800,15 +800,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	public List<String> getClassPages(Map<String, Object> eventMap) {
 		List<String> classPages = new ArrayList<String>();
-		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && StringUtils.isBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
+		/*if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && StringUtils.isBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
 			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID).toString(), 0);
 			if (!parents.isEmpty()) {
 				classPages = this.getClassPagesFromItems(parents);
 			}
 		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
-		}
-		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
+		}*/
+		
+		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID).toString(), 0);
+			if (!parents.isEmpty()) {
+				classPages = this.getClassPagesFromItems(parents);
+			}
+		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
 			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
 				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
 				if (eventDetail != null && eventDetail.size() > 0) {
@@ -829,8 +835,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 				}
 			}
-		}
-		if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)) {
+		}else if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)) {
 			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
 				ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
 				if (R != null && R.size() > 0) {
@@ -858,8 +863,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 				}
 			}
-		}
-		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
+		}else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
 			if (eventMap.containsKey("classId") && StringUtils.isNotBlank(eventMap.get("classId").toString())) {
 				classPages.add(eventMap.get("classId").toString());
 			}
