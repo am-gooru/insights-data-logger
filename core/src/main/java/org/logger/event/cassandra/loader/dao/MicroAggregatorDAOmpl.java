@@ -101,16 +101,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			collectionId = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
 			String classId = eventMap.get(PARENT_GOORU_OID) != null ? eventMap.get(PARENT_GOORU_OID).toString() : null;
-			if (!cache.containsKey(collectionId)) {
+			if (!cache.containsKey(collectionId) || StringUtils.isBlank(classId)) {
 				classPages = this.getClassPages(eventMap);
 			} else if (StringUtils.isNotBlank(classId)) {
 				classPages = (List<String>) cache.get(collectionId);
 				classPages.clear();
 				classPages.add(classId);
 				cache.put(collectionId, classPages);
-			} else {
+			} /*else {
 				classPages = (List<String>) cache.get(collectionId);
-			}
+			}*/
 		} else if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 			collectionId = eventMap.get(PARENT_GOORU_OID).toString();
 			if (cache.containsKey(collectionId)) {
