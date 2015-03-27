@@ -43,6 +43,8 @@ public class EventExceptionResolver extends SimpleMappingExceptionResolver {
 	@Override
 	public ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
 		ErrorObject errorObject = null;
+		ex.printStackTrace();
+		logger.error("Error in Resolver : {}", ex);
 		if (ex instanceof AccessDeniedException) {
 			errorObject = new ErrorObject(403, ex.getMessage());
 			response.setStatus(403);
@@ -52,12 +54,10 @@ public class EventExceptionResolver extends SimpleMappingExceptionResolver {
 		} else if (ex instanceof S3ServiceException) {
 			response.setStatus(500);
 			errorObject = new ErrorObject(500, ((S3ServiceException) ex).getErrorMessage());
-			logger.error("Error in Resolver -- " + ((S3ServiceException) ex).getErrorMessage());
 		} else {
 			errorObject = new ErrorObject(500, ex.getMessage());
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
-		logger.error("Error in Resolver -- ", ex);
 
 		ModelAndView jsonModel = new ModelAndView("rest/model");
 		jsonModel.addObject("model", new JSONSerializer().exclude("*.class").serialize(errorObject));
