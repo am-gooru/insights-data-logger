@@ -86,14 +86,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			eventMap.put(EVENT_NAME, events.getEventName());
 			eventMap.put(EVENT_ID, events.getEventId());
 			eventMap.put(EVENT_TIME, String.valueOf(events.getStartTime()));
-			if (eventMap.get(CONTENT_GOORU_OID) != null) {
+			if (eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
 				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
 				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
-			}
-			if (eventMap.get(GOORUID) != null) {
-				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
-			}
-			if (String.valueOf(eventMap.get(CONTENT_GOORU_OID)) != null) {
+
 				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
 				if (questionList != null && questionList.size() > 0) {
 					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
@@ -107,6 +103,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 				}
+			}
+			if (eventMap.get(GOORUID) != null) {
+				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 			}
 			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
@@ -188,7 +187,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 				}
 
-				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
+				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
 					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
 					if (questionList != null && questionList.size() > 0) {
 						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
@@ -552,7 +551,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
 				resourceMap.put("instructionalId", DataLoggerCaches.getInstructionalCache().get(columns.getColumnByName("instructional").getStringValue()));
 			}
-			if(gooruOid != null){
+			if(columns.getColumnByName("owner.userUid") != null){
+				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
+			}
+			if(StringUtils.isNotBlank(gooruOid)){
 				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(),gooruOid, 0);
 				if(!contentItems.isEmpty()){
 					resourceMap.put("contentItems",contentItems);
@@ -575,13 +577,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		    		
 		    		resourceMap.put("itemCount",questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L );
 		    	}
-			}
-			if(columns.getColumnByName("owner.userUid") != null){
-				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
-			}
-			if(gooruOid != null){
-				resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
+		    	resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
+		    	this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 			}
 			}
 			}
