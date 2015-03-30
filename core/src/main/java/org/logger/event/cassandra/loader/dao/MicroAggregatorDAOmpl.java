@@ -800,7 +800,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			} else {
 				classPages = new ArrayList<String>();
 				classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
-				cache.put(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID), eventMap.get(PARENT_GOORU_OID));
+				cache.put(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID), classPages);
 			}
 		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID)
 				&& StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
@@ -814,7 +814,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						if (StringUtils.isNotBlank(collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null))) {
 							classPages = new ArrayList<String>();
 							classPages.add(collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null));
-							cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null));
+							cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), classPages);
 						}
 					}
 				}
