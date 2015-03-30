@@ -174,6 +174,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 				 * process consumed data
 				 */
 				while (it.hasNext()) {
+					try{
 					String message = new String(it.next().message());
 					Gson gson = new Gson();
 					Map<String, String> messageMap = new HashMap<String, String>();
@@ -194,6 +195,10 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 						staticAggregation(messageMap);
 					} else {
 						AggregatorLogFactory.errorActivity.error(message);
+					}
+					}catch(Exception e){
+						AggregatorLogFactory.errorActivity.error(message);
+						logger.error("Aggregation Consumer failed in a loop" + e);
 					}
 				}
 			} catch (Exception e) {

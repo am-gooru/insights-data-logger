@@ -189,7 +189,9 @@ public class MessageConsumer extends Thread implements Runnable {
 				 * process consumed data
 				 */
 				while (it.hasNext()) {
-					String message = new String(it.next().message());
+					String message;
+					try{
+					message = new String(it.next().message());
 					Gson gson = new Gson();
 					Map<String, String> messageMap = new HashMap<String, String>();
 					try {
@@ -209,10 +211,13 @@ public class MessageConsumer extends Thread implements Runnable {
 					} else {
 						ConsumerLogFactory.errorActivity.error(message);
 					}
+				}catch(Exception e){
+					ConsumerLogFactory.errorActivity.error(message);
+					logger.error("Message Consumer failed in a loop" + e);
 				}
-
+				}
 			} catch (Exception e) {
-				logger.error("Message Consumer:" + e);
+				logger.error("Message Consumer broken:" + e);
 			} finally {
 				try {
 					Thread.sleep(sleepTime);
