@@ -95,31 +95,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		
 		List<String> classPages = null;
-		String collectionId = null;
+		classPages = this.getClassPages(eventMap);
+
 		String eventName = eventMap.containsKey(EVENT_NAME) ? eventMap.get(EVENT_NAME).toString() : EMPTY_STRING;
 		String gooruUUID = eventMap.containsKey(GOORUID) ? eventMap.get(GOORUID).toString() : EMPTY_STRING;
-		
-		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			collectionId = eventMap.containsKey(CONTENT_GOORU_OID)  ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
-			String classId = eventMap.containsKey(PARENT_GOORU_OID)  ? eventMap.get(PARENT_GOORU_OID).toString() : null;
-			if (!cache.containsKey(collectionId) || StringUtils.isBlank(classId)) {
-				classPages = this.getClassPages(eventMap);
-			} else if (StringUtils.isNotBlank(classId)) {
-				classPages = (List<String>) cache.get(collectionId);
-				classPages.clear();
-				classPages.add(classId);
-				cache.put(collectionId, classPages);
-			} /*else {
-				classPages = (List<String>) cache.get(collectionId);
-			}*/
-		} else if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
-			collectionId = eventMap.containsKey(PARENT_GOORU_OID) ? eventMap.get(PARENT_GOORU_OID).toString() : null;
-			if (cache.containsKey(collectionId)) {
-				classPages = (List<String>) cache.get(collectionId);
-			}
-		}else if(eventName.equalsIgnoreCase(LoaderConstants.RUFB.getName())){
-			classPages = this.getClassPages(eventMap);
-		}
 
 		String key = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
 		List<String> keysList = new ArrayList<String>();
@@ -812,88 +791,56 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @return
 	 */
 	public List<String> getClassPages(Map<String, Object> eventMap) {
-		List<String> classPages = new ArrayList<String>();
+		List<String> classPages = null;
 		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			if (StringUtils.isBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
-				List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID).toString(), 0);
-				if (!parents.isEmpty()) {
-					classPages = this.getClassPagesFromItems(parents);
-				}
+			if (cache.containsKey(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID))) {
+				classPages = (List<String>) cache.get(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID));
 			} else {
+				classPages = new ArrayList<String>();
 				classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
+				cache.put(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID), eventMap.get(PARENT_GOORU_OID));
 			}
-		} 
-		/*if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(CONTENT_GOORU_OID).toString(), 0);
-			if (!parents.isEmpty()) {
-				classPages = this.getClassPagesFromItems(parents);
-			}
-		}*/ else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
-			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
-				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
-				if (eventDetail != null && eventDetail.size() > 0) {
-					if (eventDetail.getStringValue(_EVENT_NAME, null) != null && (eventDetail.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-						if (eventDetail.getStringValue(_PARENT_GOORU_OID, null) == null || eventDetail.getStringValue(_PARENT_GOORU_OID, null).isEmpty()) {
-							List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventDetail.getStringValue(_CONTENT_GOORU_OID, null), 0);
-							if (!parents.isEmpty()) {
-								classPages = this.getClassPagesFromItems(parents);
-							}
-						} else {
-							classPages.add(eventDetail.getStringValue(_PARENT_GOORU_OID, null));
+		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID)
+				&& StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
+			if (cache.containsKey(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID))) {
+				classPages = (List<String>) cache.get(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
+			} else {
+				ColumnList<String> collectionPlayEvent = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
+				if (collectionPlayEvent != null && collectionPlayEvent.size() > 0) {
+					if (collectionPlayEvent.getStringValue(_EVENT_NAME, null) != null && (collectionPlayEvent.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+						if (StringUtils.isNotBlank(collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null))) {
+							classPages = new ArrayList<String>();
+							classPages.add(collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null));
+							cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), collectionPlayEvent.getStringValue(_PARENT_GOORU_OID, null));
 						}
-					}
-				} else {
-					List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENT_GOORU_OID).toString(), 0);
-					if (!parents.isEmpty()) {
-						classPages = this.getClassPagesFromItems(parents);
 					}
 				}
 			}
-		}else if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()) && eventMap.get(CLASSPAGEGOORUOID) == null)) {
-			if (eventMap.get(CLASSPAGEGOORUOID) == null) {
-				ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
-				if (R != null && R.size() > 0) {
-					String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
-					if (parentEventId != null) {
-						ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
-						if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())) {
-							classPages.add(C.getStringValue(_CONTENT_GOORU_OID, null));
-						}
-						if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-							if (C.getStringValue(_PARENT_GOORU_OID, null) == null || C.getStringValue(_PARENT_GOORU_OID, null).isEmpty()) {
-								List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), C.getStringValue(_CONTENT_GOORU_OID, null), 0);
-								if (!parents.isEmpty()) {
-									classPages = this.getClassPagesFromItems(parents);
-								}
-							} else {
-								classPages.add(C.getStringValue(_PARENT_GOORU_OID, null));
-							}
-						}
-					}
+		} else if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()))) {
+			ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
+			if (R != null && R.size() > 0) {
+				String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
+				if (parentEventId != null && cache.containsKey(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null))) {
+					classPages = (List<String>) cache.get(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null));
 				} else {
-					List<String> parents = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENT_GOORU_OID).toString(), 0);
-					if (!parents.isEmpty()) {
-						classPages = this.getClassPagesFromItems(parents);
+					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
+					if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CLPV1.getName())) {
+						classPages = new ArrayList<String>();
+						classPages.add(C.getStringValue(_CONTENT_GOORU_OID, null));
+					} else if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+						if (StringUtils.isNotBlank(C.getStringValue(_PARENT_GOORU_OID, null))) {
+							classPages = new ArrayList<String>();
+							classPages.add(C.getStringValue(_PARENT_GOORU_OID, null));
+
+						}
 					}
 				}
 			}
-		}else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
+		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
 			if (eventMap.containsKey("classId") && StringUtils.isNotBlank(eventMap.get("classId").toString())) {
+				classPages = new ArrayList<String>();
 				classPages.add(eventMap.get("classId").toString());
 			}
-		}
-		if (eventMap.containsKey(CLASSPAGEGOORUOID) && StringUtils.isNotBlank(eventMap.get(CLASSPAGEGOORUOID).toString())) {
-			classPages.add(eventMap.get(CLASSPAGEGOORUOID).toString());
-		}
-		/**
-		 * Pushing classpage data into cache
-		 */
-		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && !classPages.isEmpty()) {
-			cache.put(eventMap.get(CONTENT_GOORU_OID).toString(), classPages);
-		}
-		if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()))
-				&& !classPages.isEmpty()) {
-			cache.put(eventMap.get(PARENT_GOORU_OID).toString(), classPages);
 		}
 		return classPages;
 	}
