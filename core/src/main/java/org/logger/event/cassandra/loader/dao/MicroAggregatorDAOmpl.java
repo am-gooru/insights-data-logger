@@ -444,6 +444,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 						if (views == 0L) {
 							baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
+							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
 						}
 					}
 
