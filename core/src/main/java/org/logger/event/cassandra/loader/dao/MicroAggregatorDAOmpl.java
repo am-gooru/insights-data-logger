@@ -224,7 +224,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
 					logger.info("Recent Key 3: {} ", eventMap.get(SESSION_ID) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-					logger.info("eventId: {} ", eventMap.get(EVENT_ID));
 					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID), gooruUUID
 							, eventMap.get(SESSION_ID).toString(), microAggMutation);
 
@@ -431,7 +430,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),
 								e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()), m);
 					}
-
+					/**
+					 * Custom logic to handle 0 view count for first resource
+					 */
 					if (entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName())
 							&& (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENT_NAME).toString()
 									.equalsIgnoreCase(LoaderConstants.CPV1.getName())) && eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
@@ -447,6 +448,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
 						}
 					}
+					/**
+					 * End
+					 */
 
 					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).toString().equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
@@ -795,7 +799,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			if (cache.containsKey(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID))) {
 				classPages = (List<String>) cache.get(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID));
-				logger.info("classpage comes from cache...");
 			} else {
 				classPages = new ArrayList<String>();
 				classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
@@ -804,8 +807,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID)
 				&& StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
 			if (cache.containsKey(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID))) {
-				logger.info("EventID : " + eventMap.get(EVENT_ID));
-				logger.info("ClassKey : " + eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
 				classPages = (List<String>) cache.get(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
 			} else {
 				ColumnList<String> collectionPlayEvent = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
@@ -824,7 +825,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (R != null && R.size() > 0) {
 				String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
 				if (parentEventId != null && cache.containsKey(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null))) {
-					logger.info("classpage comes from cache...");
 					classPages = (List<String>) cache.get(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null));
 				} else {
 					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
