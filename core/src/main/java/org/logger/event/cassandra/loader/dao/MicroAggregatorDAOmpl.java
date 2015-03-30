@@ -186,7 +186,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString());
 			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
 			keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
-			logger.debug("Recent Key 2: {} ", eventMap.get(SESSION_ID) + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
+			logger.info("Recent Key 2: {} ", eventMap.get(SESSION_ID) + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
 			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + key, gooruUUID,
 					eventMap.get(SESSION_ID).toString(), microAggMutation);
 		}
@@ -224,6 +224,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
 					}
 					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
+					logger.info("Recent Key 3: {} ", eventMap.get(SESSION_ID) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
 					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID), gooruUUID
 							, eventMap.get(SESSION_ID).toString(), microAggMutation);
 
@@ -795,6 +796,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			if (cache.containsKey(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID))) {
 				classPages = (List<String>) cache.get(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID));
+				logger.info("classpage comes from cache...");
 			} else {
 				classPages = new ArrayList<String>();
 				classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
@@ -803,6 +805,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID)
 				&& StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
 			if (cache.containsKey(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID))) {
+				logger.info("classpage comes from cache...");
 				classPages = (List<String>) cache.get(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
 			} else {
 				ColumnList<String> collectionPlayEvent = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
@@ -821,6 +824,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (R != null && R.size() > 0) {
 				String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
 				if (parentEventId != null && cache.containsKey(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null))) {
+					logger.info("classpage comes from cache...");
 					classPages = (List<String>) cache.get(parentEventId + SEPERATOR + R.getStringValue(_PARENT_GOORU_OID, null));
 				} else {
 					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
