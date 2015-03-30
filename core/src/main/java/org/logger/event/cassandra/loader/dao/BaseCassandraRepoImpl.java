@@ -774,7 +774,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				try {
 					m.putColumnIfNotNull(columnName, new Timestamp((formatter.parse(value.toString())).getTime()));
 				} catch (Exception e) {
-					throw new RuntimeException(WRITE_EXCEPTION);
+					e.printStackTrace();
+					logger.error("Exception : columnName" + columnName + ": value : " + value);
 				}
 			}
 		} else {
