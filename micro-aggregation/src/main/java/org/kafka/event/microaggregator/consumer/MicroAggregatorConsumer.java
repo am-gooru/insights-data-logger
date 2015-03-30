@@ -174,8 +174,9 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 				 * process consumed data
 				 */
 				while (it.hasNext()) {
+					String message = null;
 					try{
-					String message = new String(it.next().message());
+					message = new String(it.next().message());
 					Gson gson = new Gson();
 					Map<String, String> messageMap = new HashMap<String, String>();
 					try {
