@@ -189,7 +189,7 @@ public class MessageConsumer extends Thread implements Runnable {
 				 * process consumed data
 				 */
 				while (it.hasNext()) {
-					String message;
+					String message = null;
 					try{
 					message = new String(it.next().message());
 					Gson gson = new Gson();
