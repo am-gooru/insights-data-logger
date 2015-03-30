@@ -538,7 +538,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	@SuppressWarnings("unchecked")
 	public void updateAssessmentAnswer(Map<String, Object> eventMap, Map<String, Object> assessmentAnswerMap) {
 
-		if (eventMap.containsKey("answers") && !(eventMap.containsKey("typeName") && eventMap.get("typeName").toString().equalsIgnoreCase("OE"))) {
+		if (eventMap.containsKey("answers") && !(eventMap.containsKey("typeName") && eventMap.get("typeName") != null && eventMap.get("typeName").toString().equalsIgnoreCase("OE"))) {
 			List<Map<String, Object>> answerList = (List<Map<String, Object>>) eventMap.get("answers");
 			if (answerList.size() > 0) {
 				for (int index = 0; index < answerList.size(); index++) {
