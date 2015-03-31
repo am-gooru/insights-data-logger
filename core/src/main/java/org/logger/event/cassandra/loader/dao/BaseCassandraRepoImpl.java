@@ -1035,7 +1035,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         return sb.toString();
     }
 
-    public Set<String> getAllLevelParents(String cfName,String Key,int retryCount){
+    public Set<String> getAllLevelParents(String cfName,String Key,int depth){
 
     	Rows<String, String> collectionItem = null;
     	Set<String> parentIds = new HashSet<String>();
@@ -1054,7 +1054,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
         			if(parentId != null){
         				parentId = parentId.trim();
         				parentIds.add(parentId);
-        				getAllLevelParents(cfName,parentId,0);
+        				if(depth > 6){
+        					logger.error("Maximum recusion depth exceeded...");
+        					return parentIds;
+        				}
+        				Set<String> grandparents = getAllLevelParents(cfName,parentId,depth+1);
+        				if(grandparents != null){
+        					parentIds.addAll(grandparents);
+        				}
         			}
         		 }
         	}
