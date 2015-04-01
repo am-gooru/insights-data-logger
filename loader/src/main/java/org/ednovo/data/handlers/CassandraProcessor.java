@@ -113,8 +113,8 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         		}
         		
 			} catch (ParseException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+				LOG.error("Exception:Activity indexing failed."+e);
 			}
         }
 
