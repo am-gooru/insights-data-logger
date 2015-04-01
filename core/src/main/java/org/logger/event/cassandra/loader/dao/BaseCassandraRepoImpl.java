@@ -48,7 +48,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	private static final Logger logger = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
-	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
+	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 
 	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
