@@ -300,7 +300,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				for(String gradeId : resource.getColumnByName("grade").getStringValue().split(",")){
 					gradeArray.add(gradeId);	
 				}
-				if(gradeArray != null && gradeArray.isEmpty() ){
+				if(gradeArray != null && !gradeArray.isEmpty() ){
 					eventMap.put("grade1", gradeArray);
 				}
 			}
@@ -522,7 +522,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				for(String gradeId : columns.getColumnByName("grade").getStringValue().split(",")){
 					gradeArray.add(gradeId);	
 				}
-				if(gradeArray != null && gradeArray.isEmpty() ){
+				if(gradeArray != null && !gradeArray.isEmpty() ){
 					resourceMap.put("grade1", gradeArray);
 				}
 			}
