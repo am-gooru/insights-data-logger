@@ -75,7 +75,7 @@ public class RealTimeOperationConfigDAOImpl extends BaseDAOCassandraImpl impleme
 			             }})
 			        .execute().getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		for (Row<String, String> row : operators) {
 				operatorsObject.put(row.getKey(), row.getColumns().getStringValue("aggregator_json", null));

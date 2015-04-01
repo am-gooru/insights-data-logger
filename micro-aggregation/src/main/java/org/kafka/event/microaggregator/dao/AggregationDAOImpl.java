@@ -38,6 +38,7 @@ import com.netflix.astyanax.query.AllRowsQuery;
 import com.netflix.astyanax.query.IndexQuery;
 import com.netflix.astyanax.query.RowQuery;
 import com.netflix.astyanax.query.RowSliceQuery;
+import com.netflix.astyanax.retry.ConstantBackoff;
 import com.netflix.astyanax.serializers.StringSerializer;
 
 import de.congrace.exp4j.ExpressionBuilder;
@@ -109,7 +110,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					} while (!startTime.equalsIgnoreCase(endTime));
 					keys.add(endTime);
 				} catch (ParseException e) {
-					e.printStackTrace();
+					logger.error("Exception:"+e);
 				}
 			} else if (checkNull(startTime) && !checkNull(endTime)) {
 				keys.add(startTime);
@@ -126,7 +127,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					keys.add(endTime);
 					keys.add(startTime);
 				} catch (ParseException e) {
-					e.printStackTrace();
+					logger.error("Exception:"+e);
 				}
 			} else {
 
@@ -151,7 +152,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 							keys.add(startTime);
 						} while (!startTime.equalsIgnoreCase(endTime));
 					} catch (ParseException e) {
-						e.printStackTrace();
+						logger.error("Exception:"+e);
 					}
 				} else {
 					Calendar calender = Calendar.getInstance();
@@ -338,7 +339,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while getting rows data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -363,7 +363,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while getting row data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -431,7 +430,36 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 			} catch (ConnectionException e) {
 				logger.error("Exception while inserting the Long value in " + columnFamilyName);
-				e.printStackTrace();
+			}
+		}
+	}
+	/**
+	 * Save any type of value.
+	 * 
+	 * @param cfName
+	 * @param rowKey
+	 * @param columnName
+	 * @param value
+	 */
+	public void putValueByType(String columnFamilyName, String rowKey, String columnName, Object columnValue) {
+
+		if (checkNull(columnName) && checkNull(columnValue)) {
+			try {
+				MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+				if(columnValue.getClass().getSimpleName().equalsIgnoreCase(dataTypes.STRING.dataType())){
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, columnValue.toString());
+				}else if(columnValue.getClass().getSimpleName().equalsIgnoreCase(dataTypes.LONG.dataType())){
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, Long.valueOf(columnValue.toString()));
+				}else if(columnValue.getClass().getSimpleName().equalsIgnoreCase(dataTypes.INTEGER.dataType())){
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, Integer.valueOf(columnValue.toString()));
+				}else if(columnValue.getClass().getSimpleName().equalsIgnoreCase(dataTypes.BOOLEAN.dataType())){
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, Boolean.valueOf(columnValue.toString()));
+				}else{
+					mutationBatch.withRow(getColumnFamily(columnFamilyName), rowKey).putColumnIfNotNull(columnName, columnValue.toString());
+				}
+					mutationBatch.execute();
+			} catch (Exception e) {
+				logger.error("Exception while inserting the value in " + columnFamilyName);
 			}
 		}
 	}
@@ -453,7 +481,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				mutationBatch.execute();
 			} catch (ConnectionException e) {
 				logger.error("Exception while deleting the column data of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-				e.printStackTrace();
 		}
 		return true;
 	}
@@ -473,7 +500,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 
 		} catch (ConnectionException e) {
 			logger.error("Exception while checking the column data exists of (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-			e.printStackTrace();
 		}
 		return false;
 	}
@@ -510,7 +536,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while Reading all the data of " + columnFamilyName);
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -542,7 +567,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 			result = rowsResult.execute();
 		} catch (ConnectionException e) {
 			logger.error("Exception while reading the column with Index of(columnFamily~ColumnName) " + columnFamilyName + SEPERATOR + whereColumns.keySet());
-			e.printStackTrace();
 		}
 		return result;
 	}
@@ -577,7 +601,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-					e.printStackTrace();
 				}
 		}
 	}
@@ -598,7 +621,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					mutationBatch.execute();
 				} catch (ConnectionException e) {
 					logger.error("Exception while inserting the string value to (columnFamily~rowKey) " + columnFamilyName + SEPERATOR + rowKey);
-					e.printStackTrace();
 					continue;
 				}
 			}
@@ -881,7 +903,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return resultMap;
 	}
 
-	/*
+	/**
 	 * @param data is to check for empty
 	 */
 	public static boolean checkNull(String data) {
@@ -892,7 +914,18 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 		return false;
 	}
 
-	/*
+	/**
+	 * @param data is to check for empty
+	 */
+	public static boolean checkNull(Object data) {
+
+		if (data != null) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * @param data is to check for empty
 	 */
 	public static boolean checkNull(OperationResult<?> data) {
@@ -1059,7 +1092,7 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		return rowKey;
 	}
@@ -1309,7 +1342,6 @@ public class AggregationDAOImpl extends BaseDAOCassandraImpl implements Aggregat
 					SimpleDateFormat customDateFormatter = new SimpleDateFormat(dateFormat[0]);
 					formedKey = formedKey.replaceAll(columnKey.D.columnKey() + dateFormat[0], customDateFormatter.format(currentDateTime));
 				} catch (ParseException e) {
-					e.printStackTrace();
 					continue;
 				}
 			}

@@ -194,7 +194,7 @@ public class MicroAggregationLoader implements Constants{
     	try {
 			liveDashboardDAOImpl.findDifferenceInCount(eventMap);
 		} catch (ParseException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
     }
     
@@ -416,7 +416,7 @@ public class MicroAggregationLoader implements Constants{
 		}
 		aggregationDAO.startStaticAggregation(startTime,endTime);
 		}catch(Exception e){
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
 		}
 

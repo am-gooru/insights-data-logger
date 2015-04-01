@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
@@ -24,6 +25,7 @@ import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.ESIndexices;
 import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.Gson;
+import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
@@ -43,21 +46,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	private CassandraConnectionProvider connectionProvider;
 
 	private BaseCassandraRepoImpl baseDao;
-
-	Map<String, String> fieldDataTypes = null;
-
-	Map<String, String> beFieldName = null;
-
-	public static Map<String, String> cache;
-
-	public static Map<String, Object> licenseCache;
-
-	public static Map<String, Object> resourceTypesCache;
-
-	public static Map<String, Object> categoryCache;
-
-	public static Map<String, String> taxonomyCodeType;
-
+	
 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 
 	SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -68,74 +57,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-
-		beFieldName = new LinkedHashMap<String, String>();
-		fieldDataTypes = new LinkedHashMap<String, String>();
-		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
-		for (Row<String, String> row : fieldDescrption) {
-			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}
-
-		Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(), 0);
-		licenseCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : licenseRows) {
-			licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-		Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(), 0);
-		resourceTypesCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : resourceTypesRows) {
-			resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-		Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(), 0);
-		categoryCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : categoryRows) {
-			categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-
-		taxonomyCodeType = new LinkedHashMap<String, String>();
-
-		ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code", 0);
-		for (int i = 0; i < taxonomyCodeTypeList.size(); i++) {
-			taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
-		}
-		cache = new LinkedHashMap<String, String>();
-		cache.put(INDEXING_VERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXING_VERSION, DEFAULT_COLUMN, 0).getStringValue());
-	}
-
-	public void clearCache() {
-		beFieldName = new LinkedHashMap<String, String>();
-		fieldDataTypes = new LinkedHashMap<String, String>();
-		Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(), 0);
-		for (Row<String, String> row : fieldDescrption) {
-			fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-			beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
-		}
-
-		Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(), 0);
-		licenseCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : licenseRows) {
-			licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-		Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(), 0);
-		resourceTypesCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : resourceTypesRows) {
-			resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-		Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(), 0);
-		categoryCache = new LinkedHashMap<String, Object>();
-		for (Row<String, String> row : categoryRows) {
-			categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-
-		taxonomyCodeType = new LinkedHashMap<String, String>();
-
-		ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamily.TABLEDATATYPES.getColumnFamily(), "taxonomy_code", 0);
-		for (int i = 0; i < taxonomyCodeTypeList.size(); i++) {
-			taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
-		}
-		cache = new LinkedHashMap<String, String>();
-		cache.put(INDEXING_VERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXING_VERSION, DEFAULT_COLUMN, 0).getStringValue());
 	}
 
 	/**
@@ -150,55 +71,54 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				jsonField = new JSONObject(fields.substring(14).trim());
 			} catch (JSONException e2) {
-				e2.printStackTrace();
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e2);
 			}
 		}
-		if (jsonField.has("version")) {
+		if (jsonField.has(VERSION)) {
 			Event events = new Gson().fromJson(fields, Event.class);
 			Map<String, Object> eventMap = new HashMap<String, Object>();
 			try {
 				eventMap = JSONDeserializer.deserializeEventv2(events);
 			} catch (JSONException e) {
-				e.printStackTrace();
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e);
 			}
 
-			eventMap.put("eventName", events.getEventName());
-			eventMap.put("eventId", events.getEventId());
-			eventMap.put("eventTime", String.valueOf(events.getStartTime()));
-			if (eventMap.get(CONTENT_GOORU_OID) != null) {
+			eventMap.put(EVENT_NAME, events.getEventName());
+			eventMap.put(EVENT_ID, events.getEventId());
+			eventMap.put(EVENT_TIME, String.valueOf(events.getStartTime()));
+			if (eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
 				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
 				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
+
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
+				if (questionList != null && questionList.size() > 0) {
+					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
+					eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
+					eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
+					eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
+
+					eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
+					eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
+					eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
+
+					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
+				}
 			}
 			if (eventMap.get(GOORUID) != null) {
 				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 			}
-			if (String.valueOf(eventMap.get(CONTENT_GOORU_OID)) != null) {
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
-				if (questionList != null && questionList.size() > 0) {
-					eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-					eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-					eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-					eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
-
-					eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-					eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-					eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
-
-					eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
-				}
-			}
-			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + cache.get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-			if (eventMap.get(EVEN_TNAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
-				indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
-				if (eventMap.containsKey(SOURCE_GOORU_OID)) {
-					indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
-				}
+			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 				try {
+					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
+					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
+						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
+					}
 					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("Exception:Unable to index events in the method indexEvents." + e);
 				}
 			}
 		} else {
@@ -215,43 +135,43 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					 * }
 					 */
 
-					if (key.equalsIgnoreCase("eventName") && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
-						eventMap.put("eventName", "reaction.create");
+					if (key.equalsIgnoreCase(EVENT_NAME) && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
+						eventMap.put(EVENT_NAME, "reaction.create");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
 
-						eventMap.put("eventName", "collection.play");
+						eventMap.put(EVENT_NAME, "collection.play");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
-						eventMap.put("eventName", "user.login");
+						eventMap.put(EVENT_NAME, "user.login");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
-						eventMap.put("eventName", "user.register");
+						eventMap.put(EVENT_NAME, "user.register");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
 									"collection-resource-question-play-dots"))) {
-						eventMap.put("eventName", "collection.resource.play");
+						eventMap.put(EVENT_NAME, "collection.resource.play");
 					}
 
-					if (key.equalsIgnoreCase("eventName")
+					if (key.equalsIgnoreCase(EVENT_NAME)
 							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
 									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
-						eventMap.put("eventName", "resource.play");
+						eventMap.put(EVENT_NAME, "resource.play");
 					}
 
 					if (key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")) {
@@ -267,23 +187,23 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 				}
 
-				if (eventMap.get(EVEN_TNAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
+				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
 					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
 					if (questionList != null && questionList.size() > 0) {
-						eventMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-						eventMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-						eventMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-						eventMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
+						eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
+						eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
+						eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
 
-						eventMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-						eventMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-						eventMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+						eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
+						eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
+						eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
 
-						eventMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
-				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + cache.get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
-				if (eventMap.get(EVEN_TNAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+				if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
 					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
 						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
@@ -303,23 +223,21 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * Indexing resources
 	 * 
 	 * @param ids
+	 * @throws Exception 
 	 */
-	public void indexResource(String ids) {
+	public void indexResource(String ids) throws Exception {
 		Collection<String> idList = new ArrayList<String>();
 		for (String id : ids.split(",")) {
-			idList.add("GLP~" + id);
+			idList.add(id);
 		}
 		logger.debug("Indexing resources : {}", idList);
-		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.DIMRESOURCE.getColumnFamily(), idList, 0);
-		try {
+		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.RESOURCE.getColumnFamily(), idList, 0);
+	
 			if (resource != null && resource.size() > 0) {
 				this.getResourceAndIndex(resource);
 			} else {
 				throw new AccessDeniedException("Invalid Id!!");
 			}
-		} catch (Exception e) {
-			logger.error("indexing failed .. :{}", e);
-		}
 	}
 
 	/**
@@ -332,15 +250,19 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	public Map<String, Object> getUserInfo(Map<String, Object> eventMap, String gooruUId) {
 		Collection<String> user = new ArrayList<String>();
 		user.add(gooruUId);
-		ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), gooruUId, 0);
-		if (eventDetailsNew != null && eventDetailsNew.size() > 0) {
-			for (int i = 0; i < eventDetailsNew.size(); i++) {
-				String columnName = eventDetailsNew.getColumnByIndex(i).getName();
-				String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
-				if (value != null) {
-					eventMap.put(columnName, value);
+		try {
+			ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), gooruUId, 0);
+			if (eventDetailsNew != null && eventDetailsNew.size() > 0) {
+				for (int i = 0; i < eventDetailsNew.size(); i++) {
+					String columnName = eventDetailsNew.getColumnByIndex(i).getName();
+					String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
+					if (value != null) {
+						eventMap.put(columnName, value);
+					}
 				}
 			}
+		}catch(Exception e){
+			logger.error("Exception while get user details."+e);
 		}
 		return eventMap;
 	}
@@ -355,47 +277,65 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	public Map<String, Object> getContentInfo(Map<String, Object> eventMap, String gooruOId) {
 
 		Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
-		if (!contentItems.isEmpty()) {
+		if (contentItems != null && !contentItems.isEmpty()) {
 			eventMap.put("contentItems", contentItems);
 		}
-		ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + gooruOId, 0);
+		ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), gooruOId, 0);
 		if (resource != null) {
-			eventMap.put("title", resource.getStringValue("title", null));
-			eventMap.put("description", resource.getStringValue("description", null));
-			eventMap.put("sharing", resource.getStringValue("sharing", null));
-			eventMap.put("category", resource.getStringValue("category", null));
-			eventMap.put("typeName", resource.getStringValue("type_name", null));
-			eventMap.put("license", resource.getStringValue("license_name", null));
-			eventMap.put("contentOrganizationId", resource.getStringValue("organization_uid", null));
-
-			if (resource.getColumnByName("instructional_id") != null) {
-				eventMap.put("instructionalId", resource.getColumnByName("instructional_id").getLongValue());
+			if(resource.getColumnByName("title") != null){
+				eventMap.put("title", resource.getColumnByName("title").getStringValue());
 			}
-			if (resource.getColumnByName("resource_format_id") != null) {
-				eventMap.put("resourceFormatId", resource.getColumnByName("resource_format_id").getLongValue());
+			if(resource.getColumnByName("description") != null){
+				eventMap.put("description", resource.getColumnByName("description").getStringValue());
 			}
-
-			if (resource.getColumnByName("type_name") != null) {
-				if (resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())) {
-					eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
+			if(resource.getColumnByName("sharing") != null){
+				eventMap.put("sharing", resource.getColumnByName("sharing").getStringValue());
+			}
+			if(resource.getColumnByName("organization.partyUid") != null){
+				eventMap.put("contentOrganizationId", resource.getColumnByName("organization.partyUid").getStringValue());
+			}
+			
+			if(resource.getColumnByName("grade") != null){
+				Set<String> gradeArray = new HashSet<String>(); 
+				for(String gradeId : resource.getColumnByName("grade").getStringValue().split(",")){
+					gradeArray.add(gradeId);	
+				}
+				if(gradeArray != null && !gradeArray.isEmpty() ){
+					eventMap.put("grade1", gradeArray);
 				}
 			}
-			if (resource.getColumnByName("category") != null) {
-				if (categoryCache.containsKey(resource.getColumnByName("category").getStringValue())) {
-					eventMap.put("resourceCategoryId", categoryCache.get(resource.getColumnByName("category").getStringValue()));
+			if(resource.getColumnByName("license.name") != null){
+				if(DataLoggerCaches.getLicenseCache().containsKey(resource.getColumnByName("license.name").getStringValue())){    							
+					eventMap.put("licenseId", DataLoggerCaches.getLicenseCache().get(resource.getColumnByName("license.name").getStringValue()));
 				}
 			}
+			if(resource.getColumnByName("resourceType") != null){
+				if(DataLoggerCaches.getResourceTypesCache().containsKey(resource.getColumnByName("resourceType").getStringValue())){    							
+					eventMap.put("resourceTypeId", DataLoggerCaches.getResourceTypesCache().get(resource.getColumnByName("resourceType").getStringValue()));
+				}
+				eventMap.put("typeName", resource.getColumnByName("resourceType").getStringValue());
+			}
+			if(resource.getColumnByName("category") != null){
+				if(DataLoggerCaches.getCategoryCache().containsKey(resource.getColumnByName("category").getStringValue())){    							
+					eventMap.put("resourceCategoryId", DataLoggerCaches.getCategoryCache().get(resource.getColumnByName("category").getStringValue()));
+				}
+				eventMap.put("category", resource.getColumnByName("category").getStringValue());
+			}
+			if(resource.getColumnByName("resourceFormat") != null){
+				eventMap.put("resourceFormat", resource.getColumnByName("resourceFormat").getStringValue());
+				eventMap.put("resourceFormatId", DataLoggerCaches.getResourceFormatCache().get(resource.getColumnByName("resourceFormat").getStringValue()));
+			}
+			if(resource.getColumnByName("instructional") != null){
+				eventMap.put("instructional", resource.getColumnByName("instructional").getStringValue());
+				eventMap.put("instructionalId", DataLoggerCaches.getInstructionalCache().get(resource.getColumnByName("instructional").getStringValue()));
+			}
+
 			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId, 0);
 			if (questionCount != null && !questionCount.isEmpty()) {
-				long questionCounts = questionCount.getLongValue("questionCount", 0L);
-				eventMap.put("questionCount", questionCounts);
-				if (questionCounts > 0L) {
-					if (resourceTypesCache.containsKey(resource.getColumnByName("type_name").getStringValue())) {
-						eventMap.put("resourceTypeId", resourceTypesCache.get(resource.getColumnByName("type_name").getStringValue()));
-					}
-				}
+				long questionCounts = questionCount.getLongValue(QUESTION_COUNT, 0L);
+				eventMap.put(QUESTION_COUNT, questionCounts);
 			} else {
-				eventMap.put("questionCount", 0L);
+				eventMap.put(QUESTION_COUNT, 0L);
 			}
 		}
 
@@ -533,153 +473,119 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @throws ParseException
 	 */
 	public void getResourceAndIndex(Rows<String, String> resource) throws ParseException {
+		{
 
-		Map<String, Object> resourceMap = new LinkedHashMap<String, Object>();
+			Map<String, Object> resourceMap = new LinkedHashMap<String, Object>();
 
-		for (int a = 0; a < resource.size(); a++) {
+			for (int a = 0; a < resource.size(); a++) {
 
-			ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
+				ColumnList<String> columns = resource.getRowByIndex(a).getColumns();
+				if (!columns.isEmpty()) {
+					String gooruOid = resource.getRowByIndex(a).getKey();
 
-			if (columns == null) {
-				return;
-			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
-				if (!contentItems.isEmpty()) {
-					resourceMap.put("contentItems", contentItems);
-				}
+					if (columns.getColumnByName("title") != null) {
+						resourceMap.put("title", columns.getColumnByName("title").getStringValue());
+					}
+					if (columns.getColumnByName("description") != null) {
+						resourceMap.put("description", columns.getColumnByName("description").getStringValue());
+					}
+					if (columns.getColumnByName("lastModified") != null) {
+						resourceMap.put("lastModified", columns.getColumnByName("lastModified").getDateValue());
+					}
+					if (columns.getColumnByName("createdOn") != null) {
+						resourceMap.put("createdOn", columns.getColumnByName("createdOn").getDateValue());
+					}
+					if (columns.getColumnByName("creator.userUid") != null) {
+						resourceMap.put("creatorUid", columns.getColumnByName("creator.userUid").getStringValue());
+					}
+					if (columns.getColumnByName("owner.userUid") != null) {
+						resourceMap.put("userUid", columns.getColumnByName("owner.userUid").getStringValue());
+					}
+					if (columns.getColumnByName("recordSource") != null) {
+						resourceMap.put("recordSource", columns.getColumnByName("recordSource").getStringValue());
+					}
+					if (columns.getColumnByName("sharing") != null) {
+						resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
+					}
+					if (columns.getColumnByName("organization.partyUid") != null) {
+						resourceMap.put("contentOrganizationId", columns.getColumnByName("organization.partyUid").getStringValue());
+					}
+					if (columns.getColumnByName("thumbnail") != null && StringUtils.isNotBlank(columns.getColumnByName("thumbnail").getStringValue())) {
+						if (columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")) {
+							resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
+						} else {
+							resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH() + "/" + columns.getColumnByName("folder").getStringValue() + "/"
+									+ columns.getColumnByName("thumbnail").getStringValue());
+						}
+					}
+					if (columns.getColumnByName("grade") != null) {
+						Set<String> gradeArray = new HashSet<String>();
+						for (String gradeId : columns.getColumnByName("grade").getStringValue().split(",")) {
+							gradeArray.add(gradeId);
+						}
+						if (gradeArray != null && !gradeArray.isEmpty()) {
+							resourceMap.put("grade1", gradeArray);
+						}
+					}
+					if (columns.getColumnByName("license.name") != null) {
+						if (DataLoggerCaches.getLicenseCache().containsKey(columns.getColumnByName("license.name").getStringValue())) {
+							resourceMap.put("licenseId", DataLoggerCaches.getLicenseCache().get(columns.getColumnByName("license.name").getStringValue()));
+						}
+					}
+					if (columns.getColumnByName("resourceType") != null) {
+						if (DataLoggerCaches.getResourceTypesCache().containsKey(columns.getColumnByName("resourceType").getStringValue())) {
+							resourceMap.put("resourceTypeId", DataLoggerCaches.getResourceTypesCache().get(columns.getColumnByName("resourceType").getStringValue()));
+						}
+						resourceMap.put("typeName", columns.getColumnByName("resourceType").getStringValue());
+					}
+					if (columns.getColumnByName("category") != null) {
+						if (DataLoggerCaches.getCategoryCache().containsKey(columns.getColumnByName("category").getStringValue())) {
+							resourceMap.put("resourceCategoryId", DataLoggerCaches.getCategoryCache().get(columns.getColumnByName("category").getStringValue()));
+						}
+						resourceMap.put("category", columns.getColumnByName("category").getStringValue());
+					}
+					if (columns.getColumnByName("resourceFormat") != null) {
+						resourceMap.put("resourceFormat", columns.getColumnByName("resourceFormat").getStringValue());
+						resourceMap.put("resourceFormatId", DataLoggerCaches.getResourceFormatCache().get(columns.getColumnByName("resourceFormat").getStringValue()));
+					}
+					if (columns.getColumnByName("instructional") != null) {
+						resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
+						resourceMap.put("instructionalId", DataLoggerCaches.getInstructionalCache().get(columns.getColumnByName("instructional").getStringValue()));
+					}
+					if (columns.getColumnByName("owner.userUid") != null) {
+						resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
+					}
+					if (StringUtils.isNotBlank(gooruOid)) {
+						Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOid, 0);
+						if (!contentItems.isEmpty()) {
+							resourceMap.put("contentItems", contentItems);
+						}
+						resourceMap.put("gooruOid", gooruOid);
 
-			}
-			if (columns.getColumnByName("title") != null) {
-				resourceMap.put("title", columns.getColumnByName("title").getStringValue());
-			}
-			if (columns.getColumnByName("description") != null) {
-				resourceMap.put("description", columns.getColumnByName("description").getStringValue());
-			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				resourceMap.put("gooruOid", columns.getColumnByName("gooru_oid").getStringValue());
-			}
-			if (columns.getColumnByName("last_modified") != null) {
-				try {
-					resourceMap.put("lastModified", formatter.parse(columns.getColumnByName("last_modified").getStringValue()));
-				} catch (Exception e) {
-					try {
-						resourceMap.put("lastModified", formatter2.parse(columns.getColumnByName("last_modified").getStringValue()));
-					} catch (Exception e2) {
-						resourceMap.put("lastModified", formatter3.parse(columns.getColumnByName("last_modified").getStringValue()));
+						ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOid, 0);
+
+						this.getLiveCounterData("all~" + gooruOid, resourceMap);
+
+						if (questionList != null && questionList.size() > 0) {
+							resourceMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
+							resourceMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
+							resourceMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
+							resourceMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
+
+							resourceMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
+							resourceMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
+							resourceMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
+
+							resourceMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
+						}
+						resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
+						this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(),
+								gooruOid);
 					}
 				}
-			}
-			if (columns.getColumnByName("created_on") != null) {
-				try {
-					resourceMap.put(
-							"createdOn",
-							columns.getColumnByName("created_on") != null ? formatter.parse(columns.getColumnByName("created_on").getStringValue()) : formatter.parse(columns.getColumnByName(
-									"last_modified").getStringValue()));
-				} catch (Exception e) {
-					try {
-						resourceMap.put(
-								"createdOn",
-								columns.getColumnByName("created_on") != null ? formatter2.parse(columns.getColumnByName("created_on").getStringValue()) : formatter2.parse(columns.getColumnByName(
-										"last_modified").getStringValue()));
-					} catch (Exception e2) {
-						resourceMap.put(
-								"createdOn",
-								columns.getColumnByName("created_on") != null ? formatter3.parse(columns.getColumnByName("created_on").getStringValue()) : formatter3.parse(columns.getColumnByName(
-										"last_modified").getStringValue()));
-					}
-				}
-			}
-			if (columns.getColumnByName("creator_uid") != null) {
-				resourceMap.put("creatorUid", columns.getColumnByName("creator_uid").getStringValue());
-			}
-			if (columns.getColumnByName("user_uid") != null) {
-				resourceMap.put("userUid", columns.getColumnByName("user_uid").getStringValue());
-			}
-			if (columns.getColumnByName("record_source") != null) {
-				resourceMap.put("recordSource", columns.getColumnByName("record_source").getStringValue());
-			}
-			if (columns.getColumnByName("sharing") != null) {
-				resourceMap.put("sharing", columns.getColumnByName("sharing").getStringValue());
-			}
-			/*
-			 * if(columns.getColumnByName("views_count") != null){ resourceMap.put("viewsCount", columns.getColumnByName("views_count").getLongValue()); }
-			 */
-			if (columns.getColumnByName("organization_uid") != null) {
-				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization_uid").getStringValue());
-			}
-			if (columns.getColumnByName("thumbnail") != null) {
-				resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
-			}
-			if (columns.getColumnByName("instructional_id") != null) {
-				resourceMap.put("instructionalId", columns.getColumnByName("instructional_id").getLongValue());
-			}
-			if (columns.getColumnByName("resource_format_id") != null) {
-				resourceMap.put("resourceFormatId", columns.getColumnByName("resource_format_id").getLongValue());
-			}
-			if (columns.getColumnByName("grade") != null) {
-				Set<String> gradeArray = new HashSet<String>();
-				for (String gradeId : columns.getColumnByName("grade").getStringValue().split(",")) {
-					gradeArray.add(gradeId);
-				}
-				if (gradeArray != null && gradeArray.isEmpty()) {
-					resourceMap.put("grade", gradeArray);
-				}
-			}
-			if (columns.getColumnByName("license_name") != null) {
-				if (licenseCache.containsKey(columns.getColumnByName("license_name").getStringValue())) {
-					resourceMap.put("licenseId", licenseCache.get(columns.getColumnByName("license_name").getStringValue()));
-				}
-			}
-			if (columns.getColumnByName("type_name") != null) {
-				if (resourceTypesCache.containsKey(columns.getColumnByName("type_name").getStringValue())) {
-					resourceMap.put("resourceTypeId", resourceTypesCache.get(columns.getColumnByName("type_name").getStringValue()));
-				}
-			}
-			if (columns.getColumnByName("category") != null) {
-				if (categoryCache.containsKey(columns.getColumnByName("category").getStringValue())) {
-					resourceMap.put("resourceCategoryId", categoryCache.get(columns.getColumnByName("category").getStringValue()));
-				}
-			}
-			if (columns.getColumnByName("category") != null) {
-				resourceMap.put("category", columns.getColumnByName("category").getStringValue());
-			}
-			if (columns.getColumnByName("type_name") != null) {
-				resourceMap.put("typeName", columns.getColumnByName("type_name").getStringValue());
-			}
-			if (columns.getColumnByName("resource_format") != null) {
-				resourceMap.put("resourceFormat", columns.getColumnByName("resource_format").getStringValue());
-			}
-			if (columns.getColumnByName("instructional") != null) {
-				resourceMap.put("instructional", columns.getColumnByName("instructional").getStringValue());
-			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), columns.getColumnByName("gooru_oid").getStringValue(), 0);
-
-				this.getLiveCounterData("all~" + columns.getColumnByName("gooru_oid").getStringValue(), resourceMap);
-
-				if (questionList != null && questionList.size() > 0) {
-					resourceMap.put("questionCount", questionList.getColumnByName("questionCount") != null ? questionList.getColumnByName("questionCount").getLongValue() : 0L);
-					resourceMap.put("resourceCount", questionList.getColumnByName("resourceCount") != null ? questionList.getColumnByName("resourceCount").getLongValue() : 0L);
-					resourceMap.put("oeCount", questionList.getColumnByName("oeCount") != null ? questionList.getColumnByName("oeCount").getLongValue() : 0L);
-					resourceMap.put("mcCount", questionList.getColumnByName("mcCount") != null ? questionList.getColumnByName("mcCount").getLongValue() : 0L);
-
-					resourceMap.put("fibCount", questionList.getColumnByName("fibCount") != null ? questionList.getColumnByName("fibCount").getLongValue() : 0L);
-					resourceMap.put("maCount", questionList.getColumnByName("maCount") != null ? questionList.getColumnByName("maCount").getLongValue() : 0L);
-					resourceMap.put("tfCount", questionList.getColumnByName("tfCount") != null ? questionList.getColumnByName("tfCount").getLongValue() : 0L);
-
-					resourceMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
-				}
-			}
-			if (columns.getColumnByName("user_uid") != null) {
-				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("user_uid").getStringValue());
-			}
-			if (columns.getColumnByName("gooru_oid") != null) {
-				resourceMap = this.getTaxonomyInfo(resourceMap, columns.getColumnByName("gooru_oid").getStringValue());
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + cache.get(INDEXING_VERSION), IndexType.DIMRESOURCE.getIndexType(), columns
-						.getColumnByName("gooru_oid").getStringValue());
 			}
 		}
+
 	}
 
 	/**
@@ -746,17 +652,17 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			contentBuilder = jsonBuilder().startObject();
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 				String rowKey = null;
-				if (beFieldName.containsKey(entry.getKey())) {
-					rowKey = beFieldName.get(entry.getKey());
+				if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
+					rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 					contentBuilder.field(rowKey,
-							TypeConverter.stringToAny(String.valueOf(entry.getValue()), fieldDataTypes.containsKey(entry.getKey()) ? fieldDataTypes.get(entry.getKey()) : "String"));
+							TypeConverter.stringToAny(String.valueOf(entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
 				}
 			}
 			indexingES(indexName, indexType, id, contentBuilder, 0);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:Unable to index in the method saveInESIndex." + e);
 		}
 
 	}
@@ -774,8 +680,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 		for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 			String rowKey = null;
-			if (beFieldName.containsKey(entry.getKey())) {
-				rowKey = beFieldName.get(entry.getKey());
+			if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
+				rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 			}
 			if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 				updateRequestBuilder.addScriptParam(rowKey, entry.getValue());
@@ -804,13 +710,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				try {
 					Thread.sleep(2000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("Exception:Thread interrupted in the method indexingES." + e);
 				}
 				logger.info("Retrying count: {}  ", retryCount);
 				retryCount++;
 				indexingES(indexName, indexType, id, contentBuilder, retryCount);
 			} else {
-				e.printStackTrace();
+				logger.error("Exception:Unable to index in the method indexingES." + e);
 			}
 		}
 
@@ -822,148 +728,157 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @throws Exception
 	 */
 	public void getUserAndIndex(String userId) throws Exception {
-		ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.DIMUSER.getColumnFamily(), userId, 0);
-
-		if (userInfos != null & userInfos.size() > 0) {
-			logger.info("INdexing user : " + userId);
+		
+ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFamily(), userId,0);
+		
+		if(userInfos != null & userInfos.size() > 0){
+			logger.info("INdexing user : "+ userId);			
 			XContentBuilder contentBuilder = jsonBuilder().startObject();
-			if (userInfos.getColumnByName("gooru_uid") != null) {
-				contentBuilder.field("user_uid", userInfos.getColumnByName("gooru_uid").getStringValue());
-				Map<String, Object> userMap = new HashMap<String, Object>();
-				this.getLiveCounterData("all~" + userInfos.getColumnByName("gooru_uid").getStringValue(), userMap);
-				for (Map.Entry<String, Object> entry : userMap.entrySet()) {
-					String rowKey = null;
-					if (beFieldName.containsKey(entry.getKey())) {
-						rowKey = beFieldName.get(entry.getKey());
-						contentBuilder.field(rowKey, entry.getValue());
+			if(userId != null){
+				contentBuilder.field("user_uid",userId);
+				Map<String,Object> userMap = new HashMap<String, Object>();
+				this.getLiveCounterData("all~"+userId, userMap);
+				for(Map.Entry<String, Object> entry : userMap.entrySet()){
+					String rowKey = null;  				
+					if(DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())){
+						rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
+						contentBuilder.field(rowKey,entry.getValue());
 					}
 				}
 			}
-			if (userInfos.getColumnByName("confirm_status") != null) {
-				contentBuilder.field("confirm_status", userInfos.getColumnByName("confirm_status").getLongValue());
+			if(userInfos.getColumnByName("confirmStatus") != null){
+				contentBuilder.field("confirm_status",Long.valueOf(userInfos.getColumnByName("confirmStatus").getStringValue()));
 			}
-			if (userInfos.getColumnByName("registered_on") != null) {
-				contentBuilder.field("registered_on", TypeConverter.stringToAny(userInfos.getColumnByName("registered_on").getStringValue(), "Date"));
+			if(userInfos.getColumnByName("createdOn") != null){
+				contentBuilder.field("registered_on",userInfos.getColumnByName("createdOn").getDateValue());
 			}
-			if (userInfos.getColumnByName("added_by_system") != null) {
-				contentBuilder.field("added_by_system", userInfos.getColumnByName("added_by_system").getLongValue());
+			if(userInfos.getColumnByName("addedBySystem") != null){
+				contentBuilder.field("added_by_system",userInfos.getColumnByName("addedBySystem").getLongValue());
 			}
-			if (userInfos.getColumnByName("account_created_type") != null) {
-				contentBuilder.field("account_created_type", userInfos.getColumnByName("account_created_type").getStringValue());
+			if(userInfos.getColumnByName("accountRegisterType") != null){
+				contentBuilder.field("account_created_type",userInfos.getColumnByName("accountRegisterType").getStringValue());
 			}
-			if (userInfos.getColumnByName("reference_uid") != null) {
-				contentBuilder.field("reference_uid", userInfos.getColumnByName("reference_uid").getStringValue());
+			if(userInfos.getColumnByName("referenceUid") != null){
+				contentBuilder.field("reference_uid",userInfos.getColumnByName("referenceUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("email_sso") != null) {
-				contentBuilder.field("email_sso", userInfos.getColumnByName("email_sso").getStringValue());
+			if(userInfos.getColumnByName("emailSso") != null){
+				contentBuilder.field("email_sso",userInfos.getColumnByName("emailSso").getStringValue());
 			}
-			if (userInfos.getColumnByName("deactivated_on") != null) {
-				contentBuilder.field("deactivated_on", TypeConverter.stringToAny(userInfos.getColumnByName("deactivated_on").getStringValue(), "Date"));
+			if(userInfos.getColumnByName("deactivatedOn") != null){
+				contentBuilder.field("deactivated_on",userInfos.getColumnByName("deactivatedOn").getDateValue());
 			}
-			if (userInfos.getColumnByName("active") != null) {
-				contentBuilder.field("active", userInfos.getColumnByName("active").getIntegerValue());
+			if(userInfos.getColumnByName("active") != null){
+				contentBuilder.field("active",userInfos.getColumnByName("active").getShortValue());
 			}
-			if (userInfos.getColumnByName("last_login") != null) {
-				contentBuilder.field("last_login", TypeConverter.stringToAny(userInfos.getColumnByName("last_login").getStringValue(), "Date"));
+			if(userInfos.getColumnByName("lastLogin") != null){
+				contentBuilder.field("last_login",userInfos.getColumnByName("lastLogin").getDateValue());
 			}
-			if (userInfos.getColumnByName("user_role") != null) {
+			if(userInfos.getColumnByName("roleSet") != null){
 				Set<String> roleSet = new HashSet<String>();
-				for (String role : userInfos.getColumnByName("user_role").getStringValue().split(",")) {
+				for(String role : userInfos.getColumnByName("roleSet").getStringValue().split(",")){
 					roleSet.add(role);
 				}
-				contentBuilder.field("roles", roleSet);
+				contentBuilder.field("roles",roleSet);
 			}
-
-			if (userInfos.getColumnByName("identity_id") != null) {
-				contentBuilder.field("identity_id", userInfos.getColumnByName("identity_id").getIntegerValue());
+			
+			if(userInfos.getColumnByName("identityId") != null){
+				contentBuilder.field("identity_id",userInfos.getColumnByName("identityId").getIntegerValue());
 			}
-			if (userInfos.getColumnByName("mail_status") != null) {
-				contentBuilder.field("mail_status", userInfos.getColumnByName("mail_status").getLongValue());
+			if(userInfos.getColumnByName("mailStatus") != null){
+				contentBuilder.field("mail_status",userInfos.getColumnByName("mailStatus").getLongValue());
 			}
-			if (userInfos.getColumnByName("idp_id") != null) {
-				contentBuilder.field("idp_id", userInfos.getColumnByName("idp_id").getIntegerValue());
+			if(userInfos.getColumnByName("idpId") != null){
+				contentBuilder.field("idp_id",userInfos.getColumnByName("idpId").getIntegerValue());
 			}
-			if (userInfos.getColumnByName("state") != null) {
-				contentBuilder.field("state", userInfos.getColumnByName("state").getStringValue());
+			if(userInfos.getColumnByName("state") != null){
+				contentBuilder.field("state",userInfos.getColumnByName("state").getStringValue());
 			}
-			if (userInfos.getColumnByName("login_type") != null) {
-				contentBuilder.field("login_type", userInfos.getColumnByName("login_type").getStringValue());
+			if(userInfos.getColumnByName("loginType") != null){
+				contentBuilder.field("login_type",userInfos.getColumnByName("loginType").getStringValue());
 			}
-			if (userInfos.getColumnByName("user_group_uid") != null) {
-				contentBuilder.field("user_group_uid", userInfos.getColumnByName("user_group_uid").getStringValue());
+			if(userInfos.getColumnByName("userGroupUid") != null){
+				contentBuilder.field("user_group_uid",userInfos.getColumnByName("userGroupUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("primary_organization_uid") != null) {
-				contentBuilder.field("primary_organization_uid", userInfos.getColumnByName("primary_organization_uid").getStringValue());
+			if(userInfos.getColumnByName("primaryOrganizationUid") != null){
+				contentBuilder.field("primary_organization_uid",userInfos.getColumnByName("primaryOrganizationUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("license_version") != null) {
-				contentBuilder.field("license_version", userInfos.getColumnByName("license_version").getStringValue());
+			if(userInfos.getColumnByName("licenseVersion") != null){
+				contentBuilder.field("license_version",userInfos.getColumnByName("licenseVersion").getStringValue());
 			}
-			if (userInfos.getColumnByName("parent_id") != null) {
-				contentBuilder.field("parent_id", userInfos.getColumnByName("parent_id").getLongValue());
+			if(userInfos.getColumnByName("parentId") != null){
+				contentBuilder.field("parent_id",userInfos.getColumnByName("parentId").getLongValue());
 			}
-			if (userInfos.getColumnByName("lastname") != null) {
-				contentBuilder.field("lastname", userInfos.getColumnByName("lastname").getStringValue());
+			if(userInfos.getColumnByName("lastname") != null){
+				contentBuilder.field("lastname",userInfos.getColumnByName("lastname").getStringValue());
 			}
-			if (userInfos.getColumnByName("account_type_id") != null) {
-				contentBuilder.field("account_type_id", userInfos.getColumnByName("account_type_id").getLongValue());
+			if(userInfos.getColumnByName("accountTypeId") != null){
+				contentBuilder.field("account_type_id",userInfos.getColumnByName("accountTypeId").getLongValue());
 			}
-			if (userInfos.getColumnByName("is_deleted") != null) {
-				contentBuilder.field("is_deleted", userInfos.getColumnByName("is_deleted").getIntegerValue());
+			if(userInfos.getColumnByName("isDeleted") != null){
+				contentBuilder.field("is_deleted",userInfos.getColumnByName("isDeleted").getBooleanValue() ? 1 : 0);
 			}
-			if (userInfos.getColumnByName("external_id") != null) {
-				contentBuilder.field("external_id", userInfos.getColumnByName("external_id").getStringValue());
+			if(userInfos.getColumnByName("emailId") != null){
+				contentBuilder.field("external_id",userInfos.getColumnByName("emailId").getStringValue());
 			}
-			if (userInfos.getColumnByName("organization_uid") != null) {
-				contentBuilder.field("user_organization_uid", userInfos.getColumnByName("organization_uid").getStringValue());
+			if(userInfos.getColumnByName("organization.partyUid") != null){
+				contentBuilder.field("user_organization_uid",userInfos.getColumnByName("organization.partyUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("import_code") != null) {
-				contentBuilder.field("import_code", userInfos.getColumnByName("import_code").getStringValue());
+			if(userInfos.getColumnByName("importCode") != null){
+				contentBuilder.field("import_code",userInfos.getColumnByName("importCode").getStringValue());
 			}
-			if (userInfos.getColumnByName("parent_uid") != null) {
-				contentBuilder.field("parent_uid", userInfos.getColumnByName("parent_uid").getStringValue());
+			if(userInfos.getColumnByName("parentUid") != null){
+				contentBuilder.field("parent_uid",userInfos.getColumnByName("parentUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("security_group_uid") != null) {
-				contentBuilder.field("security_group_uid", userInfos.getColumnByName("security_group_uid").getStringValue());
+			if(userInfos.getColumnByName("securityGroupUid") != null){
+				contentBuilder.field("security_group_uid",userInfos.getColumnByName("securityGroupUid").getStringValue());
 			}
-			if (userInfos.getColumnByName("username") != null) {
-				contentBuilder.field("username", userInfos.getColumnByName("username").getStringValue());
+			if(userInfos.getColumnByName("username") != null){
+				contentBuilder.field("username",userInfos.getColumnByName("username").getStringValue());
 			}
-			if (userInfos.getColumnByName("role_id") != null) {
-				contentBuilder.field("role_id", userInfos.getColumnByName("role_id").getLongValue());
+			if(userInfos.getColumnByName("roleId") != null){
+				contentBuilder.field("role_id",userInfos.getColumnByName("roleId").getLongValue());
 			}
-			if (userInfos.getColumnByName("firstname") != null) {
-				contentBuilder.field("firstname", userInfos.getColumnByName("firstname").getStringValue());
+			if(userInfos.getColumnByName("firstname") != null){
+				contentBuilder.field("firstname",userInfos.getColumnByName("firstname").getStringValue());
 			}
-			if (userInfos.getColumnByName("register_token") != null) {
-				contentBuilder.field("register_token", userInfos.getColumnByName("register_token").getStringValue());
+			if(userInfos.getColumnByName("registerToken") != null){
+				contentBuilder.field("register_token",userInfos.getColumnByName("registerToken").getStringValue());
 			}
-			if (userInfos.getColumnByName("view_flag") != null) {
-				contentBuilder.field("view_flag", userInfos.getColumnByName("view_flag").getLongValue());
+			if(userInfos.getColumnByName("viewFlag") != null){
+				contentBuilder.field("view_flag",userInfos.getColumnByName("viewFlag").getLongValue());
 			}
-			if (userInfos.getColumnByName("account_uid") != null) {
-				contentBuilder.field("account_uid", userInfos.getColumnByName("account_uid").getStringValue());
+			if(userInfos.getColumnByName("accountUid") != null){
+				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
 			}
-
-			Collection<String> user = new ArrayList<String>();
-			user.add(userId);
-			Rows<String, String> eventDetailsNew = baseDao.readWithKeyList(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), user, 0);
-			for (Row<String, String> row : eventDetailsNew) {
-				ColumnList<String> userInfo = row.getColumns();
-				for (int i = 0; i < userInfo.size(); i++) {
-					String columnName = userInfo.getColumnByIndex(i).getName();
-					String value = userInfo.getColumnByIndex(i).getStringValue();
-					if (value != null) {
-						contentBuilder.field(columnName, value);
-					}
-				}
-			}
-			contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex() + "_" + cache.get(INDEXING_VERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder)
-					.execute().actionGet();
-		} else {
+	    	
+	    	ColumnList<String> eventDetailsNeww = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
+	    	for(Column<String> column : eventDetailsNeww) {
+	    		if(column.getStringValue() != null){
+	    			contentBuilder.field(column.getName(), column.getStringValue());
+	    		}
+	    	}
+	     	
+	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamily.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
+	    	
+	    	if(aliasUserData.getColumnNames().contains("firstname_alias")){
+	    		contentBuilder.field("firstname_alias", aliasUserData.getColumnByName("firstname_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("lastname_alias")){
+	    		contentBuilder.field("lastname_alias", aliasUserData.getColumnByName("lastname_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("username_alias")){
+	    		contentBuilder.field("username_alias", aliasUserData.getColumnByName("username_alias").getStringValue());
+	    	}
+	    	if(aliasUserData.getColumnNames().contains("external_id_alias")){
+	    		contentBuilder.field("external_id_alias", aliasUserData.getColumnByName("external_id_alias").getStringValue());
+	    	}
+	    	
+	    	contentBuilder.field("index_updated_time", new Date());
+			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+    		;
+		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
-		}
-
+		}	
 	}
 
 	/**
@@ -978,24 +893,24 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (sourceValues != null && sourceValues.size() > 0) {
 				XContentBuilder contentBuilder = jsonBuilder().startObject();
 				for (int i = 0; i < sourceValues.size(); i++) {
-					if (taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("String")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getStringValue());
 					}
-					if (taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Long")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getLongValue());
 					}
-					if (taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Integer")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getIntegerValue());
 					}
-					if (taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getDoubleValue());
 					}
-					if (taxonomyCodeType.get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
+					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
 					}
 				}
 				contentBuilder.field("index_updated_time", new Date());
-				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + cache.get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
+				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
 						.setSource(contentBuilder).execute().actionGet();
 			}
 		}

@@ -23,25 +23,26 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JSONDeserializer {
 
+	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
+	
 	public static <T> T deserialize(String json, TypeReference<T> type) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.readValue(json, type);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:de-serialization failed." + e);
 		}
 		return null;
 	}
@@ -56,12 +57,9 @@ public class JSONDeserializer {
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		
+		} catch (Exception e) {
+			logger.error("Exception:de-serialization failed." + e);
 		}
 		return (T) map;
 	}
@@ -77,7 +75,7 @@ public class JSONDeserializer {
 			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getSession(), new TypeReference<HashMap<String, Object>>(){}));
 		
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Exception:de-serialization failed." + e);
 		}
 		return (T) map;
 	}

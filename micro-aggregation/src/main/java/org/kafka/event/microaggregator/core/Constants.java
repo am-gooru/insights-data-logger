@@ -236,6 +236,20 @@ public interface Constants {
 
 	public static final String CONFIG_SETTINGS = "config_settings";
 
+	public static final String MAIL_LOOP_COUNT = "mail_loop_count";
+	
+	public static final String THREAD_LOOP_COUNT = "thread_loop_count";
+	
+	public static final String THREAD_STATUS = "status";
+	
+	public static final String THREAD_SLEEP_TIME = "thread_sleep_time";
+	
+	public static final String MONITOR_KAFKA_LOG_CONSUMER = "monitor~kafka~log~consumer";
+	
+	public static final String MONITOR_KAFKA_AGGREGATOR_CONSUMER = "monitor~kafka~aggregator~consumer";
+	
+	public static final String KAFKA_MAIL_HANDLER = "kafka~mail~handler";
+	
 	public enum sortType {
 
 		ASC("ASC"), DESC("DESC");
@@ -330,7 +344,7 @@ public interface Constants {
 
 	public enum columnFamily {
 
-		LIVE_DASHBOARD("live_dashboard"), AGGREGATION_DETAIL("aggregation_detail"), FORMULA_DETAIL("formula_detail"), EVENT_TIMELINE("event_timeline"), EVENT_DETAIL("event_detail"), JOB_CONFIG_SETTING("job_config_settings");
+		LIVE_DASHBOARD("live_dashboard"), AGGREGATION_DETAIL("aggregation_detail"), JOB_TRACKER("job_tracker"), FORMULA_DETAIL("formula_detail"), EVENT_TIMELINE("event_timeline"), EVENT_DETAIL("event_detail"), JOB_CONFIG_SETTING("job_config_settings");
 
 		private String columnFamily;
 
@@ -340,6 +354,20 @@ public interface Constants {
 
 		public String columnFamily() {
 			return columnFamily;
+		}
+	}
+	
+	public enum dataTypes{
+		STRING("string"), INTEGER("integer"), LONG("long"), BOOLEAN("boolean");
+		
+		private String dataType;
+		
+		private dataTypes(String value){
+			dataType = value;
+		}
+		
+		public String dataType(){
+			return dataType;
 		}
 	}
 }

@@ -54,6 +54,11 @@
   </build>
   <dependencies>
   <dependency>
+			<groupId>org.ednovo.data.eventapi</groupId>
+			<artifactId>kafka-consumer</artifactId>
+			<version>1.0</version>
+		</dependency>
+  <dependency>
   	<groupId>org.ednovo.data.eventapi</groupId>
   	<artifactId>core</artifactId>
   	 <version>1.0</version>

@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -148,10 +147,8 @@ public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl impleme
 			new RangeBuilder().setLimit(count).setStart(startColumnPrefix).setEnd(endColumnPrefix).build())
 			.execute().getResult();
 			return eventRows;
-		} catch (NotFoundException e) {
-			e.printStackTrace();
-		} catch (ConnectionException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Exception:"+e);
 		}
 		return eventRows;
 	}
@@ -165,7 +162,7 @@ public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl impleme
         try {
             m.execute();
         } catch (ConnectionException e) {
-            logger.info("Error while inserting to cassandra  ");
+            logger.error("Error while inserting to cassandra  ");
         }
     
     	
@@ -180,7 +177,7 @@ public class ActivityStreamDAOCassandraImpl extends BaseDAOCassandraImpl impleme
     		.withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build())
     		.execute().getResult();
     	} catch (ConnectionException e) {
-    		e.printStackTrace();
+    		logger.error("Exception:"+e);
     	}
     	return activities;
     }

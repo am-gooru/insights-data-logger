@@ -28,10 +28,12 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.kafka.event.microaggregator.consumer.MicroAggregatorConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.intercept.RunAsManager;
 
-public class DataLoader  {
+public class DataLoader implements Runnable {
 
     static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
@@ -53,8 +55,7 @@ public class DataLoader  {
     	    
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
-    	    	KafkaLogConsumer consumerThread = new KafkaLogConsumer();
-    	        consumerThread.start();
+    	    	runThread();
     		    return;
     	    }
     	}
@@ -62,5 +63,15 @@ public class DataLoader  {
     		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
     			
+	}
+    
+    @Override
+    public void run(){
+    	runThread();
+    }
+
+	public static void runThread() {
+		KafkaLogConsumer consumerThread = new KafkaLogConsumer();
+        consumerThread.start();
 	}
 }

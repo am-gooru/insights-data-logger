@@ -87,7 +87,7 @@ public String checkJobStatus(){
 		jobStatus = getKeyspace().prepareQuery(jobStatusCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
 	} catch (ConnectionException e) {
 		// TODO Auto-generated catch block
-		e.printStackTrace();
+		logger.error("Exception:"+e);
 	}
 	
 	return jobStatus.getStringValue("job_status", null);
@@ -102,7 +102,7 @@ public long getJobsCount(){
 	try {
 		jobStatus = getKeyspace().prepareQuery(jobStatusCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
 	} catch (ConnectionException e) {
-		e.printStackTrace();
+		logger.error("Exception:"+e);
 	}
 	return jobStatus.getLongValue("jobs_count", 0L);
 
@@ -117,7 +117,7 @@ public String getConstants(String KEY){
 	try {
 		jobConstants = getKeyspace().prepareQuery(jobStatusCF).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).getKey(KEY).execute().getResult();
 	} catch (ConnectionException e) {
-		e.printStackTrace();
+		logger.error("Exception:"+e);
 	}
 	
 	if(jobConstants != null){

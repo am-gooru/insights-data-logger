@@ -80,7 +80,7 @@ public class RealTImeAggregatorsDAOImpl extends BaseDAOCassandraImpl implements 
 					.getKey(timeLineKey)
 					.execute().getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
     	return  dateDetail;
     }
@@ -95,7 +95,7 @@ public class RealTImeAggregatorsDAOImpl extends BaseDAOCassandraImpl implements 
 					.execute()
 					.getResult();
 		} catch (ConnectionException e) {
-			e.printStackTrace();
+			logger.error("Exception:"+e);
 		}
     	return  dataDetail;
     }
@@ -107,7 +107,7 @@ public class RealTImeAggregatorsDAOImpl extends BaseDAOCassandraImpl implements 
             OperationResult<Void> result = m.execute();
 
         } catch (ConnectionException ex) {
-        	ex.printStackTrace();
+        	logger.error("Exception:"+ex);
         }
 	}
 

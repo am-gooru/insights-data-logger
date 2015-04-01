@@ -538,7 +538,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	@SuppressWarnings("unchecked")
 	public void updateAssessmentAnswer(Map<String, Object> eventMap, Map<String, Object> assessmentAnswerMap) {
 
-		if (eventMap.containsKey("answers") && !(eventMap.get("typeName").toString().equalsIgnoreCase("OE"))) {
+		if (eventMap.containsKey("answers") && !(eventMap.containsKey("typeName") && eventMap.get("typeName") != null && eventMap.get("typeName").toString().equalsIgnoreCase("OE"))) {
 			List<Map<String, Object>> answerList = (List<Map<String, Object>>) eventMap.get("answers");
 			if (answerList.size() > 0) {
 				for (int index = 0; index < answerList.size(); index++) {
@@ -572,7 +572,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 						}
 						baseCassandraDao.updateAssessmentAnswer(ColumnFamily.ASSESSMENTANSWER.getColumnFamily(), assessmentAnswerMap);
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error("Exception:Unable to save assessment answer." + e);
 					}
 				}
 			}
@@ -618,7 +618,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			Set<Entry<String, String>> collectionItemCFKeySet = DataUtils.collectionItemCFKeys.entrySet();
 			updateColumnFamily(ColumnFamily.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
 		} else {
-			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVEN_TNAME));
+			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVENT_NAME));
 		}
 	}
 
@@ -684,7 +684,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			try {
 				m.execute();
 			} catch (ConnectionException e) {
-				e.printStackTrace();
+				logger.info("Exception: {}" ,e );
 			}
 		} else {
 			logger.info("Incoming Key is null to update CF {}" ,cfName );

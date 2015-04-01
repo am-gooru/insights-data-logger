@@ -10,9 +10,15 @@ public interface Constants {
     
     public static final  String SEPERATOR = "~";
     
+    public static final  String COMMA = ",";
+    
 	public static final  String CONTEXT = "context";
 	
+	public static final  String _PAYLOAD_OBJECT = "pay_load_object";
+	
 	public static final  String USER = "user";
+	
+	public static final  String USER_IP = "userIp";
 	
 	public static final  String PAY_LOAD = "payLoadObject";
 	
@@ -20,11 +26,15 @@ public interface Constants {
 	
 	public static final  String LAST_ACCESSED_USER_UID = "last~accessed~useruid";
 	
-	public static final  String LAST_ACCESSED_USER = "last~accessed~user";
+	public static final  String _LAST_ACCESSED_USER = "last~accessed~user";
 	
-	public static final  String LAST_ACCESSED = "last~accessed";
+	public static final  String LAST_ACCESSED_USER = "lastAccessedUser";
 	
-	public static final  String EVEN_TNAME = "eventName";
+	public static final  String _LAST_ACCESSED = "last~accessed";
+	
+	public static final  String LAST_ACCESSED = "lastAccessed";
+	
+	public static final  String EVENT_NAME = "eventName";
 	
 	public static final  String CONTENT_GOORU_OID = "contentGooruId";
 	
@@ -32,13 +42,17 @@ public interface Constants {
 	
 	public static final  String PARENT_GOORU_OID = "parentGooruId";
 	
-	public static final  String TIMEINMS = "timeInMillSec";
+	public static final  String TIMEINMSEC = "timeInMillSec";
 	
 	public static final  String TOTALTIMEINMS = "totalTimeSpentInMs";
+	
+	public static final  String TIMESPENTINMS = "timeSpentInMs";
 	
 	public static final  String _EVENT_ID = "event_id";
 	
 	public static final  String EVENT_ID = "eventId";
+	
+	public static final  String EVENT_TIME = "eventTime";
 	
 	public static final  String PARENT_EVENT_ID = "parentEventId";
 	
@@ -52,7 +66,9 @@ public interface Constants {
 
 	public static final  String EVENT_TYPE = "eventType";
 	
-	public static final  String SESSION = "sessionId";
+	public static final  String SESSION_ID = "sessionId";
+	
+	public static final  String SESSION = "session";
 	
 	public static final  String _FIRST_ATTEMPT_STATUS = "first_attempt_status";
 	
@@ -102,6 +118,8 @@ public interface Constants {
 	
 	public static final  String COUNTER = "counter";
 	
+	public static final  String REACTION_TYPE = "reactionType";
+	
 	public static final  String RESOURCE_TYPE = "resourceType";
 	
 	public static final  String QUESTION_TYPE = "questionType";
@@ -118,11 +136,11 @@ public interface Constants {
 	
 	public static final  String ACTION_TYPE = "actionType";
 	
-	public static final  String USERAGENT = "userAgent";
+	public static final  String USER_AGENT = "userAgent";
 	
-	public static final  String REGISTERTYPE = "registerType";
+	public static final  String REGISTER_TYPE = "registerType";
 	
-	public static final  String CLIENTSOURCE = "clientSource";
+	public static final  String CLIENT_SOURCE = "clientSource";
 	
 	public static final  String AUTO = "auto";
 	
@@ -188,7 +206,19 @@ public interface Constants {
 	
 	public static final  String COLLECTION = "collection";
 	
+	public static final  String ANSWER_ID = "answerId";
+	
+	public static final  String OPEN_ENDED_TEXT = "openEndedText";
+	
 	public static final  String RESOURCE = "resource";
+	
+	public static final  String CONTEXT_INFO = "contextInfo";
+	
+	public static final  String MOBILE_DATA = "mobileData";
+	
+	public static final  String HINT_ID = "hintId";
+	
+	public static final  String COLLABORATOR_IDS = "collaboratorIds";
 	
 	public static final  String _GOORU_OID = "gooru_oid";
 	
@@ -210,6 +240,8 @@ public interface Constants {
 	
 	public static final  String START_TIME = "startTime";
 	
+	public static final  String END_TIME = "endTime";
+	
 	public static final  String _END_TIME = "end_time";
 	
 	public static final  String API_KEY = "apiKey";
@@ -219,6 +251,8 @@ public interface Constants {
 	public static final  String ORGANIZATION_UID = "organizationUId";
 	
 	public static final  String _EVENT_VALUE = "event_value";
+	
+	public static final  String _TIME_SPENT_IN_MILLIS = "time_spent_in_millis";
 	
 	public static final  String _CONTENT_GOORU_OID = "content_gooru_oid";
 
@@ -416,15 +450,15 @@ public interface Constants {
 	
 	public static final  String KAFKA_PRODUCER_TYPE = "kafka_producertype";
 
-	public static final int RECURSION_MAX_DEPTH = 20;
+	public static final int RECURSION_MAX_DEPTH = 8;
 	
 	public static final  String SCOLLECTION = "scollection";
 
-	public static final String READ_EXCEPTION = "Exception while read ColumnFamily:";
+	public static final String READ_EXCEPTION = "Exception while reading ColumnFamily:";
 	
-	public static final String WRITE_EXCEPTION = "Exception while write in  ColumnFamily:";
+	public static final String WRITE_EXCEPTION = "Exception while writing ColumnFamily:";
 	
-	public static final String DELETE_EXCEPTION = "Exception while delete in  ColumnFamily:";
+	public static final String DELETE_EXCEPTION = "Exception while deleting ColumnFamily:";
 
 	public static final String ASSOCIATION_DATE = "associationDate";
 	
@@ -477,4 +511,47 @@ public interface Constants {
 	public static final String IS_REQUIRED = "isRequired";
 	
 	public static final String COLLECTION_ITEM_IS_REQUIRED = "collectionItemIsRequired";
+	
+	public static final String EVENT_SOURCE = "api-logged";
+	
+	public static final String INVALID_API_KEY = "Oops! Invalid API Key.";
+	
+	public static final String INVALID_JSON = "Oops! Invalid JSON.";
+	
+	public static final String BAD_REQUEST = "Oops! You have to send event json.";
+	
+	public static final String FORWARD_SLASH = "\"";
+	
+	public static final String EMPTY_STRING = "";
+	
+	public static final String EMPTY_EXCEPTION = " must not be Emtpy!";
+	
+	public static final String QUESTION_COUNT = "questionCount";
+	
+	public static final String RESOURCE_COUNT = "resourceCount";
+	
+	public static final String OE_COUNT = "oeCount";
+	
+	public static final String MC_COUNT = "mcCount";
+	
+	public static final String FIB_COUNT = "fibCount";
+	
+	public static final String MA_COUNT = "maCount";
+	
+	public static final String TF_COUNT = "tfCount";
+	
+	public static final String ITEM_COUNT = "itemCount";
+	
+	public static final String INDEXINGVERSION = "index_version";	
+	
+	public static final String MONITOR_KAFKA_CONSUMER = "monitor~kafka~consumer";
+	
+	public static final String STATUS = "status";
+	
+	public static final String MAIL_LOOP_COUNT = "mail_loop_count";
+	
+	public static final String THREAD_LOOP_COUNT = "thread_loop_count";
+	
+	public static final String THREAD_SLEEP_TIME = "thread_sleep_time";
+	
 }

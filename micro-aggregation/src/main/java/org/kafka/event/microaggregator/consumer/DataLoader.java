@@ -31,7 +31,7 @@ import org.apache.commons.cli.PosixParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataLoader  {
+public class DataLoader implements Runnable {
 
     static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
@@ -53,8 +53,7 @@ public class DataLoader  {
     	    
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
-    	    	MicroAggregatorConsumer consumerThread = new MicroAggregatorConsumer();
-    	        consumerThread.start();
+    	    	runThread();
     		    return;
     	    }
     	}
@@ -62,5 +61,15 @@ public class DataLoader  {
     		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
     			
+	}
+    
+    @Override
+    public void run(){
+    	runThread();
+    }
+
+	public static void runThread() {
+		MicroAggregatorConsumer consumerThread = new MicroAggregatorConsumer();
+        consumerThread.start();
 	}
 }

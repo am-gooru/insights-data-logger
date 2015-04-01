@@ -36,6 +36,8 @@ public enum ColumnFamily {
 	
 	CONFIGSETTINGS("job_config_settings"),
 	
+	JOB_TRACKER("job_tracker"),
+	
 	REALTIMECONFIG("real_time_operation_config"),
 	
 	RECENTVIEWEDRESOURCES("recent_viewed_resources"),
@@ -62,6 +64,10 @@ public enum ColumnFamily {
 	
 	RESOURCETYPES("resource_type"),
 	
+	RESOURCEFORMAT("resource_format"),
+
+	INSTRUCTIONAL("instructional_use"),
+	
 	CATEGORY("category"),
 	
 	RESOURCE("resource"),
@@ -69,6 +75,9 @@ public enum ColumnFamily {
 	ASSESSMENTANSWER("assessment_answer"),
 	
 	USER("user"),
+	
+	ANONYMIZEDUSERDATA("anonymized_user_data")
+	
 	
 	;
 	

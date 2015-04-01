@@ -23,7 +23,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -->
 <configuration>
-	
+
 	<!-- console appender -->
 	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
@@ -33,60 +33,55 @@
 			<level>INFO</level>
 		</filter>
 	</appender>
-	
-	<!-- activity appender will append the micro aggregator module related INFO log -->
-	<appender name="activity-out"
-		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
-		<param name="File" value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.log" />
+
+	<!-- activity appender will append the consumer module related INFO log -->
+	<appender name="activity-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File" value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity.%d{yyyy-MM-dd}.log
-			</fileNamePattern>
+			<fileNamePattern>${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<param name="encoding" value="UTF-8" />
 		<encoder>
-			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
-				- %msg%n</pattern>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
 		</encoder>
 	</appender>
+
 	
-	<!-- error appender will append the micro aggregator module related ERROR log -->
-	<appender name="activity-error-out"
-		class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
-		<param name="File" value="${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.log" />
+	<!-- error appender will append the consumer module related ERROR log -->
+		<appender name="activity-error-out" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- Rolling file appender for rolling files -->
+		<param name="File" value="${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.log" />
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<fileNamePattern>${MICRO_AGGREGATOR_STORAGE}/logs/aggregator_logs/activity-error.%d{yyyy-MM-dd}.log
-			</fileNamePattern>
+			<fileNamePattern>${CONSUMER_LOG_STORAGE}/logs/consumer_logs/activity-error.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<param name="encoding" value="UTF-8" />
 		<encoder>
-			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32}
-				- %msg%n</pattern>
+			<pattern>%-30([web] %d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
 		</encoder>
 	</appender>
 
-	<!-- activity logger to micro aggregator module related INFO log -->
-	<logger name="aggregatorActivity" level="INFO" additivity="false">
-		<appender-ref ref="activity-out" />
-	</logger>
-
-	<!-- activity logger to micro aggregator module related ERROR log -->
-	<logger name="aggregatorActivityError" level="ERROR" additivity="false">
-		<appender-ref ref="activity-error-out" />
-	</logger>
-
-	<!-- logger configuration for dependency -->
+	<!-- activity logger to log consumer module related INFO log -->
+	<logger name="consumerActivity" level="INFO" additivity="false">
+        <appender-ref ref="activity-out"/>
+    </logger>
+	
+	<!-- activity logger to log consumer module related ERROR log -->
+	<logger name="consumerActivityError" level="ERROR" additivity="false">
+        <appender-ref ref="activity-error-out"/>
+    </logger>
+    
+    <!-- logger configuration for dependency -->
 	<logger name="org.springframework" level="WARN"></logger>
 	<logger name="org.hibernate.cfg.HbmBinder" level="WARN"></logger>
-
+	
 	<!-- Root level logger -->
 	<root level="INFO">
-		<appender-ref ref="stdout" />
+	<appender-ref ref="stdout" /> 
 	</root>
-	</configuration>
+</configuration>
 
