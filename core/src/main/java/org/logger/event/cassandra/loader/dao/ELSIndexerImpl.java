@@ -228,7 +228,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	public void indexResource(String ids) throws Exception {
 		Collection<String> idList = new ArrayList<String>();
 		for (String id : ids.split(",")) {
-			idList.add("GLP~" + id);
+			idList.add(id);
 		}
 		logger.debug("Indexing resources : {}", idList);
 		Rows<String, String> resource = baseDao.readWithKeyList(ColumnFamily.RESOURCE.getColumnFamily(), idList, 0);
