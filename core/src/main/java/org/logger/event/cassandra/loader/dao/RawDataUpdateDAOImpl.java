@@ -423,8 +423,10 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 	@SuppressWarnings("unchecked")
 	public UserCo processUser(Map<String, Object> eventMap, UserCo userCo) {
 		
-		userCo.setUserUid(eventMap.get("gooruUId").toString());
-		userCo.setGooruUid(eventMap.get("gooruUId").toString());
+		if (eventMap.containsKey("gooruUId") && eventMap.get("gooruUId") != null) {
+			userCo.setUserUid(eventMap.get("gooruUId").toString());
+			userCo.setGooruUid(eventMap.get("gooruUId").toString());
+		}
 		userCo.setFirstname((eventMap.containsKey("firstName") && eventMap.get("firstName") != null) ? eventMap.get("firstName").toString() : null);
 		userCo.setLastname((eventMap.containsKey("lastName") && eventMap.get("lastName") != null) ? eventMap.get("lastName").toString() : null);
 		userCo.setUsername((eventMap.containsKey("username") && eventMap.get("username") != null) ? eventMap.get("username").toString() : null);
