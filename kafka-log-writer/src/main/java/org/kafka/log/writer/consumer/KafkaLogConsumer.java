@@ -114,8 +114,8 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 		Properties props = new Properties();
 		props.put("zookeeper.connect", KafkaLogConsumer.buildEndPoint(ZOOKEEPER_IP, ZOOKEEPER_PORT));
 		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "10000");
-		props.put("zookeeper.sync.time.ms", "200");
+		props.put("zookeeper.session.timeout.ms", "20000");
+		props.put("zookeeper.sync.time.ms", "2000");
 		props.put("auto.commit.interval.ms", "1000");
 		logger.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
@@ -125,10 +125,64 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 
 	public void run() {
 
-		consumedData();
+		initConsumer();
+//		autoReconnectConsumer();
 	}
 
-	void consumedData() {
+	public void initConsumer() {
+
+		Integer noOfThread = 1;
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		topicCountMap.put(topic, noOfThread);
+		try {
+
+			/**
+			 * get list of kafka stream from specific topic
+			 */
+			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer
+					.createMessageStreams(topicCountMap);
+			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+			ConsumerIterator<byte[], byte[]> it = stream.iterator();
+			/**
+			 * process consumed data
+			 */
+			while (it.hasNext()) {
+				String message = new String(it.next().message());
+				Gson gson = new Gson();
+				Map<String, String> messageMap = new HashMap<String, String>();
+				try {
+					messageMap = gson.fromJson(message, messageMap.getClass());
+				} catch (Exception e) {
+					LogWritterFactory.errorActivity.error(message);
+					continue;
+				}
+
+				/**
+				 * TODO We're only getting raw data now. We'll have to use the
+				 * server IP as well for extra information.
+				 */
+				if (messageMap != null && !messageMap.isEmpty()) {
+					/**
+					 * Write the consumed JSON to Log file.
+					 */
+					LogWritterFactory.activity.info(message);
+				} else {
+					LogWritterFactory.errorActivity.error(message);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Log writter Message  Consumer:" + e);
+			mailHandler
+					.sendKafkaNotification("Hi Team, \n \n Kafka log writter consumer stopped at server "
+							+ SERVER_NAME
+							+ " on " + new Date());
+		}
+	}
+	
+	/**
+	 * AutoReconnect for loop count is disabled
+	 */
+	private void autoReconnectConsumer() {
 
 		Integer noOfThread = 1;
 		int loopCount = 0, status = 1, mailLoopCount;
