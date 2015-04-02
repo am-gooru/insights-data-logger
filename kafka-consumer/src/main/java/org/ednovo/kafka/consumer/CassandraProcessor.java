@@ -32,6 +32,7 @@ import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventValidator;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
+import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	private final String GOORU_EVENT_LOGGER_API_KEY = "5673eaa7-15e3-4d6b-b3ef-5f7729c82de3";
 	private final String EVENT_SOURCE = "kafka-logged";
 	private EventValidator eventValidator;
+	private DataLoggerCaches loggerCache;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
 	public CassandraProcessor() {
@@ -53,6 +55,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 
 	protected void init() {
 		gson = new Gson();
+		setLoggerCache(new DataLoggerCaches());
 		dataLoader = new CassandraDataLoader();
 		eventValidator = new EventValidator(null);
 	}
@@ -182,6 +185,14 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	     			}
 	     		}
 			 }
+	}
+
+	public DataLoggerCaches getLoggerCache() {
+		return loggerCache;
+	}
+
+	public void setLoggerCache(DataLoggerCaches loggerCache) {
+		this.loggerCache = loggerCache;
 	}
 
 }
