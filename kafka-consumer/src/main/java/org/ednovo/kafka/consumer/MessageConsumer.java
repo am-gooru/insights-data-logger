@@ -147,16 +147,19 @@ public class MessageConsumer extends Thread implements Runnable {
 		 */
 		Integer noOfThread = 1;
 		topicCountMap.put(topic, new Integer(noOfThread));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer
-				.createMessageStreams(topicCountMap);
-		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-		ConsumerIterator<byte[], byte[]> it = stream.iterator();
-		/**
-		 * process consumed data
-		 */
-		while (it.hasNext()) {
-			String message = null;
-			try {
+		try {
+			topicCountMap.put(topic, new Integer(1));
+			logger.info("Consumer topic : "+topic);
+			logger.info("Consumer topicCountMap : "+topicCountMap);
+			
+			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+			ConsumerIterator<byte[], byte[]> it = stream.iterator();
+			/**
+			 * process consumed data
+			 */
+			while (it.hasNext()) {
+				String message = null;
 				message = new String(it.next().message());
 				Gson gson = new Gson();
 				Map<String, String> messageMap = new HashMap<String, String>();
@@ -168,8 +171,7 @@ public class MessageConsumer extends Thread implements Runnable {
 				}
 
 				/**
-				 * TODO We're only getting raw data now. We'll have to use the
-				 * server IP as well for extra information.
+				 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
 				 **/
 				if (messageMap != null && !messageMap.isEmpty()) {
 					ConsumerLogFactory.activity.info(message);
@@ -177,13 +179,11 @@ public class MessageConsumer extends Thread implements Runnable {
 				} else {
 					ConsumerLogFactory.errorActivity.error(message);
 				}
-			} catch (Exception e) {
-				ConsumerLogFactory.errorActivity.error(message);
-				mailHandler
-						.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server "
-								+ SERVER_NAME + " on " + new Date());
-				logger.error("Message Consumer failed in a loop" + e);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("Message Consumer failed in a loop" + e);
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 
 	}
