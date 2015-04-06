@@ -82,9 +82,20 @@ public class KafkaEventHandler {
 	 * @param ip kafka ip's
 	 * @param port kafka port number by default it's 9160
 	 * @param topic kafka will push data to mentioned topic
+	 * @param poolSize pool size for asynchronous data delivary
 	 */
 	public KafkaEventHandler(String ip, String port,Integer poolSize) {
 		init(ip, port, topic, poolSize);
+	}
+	
+	/**
+	 * This will initialize the kafka with ip,port and poolsize
+	 * @param ip kafka ip's
+	 * @param port kafka port number by default it's 9160
+	 * @param topic kafka will push data to mentioned topic
+	 */
+	public KafkaEventHandler(String ip, String port) {
+		init(ip, port, topic);
 	}
 	
 	private void init(String ip, String portNo, String topic) {
@@ -148,6 +159,33 @@ public class KafkaEventHandler {
 		send(topic,messageAsJson);
 	}
 
+	/**
+	 * Send event data in synchronous level
+	 * @param eventLog message needs to be send
+	 */
+	public void sendSyncEventLog(String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		sendData(messageAsJson);
+	}
+
+	/**
+	 * Send event data in synchronous level
+	 * @param topic topic needs to be pushed
+	 * @param eventLog message needs to be send
+	 */
+	public void sendSyncEventLog(String topic,String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		sendData(topic,messageAsJson);
+	}
+	
 	/**
 	 * Send data in synchronous way on thread level 
 	 * @param eventLog message needs to be send
