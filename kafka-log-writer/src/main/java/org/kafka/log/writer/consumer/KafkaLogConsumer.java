@@ -139,8 +139,10 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 			/**
 			 * get list of kafka stream from specific topic
 			 */
-			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer
-					.createMessageStreams(topicCountMap);
+			topicCountMap.put(topic, new Integer(1));
+			logger.info("Logwriter topic : "+topic);
+			logger.info("LogWriter topicCountMap : "+topicCountMap);
+			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 			ConsumerIterator<byte[], byte[]> it = stream.iterator();
 			/**
@@ -158,8 +160,7 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 				}
 
 				/**
-				 * TODO We're only getting raw data now. We'll have to use the
-				 * server IP as well for extra information.
+				 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
 				 */
 				if (messageMap != null && !messageMap.isEmpty()) {
 					/**
@@ -171,11 +172,9 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error("Log writter Message  Consumer:" + e);
-			mailHandler
-					.sendKafkaNotification("Hi Team, \n \n Kafka log writter consumer stopped at server "
-							+ SERVER_NAME
-							+ " on " + new Date());
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka log writter consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 	}
 	
