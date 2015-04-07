@@ -555,12 +555,5 @@ public interface Constants {
 	public static final String THREAD_SLEEP_TIME = "thread_sleep_time";
 	
 	public String PATHWAYGOORUOID= "pathwayGooruId";
-
-	public String PARENTEVENTID = "parentEventId";
-
-	public String EVENTNAME = "eventName";
-
-	public String CONTENTGOORUOID = "contentGooruId";
-
 	
 }
