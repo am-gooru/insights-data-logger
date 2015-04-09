@@ -97,7 +97,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		/*List<String> classPages = null;
 		classPages = this.getClassPages(eventMap);*/
 
-		List<String> pathWays = getPathWaysFromCollection(eventMap);
+		List<String> pathways = getPathways(eventMap);
 		 
 		String eventName = eventMap.containsKey(EVENT_NAME) ? eventMap.get(EVENT_NAME).toString() : EMPTY_STRING;
 		String gooruUUID = eventMap.containsKey(GOORUID) ? eventMap.get(GOORUID).toString() : EMPTY_STRING;
@@ -123,25 +123,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			resourceMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving last accessed time.");
+			logger.error("Exception while saving last accessed time."+e);
 		}
 		/* Maintain session - Start */
 
 		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(TYPE) && eventMap.get(TYPE).toString().equalsIgnoreCase(START)) {
 			Date eventDateTime = new Date(Long.parseLong(EMPTY_STRING + eventMap.get(START_TIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-
-			/*if (classPages != null && classPages.size() > 0) {
-				for (String classPage : classPages) {
-				baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), classPage + SEPERATOR + key + SEPERATOR
-						+ gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
-				}
-			}
-			*/
 			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), key + SEPERATOR + gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 			 if(eventMap.get(PARENT_GOORU_OID) != null && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())){
-		        	if(pathWays != null && pathWays.size() > 0){
-						for(String pathway : pathWays){
+		        	if(pathways != null && pathways.size() > 0){
+						for(String pathway : pathways){
 							String classUid = null;
 							if(cache.containsKey(pathway)){
 								classUid = cache.get(pathway).toString();
@@ -160,8 +152,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			questionCountInQuiz = this.getQuestionCount(eventMap);
-			if(pathWays != null && pathWays.size() > 0){
-				for(String pathway : pathWays) {
+			if(pathways != null && pathways.size() > 0){
+				for(String pathway : pathways) {
 					String classUid = null;
 					if(cache.containsKey(pathway)){
 						classUid = cache.get(pathway).toString();
@@ -184,7 +176,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							try {
 								Thread.sleep(500);
 							} catch (Exception e) {
-								logger.error("Exception while waiting for classpage join.");
+								logger.error("Exception while waiting for classpage join."+e);
 							}
 							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 							logger.info("Retrying to check if a student : {}", retryCount);
@@ -224,8 +216,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 
-			if(pathWays != null && pathWays.size() > 0){
-				for(String pathway : pathWays){
+			if(pathways != null && pathways.size() > 0){
+				for(String pathway : pathways){
 					String classUid = null;
 					if(cache.containsKey(pathway)){
 						classUid = cache.get(pathway).toString();
@@ -267,6 +259,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					}
 					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
 					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
+					logger.info("Recent Key 3: {} ",eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
 					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID), gooruUUID
 							, eventMap.get(SESSION_ID).toString(), microAggMutation);
 					
@@ -304,7 +297,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			microAggMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving micro_aggregation columnfamily.");
+			logger.error("Exception while saving micro_aggregation columnfamily."+e);
 		}
 
 		if (keysList != null && keysList.size() > 0) {
@@ -312,7 +305,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				j = new JSONObject(aggregatorJson);
 			} catch (Exception e) {
-				logger.error("Exception while aggregator json conversion.");
+				logger.error("Exception while aggregator json conversion."+e);
 			}
 			this.startCounters(eventMap, j, keysList, key);
 			this.postAggregatorUpdate(eventMap, j, keysList, key);
@@ -771,7 +764,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			answersJson = new JSONObject(answers);
 		} catch (JSONException e) {
-			logger.error("Exception while conversion answer object as JSON");
+			logger.error("Exception while conversion answer object as JSON."+e);
 		}
 		JSONArray names = answersJson.names();
 		String firstChoosenAns = null;
@@ -780,7 +773,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				firstChoosenAns = names.getString(0);
 			} catch (JSONException e) {
-				logger.error("Exception while conversion answer choice as JSON");
+				logger.error("Exception while conversion answer choice as JSON."+e);
 			}
 		}
 
@@ -1605,7 +1598,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 	
-	public List<String> getPathWaysFromCollection(Map<String, Object> eventMap) {
+	public List<String> getPathways(Map<String, Object> eventMap) {
 		List<String> pathway = null;
 		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID) && eventMap.get(PARENT_GOORU_OID) != null
 				&& StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
@@ -1623,7 +1616,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
 				if (eventDetail != null && eventDetail.size() > 0) {
 					pathway = new ArrayList<String>();
-					if (eventDetail.getStringValue(EVENT_NAME, null) != null && (eventDetail.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+					if (eventDetail.getStringValue(_EVENT_NAME, null) != null && (eventDetail.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 						pathway.add(eventDetail.getStringValue(_PARENT_GOORU_OID, null));
 						cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), pathway);
 					}
@@ -1637,10 +1630,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		} else if ((eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRAV1.getName()))) {
 			ColumnList<String> R = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
 			if (R != null && R.size() > 0) {
-				String parentEventId = R.getStringValue(PARENT_EVENT_ID, null);
+				String parentEventId = R.getStringValue(_PARENT_EVENT_ID, null);
 				if (parentEventId != null) {
 					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
-					if (C.getStringValue(EVENT_NAME, null) != null && (C.getStringValue(EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
+					if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 						pathway = new ArrayList<String>();
 						pathway.add(C.getStringValue(_PARENT_GOORU_OID, null));
 					}
@@ -1655,11 +1648,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		List<String> pathwayIds = new ArrayList<String>();
 		for(String parentId : parentIds){
 			String type = null;
-
 			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),parentId,0);
-			
 			type = resourcesDetail.getStringValue("resourceType", null);
-
+			logger.info("resourceType : " + type);
 			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
 				pathwayIds.add(parentId);
 			}
