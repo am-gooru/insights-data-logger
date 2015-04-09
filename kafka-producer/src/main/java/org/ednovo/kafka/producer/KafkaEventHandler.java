@@ -25,10 +25,8 @@ package org.ednovo.kafka.producer;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,6 +35,8 @@ import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -44,27 +44,61 @@ public class KafkaEventHandler {
 
 	private static final long serialVersionUID = 8483062836459978581L;
 	
-
-	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
-	private Producer<String, String> producer;
-	private String topic = "activity-log";
+	private static final Logger logger  = LoggerFactory.getLogger(KafkaEventHandler.class);
+	
 	protected Properties props = new Properties();
+	private Producer<String, String> producer;
+	private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
+	private String topic = "activity-log";
 	private ExecutorService executor;
 	private static final int NTHREDS = 7;
 
 	public KafkaEventHandler() {
-		
 	}
 
+	/**
+	 * This will initialize the kafka with ip,port and topic
+	 * @param ip kafka ip's
+	 * @param port kafka port number by default it's 9160
+	 * @param topic kafka will push data to mentioned topic
+	 */
 	public KafkaEventHandler(String ip, String port, String topic) {
 		init(ip, port, topic);
 	}
-	
+
+	/**
+	 * This will initialize the kafka with ip,port,topic and poolsize
+	 * @param ip kafka ip's
+	 * @param port kafka port number by default it's 9160
+	 * @param topic kafka will push data to mentioned topic
+	 * @param poolSize pool size for asynchronous data delivary
+	 */
 	public KafkaEventHandler(String ip, String port, String topic,Integer poolSize) {
 		init(ip, port, topic, poolSize);
 	}
 
-	public void init(String ip, String portNo, String topic) {
+	/**
+	 * This will initialize the kafka with ip,port and poolsize
+	 * @param ip kafka ip's
+	 * @param port kafka port number by default it's 9160
+	 * @param topic kafka will push data to mentioned topic
+	 * @param poolSize pool size for asynchronous data delivary
+	 */
+	public KafkaEventHandler(String ip, String port,Integer poolSize) {
+		init(ip, port, topic, poolSize);
+	}
+	
+	/**
+	 * This will initialize the kafka with ip,port and poolsize
+	 * @param ip kafka ip's
+	 * @param port kafka port number by default it's 9160
+	 * @param topic kafka will push data to mentioned topic
+	 */
+	public KafkaEventHandler(String ip, String port) {
+		init(ip, port, topic);
+	}
+	
+	private void init(String ip, String portNo, String topic) {
 	
 		this.topic = topic;
 		props.put("metadata.broker.list",KafkaEventHandler.buildEndPoint(ip, portNo));
@@ -75,12 +109,136 @@ public class KafkaEventHandler {
 		executor = Executors.newFixedThreadPool(NTHREDS);
 		try {
 			producer = new Producer<String, String>(new ProducerConfig(props));
+			logger.debug("KafkaEventHandler producer initialized");
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("KafkaEventHandler producer is not initialized"+e.getMessage());
 		}
 	}
 	
-	public static String buildEndPoint(String ip, String portNo){
+	private void init(String ip, String portNo, String topic,int poolSize) {
+		this.topic = topic;
+		props.put("metadata.broker.list",KafkaEventHandler.buildEndPoint(ip, portNo));
+		props.put("serializer.class", "kafka.serializer.StringEncoder");
+		props.put("request.required.acks", "1");
+		props.put("retry.backoff.ms", "1000");
+		props.put("producer.type", "sync");
+		executor = Executors.newFixedThreadPool(poolSize);
+
+		try {
+			producer = new Producer<String, String>(new ProducerConfig(props));
+			logger.debug("KafkaEventHandler producer initialized");
+		} catch (Exception e) {
+			logger.error("KafkaEventHandler producer is not initialized"+e.getMessage());
+		}
+	}
+	
+	/**
+	 * Send event data in asynchronous level
+	 * @param eventLog message needs to be send
+	 */
+	public void sendEventLog(String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		send(messageAsJson);
+	}
+
+	/**
+	 * Send event data in asynchronous level
+	 * @param topic topic needs to be pushed
+	 * @param eventLog message needs to be send
+	 */
+	public void sendEventLog(String topic,String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		send(topic,messageAsJson);
+	}
+
+	/**
+	 * Send event data in synchronous level
+	 * @param eventLog message needs to be send
+	 */
+	public void sendSyncEventLog(String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		sendData(messageAsJson);
+	}
+
+	/**
+	 * Send event data in synchronous level
+	 * @param topic topic needs to be pushed
+	 * @param eventLog message needs to be send
+	 */
+	public void sendSyncEventLog(String topic,String eventLog) {
+		
+		Map<String, String> message = new HashMap<String, String>();
+		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
+		message.put("raw", new String(eventLog));
+		String messageAsJson = new JSONObject(message).toString();
+		sendData(topic,messageAsJson);
+	}
+	
+	/**
+	 * Send data in synchronous way on thread level 
+	 * @param eventLog message needs to be send
+	 */
+	private void sendData(String eventLog) {
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, eventLog);
+		producer.send(data);
+	}
+
+	/**
+	 * Send data in synchronous way on thread level 
+	 * @param topic topic needs to be pushed
+	 * @param eventLog message needs to be send
+	 */
+	private void sendData(String topic, String eventLog) {
+		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, eventLog);
+		producer.send(data);
+	}
+	
+	/**
+	 * Send data in asynchronous way on thread level 
+	 * @param message message needs to be send
+	 */
+	private void send(final String message) {
+
+		executor.submit(new Runnable() {
+			
+			@Override
+			public void run() {
+				KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, message);
+				producer.send(data);
+			}
+		});
+	}
+
+	/**
+	 * Send data in asynchronous way on thread level 
+	 * @param topic topic needs to be pushed
+	 * @param message message needs to be send
+	 */
+	private void send(final String topic, final String message) {
+
+		executor.submit(new Runnable() {
+			
+			@Override
+			public void run() {
+				KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, message);
+				producer.send(data);
+			}
+		});
+	}
+	
+	private static String buildEndPoint(String ip, String portNo){
 		
 		StringBuffer stringBuffer  = new StringBuffer();
 		String[] ips = ip.split(",");
@@ -99,54 +257,12 @@ public class KafkaEventHandler {
 		}
 		return stringBuffer.toString();
 	}
-
-	public void init(String ip, String portNo, String topic,int poolSize) {
-		this.topic = topic;
-		props.put("metadata.broker.list",KafkaEventHandler.buildEndPoint(ip, portNo));
-		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("request.required.acks", "1");
-		props.put("retry.backoff.ms", "1000");
-		props.put("producer.type", "sync");
-		executor = Executors.newFixedThreadPool(poolSize);
-
-		try {
-			producer = new Producer<String, String>(new ProducerConfig(props));
-		} catch (Exception e) {
-		}
-	}
 	
-	public void sendEventLog(String eventLog) {
+	public Producer<String, String> getProducer() {
+		return producer;
+	}
 		
-		Map<String, String> message = new HashMap<String, String>();
-		message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-		message.put("raw", new String(eventLog));
-		String messageAsJson = new JSONObject(message).toString();
-		send(messageAsJson);
+	public String getTopic() {
+		return topic;
 	}
-
-	public void sendData(String eventLog) {
-		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, eventLog);
-		producer.send(data);
-	}
-
-	public Producer<String, String> getProducer(){
-	return producer;	
-	}
-	
-	public String getTopic(){
-	return topic;	
-	}
-	
-	public void send(final String message) {
-
-		executor.submit(new Runnable() {
-			
-			@Override
-			public void run() {
-				KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, message);
-				producer.send(data);
-			}
-		});
-	}
-
 }

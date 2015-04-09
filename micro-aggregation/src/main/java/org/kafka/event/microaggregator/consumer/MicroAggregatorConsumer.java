@@ -97,8 +97,8 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		Properties props = new Properties();
 		props.put("zookeeper.connect", MicroAggregatorConsumer.buildEndPoint(ZK_IP, ZK_PORT));
 		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "10000");
-		props.put("zookeeper.sync.time.ms", "200");
+		props.put("zookeeper.session.timeout.ms", "20000");
+		props.put("zookeeper.sync.time.ms", "2000");
 		props.put("auto.commit.interval.ms", "1000");
 		logger.info("Kafka micro aggregator consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
@@ -123,8 +123,65 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		}
 		return stringBuffer.toString();
 	}
-
+	
 	public void run() {
+		Integer noOfThread = 1;
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		topicCountMap.put(topic, noOfThread);
+
+		try {
+			/**
+			 * get list of kafka stream from specific topic
+			 */
+			topicCountMap.put(topic, new Integer(1));
+			logger.info("Micro topic : "+topic);
+			logger.info("Micro topicCountMap : "+topicCountMap);
+			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+			ConsumerIterator<byte[], byte[]> it = stream.iterator();
+			/**
+			 * process consumed data
+			 */
+			while (it.hasNext()) {
+				String message = null;
+				try {
+					message = new String(it.next().message());
+					Gson gson = new Gson();
+					Map<String, String> messageMap = new HashMap<String, String>();
+					try {
+						messageMap = gson.fromJson(message, messageMap.getClass());
+					} catch (Exception e) {
+						AggregatorLogFactory.errorActivity.error(message);
+						continue;
+					}
+
+					/**
+					 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+					 */
+					if (messageMap != null && !messageMap.isEmpty()) {
+						AggregatorLogFactory.activity.info(message);
+						updateActivityStream(messageMap);
+						/**
+						 * Disabled this job due to disable of formula calculation logic staticAggregation(messageMap);
+						 */
+					} else {
+						AggregatorLogFactory.errorActivity.error(message);
+					}
+				} catch (Exception e) {
+					AggregatorLogFactory.errorActivity.error(message);
+					logger.error("Aggregation Consumer failed in a loop" + e);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Aggregation Consumer:" + e);
+			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer stopped at server " + SERVER_NAME + " on " + new Date());
+		}
+	}
+
+	/**
+	 * AutoReconnect for loop count is disabled
+	 */
+	private void AutoReconnector() {
 
 		Integer noOfThread = 1;
 		int loopCount = 0, status = 1, mailLoopCount;
