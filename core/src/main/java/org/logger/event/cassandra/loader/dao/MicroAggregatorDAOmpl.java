@@ -144,7 +144,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 								}
 							}
 							if(StringUtils.isNotBlank(classUid)){
-							logger.error("classpage id is null");
+							logger.error(CLASS_NOT_FOUND);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+ pathway+SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 						}
@@ -169,7 +169,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 					if(StringUtils.isNotBlank(classUid)){
-					logger.error("classpage id is null");
+					logger.error(CLASS_NOT_FOUND);
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					logger.info("isOwner : {}", isOwner);
@@ -238,7 +238,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 					if(StringUtils.isNotBlank(classUid)){
-					logger.error("classpage id is null");
+					logger.error(CLASS_NOT_FOUND);
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					if (cache.containsKey(gooruUUID + SEPERATOR + classUid)) {
