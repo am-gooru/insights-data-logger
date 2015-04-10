@@ -1615,10 +1615,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			} else {
 				ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), eventMap.get(PARENT_EVENT_ID).toString(), 0);
 				if (eventDetail != null && eventDetail.size() > 0) {
-					pathway = new ArrayList<String>();
 					if (eventDetail.getStringValue(_EVENT_NAME, null) != null && (eventDetail.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-						pathway.add(eventDetail.getStringValue(_PARENT_GOORU_OID, null));
-						cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), pathway);
+						if (eventDetail.getStringValue(_PARENT_GOORU_OID, null) != null) {
+							pathway = new ArrayList<String>();
+							pathway.add(eventDetail.getStringValue(_PARENT_GOORU_OID, null));
+							cache.put(eventMap.get(PARENT_EVENT_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID), pathway);
+						}
 					}
 				} else {
 					List<String> parents = baseCassandraDao.getParentIds(ColumnFamily.COLLECTIONITEM.getColumnFamily(), eventMap.get(PARENT_GOORU_OID).toString(), 0);
@@ -1634,8 +1636,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (parentEventId != null) {
 					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
 					if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-						pathway = new ArrayList<String>();
-						pathway.add(C.getStringValue(_PARENT_GOORU_OID, null));
+						if(C.getStringValue(_PARENT_GOORU_OID, null) != null){
+							pathway = new ArrayList<String>();
+							pathway.add(C.getStringValue(_PARENT_GOORU_OID, null));
+						}
 					}
 				}
 			}
