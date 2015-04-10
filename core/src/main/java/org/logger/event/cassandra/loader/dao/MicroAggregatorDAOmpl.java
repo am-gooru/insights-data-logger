@@ -139,7 +139,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 								classUid = cache.get(pathway).toString();
 							}else{
 								classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-								cache.put(pathway, classUid);
+								if(classUid != null){
+									cache.put(pathway, classUid);
+								}
 							}
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+ pathway+SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
@@ -159,7 +161,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						classUid = cache.get(pathway).toString();
 					}else{
 						classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-						cache.put(pathway, classUid);
+						if(classUid != null){
+							cache.put(pathway, classUid);
+						}
 					}
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
@@ -223,7 +227,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						classUid = cache.get(pathway).toString();
 					}else{
 						classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-						cache.put(pathway, classUid);
+						if(classUid != null){
+							cache.put(pathway, classUid);
+						}
 					}
 
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
