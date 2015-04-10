@@ -130,8 +130,8 @@ public class MessageConsumer extends Thread implements Runnable {
 		Properties props = new Properties();
 		props.put("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
 		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "20000");
-		props.put("zookeeper.sync.time.ms", "2000");
+		props.put("zookeeper.session.timeout.ms", "6000");
+		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
 		logger.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 		return new ConsumerConfig(props);
