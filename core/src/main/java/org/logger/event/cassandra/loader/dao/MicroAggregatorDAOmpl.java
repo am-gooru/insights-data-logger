@@ -143,9 +143,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 									cache.put(pathway, classUid);
 								}
 							}
+							if(StringUtils.isNotBlank(classUid)){
+							logger.error("classpage id is null");
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+ pathway+SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 						}
+		        	}
 		        	}
 		        }
 		}
@@ -165,6 +168,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							cache.put(pathway, classUid);
 						}
 					}
+					if(StringUtils.isNotBlank(classUid)){
+					logger.error("classpage id is null");
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					logger.info("isOwner : {}", isOwner);
@@ -211,6 +216,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 				}
 			}
+			}
 			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString());
 			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
 			keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
@@ -231,7 +237,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							cache.put(pathway, classUid);
 						}
 					}
-
+					if(StringUtils.isNotBlank(classUid)){
+					logger.error("classpage id is null");
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					if (cache.containsKey(gooruUUID + SEPERATOR + classUid)) {
@@ -273,6 +280,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENT_SESSION+classUid+SEPERATOR+eventMap.get(PARENT_GOORU_OID).toString(), eventMap.get(GOORUID).toString(), eventMap.get(SESSION_ID).toString(), microAggMutation);
 
 				}
+			}
 			}
 			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID));
 			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
