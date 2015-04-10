@@ -1225,7 +1225,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public List<String> getParentId(String cfName, String Key, int retryCount) {
+	public List<String> getParentIds(String cfName, String Key, int retryCount) {
 
 		Rows<String, String> collectionItem = null;
 		List<String> classPages = new ArrayList<String>();
@@ -1235,7 +1235,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.addExpression().whereColumn(_RESOURCE_GOORU_OID).equals().value(Key).execute().getResult();
 		} catch (Exception e) {
 			if (e instanceof ConnectionException && retryCount < 6) {
-				return getParentId(cfName, Key, ++retryCount);
+				return getParentIds(cfName, Key, ++retryCount);
 			} else {
 				throw new RuntimeException(READ_EXCEPTION + cfName);
 			}
@@ -1546,4 +1546,27 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return parentIds;
 	}
+	
+	public String getParentId(String cfName, String Key, int retryCount) {
+		Rows<String, String> collectionItem = null;
+		String parentId = null;
+		try {
+			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
+					.addExpression().whereColumn("resource_gooru_oid").equals().value(Key).execute().getResult();
+		} catch (ConnectionException e) {
+			if (retryCount < 6) {
+				retryCount++;
+				return getParentId(cfName, Key, retryCount);
+			} else {
+				e.printStackTrace();
+			}
+		}
+		if (collectionItem != null) {
+			for (Row<String, String> collectionItems : collectionItem) {
+				parentId = collectionItems.getColumns().getColumnByName("collection_gooru_oid").getStringValue();
+			}
+		}
+		return parentId;
+	}
+	    
 }
