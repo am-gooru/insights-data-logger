@@ -97,8 +97,14 @@ public class KafkaEventHandler {
 	public KafkaEventHandler(String ip, String port) {
 		init(ip, port, topic);
 	}
-	
-	private void init(String ip, String portNo, String topic) {
+
+	/**
+	 * Initialize kafka producer
+	 * @param ip kafka ip's separated by comma
+	 * @param portNo kafka port by default 9160
+	 * @param topic primary topic needs to be pushed
+	 */
+	public void init(String ip, String portNo, String topic) {
 	
 		this.topic = topic;
 		props.put("metadata.broker.list",KafkaEventHandler.buildEndPoint(ip, portNo));
@@ -114,8 +120,15 @@ public class KafkaEventHandler {
 			logger.error("KafkaEventHandler producer is not initialized"+e.getMessage());
 		}
 	}
-	
-	private void init(String ip, String portNo, String topic,int poolSize) {
+
+	/**
+	 * Initialize kafka producer
+	 * @param ip kafka ip's separated by comma
+	 * @param portNo kafka port by default 9160
+	 * @param topic primary topic needs to be pushed
+	 * @param poolSize asynchronous producer pool size
+	 */
+	public void init(String ip, String portNo, String topic,int poolSize) {
 		this.topic = topic;
 		props.put("metadata.broker.list",KafkaEventHandler.buildEndPoint(ip, portNo));
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
