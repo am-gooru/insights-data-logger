@@ -851,31 +851,44 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
 			}
 	    	
-	    	ColumnList<String> eventDetailsNeww = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
-	    	for(Column<String> column : eventDetailsNeww) {
-	    		if(column.getStringValue() != null && !column.getName().equalsIgnoreCase("grade") && !column.getName().equalsIgnoreCase("tax_ids")){
-	    			contentBuilder.field(column.getName(), column.getStringValue());
-	    		} else if(column.getStringValue() != null && column.getName().equalsIgnoreCase("grade")){
-					Set<String> grades = new HashSet<String>();
-					for(String grade : column.getStringValue().split(",")){
-						grades.add(grade);
+	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
+	    	if(extractedUserData != null) {
+				for (Column<String> column : extractedUserData) {
+					if (StringUtils.isNotBlank(column.getStringValue())) {
+						if (!column.getName().equalsIgnoreCase(GRADE) && !column.getName().equalsIgnoreCase(TAXONOMY_IDS)) {
+							contentBuilder.field(column.getName(), column.getStringValue());
+						} else {
+							Set<String> grades = new HashSet<String>();
+							Set<Long> subjectCodes = new HashSet<Long>();
+							Set<Long> courseCodes = new HashSet<Long>();
+							for (String field : column.getStringValue().split(COMMA)) {
+								if (column.getName().equalsIgnoreCase(GRADE)) {
+									grades.add(field);
+								} else {
+									ColumnList<String> extractedCodeData = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), field, 0);
+									if (extractedCodeData != null && extractedCodeData.getColumnNames().contains(SUBJECT_CODE_ID)) {
+										long subject = extractedCodeData.getLongValue(SUBJECT_CODE_ID, 0L);
+										if(subject != 0L) {
+											subjectCodes.add(subject);
+										}
+										long course = extractedCodeData.getLongValue(COURSE_CODE_ID, 0L);
+										if(course != 0L) {
+											courseCodes.add(course);
+										}
+									}
+								}
+							}
+							if (!grades.isEmpty()) {
+								contentBuilder.field(GRADE_FIELD, grades);
+							}
+							if (!subjectCodes.isEmpty() && !courseCodes.isEmpty()) {
+								contentBuilder.field(SUBJECT, subjectCodes);
+								contentBuilder.field(COURSE, courseCodes);
+							}
+						}
 					}
-					contentBuilder.field("grade1",grades);
-				} else if(column.getStringValue() != null && column.getName().equalsIgnoreCase("tax_ids")){
-					Set<Long> subjectCodes = new HashSet<Long>();
-					Set<Long> courseCodes = new HashSet<Long>();
-					for(String taxIds : column.getStringValue().split(",")){
-						ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), taxIds, 0);
-						long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
-						long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
-						subjectCodes.add(subject);
-						courseCodes.add(course);
-					}
-					contentBuilder.field("subject",subjectCodes);
-					contentBuilder.field("course",courseCodes);
 				}
 	    	}
-	     	
 	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamily.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
 	    	
 	    	if(aliasUserData.getColumnNames().contains("firstname_alias")){
@@ -899,6 +912,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 		}	
 	}
 
+	
 	/**
 	 * 
 	 * @param key

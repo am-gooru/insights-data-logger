@@ -557,4 +557,18 @@ public interface Constants {
 	public static final String PATHWAYGOORUOID= "pathwayGooruId";
 
 	public static final String CLASS_NOT_FOUND= "classpage id is null";
+	
+	public static final String TAXONOMY_IDS = "tax_ids";
+	
+	public static final String SUBJECT = "subject";
+	
+	public static final String COURSE = "course";
+	
+	public static final String GRADE = "grade";
+	
+	public static final String GRADE_FIELD = "grade1";
+	
+	public static final String SUBJECT_CODE_ID = "subject_code_id";
+	
+	public static final String COURSE_CODE_ID = "course_code_id";
 }
