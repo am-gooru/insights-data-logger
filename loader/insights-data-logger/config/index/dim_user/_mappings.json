@@ -41,15 +41,6 @@
 },"course":{
 "type":"string",
 "index":"not_analyzed"
-},"grade1":{
-"type":"string",
-"index":"not_analyzed"
-},"subject":{
-"type":"string",
-"index":"not_analyzed"
-},"course":{
-"type":"string",
-"index":"not_analyzed"
 }
 }
 }
