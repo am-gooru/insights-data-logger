@@ -851,13 +851,45 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
 			}
 	    	
-	    	ColumnList<String> eventDetailsNeww = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
-	    	for(Column<String> column : eventDetailsNeww) {
-	    		if(column.getStringValue() != null){
-	    			contentBuilder.field(column.getName(), column.getStringValue());
-	    		}
+	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
+	    	if(extractedUserData != null) {
+				for (Column<String> column : extractedUserData) {
+					if (StringUtils.isNotBlank(column.getStringValue())) {
+						if (!column.getName().equalsIgnoreCase(GRADE) && !column.getName().equalsIgnoreCase(TAXONOMY_IDS)) {
+							contentBuilder.field(column.getName(), column.getStringValue());
+						} else {
+							Set<String> grades = new HashSet<String>();
+							Set<Long> subjectCodes = new HashSet<Long>();
+							Set<Long> courseCodes = new HashSet<Long>();
+							for (String field : column.getStringValue().split(COMMA)) {
+								if (column.getName().equalsIgnoreCase(GRADE)) {
+									grades.add(field);
+								} else {
+									ColumnList<String> extractedCodeData = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), field, 0);
+									if (extractedCodeData != null && extractedCodeData.getColumnNames().contains(SUBJECT_CODE_ID)) {
+										long subject = extractedCodeData.getLongValue(SUBJECT_CODE_ID, 0L);
+										if(subject != 0L) {
+											subjectCodes.add(subject);
+										}
+										long course = extractedCodeData.getLongValue(COURSE_CODE_ID, 0L);
+										if(course != 0L) {
+											courseCodes.add(course);
+										}
+									}
+								}
+							}
+							if (!grades.isEmpty()) {
+								contentBuilder.field(GRADE_FIELD, grades);
+							}
+							if (!subjectCodes.isEmpty() && !courseCodes.isEmpty()) {
+								contentBuilder.field(SUBJECT, subjectCodes);
+								contentBuilder.field(COURSE, courseCodes);
+							}
+						}
+					}
+				}
 	    	}
-	     	
+	    	
 	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamily.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
 	    	
 	    	if(aliasUserData.getColumnNames().contains("firstname_alias")){
