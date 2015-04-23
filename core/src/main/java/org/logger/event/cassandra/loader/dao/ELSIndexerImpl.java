@@ -256,7 +256,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				for (int i = 0; i < eventDetailsNew.size(); i++) {
 					String columnName = eventDetailsNew.getColumnByIndex(i).getName();
 					String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
-					if (value != null) {
+					if (!columnName.equalsIgnoreCase(GRADE) &&  !columnName.equalsIgnoreCase(TAXONOMY_IDS) && value != null) {
 						eventMap.put(columnName, value);
 					}
 				}
@@ -660,9 +660,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 							TypeConverter.stringToAny(String.valueOf(entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
 				}
 			}
-			indexingES(indexName, indexType, id, contentBuilder, 0);
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error("Exception:Unable to index in the method saveInESIndex." + e);
+		}
+		if(contentBuilder != null){
+			indexingES(indexName, indexType, id, contentBuilder, 0);
 		}
 
 	}
@@ -706,6 +709,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			contentBuilder.field("index_updated_time", new Date());
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		} catch (Exception e) {
+			e.printStackTrace();
 			if (retryCount < 6) {
 				try {
 					Thread.sleep(2000);
