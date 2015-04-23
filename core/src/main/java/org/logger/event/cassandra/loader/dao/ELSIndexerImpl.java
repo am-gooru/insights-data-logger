@@ -661,8 +661,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("Exception:Unable to index in the method saveInESIndex." + e);
+			logger.error("Exception while Indexing:", e);
 		}
 		if(contentBuilder != null){
 			indexingES(indexName, indexType, id, contentBuilder, 0);
@@ -709,7 +708,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			contentBuilder.field("index_updated_time", new Date());
 			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 		} catch (Exception e) {
-			e.printStackTrace();
 			if (retryCount < 6) {
 				try {
 					Thread.sleep(2000);
@@ -720,7 +718,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				retryCount++;
 				indexingES(indexName, indexType, id, contentBuilder, retryCount);
 			} else {
-				logger.error("Exception:Unable to index in the method indexingES." + e);
+				logger.error("Exception:Unable to index in the method indexingES.", e);
 			}
 		}
 
