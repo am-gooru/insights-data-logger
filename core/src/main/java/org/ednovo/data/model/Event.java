@@ -70,6 +70,16 @@ public class Event implements Serializable {
 
 	private String organizationUid;
 	
+	private Long hitCount;
+	
+	public Long getHitCount() {
+		return hitCount;
+	}
+
+	public void setHitCount(Long hitCount) {
+		this.hitCount = hitCount;
+	}
+
 	public String getEventType() {
 		return eventType;
 	}
