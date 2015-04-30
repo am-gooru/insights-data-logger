@@ -571,4 +571,8 @@ public interface Constants {
 	public static final String SUBJECT_CODE_ID = "subject_code_id";
 	
 	public static final String COURSE_CODE_ID = "course_code_id";
+	
+	public static final String HIT_COUNT = "hitCount";
+	
+	public static final String RESULT_COUNT = "resultCount";
 }

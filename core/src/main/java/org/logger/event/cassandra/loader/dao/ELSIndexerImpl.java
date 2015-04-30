@@ -103,6 +103,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 				}
+				if(eventMap.containsKey(HIT_COUNT) && StringUtils.isNotBlank(eventMap.get(HIT_COUNT).toString())) {
+					eventMap.put(RESULT_COUNT, Long.valueOf(eventMap.get(HIT_COUNT).toString()));
+				}
 			}
 			if (eventMap.get(GOORUID) != null) {
 				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
