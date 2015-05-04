@@ -78,7 +78,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				jsonField = new JSONObject(fields.substring(14).trim());
 			} catch (JSONException e2) {
-				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e2);
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." , e2);
 			}
 		}
 		if (jsonField.has(VERSION)) {
@@ -87,7 +87,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				eventMap = JSONDeserializer.deserializeEventv2(events);
 			} catch (JSONException e) {
-				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e);
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." , e);
 			}
 
 			eventMap.put(EVENT_NAME, events.getEventName());
@@ -116,12 +116,15 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (eventMap.get(GOORUID) != null) {
 				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 			}
-			
-			if (eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null && !String.valueOf(eventMap.get(USER_IP)).isEmpty()) {
+			String userIp = null;
+			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
+				userIp = String.valueOf(eventMap.get(USER_IP));
+			}
+			if (userIp != null) {
 				try {
 					GeoLocation geo = new GeoLocation();
-					CityResponse res = geo.getGeoResponse(String.valueOf(eventMap.get(USER_IP)));
-					eventMap.put(REGION, geoLocation.getGeoRegionByIP(String.valueOf(eventMap.get(USER_IP))));
+					CityResponse res = geo.getGeoResponse(userIp);
+					eventMap.put(REGION, geoLocation.getGeoRegionByIP(userIp));
 						if (res != null && res.getCity().getName() != null) {
 							eventMap.put(CITY, res.getCity().getName());
 						}
@@ -131,11 +134,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						if (res != null && res.getLocation().getLongitude() != null) {
 							eventMap.put(LONGITUDE, res.getLocation().getLongitude());
 						}				
-				} catch (IOException e) {
-					logger.error("IOException while finding geo location."+e);
-				} catch (GeoIp2Exception e) {
-					logger.error("GeoIp2Exception while finding geo location."+e);
-				}
+				} catch (Exception e) {
+					logger.error("Exception while finding geo location.",e);
+				} 
 			}
 			
 			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
@@ -149,7 +150,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
 				} catch (Exception e) {
-					logger.error("Exception:Unable to index events in the method indexEvents." + e);
+					logger.error("Exception:Unable to index events in the method indexEvents." , e);
 				}
 			}
 		} else {
@@ -244,6 +245,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					}
 				}
 			} catch (Exception e3) {
+				logger.error("Exception : ",e3);
 				throw new RuntimeException();
 			}
 		}
