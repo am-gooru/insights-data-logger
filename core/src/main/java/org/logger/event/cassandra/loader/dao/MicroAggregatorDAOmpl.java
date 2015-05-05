@@ -121,7 +121,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			resourceMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving last accessed time.");
+			logger.error("Exception while saving last accessed time.",e);
 		}
 		/* Maintain session - Start */
 
@@ -160,7 +160,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							try {
 								Thread.sleep(500);
 							} catch (Exception e) {
-								logger.error("Exception while waiting for classpage join.");
+								logger.error("Exception while waiting for classpage join.",e);
 							}
 							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classPage, 0);
 							logger.info("Retrying to check if a student : {}", retryCount);
@@ -207,7 +207,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							try {
 								Thread.sleep(500);
 							} catch (Exception e) {
-								logger.error("Exception while waiting for classpage join.");
+								logger.error("Exception while waiting for classpage join.",e);
 							}
 							;
 							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classPage, 0);
@@ -251,7 +251,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			microAggMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving micro_aggregation columnfamily.");
+			logger.error("Exception while saving micro_aggregation columnfamily.",e);
 		}
 
 		if (keysList != null && keysList.size() > 0) {
@@ -259,7 +259,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				j = new JSONObject(aggregatorJson);
 			} catch (Exception e) {
-				logger.error("Exception while aggregator json conversion.");
+				logger.error("Exception while aggregator json conversion.",e);
 			}
 			this.startCounters(eventMap, j, keysList, key);
 			this.postAggregatorUpdate(eventMap, j, keysList, key);
@@ -304,12 +304,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						if (status != 0) {
 							status = status - 1;
 						}
-						if (attempStatus[status] == 1) {
+						if (attempStatus[0] == 1) {
 							answerStatus = LoaderConstants.CORRECT.getName();
 						} else if (attempStatus[status] == 0) {
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
-						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
+						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[0]);
 						if (option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
 							answerStatus = option;
 						}
@@ -342,7 +342,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save post aggregated data." + e);
+			logger.error("Exception:Unable to save post aggregated data.", e);
 		}
 	}
 
@@ -391,7 +391,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					try {
 						Thread.sleep(200);
 					} catch (InterruptedException e1) {
-						logger.error("Exception:Thread interrupted." + e);
+						logger.error("Exception:Thread interrupted.", e);
 					}
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + "completion_progress",
 							collectionStatus, m);
@@ -401,7 +401,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save counter aggregated data." + e);
+			logger.error("Exception:Unable to save counter aggregated data.",e);
 		}
 	}
 
@@ -517,7 +517,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save real time class/collection reports data." + e);
+			logger.error("Exception:Unable to save real time class/collection reports data.", e);
 		}
 	}
 
@@ -689,7 +689,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save real class/collection aggregated data." + e);
+			logger.error("Exception:Unable to save real class/collection aggregated data.",e);
 		}
 
 	}
@@ -719,7 +719,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			answersJson = new JSONObject(answers);
 		} catch (JSONException e) {
-			logger.error("Exception while conversion answer object as JSON");
+			logger.error("Exception while conversion answer object as JSON",e);
 		}
 		JSONArray names = answersJson.names();
 		String firstChoosenAns = null;
@@ -728,7 +728,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				firstChoosenAns = names.getString(0);
 			} catch (JSONException e) {
-				logger.error("Exception while conversion answer choice as JSON");
+				logger.error("Exception while conversion answer choice as JSON",e);
 			}
 		}
 
@@ -1554,7 +1554,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			baseCassandraDao.updateResourceEntity(rawUpdateDAO.processCollection(eventDataMap, resourceCo));
 		} catch (Exception ex) {
-			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get(GOORU_OID).toString(), ex);
+			logger.error("Unable to save resource entity for Id {} due to {}", ex);
 		}
 	}
 }
