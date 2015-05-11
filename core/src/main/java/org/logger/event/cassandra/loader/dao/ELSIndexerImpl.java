@@ -64,6 +64,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+		this.geoLocation = new GeoLocation();
 	}
 
 	/**
