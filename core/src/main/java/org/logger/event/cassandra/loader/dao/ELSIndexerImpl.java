@@ -2,6 +2,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,7 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -34,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.Gson;
+import com.maxmind.geoip2.exception.GeoIp2Exception;
+import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
@@ -47,6 +52,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 	private BaseCassandraRepoImpl baseDao;
 	
+	private GeoLocation geoLocation;
+	
 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
 
 	SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
@@ -57,6 +64,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+		this.geoLocation = new GeoLocation();
 	}
 
 	/**
@@ -71,7 +79,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				jsonField = new JSONObject(fields.substring(14).trim());
 			} catch (JSONException e2) {
-				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e2);
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." , e2);
 			}
 		}
 		if (jsonField.has(VERSION)) {
@@ -80,7 +88,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			try {
 				eventMap = JSONDeserializer.deserializeEventv2(events);
 			} catch (JSONException e) {
-				logger.error("Exception:Unable to convert JSON in the method indexEvents." + e);
+				logger.error("Exception:Unable to convert JSON in the method indexEvents." , e);
 			}
 
 			eventMap.put(EVENT_NAME, events.getEventName());
@@ -109,6 +117,29 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (eventMap.get(GOORUID) != null) {
 				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
 			}
+			String userIp = null;
+			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
+				userIp = String.valueOf(eventMap.get(USER_IP));
+			}
+			if (userIp != null) {
+				try {
+					GeoLocation geo = new GeoLocation();
+					CityResponse res = geo.getGeoResponse(userIp);
+					eventMap.put(REGION, geoLocation.getGeoRegionByIP(userIp));
+						if (res != null && res.getCity().getName() != null) {
+							eventMap.put(CITY, res.getCity().getName());
+						}
+						if (res != null && res.getLocation().getLatitude() != null) {
+							eventMap.put(LATITUDE, res.getLocation().getLatitude());
+						}
+						if (res != null && res.getLocation().getLongitude() != null) {
+							eventMap.put(LONGITUDE, res.getLocation().getLongitude());
+						}				
+				} catch (Exception e) {
+					logger.error("Exception while finding geo location.",e);
+				} 
+			}
+			
 			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
 			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 				try {
@@ -120,7 +151,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
 				} catch (Exception e) {
-					logger.error("Exception:Unable to index events in the method indexEvents." + e);
+					logger.error("Exception:Unable to index events in the method indexEvents." , e);
 				}
 			}
 		} else {
@@ -215,6 +246,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					}
 				}
 			} catch (Exception e3) {
+				logger.error("Exception : ",e3);
 				throw new RuntimeException();
 			}
 		}
@@ -635,7 +667,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			resourceMap.put("copyCount", vluesList.getColumnByName("count~copy") != null ? vluesList.getColumnByName("count~copy").getLongValue() : 0L);
 			resourceMap.put("sharingCount", vluesList.getColumnByName("count~share") != null ? vluesList.getColumnByName("count~share").getLongValue() : 0L);
 			resourceMap.put("commentCount", vluesList.getColumnByName("count~comment") != null ? vluesList.getColumnByName("count~comment").getLongValue() : 0L);
-			resourceMap.put("reviewCount", vluesList.getColumnByName("count~review") != null ? vluesList.getColumnByName("count~review").getLongValue() : 0L);
+			resourceMap.put("reviewCount", vluesList.getColumnByName("count~reviews") != null ? vluesList.getColumnByName("count~reviews").getLongValue() : 0L);
 		}
 		return resourceMap;
 	}

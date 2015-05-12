@@ -575,4 +575,13 @@ public interface Constants {
 	public static final String HIT_COUNT = "hitCount";
 	
 	public static final String RESULT_COUNT = "resultCount";
+	
+	public static final String REGION = "region";
+	
+	public static final String LATITUDE = "latitude";
+	
+	public static final String LONGITUDE = "longitude";
+	
+	public static final String CITY = "city";
+	
 }
