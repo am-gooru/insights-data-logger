@@ -306,7 +306,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 						if (attempStatus[0] == 1) {
 							answerStatus = LoaderConstants.CORRECT.getName();
-						} else if (attempStatus[0] == 0) {
+						} else if (attempStatus[status] == 0) {
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
 						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[0]);
@@ -430,7 +430,30 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),
 								e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()), m);
 					}
-				
+					/**
+					 * Custom logic to handle 0 view count for first resource
+					 */
+					/*
+					 * Disabled in release-1.3.1
+					 * if (entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName())
+							&& (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENT_NAME).toString()
+									.equalsIgnoreCase(LoaderConstants.CPV1.getName())) && eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
+
+						ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
+
+						long views = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(
+								eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
+						
+
+						if (views == 0L) {
+							baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
+							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
+						}
+					}*/
+					/**
+					 * End
+					 */
+
 					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).toString().equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
 
@@ -444,13 +467,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							status = status - 1;
 						}
 
-						if (attempStatus[0] == 1) {
+						if (attempStatus[status] == 1) {
 							answerStatus = LoaderConstants.CORRECT.getName();
-						} else if (attempStatus[0] == 0) {
+						} else if (attempStatus[status] == 0) {
 							answerStatus = LoaderConstants.INCORRECT.getName();
 						}
 
-						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[0]);
+						String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 						if (option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) {
 							answerStatus = option;
 						}
@@ -637,8 +660,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (status != 0) {
 					status = status - 1;
 				}
-				int attemptStatus = attempStatus[0];
-				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[0]);
+				int attemptStatus = attempStatus[status];
+				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 				/*
 				 * if (option != null && option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())) { answerStatus = option; }
 				 */
@@ -648,7 +671,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						option = "A";
 					}
 				} else {
-					option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[0]);
+					option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 				}
 				boolean answered = this.isUserAlreadyAnswered(keyValue, eventMap.get(CONTENT_GOORU_OID).toString());
 				if (answered) {
