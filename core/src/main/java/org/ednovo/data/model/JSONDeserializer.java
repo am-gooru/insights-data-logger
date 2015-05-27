@@ -26,7 +26,6 @@ package org.ednovo.data.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +41,12 @@ public class JSONDeserializer {
 		try {
 			return mapper.readValue(json, type);
 		} catch (Exception e) {
-			logger.error("Exception:de-serialization failed." + e);
+			logger.error("Exception:", e);
 		}
 		return null;
 	}
 	
-	public static <T> T deserializeEvent(Event event) throws JSONException {
+	public static <T> T deserializeEvent(Event event) {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String,String> map = new HashMap<String,String>();
@@ -59,11 +58,11 @@ public class JSONDeserializer {
 			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
 		
 		} catch (Exception e) {
-			logger.error("Exception:de-serialization failed." + e);
+			logger.error("Exception:", e);
 		}
 		return (T) map;
 	}
-	public static <T> T deserializeEventv2(Event event) throws JSONException {
+	public static <T> T deserializeEventv2(Event event) {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String,Object> map = new HashMap<String,Object>();
@@ -75,7 +74,7 @@ public class JSONDeserializer {
 			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getSession(), new TypeReference<HashMap<String, Object>>(){}));
 		
 		} catch (Exception e) {
-			logger.error("Exception:de-serialization failed." + e);
+			logger.error("Exception:", e);
 		}
 		return (T) map;
 	}
