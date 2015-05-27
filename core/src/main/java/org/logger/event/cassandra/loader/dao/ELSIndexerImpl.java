@@ -119,7 +119,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			String userIp = null;
 			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
-				userIp = String.valueOf(eventMap.get(USER_IP));
+				userIp = String.valueOf(eventMap.get(USER_IP)).split(COMMA)[0];
 			}
 			if (userIp != null) {
 				try {
