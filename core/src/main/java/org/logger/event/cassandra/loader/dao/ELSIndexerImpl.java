@@ -119,7 +119,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			}
 			String userIp = null;
 			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
-				userIp = String.valueOf(eventMap.get(USER_IP));
+				userIp = String.valueOf(eventMap.get(USER_IP)).split(COMMA)[0];
 			}
 			if (userIp != null) {
 				try {
@@ -885,6 +885,9 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 			}
 			if(userInfos.getColumnByName("accountUid") != null){
 				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
+			}
+			if(userInfos.getColumnByName("userProfileImage") != null){
+				contentBuilder.field("user_profile_image",userInfos.getColumnByName("userProfileImage").getStringValue());
 			}
 	    	
 	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
