@@ -887,7 +887,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 				contentBuilder.field("account_uid",userInfos.getColumnByName("accountUid").getStringValue());
 			}
 			if(userInfos.getColumnByName("userProfileImage") != null){
-				contentBuilder.field("profile_image",userInfos.getColumnByName("userProfileImage").getStringValue());
+				contentBuilder.field("user_profile_image",userInfos.getColumnByName("userProfileImage").getStringValue());
 			}
 	    	
 	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
