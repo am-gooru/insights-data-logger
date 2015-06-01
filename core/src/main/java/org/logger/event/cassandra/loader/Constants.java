@@ -584,4 +584,6 @@ public interface Constants {
 	
 	public static final String CITY = "city";
 	
+	public static final String PREVIOUS_RATE ="previousRate";
+	
 }
