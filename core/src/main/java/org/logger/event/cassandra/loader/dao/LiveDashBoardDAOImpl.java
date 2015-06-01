@@ -75,11 +75,11 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 						String orginalColumn = this.formOrginalKeys(value, eventMap);
 						if (orginalColumn != null) {
 							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
-								if (!orginalColumn.startsWith(_TIME_SPENT + SEPERATOR) && !orginalColumn.startsWith(SUM + SEPERATOR)) {
+								if (!orginalColumn.startsWith(_TIME_SPENT + SEPERATOR) && !orginalColumn.startsWith(SUM + SEPERATOR) && !(eventMap.containsKey(PREVIOUS_RATE) && eventMap.get(PREVIOUS_RATE) != null && eventMap.get(PREVIOUS_RATE).toString().isEmpty())) {
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, 1L, m);
 								} else if (orginalColumn.startsWith(_TIME_SPENT + SEPERATOR)) {
 									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
-								} else if (orginalColumn.startsWith(SUM + SEPERATOR)) {
+								} else if (orginalColumn.startsWith(SUM + SEPERATOR)  && !(eventMap.containsKey(PREVIOUS_RATE) && eventMap.get(PREVIOUS_RATE) != null && eventMap.get(PREVIOUS_RATE).toString().isEmpty())) {
 									String[] rowKey = orginalColumn.split(SEPERATOR);
 									baseDao.generateCounter(
 											ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
