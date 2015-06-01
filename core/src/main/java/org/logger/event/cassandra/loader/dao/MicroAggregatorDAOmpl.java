@@ -124,7 +124,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		/* Maintain session - Start */
 
-		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(TYPE) && eventMap.get(TYPE).toString().equalsIgnoreCase(START)) {
+		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			Date eventDateTime = new Date(Long.parseLong(EMPTY_STRING + eventMap.get(START_TIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), key + SEPERATOR + gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
