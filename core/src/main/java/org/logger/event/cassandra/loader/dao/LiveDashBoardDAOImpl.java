@@ -404,7 +404,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			performCounter(key,column,map,m);
 		} else {
 			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), -Long.valueOf(map.get(PREVIOUS_RATE).toString()), m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), -1L, m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, -Long.valueOf(map.get(PREVIOUS_RATE).toString()), m);
+				
 			}else{
 				performCounter(key,column,map,m);
 			}

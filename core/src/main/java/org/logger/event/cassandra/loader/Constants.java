@@ -590,4 +590,6 @@ public interface Constants {
 	
 	public static final String COUNT_SEPARATOR_RATINGS = "count~ratings";
 	
+	public static final String RATE = "rate";
+	
 }
