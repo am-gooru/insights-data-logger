@@ -78,10 +78,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 								performRating(key, orginalColumn,eventMap,m);		
 								continue;
 							}
-							if (eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR)) {
-								continue;
+							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
+								performCounter(key, orginalColumn, eventMap, m);					
 							}
-							performCounter(key, orginalColumn, eventMap, m);					
 						}
 					}
 				}
@@ -404,8 +403,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			performCounter(key,column,map,m);
 		} else {
 			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), -1L, m);
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, -Long.valueOf(map.get(PREVIOUS_RATE).toString()), m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), (1L * -1), m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, (Long.valueOf(map.get(PREVIOUS_RATE).toString()) * -1), m);
 				
 			}else{
 				performCounter(key,column,map,m);
