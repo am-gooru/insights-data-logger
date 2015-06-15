@@ -96,6 +96,8 @@ public interface Constants {
 	
 	public static final  String SUM = "sum";
 	
+	public static final  String SUB = "sub";
+	
 	public static final  String AVG = "avg";
 	
 	public static final  String SUMOFAVG = "sumofavg";
@@ -583,5 +585,11 @@ public interface Constants {
 	public static final String LONGITUDE = "longitude";
 	
 	public static final String CITY = "city";
+	
+	public static final String PREVIOUS_RATE = "previousRate";
+	
+	public static final String COUNT_SEPARATOR_RATINGS = "count~ratings";
+	
+	public static final String RATE = "rate";
 	
 }
