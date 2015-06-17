@@ -584,4 +584,6 @@ public interface Constants {
 	
 	public static final String CITY = "city";
 	
+	public String DEFAULTCOLUMN = "constant_value";
+	
 }
