@@ -305,7 +305,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				this.getResourceAndIndex(resource, id);
 			} else {
 				logger.info("Indexing resources from dim_resource : {}", id);
-				ColumnList<String> dimResource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), id, 0);
+				ColumnList<String> dimResource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~".concat(id), 0);
 				if (dimResource != null && dimResource.size() > 0) {
 					this.getDimResourceAndIndex(dimResource, id);
 				} else {
