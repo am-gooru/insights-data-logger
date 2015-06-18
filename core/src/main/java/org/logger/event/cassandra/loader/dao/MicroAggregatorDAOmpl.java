@@ -93,9 +93,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		if (cache.size() > 100000) {
 			cache.clear();
 		}
-		
-		/*List<String> classPages = null;
-		classPages = this.getClassPages(eventMap);*/
 
 		List<String> pathways = getPathways(eventMap);
 		 
@@ -123,11 +120,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			resourceMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving last accessed time."+e);
+			logger.error("Exception while saving last accessed time.",e);
 		}
 		/* Maintain session - Start */
 
-		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(TYPE) && eventMap.get(TYPE).toString().equalsIgnoreCase(START)) {
+		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			Date eventDateTime = new Date(Long.parseLong(EMPTY_STRING + eventMap.get(START_TIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
 			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), key + SEPERATOR + gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
@@ -144,7 +141,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 								}
 							}
 							if(StringUtils.isNotBlank(classUid)){
-							logger.error(CLASS_NOT_FOUND);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+ pathway+SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
 						}
@@ -169,7 +165,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 					if(StringUtils.isNotBlank(classUid)){
-					logger.error(CLASS_NOT_FOUND);
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					logger.info("isOwner : {}", isOwner);
@@ -238,7 +233,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 					if(StringUtils.isNotBlank(classUid)){
-					logger.error(CLASS_NOT_FOUND);
 					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
 
 					if (cache.containsKey(gooruUUID + SEPERATOR + classUid)) {
@@ -311,7 +305,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			microAggMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving micro_aggregation columnfamily."+e);
+			logger.error("Exception while saving micro_aggregation columnfamily.",e);
 		}
 
 		if (keysList != null && keysList.size() > 0) {
@@ -319,7 +313,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				j = new JSONObject(aggregatorJson);
 			} catch (Exception e) {
-				logger.error("Exception while aggregator json conversion."+e);
+				logger.error("Exception while aggregator json conversion.",e);
 			}
 			this.startCounters(eventMap, j, keysList, key);
 			this.postAggregatorUpdate(eventMap, j, keysList, key);
@@ -402,7 +396,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save post aggregated data." + e);
+			logger.error("Exception:Unable to save post aggregated data.", e);
 		}
 	}
 
@@ -451,7 +445,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					try {
 						Thread.sleep(200);
 					} catch (InterruptedException e1) {
-						logger.error("Exception:Thread interrupted." + e);
+						logger.error("Exception:Thread interrupted.", e);
 					}
 					baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + "completion_progress",
 							collectionStatus, m);
@@ -461,7 +455,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save counter aggregated data." + e);
+			logger.error("Exception:Unable to save counter aggregated data.", e);
 		}
 	}
 
@@ -490,28 +484,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),
 								e.get(AGGMODE).toString().equalsIgnoreCase(AUTO) ? 1L : Long.parseLong(eventMap.get(e.get(AGGMODE)).toString()), m);
 					}
-					/**
-					 * Custom logic to handle 0 view count for first resource
-					 * Disabled in 1.3.1 release
-					 * 
-					if (entry.getKey().toString().equalsIgnoreCase(LoaderConstants.TOTALVIEWS.getName())
-							&& (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventMap.get(EVENT_NAME).toString()
-									.equalsIgnoreCase(LoaderConstants.CPV1.getName())) && eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
-
-						ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, 0);
-
-						long views = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName()) != null ? counterColumns.getLongValue(
-								eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TOTALVIEWS.getName(), 0L) : 0L;
-						
-
-						if (views == 0L) {
-							baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
-							baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), localKey, key + SEPERATOR + entry.getKey(),1L, m);
-						}
-					}
-					 * 
-					 * End
-					 */
 
 					if (entry.getKey() != null && entry.getKey().toString().equalsIgnoreCase(CHOICE) && eventMap.get(RESOURCE_TYPE).toString().equalsIgnoreCase(QUESTION)
 							&& eventMap.get(TYPE).toString().equalsIgnoreCase(STOP)) {
@@ -576,7 +548,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save real time class/collection reports data." + e);
+			logger.error("Exception:Unable to save real time class/collection reports data.", e);
 		}
 	}
 
@@ -748,7 +720,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:Unable to save real class/collection aggregated data." + e);
+			logger.error("Exception:Unable to save real class/collection aggregated data.", e);
 		}
 
 	}
@@ -967,57 +939,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		return status;
 
-	}
-
-	/**
-	 * 
-	 * @param eventMap
-	 */
-	public void migrationAndUpdate(Map<String, Object> eventMap) {
-		List<String> classPages = this.getClassPages(eventMap);
-		List<String> keysList = new ArrayList<String>();
-
-		if (eventMap.get(MODE) != null && eventMap.get(MODE).toString().equalsIgnoreCase(STUDY)) {
-
-			if (classPages != null && classPages.size() > 0) {
-				for (String classPage : classPages) {
-					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID).toString(), classPage, 0);
-					boolean isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), eventMap.get(GOORUID).toString(), classPage, 0);
-					if (!isOwner && isStudent) {
-						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
-						keysList.add(ALL_SESSION + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
-					}
-					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classPage + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
-					// keysList.add(FIRSTSESSION+classPage+SEPERATOR+eventMap.get(PARENTGOORUOID)+SEPERATOR+eventMap.get(GOORUID));
-				}
-			}
-
-		}
-
-		this.completeMigration(eventMap, keysList);
-	}
-
-	/**
-	 * 
-	 * @param eventMap
-	 * @param keysList
-	 */
-	public void completeMigration(Map<String, Object> eventMap, List<String> keysList) {
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-		if (keysList != null && keysList.size() > 0) {
-			for (String keyValue : keysList) {
-				ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, 0);
-				long views = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName()) != null ? counterColumns.getLongValue(
-						eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 0L) : 0L;
-				long timeSpent = counterColumns.getColumnByName(eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName()) != null ? counterColumns.getLongValue(
-						eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.TS.getName(), 0L) : 0L;
-				logger.info("views : {} : timeSpent : {} ", views, timeSpent);
-
-				if (views == 0L && timeSpent > 0L) {
-					baseCassandraDao.generateCounter(ColumnFamily.REALTIMECOUNTER.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + LoaderConstants.VIEWS.getName(), 1L, m);
-				}
-			}
-		}
 	}
 
 	/**

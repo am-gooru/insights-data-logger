@@ -141,6 +141,8 @@ public enum LoaderConstants {
 	
 	ITEM_DOT_EDIT("item.edit"),
 	
+	ITEM_DOT_RATE("item.rate"),
+	
 	ITEM_DOT_DELETE("item.delete"),
 	
 	REGISTER_DOT_USER("user.register"),

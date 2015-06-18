@@ -74,21 +74,12 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 					for (String value : columnValue.split(COMMA)) {
 						String orginalColumn = this.formOrginalKeys(value, eventMap);
 						if (orginalColumn != null) {
+							if(eventMap.containsKey(EVENT_NAME) && eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_RATE.getName())){
+								performRating(key, orginalColumn,eventMap,m);		
+								continue;
+							}
 							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
-								if (!orginalColumn.startsWith(_TIME_SPENT + SEPERATOR) && !orginalColumn.startsWith(SUM + SEPERATOR)) {
-									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, 1L, m);
-								} else if (orginalColumn.startsWith(_TIME_SPENT + SEPERATOR)) {
-									baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, orginalColumn, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
-								} else if (orginalColumn.startsWith(SUM + SEPERATOR)) {
-									String[] rowKey = orginalColumn.split(SEPERATOR);
-									baseDao.generateCounter(
-											ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
-											key,
-											orginalColumn,
-											rowKey[1].equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey[1]))) : Long.valueOf(String.valueOf(eventMap
-													.get(rowKey[1].trim()) == null ? "0" : eventMap.get(rowKey[1].trim()))), m);
-
-								}
+								performCounter(key, orginalColumn, eventMap, m);					
 							}
 						}
 					}
@@ -103,6 +94,23 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		}
 	}
 
+	private void performCounter(String key,String column,Map<String, Object> eventMap,MutationBatch m){
+		
+		if (column.startsWith(_TIME_SPENT + SEPERATOR)) {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
+		} else if (column.startsWith(SUM + SEPERATOR)) {
+			String rowKey = column.split(SEPERATOR)[1];
+			baseDao.generateCounter(
+					ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
+					key,
+					column,
+					rowKey.equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey))) : Long.valueOf(String.valueOf(eventMap
+							.get(rowKey.trim()) == null ? "0" : eventMap.get(rowKey.trim()))), m);
+
+		} else {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, 1L, m);
+		}
+	}
 	/**
 	 * 
 	 * @param atmosphereEndPoint
@@ -385,6 +393,21 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 			if (geoData.getLatitude() != null && geoData.getLongitude() != null) {
 				this.saveGeoLocation(geoData, eventMap);
+			}
+		}
+	}
+	
+	private void performRating(String key, String column, Map<String, Object> map, MutationBatch m) {
+
+		if (map.get(PREVIOUS_RATE) == null || (map.get(PREVIOUS_RATE) != null && map.get(PREVIOUS_RATE).equals(0))) {
+			performCounter(key,column,map,m);
+		} else {
+			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), (1L * -1), m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, (Long.valueOf(map.get(PREVIOUS_RATE).toString()) * -1), m);
+				
+			}else{
+				performCounter(key,column,map,m);
 			}
 		}
 	}
