@@ -586,6 +586,8 @@ public interface Constants {
 	
 	public static final String CITY = "city";
 	
+	public static final String DEFAULTCOLUMN = "constant_value";
+	
 	public static final String PREVIOUS_RATE = "previousRate";
 	
 	public static final String COUNT_SEPARATOR_RATINGS = "count~ratings";
