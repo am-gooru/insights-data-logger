@@ -1147,8 +1147,4 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 			}
 		}
 	}
-
-	public static void main(String ag[]){
-		System.out.println("hyyyyy");
-	}
 }
