@@ -46,16 +46,19 @@ import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
+import org.logger.event.cassandra.loader.EventColumns;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.retry.ConstantBackoff;
 
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
 
@@ -82,6 +85,253 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		this.rawUpdateDAO = new RawDataUpdateDAOImpl(this.connectionProvider);
 	}
 
+	public void eventProcessor(Map<String, Object> eventMap) {
+		try {
+			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
+			String gooruUUID = eventMap.containsKey(GOORUID) ? (String)eventMap.get(GOORUID) : null;
+			String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? (String) eventMap.get(CONTENT_GOORU_OID) : null;
+			String lessonGooruId = eventMap.get(LESSON_GOORU_OID) != null ? (String) eventMap.get(LESSON_GOORU_OID) : null;
+			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
+			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : null;
+			String classGooruId = eventMap.get(CLASS_GOORU_OID) != null ? (String) eventMap.get(CLASS_GOORU_OID) : null;
+			String parentGooruId = eventMap.get(PARENT_GOORU_OID) != null ? (String) eventMap.get(PARENT_GOORU_OID) : null;
+			String sessionId = eventMap.get(SESSION_ID) != null ? (String) eventMap.get(SESSION_ID) : null;
+			String eventType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
+			
+			List<String> keysList = new ArrayList<String>();
+			/**
+			 * Mutation Batch for storing session activity details
+			 */
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			String sessionKey = (String) eventMap.get(SESSION_ID);
+			/**
+			 * Generate column list with session id
+			 */
+			if (LoaderConstants.CPV1.getName().equals(eventName)) {
+				List<String> sessionKeys = generateSessionKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+				for (String session : sessionKeys) {
+					Date eventDateTime = new Date(((Number) (eventMap.get(START_TIME))).longValue());
+					String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), session).putColumnIfNotNull(generateColumnKey(sessionId,_SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId,TYPE), eventType)
+							.putColumnIfNotNull(generateColumnKey(sessionId,_EVENT_TIME), eventRowKey);
+				}
+			}
+
+			/**
+			 * Store session activity details
+			 */
+			ColumnListMutation<String> aggregatorColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY.getColumnFamily()), sessionKey);
+			ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), sessionKey);
+			keysList.add(sessionKey);
+			this.generateColumnList(eventMap, aggregatorColumns, counterColumns);
+
+			/**
+			 * If user is playing collection from class , we need to generate All students and All session details.
+			 */
+			if (eventMap.containsKey(CLASS_GOORU_OID) && eventMap.get(CLASS_GOORU_OID) != null) {
+				String allSessionKey = null;
+				if (LoaderConstants.CPV1.getName().equals(eventName)) {
+					allSessionKey = this.generateColumnKey("AS", classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId);
+				} else {
+					allSessionKey = this.generateColumnKey("AS", classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId);
+				}
+				ColumnListMutation<String> allSessionAggColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY.getColumnFamily()), allSessionKey);
+				ColumnListMutation<String> allSessionCounterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), allSessionKey);
+				keysList.add(allSessionKey);
+				this.generateColumnList(eventMap, allSessionAggColumns, allSessionCounterColumns);
+			}
+
+			;
+			m.execute();
+
+			/**
+			 * Storing the latest collection accessed time
+			 */
+			this.storeLastAccessedTime(contentGooruId, ((Number) eventMap.get(END_TIME)).longValue());
+			if (STOP.equalsIgnoreCase((String) eventMap.get(TYPE))) {
+				/**
+				 * Sync data from counter CF to aggregator CF
+				 */
+				this.getDataFromCounterToAggregator(keysList);
+				/**
+				 * Storing score and time spent in the different type of key combination
+				 */
+				if (LoaderConstants.CPV1.getName().equals(eventName)) {
+					String collectionType = (String) eventMap.get(COLLECTION_TYPE);
+					MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+					List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID,collectionType);
+					for (String key : scoreKeyList) {
+						ColumnListMutation<String> scoreColumnList = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), key);
+						this.generateScoreTSColumnList(eventMap, scoreColumnList);
+					}
+					scoreMutation.execute();
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+		}
+	}
+
+	private List<String> generateClassActivityKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID,String collectionType) {
+		List<String> scoreKeyList = new ArrayList<String>();
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId,gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID,collectionType));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID,collectionType));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID,collectionType));
+		return scoreKeyList;
+	}
+
+	private List<String> generateSessionKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,String contentGooruId, String gooruUUID) {
+		List<String> sessionKeyList = new ArrayList<String>();
+		if (classGooruId != null) {
+			String classSessionKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+			sessionKeyList.add(classSessionKey);
+			sessionKeyList.add(generateColumnKey("RS",classSessionKey));
+		}else{
+			sessionKeyList.add(contentGooruId);
+			sessionKeyList.add(generateColumnKey("RS",contentGooruId));
+		}
+		return sessionKeyList;
+	}
+	private void columGenerator(Map<String, Object> eventMap,Map.Entry<String, Object> entry,ColumnListMutation<String> aggregatorColumns,ColumnListMutation<String> counterColumns,String columnPrefix){
+		if (eventMap.containsKey(entry.getValue())) {
+			if (eventMap.get(entry.getValue()) instanceof Number) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(columnPrefix, entry.getKey()), ((Number) eventMap.get(entry.getValue())).longValue());
+				counterColumns.putColumnIfNotNull(this.generateColumnKey(columnPrefix, entry.getKey()), ((Number) eventMap.get(entry.getValue())).longValue());
+			} else {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(columnPrefix, entry.getKey()), (String) eventMap.get(VIEWS_COUNT));
+			}
+		}
+	}
+	
+	private void generateColumnList(Map<String, Object> eventMap, ColumnListMutation<String> aggregatorColumns, ColumnListMutation<String> counterColumns) {
+
+		String contentGooruId = (String) eventMap.get(CONTENT_GOORU_OID);
+		String parentGooruId = (String) eventMap.get(PARENT_GOORU_OID);
+		
+		if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_PLAY_COLUMNS.entrySet()) {
+				columGenerator(eventMap, entry, aggregatorColumns,counterColumns,contentGooruId);
+			}
+
+			if (!eventMap.containsKey(VIEWS_COUNT) && START.equalsIgnoreCase((String) eventMap.get(TYPE))) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, VIEWS), 1L);
+				counterColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, VIEWS), 1L);
+			}
+
+			if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
+				long totalQuestionsCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_COUNT), totalQuestionsCount);
+				if (totalQuestionsCount > 0) {
+					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE), (100 * (((Number) eventMap.get(SCORE)).longValue() / totalQuestionsCount)));
+				}
+			}
+		}
+		if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_RESOURCE_PLAY_COLUMNS.entrySet()) {
+				columGenerator(eventMap, entry, aggregatorColumns, counterColumns,contentGooruId);
+			}
+
+			if (!eventMap.containsKey(VIEWS_COUNT) && START.equalsIgnoreCase((String) eventMap.get(TYPE))) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, VIEWS), 1L);
+				counterColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, VIEWS), 1L);
+			}
+			if (OE.equals(eventMap.get(QUESTION_TYPE))) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, ACTIVE), "false");
+			}
+			if (QUESTION.equals(eventMap.get(RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)))) {
+				String answerStatus = null;
+				int[] attemptTrySequence = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_TRY_SEQ));
+				int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
+				int status = 0;
+				status = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
+				if (status != 0) {
+					status = status - 1;
+				}
+				if (attempStatus.length == 0) {
+					answerStatus = LoaderConstants.SKIPPED.getName();
+				} else if (attempStatus[status] == 0) {
+					answerStatus = LoaderConstants.INCORRECT.getName();
+				} else if (attempStatus[status] == 1) {
+					answerStatus = LoaderConstants.CORRECT.getName();
+				}
+				String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
+				counterColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, option), 1);
+				counterColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, answerStatus), 1);
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, OPTIONS), option);
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
+			}
+		} else if (LoaderConstants.CRAV1.getName().equals(eventMap.get(EVENT_NAME))) {
+
+			long reaction = DataUtils.formatReactionString((String) eventMap.get(REACTION_TYPE));
+			/**
+			 * Resource Reaction
+			 */
+			aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, REACTION), reaction);
+			/**
+			 * Collection Reaction
+			 */
+			aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(parentGooruId, TOTAL_REACTION), reaction);
+			aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(parentGooruId, REACTED_COUNT), 1L);
+
+		} else if (LoaderConstants.RUFB.getName().equals(eventMap.get(EVENT_NAME))) {
+			for (Map.Entry<String, Object> entry : EventColumns.USER_FEEDBACK_COLUMNS.entrySet()) {
+				columGenerator(eventMap, entry, aggregatorColumns, counterColumns,contentGooruId);
+			}
+		}
+	}
+
+	private void generateScoreTSColumnList(Map<String, Object> eventMap, ColumnListMutation<String> aggregatorColumns) {
+		String contentGooruId = (String) eventMap.get(CONTENT_GOORU_OID);
+		if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
+			long totalQuestionsCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+			if (totalQuestionsCount > 0) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE), (100 * (((Number) eventMap.get(SCORE)).longValue() / totalQuestionsCount)));
+			}
+		}
+		aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, TIME_SPENT), (((Number) eventMap.get(TOTALTIMEINMS)).longValue()));
+		aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _COLLECTION_TYPE), (String) eventMap.get(COLLECTION_TYPE));
+	}
+
+	/**
+	 * Generate aggregator from counter CF
+	 * 
+	 * @param keysList
+	 */
+	private void getDataFromCounterToAggregator(List<String> keysList) {
+		try {
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			for (String key : keysList) {
+				ColumnList<String> counterData = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), key, 0);
+				ColumnListMutation<String> aggregatorColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY.getColumnFamily()), key);
+				for (Column<String> column : counterData) {
+					aggregatorColumns.putColumnIfNotNull(column.getName(), column.getLongValue());
+				}
+			}
+			m.execute();
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+		}
+	}
+
+	/**
+	 * This method says what is the last accessed time of collection or assessment
+	 * 
+	 * @param gooruOid
+	 * @param timestamp
+	 */
+	private void storeLastAccessedTime(String gooruOid, long timestamp) {
+		try {
+			MutationBatch resourceMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			baseCassandraDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), gooruOid, LAST_ACCESSED, timestamp, resourceMutation);
+			resourceMutation.executeAsync();
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+		}
+	}
+
 	/**
 	 * This is process all the real time reports event(collection.play,resource.play,collection.play,etc..)
 	 * 
@@ -94,218 +344,77 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			cache.clear();
 		}
 
-		List<String> pathways = getPathways(eventMap);
-		 
+		// List<String> pathways = getPathways(eventMap);
+
 		String eventName = eventMap.containsKey(EVENT_NAME) ? eventMap.get(EVENT_NAME).toString() : EMPTY_STRING;
+
 		String gooruUUID = eventMap.containsKey(GOORUID) ? eventMap.get(GOORUID).toString() : EMPTY_STRING;
 
-		String key = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
+		String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
+
+		String classGooruId = eventMap.get(CLASS_GOORU_OID) != null ? eventMap.get(CLASS_GOORU_OID).toString() : null;
+
+		String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? eventMap.get(UNIT_GOORU_OID).toString() : null;
+
+		String lessonGooruId = eventMap.get(LESSON_GOORU_OID) != null ? eventMap.get(LESSON_GOORU_OID).toString() : null;
+
+		String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? eventMap.get(COURSE_GOORU_OID).toString() : null;
+
 		List<String> keysList = new ArrayList<String>();
 
 		MutationBatch resourceMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
 		MutationBatch microAggMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 
-		boolean isStudent = false;
 		/*
 		 * 
 		 * Update last accessed time/user
 		 */
 
-		baseCassandraDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), key, LAST_ACCESSED, Long.parseLong(EMPTY_STRING + eventMap.get(END_TIME)),
-				resourceMutation);
-		baseCassandraDao
-				.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), key, LAST_ACCESSED_USER, gooruUUID, resourceMutation);
+		baseCassandraDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contentGooruId, LAST_ACCESSED, Long.parseLong(EMPTY_STRING + eventMap.get(END_TIME)), resourceMutation);
+		baseCassandraDao.generateNonCounter(ColumnFamily.RESOURCE.getColumnFamily(), contentGooruId, LAST_ACCESSED_USER, gooruUUID, resourceMutation);
 
 		try {
 			resourceMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving last accessed time.",e);
+			logger.error("Exception while saving last accessed time.", e);
 		}
 		/* Maintain session - Start */
 
 		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			Date eventDateTime = new Date(Long.parseLong(EMPTY_STRING + eventMap.get(START_TIME)));
 			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), key + SEPERATOR + gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
-			 if(eventMap.get(PARENT_GOORU_OID) != null && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())){
-		        	if(pathways != null && pathways.size() > 0){
-						for(String pathway : pathways){
-							String classUid = null;
-							if(cache.containsKey(pathway)){
-								classUid = cache.get(pathway).toString();
-							}else{
-								classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-								if(classUid != null){
-									cache.put(pathway, classUid);
-								}
-							}
-							if(StringUtils.isNotBlank(classUid)){
-							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+ pathway+SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
-							baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),classUid +SEPERATOR+eventMap.get(CONTENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
-						}
-		        	}
-		        	}
-		        }
+			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), contentGooruId + SEPERATOR + gooruUUID, eventMap.get(SESSION_ID).toString(), eventRowKey,
+					microAggMutation);
+
+			if (unitGooruId != null && lessonGooruId != null) {
+				boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classGooruId, 0);
+				if (!isOwner) {
+					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),
+							classGooruId + SEPERATOR + unitGooruId + SEPERATOR + lessonGooruId + SEPERATOR + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
+							eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
+					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + SEPERATOR + classGooruId + SEPERATOR + unitGooruId + SEPERATOR
+							+ lessonGooruId + SEPERATOR + eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID), eventMap.get(SESSION_ID).toString(), eventRowKey, microAggMutation);
+				}
+			}
 		}
 
 		/* Maintain session - END */
 
-		if (eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			questionCountInQuiz = this.getQuestionCount(eventMap);
-			if(pathways != null && pathways.size() > 0){
-				for(String pathway : pathways) {
-					String classUid = null;
-					if(cache.containsKey(pathway)){
-						classUid = cache.get(pathway).toString();
-					}else{
-						classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-						if(classUid != null){
-							cache.put(pathway, classUid);
-						}
-					}
-					if(StringUtils.isNotBlank(classUid)){
-					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
+		if (classGooruId != null && unitGooruId != null && lessonGooruId != null) {
+			keysList.add(ALL_SESSION + classGooruId + SEPERATOR + unitGooruId + SEPERATOR + lessonGooruId + SEPERATOR + contentGooruId);
 
-					logger.info("isOwner : {}", isOwner);
-
-					if (cache.containsKey(gooruUUID + SEPERATOR + classUid)) {
-						isStudent = (Boolean) cache.get(gooruUUID + SEPERATOR + classUid);
-					} else {
-
-						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
-
-						int retryCount = 1;
-						while (retryCount < 5 && !isStudent) {
-							try {
-								Thread.sleep(500);
-							} catch (Exception e) {
-								logger.error("Exception while waiting for classpage join."+e);
-							}
-							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
-							logger.info("Retrying to check if a student : {}", retryCount);
-							retryCount++;
-						}
-						cache.put(gooruUUID + SEPERATOR + classUid, isStudent);
-					}
-					logger.info("isStudent : {}", isStudent);
-
-					eventMap.put(CLASSPAGEGOORUOID, classUid);
-					eventMap.put(PATHWAYGOORUOID, pathway);
-
-					if (!isOwner && isStudent) {
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + key);
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + key);
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + key + SEPERATOR + eventMap.get(GOORUID));
-					}
-
-					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway +  SEPERATOR + key + SEPERATOR + gooruUUID);
-					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + key + SEPERATOR + gooruUUID);
-					logger.info("Recent Key 1: {} ", eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway +  SEPERATOR + key + SEPERATOR + gooruUUID);
-					logger.info("Recent Key 2: {} ", eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + key + SEPERATOR + gooruUUID);
-					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classUid + SEPERATOR + pathway +  SEPERATOR + key, gooruUUID,
-							eventMap.get(SESSION_ID).toString(), microAggMutation);
-					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classUid + SEPERATOR + key, gooruUUID,
-							eventMap.get(SESSION_ID).toString(), microAggMutation);
-
-				}
-			}
-			}
-			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString());
-			keysList.add(ALL_SESSION + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
-			keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID).toString() + SEPERATOR + eventMap.get(GOORUID));
-			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + key, gooruUUID,
-					eventMap.get(SESSION_ID).toString(), microAggMutation);
+		} else {
+			keysList.add(SESSION_ID);
 		}
 
-		if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
-
-			if(pathways != null && pathways.size() > 0){
-				for(String pathway : pathways){
-					String classUid = null;
-					if(cache.containsKey(pathway)){
-						classUid = cache.get(pathway).toString();
-					}else{
-						classUid = baseCassandraDao.getParentId(ColumnFamily.COLLECTIONITEM.getColumnFamily(), pathway,0);
-						if(classUid != null){
-							cache.put(pathway, classUid);
-						}
-					}
-					if(StringUtils.isNotBlank(classUid)){
-					boolean isOwner = baseCassandraDao.getClassPageOwnerInfo(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
-
-					if (cache.containsKey(gooruUUID + SEPERATOR + classUid)) {
-						isStudent = (Boolean) cache.get(eventMap.get(GOORUID) + SEPERATOR + classUid);
-					} else {
-
-						isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
-
-						int retryCount = 1;
-						while (retryCount < 5 && !isStudent) {
-							try {
-								Thread.sleep(500);
-							} catch (Exception e) {
-								logger.error("Exception while waiting for classpage join.");
-							}
-							;
-							isStudent = baseCassandraDao.isUserPartOfClass(ColumnFamily.CLASSPAGE.getColumnFamily(), gooruUUID, classUid, 0);
-							logger.info("Retrying to check if a student : {}", retryCount);
-							retryCount++;
-						}
-						cache.put(gooruUUID + SEPERATOR + classUid, isStudent);
-					}
-					logger.info("isStudent : {}", isStudent);
-					eventMap.put(CLASSPAGEGOORUOID, classUid);
-					if (!isOwner && isStudent) {
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID));
-						keysList.add(ALL_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-						keysList.add(ALL_SESSION+classUid+SEPERATOR+eventMap.get(PARENT_GOORU_OID));
-						keysList.add(ALL_SESSION+classUid+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-					
-					}
-					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-					keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-					logger.info("Recent Key 3: {} ",eventMap.get(SESSION_ID) + SEPERATOR + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + classUid + SEPERATOR + pathway + SEPERATOR + eventMap.get(PARENT_GOORU_OID), gooruUUID
-							, eventMap.get(SESSION_ID).toString(), microAggMutation);
-					
-					keysList.add(eventMap.get(SESSION_ID)+SEPERATOR+classUid+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-					baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(),RECENT_SESSION+classUid+SEPERATOR+eventMap.get(PARENT_GOORU_OID).toString(), eventMap.get(GOORUID).toString(), eventMap.get(SESSION_ID).toString(), microAggMutation);
-
-				}
-			}
-			}
-			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID));
-			keysList.add(ALL_SESSION + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-			keysList.add(eventMap.get(SESSION_ID) + SEPERATOR + eventMap.get(PARENT_GOORU_OID) + SEPERATOR + gooruUUID);
-			baseCassandraDao.generateNonCounter(ColumnFamily.MICROAGGREGATION.getColumnFamily(), RECENT_SESSION + eventMap.get(PARENT_GOORU_OID), gooruUUID,
-					eventMap.get(SESSION_ID).toString(), microAggMutation);
-
-		}
-
-		if (eventName.equalsIgnoreCase(LoaderConstants.RUFB.getName())) {
-			if(eventMap.containsKey(SESSION) && (eventMap.get(SESSION) == null || (eventMap.get(SESSION) != null && (eventMap.get(SESSION).toString().equalsIgnoreCase("null") || StringUtils.isBlank(eventMap.get(SESSION).toString()))))){
-				eventMap.put(SESSION, "AS");
-			}
-			if(eventMap.containsKey("classId") && eventMap.get("classId") != null && eventMap.containsKey("pathwayId") && eventMap.get("pathwayId") != null){
-				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(ALL_SESSION+eventMap.get("classId")+SEPERATOR+eventMap.get("pathwayId")+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-			}
-			if(eventMap.containsKey("classId") && eventMap.get("classId") != null ){
-				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(ALL_SESSION+eventMap.get("classId")+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-			}
-				keysList.add(eventMap.get(SESSION)+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));
-				keysList.add(ALL_SESSION+SEPERATOR+eventMap.get(PARENT_GOORU_OID)+SEPERATOR+eventMap.get(GOORUID));	
-		}
 		/**
 		 * Saving data in micro_aggregation columnfamily.
 		 */
 		try {
 			microAggMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception while saving micro_aggregation columnfamily.",e);
+			logger.error("Exception while saving micro_aggregation columnfamily.", e);
 		}
 
 		if (keysList != null && keysList.size() > 0) {
@@ -313,11 +422,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				j = new JSONObject(aggregatorJson);
 			} catch (Exception e) {
-				logger.error("Exception while aggregator json conversion.",e);
+				logger.error("Exception while aggregator json conversion.", e);
 			}
-			this.startCounters(eventMap, j, keysList, key);
-			this.postAggregatorUpdate(eventMap, j, keysList, key);
-			this.startCounterAggregator(eventMap, j, keysList, key);
+			this.startCounters(eventMap, j, keysList, contentGooruId);
+			this.postAggregatorUpdate(eventMap, j, keysList, contentGooruId);
+			this.startCounterAggregator(eventMap, j, keysList, contentGooruId);
 		}
 	}
 
@@ -750,7 +859,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			answersJson = new JSONObject(answers);
 		} catch (JSONException e) {
-			logger.error("Exception while conversion answer object as JSON."+e);
+			logger.error("Exception while conversion answer object as JSON." + e);
 		}
 		JSONArray names = answersJson.names();
 		String firstChoosenAns = null;
@@ -759,7 +868,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			try {
 				firstChoosenAns = names.getString(0);
 			} catch (JSONException e) {
-				logger.error("Exception while conversion answer choice as JSON."+e);
+				logger.error("Exception while conversion answer choice as JSON." + e);
 			}
 		}
 
@@ -777,27 +886,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		baseCassandraDao.generateNonCounter(ColumnFamily.REALTIMEAGGREGATOR.getColumnFamily(), keyValue, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + CHOICE, firstChoosenAns, m);
 
 		return m;
-	}
-
-	/**
-	 * 
-	 * @param parentIds
-	 * @return
-	 */
-	private List<String> getClassPagesFromItems(List<String> parentIds) {
-		List<String> classPageGooruOids = new ArrayList<String>();
-		for (String classPageGooruOid : parentIds) {
-			String type = null;
-			ColumnList<String> resource = baseCassandraDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~" + classPageGooruOid, 0);
-			if (resource != null) {
-				type = resource.getColumnByName("type_name") != null ? resource.getColumnByName("type_name").getStringValue() : null;
-			}
-
-			if (type != null && type.equalsIgnoreCase(LoaderConstants.CLASSPAGE.getName())) {
-				classPageGooruOids.add(classPageGooruOid);
-			}
-		}
-		return classPageGooruOids;
 	}
 
 	/**
@@ -833,7 +921,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (cache.containsKey(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID))) {
 				classPages = (List<String>) cache.get(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID));
 			} else {
-				if(eventMap.containsKey(PARENT_GOORU_OID) && eventMap.get(PARENT_GOORU_OID) != null && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())){
+				if (eventMap.containsKey(PARENT_GOORU_OID) && eventMap.get(PARENT_GOORU_OID) != null && StringUtils.isNotBlank(eventMap.get(PARENT_GOORU_OID).toString())) {
 					classPages = new ArrayList<String>();
 					classPages.add(eventMap.get(PARENT_GOORU_OID).toString());
 					cache.put(eventMap.get(EVENT_ID) + SEPERATOR + eventMap.get(CONTENT_GOORU_OID), classPages);
@@ -1420,10 +1508,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			Map<String, Object> collectionMap = (Map<String, Object>) eventDataMap.get(COLLECTION);
 			ResourceCo collection = new ResourceCo();
 			rawUpdateDAO.processCollection(collectionMap, collection);
-			if(eventMap.get(PARENT_CONTENT_ID) != null){
+			if (eventMap.get(PARENT_CONTENT_ID) != null) {
 				collection.setContentId(Long.valueOf(eventMap.get(PARENT_CONTENT_ID).toString()));
 			}
-			if(collectionMap.get(VERSION) != null){
+			if (collectionMap.get(VERSION) != null) {
 				collection.setVersion(Integer.valueOf(collectionMap.get(VERSION).toString()));
 			}
 			baseCassandraDao.updateResourceEntity(collection);
@@ -1532,7 +1620,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			logger.error("Unable to save resource entity for Id {} due to {}", eventDataMap.get(GOORU_OID).toString(), ex);
 		}
 	}
-	
+
 	public List<String> getPathways(Map<String, Object> eventMap) {
 		List<String> pathway = null;
 		if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && eventMap.containsKey(PARENT_GOORU_OID) && eventMap.get(PARENT_GOORU_OID) != null
@@ -1571,7 +1659,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (parentEventId != null) {
 					ColumnList<String> C = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), parentEventId, 0);
 					if (C.getStringValue(_EVENT_NAME, null) != null && (C.getStringValue(_EVENT_NAME, null)).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-						if(C.getStringValue(_PARENT_GOORU_OID, null) != null){
+						if (C.getStringValue(_PARENT_GOORU_OID, null) != null) {
 							pathway = new ArrayList<String>();
 							pathway.add(C.getStringValue(_PARENT_GOORU_OID, null));
 						}
@@ -1582,19 +1670,28 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		return pathway;
 	}
-	
-	private List<String> getPathwayFromItems(List<String> parentIds){
+
+	private List<String> getPathwayFromItems(List<String> parentIds) {
 		List<String> pathwayIds = new ArrayList<String>();
-		for(String parentId : parentIds){
+		for (String parentId : parentIds) {
 			String type = null;
-			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(),parentId,0);
+			ColumnList<String> resourcesDetail = baseCassandraDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), parentId, 0);
 			type = resourcesDetail.getStringValue("resourceType", null);
 			logger.info("resourceType : " + type);
-			if(type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())){
+			if (type != null && type.equalsIgnoreCase(LoaderConstants.PATHWAY.getName())) {
 				pathwayIds.add(parentId);
 			}
 		}
 		return pathwayIds;
 	}
-	
+
+	private String generateColumnKey(String... columns) {
+		StringBuilder columnKey = new StringBuilder();
+		for (String column : columns) {
+			columnKey.append(columnKey.length() > 0 ? SEPERATOR : EMPTY);
+			columnKey.append(column);
+		}
+		return columnKey.toString();
+
+	}
 }

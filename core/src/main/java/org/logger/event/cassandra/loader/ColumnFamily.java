@@ -76,9 +76,15 @@ public enum ColumnFamily {
 	
 	USER("user"),
 	
-	ANONYMIZEDUSERDATA("anonymized_user_data")
+	ANONYMIZEDUSERDATA("anonymized_user_data"),
 	
+	SESSIONS("sessions"),
 	
+	SESSION_ACTIVITY("session_activity"),
+	
+	SESSION_ACTIVITY_COUNTER("session_activity_counter"),
+	
+	CLASS_ACTIVITY("class_activity"),
 	;
 	
 	String name;
