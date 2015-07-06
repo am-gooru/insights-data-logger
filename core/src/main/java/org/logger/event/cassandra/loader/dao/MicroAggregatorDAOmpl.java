@@ -151,20 +151,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (LoaderConstants.CPV1.getName().equals(eventName)) {
 					String collectionType = (String) eventMap.get(COLLECTION_TYPE);
 					long scoreInPercentage = 0L;
+					if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
+						long totalQuestionsCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+						if (totalQuestionsCount > 0) {
+							scoreInPercentage = (100 * ((Number) eventMap.get(SCORE)).longValue() / totalQuestionsCount);
+						}
+					}
 					MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 					List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID,collectionType);
 					for (String key : scoreKeyList) {
 						ColumnListMutation<String> scoreAggregator = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), key);
 						ColumnListMutation<String> scoreCounter = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), key);
-						
-						if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
-							long totalQuestionsCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
-							if (totalQuestionsCount > 0) {
-								scoreInPercentage = (100 * ((Number) eventMap.get(SCORE)).longValue() / totalQuestionsCount);
-								aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE),scoreInPercentage );
-							}
-						}
-						
+						scoreAggregator.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE),scoreInPercentage);
 						for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
 							columGenerator(eventMap, entry, scoreAggregator,scoreCounter,contentGooruId);
 							columGenerator(eventMap, entry, scoreAggregator,scoreCounter,null);
