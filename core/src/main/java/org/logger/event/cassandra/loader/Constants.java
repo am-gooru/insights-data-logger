@@ -12,6 +12,8 @@ public interface Constants {
     
     public static final  String COMMA = ",";
     
+    public static final  String EMPTY = "";
+    
 	public static final  String CONTEXT = "context";
 	
 	public static final  String _PAYLOAD_OBJECT = "pay_load_object";
@@ -42,17 +44,35 @@ public interface Constants {
 	
 	public static final  String PARENT_GOORU_OID = "parentGooruId";
 	
+	public static final  String CLASS_GOORU_OID = "classGooruId";
+	
+	public static final  String UNIT_GOORU_OID = "unitGooruId";
+	
+	public static final  String LESSON_GOORU_OID = "lessonGooruId";
+	
+	public static final  String COURSE_GOORU_OID = "courseGooruId";
+	
 	public static final  String TIMEINMSEC = "timeInMillSec";
 	
 	public static final  String TOTALTIMEINMS = "totalTimeSpentInMs";
 	
 	public static final  String TIMESPENTINMS = "timeSpentInMs";
 	
+	public static final  String AVG_TIME_SPENT = "avg_time_spent";
+	
+	public static final  String TIME_SPENT = "time_spent";
+	
+	public static final  String _COLLECTION_TYPE = "collection_type";
+	
+	public static final  String COLLECTION_TYPE = "collectionType";
+	
 	public static final  String _EVENT_ID = "event_id";
 	
 	public static final  String EVENT_ID = "eventId";
 	
 	public static final  String EVENT_TIME = "eventTime";
+	
+	public static final  String _EVENT_TIME = "event_time";
 	
 	public static final  String PARENT_EVENT_ID = "parentEventId";
 	
@@ -122,6 +142,12 @@ public interface Constants {
 	
 	public static final  String REACTION_TYPE = "reactionType";
 	
+	public static final  String REACTION = "reaction";
+	
+	public static final  String TOTAL_REACTION = "total_reaction";
+	
+	public static final  String REACTED_COUNT = "reacted_count";
+	
 	public static final  String RESOURCE_TYPE = "resourceType";
 	
 	public static final  String QUESTION_TYPE = "questionType";
@@ -172,6 +198,10 @@ public interface Constants {
 	
 	public static final  String VIEWS = "views";
 	
+	public static final  String VIEWS_COUNT = "viewsCount";
+	
+	public static final  String ATTEMPT_COUNT = "attemptCount";
+	
 	public static final  String COMPLETED = "completed";
 	
 	public static final  String COMPLETED_EVENT = "completed-event";
@@ -207,6 +237,8 @@ public interface Constants {
 	public static final  String ATTMPT_STATUS = "attemptStatus";
 	
 	public static final  String COLLECTION = "collection";
+	
+	public static final  String ASSESSMENT = "assessment";
 	
 	public static final  String ANSWER_ID = "answerId";
 	
@@ -344,6 +376,12 @@ public interface Constants {
 	
 	public static final  String SCORE = "score";
 	
+	public static final  String TOTAL_SCORE = "score";
+	
+	public static final  String SCORE_IN_PERCENTAGE = "score_in_percentage";
+	
+	public static final  String TOTAL_QUESTIONS_COUNT = "totalQuestionsCount";
+	
 	public static final  String _QUESTION_COUNT = "question_count";
 	
 	public static final  String _SCORE_IN_PERCENTAGE = "grade_in_percentage";
@@ -391,6 +429,8 @@ public interface Constants {
 	public static final  String AGG_JSON = "aggregator_json";
 	
 	public static final  String ANONYMOUS_SESSION = "anonymous~session";
+	
+	public static final  String ANONYMOUS = "ANONYMOUS";
 	
 	public static final  String ALL_USER_SESSION = "all~user~session";
 	
