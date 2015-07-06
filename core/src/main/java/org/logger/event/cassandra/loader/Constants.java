@@ -238,6 +238,8 @@ public interface Constants {
 	
 	public static final  String COLLECTION = "collection";
 	
+	public static final  String ASSESSMENT = "assessment";
+	
 	public static final  String ANSWER_ID = "answerId";
 	
 	public static final  String OPEN_ENDED_TEXT = "openEndedText";
@@ -373,6 +375,8 @@ public interface Constants {
 	public static final  String RESOURCE_GOORU_OID = "resourceGooruOid";
 	
 	public static final  String SCORE = "score";
+	
+	public static final  String TOTAL_SCORE = "score";
 	
 	public static final  String SCORE_IN_PERCENTAGE = "score_in_percentage";
 	

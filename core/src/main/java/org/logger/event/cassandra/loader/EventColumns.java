@@ -10,13 +10,21 @@ public class EventColumns implements Constants{
 	public static final Map<String, Object> COLLECTION_RESOURCE_PLAY_COLUMNS;
 	public static final Map<String, Object> CREATE_REACTION_COLUMNS;
 	public static final Map<String, Object> USER_FEEDBACK_COLUMNS;
-
+	public static final Map<String, Object> SCORE_AGGREGATE_COLUMNS;
+	
+	static { 
+		Map<String, Object> cpColumns = new HashMap<String, Object>();
+		cpColumns.put(VIEWS, VIEWS_COUNT);
+		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
+		SCORE_AGGREGATE_COLUMNS = Collections.unmodifiableMap(cpColumns);
+	}
 	static {
 		Map<String, Object> cpColumns = new HashMap<String, Object>();
 		cpColumns.put(VIEWS, VIEWS_COUNT);
 		cpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
 		cpColumns.put(SCORE, SCORE);
+		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
