@@ -16,6 +16,7 @@ public class EventColumns implements Constants{
 		Map<String, Object> cpColumns = new HashMap<String, Object>();
 		cpColumns.put(VIEWS, VIEWS_COUNT);
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
+		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		SCORE_AGGREGATE_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
