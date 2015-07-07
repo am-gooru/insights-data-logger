@@ -87,6 +87,8 @@ public enum ColumnFamily {
 	CLASS_ACTIVITY("class_activity"),
 	
 	CLASS_ACTIVITY_COUNTER("class_activity_counter"),
+	
+	CONTENT_META("content_meta"),
 	;
 	
 	String name;

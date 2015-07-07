@@ -158,29 +158,32 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}
 					}
 					MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-					List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID,collectionType);
+					List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 					for (String key : scoreKeyList) {
 						ColumnListMutation<String> scoreAggregator = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), key);
 						ColumnListMutation<String> scoreCounter = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), key);
-						scoreAggregator.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE),scoreInPercentage);
+						scoreAggregator.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE_IN_PERCENTAGE), scoreInPercentage);
 						for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
-							columGenerator(eventMap, entry, scoreAggregator,scoreCounter,contentGooruId);
-							columGenerator(eventMap, entry, scoreAggregator,scoreCounter,null);
+							columGenerator(eventMap, entry, scoreAggregator, scoreCounter, contentGooruId);
+							columGenerator(eventMap, entry, scoreAggregator, scoreCounter, null);
 						}
 					}
-					List<String> classActivityKeys = generateClassActivityAggregatedKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID,collectionType);
+					List<String> classActivityKeys = generateClassActivityAggregatedKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 					for (String key : classActivityKeys) {
 						ColumnListMutation<String> scoreAggregator = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), key);
 						ColumnListMutation<String> scoreCounter = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), key);
-						if(COLLECTION.equalsIgnoreCase(collectionType)){
+						if (COLLECTION.equalsIgnoreCase(collectionType)) {
 							scoreCounter.incrementCounterColumn(contentGooruId, ((Number) eventMap.get(TOTALTIMEINMS)).longValue());
-						}else if(ASSESSMENT.equalsIgnoreCase(collectionType)){
+						} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
 							scoreAggregator.putColumnIfNotNull(contentGooruId, scoreInPercentage);
 						}
 					}
 					scoreMutation.execute();
-					this.getDataFromCounterToAggregator(scoreKeyList,ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(),ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
-					this.getDataFromCounterToAggregator(classActivityKeys,ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(),ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
+					this.getDataFromCounterToAggregator(scoreKeyList, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
+					this.getDataFromCounterToAggregator(classActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
+					if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
+						computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -188,6 +191,58 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
+	private void computeScoreByLevel(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID, String collectionType) {
+		try {
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			/**
+			 * calculate score in Course level
+			 */
+			Long totalCourseScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
+			Long assessmentsCountInCourse = getAssessmentCount(courseGooruId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(SCORE_IN_PERCENTAGE,
+					(totalCourseScore / assessmentsCountInCourse));
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType)).putColumn(
+					SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
+
+			/**
+			 * calculate score in Unit level
+			 */
+			Long totalUnitScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
+			Long assessmentsCountInUnit = getAssessmentCount(unitGooruId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID)).putColumn(
+					SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType))
+					.putColumn(SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
+
+			/**
+			 * calculate score in Lesson level
+			 */
+			Long totalLessonScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId,gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
+			Long assessmentsCountInLesson = getAssessmentCount(lessonGooruId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId, gooruUUID)).putColumn(
+					SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId, gooruUUID, collectionType))
+					.putColumn(SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
+
+			m.execute();
+		} catch (Exception e) {
+			logger.error("Exception", e);
+		}
+	}
+	private Long getTotalScore(String key){
+		long score = 0L;
+		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), key, 0);
+		for(Column<String> scoreColumn : scoreList){
+			score += scoreColumn.getLongValue();
+		}
+		return score;
+	}
+	
+	private Long getAssessmentCount(String key){
+		ColumnList<String> contentMetadata = baseCassandraDao.readWithKey(ColumnFamily.CONTENT_META.getColumnFamily(), key, 0);
+		return contentMetadata.getLongValue(ASSESSMENT_COUNT, 0L);
+	}
+	
 	private List<String> generateClassActivityKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID,String collectionType) {
 		List<String> scoreKeyList = new ArrayList<String>();
 		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId,gooruUUID));
