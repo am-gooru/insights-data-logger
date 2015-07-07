@@ -199,31 +199,35 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 */
 			Long totalCourseScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInCourse = getAssessmentCount(courseGooruId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(SCORE_IN_PERCENTAGE,
-					(totalCourseScore / assessmentsCountInCourse));
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType)).putColumn(
-					SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
-
+			if (assessmentsCountInCourse > 0) {
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(SCORE_IN_PERCENTAGE,
+						(totalCourseScore / assessmentsCountInCourse));
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType)).putColumn(
+						SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
+			}
 			/**
 			 * calculate score in Unit level
 			 */
 			Long totalUnitScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInUnit = getAssessmentCount(unitGooruId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID)).putColumn(
-					SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType))
-					.putColumn(SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
-
+			if (assessmentsCountInUnit > 0) {
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID)).putColumn(
+						SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType))
+						.putColumn(SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
+			}
 			/**
 			 * calculate score in Lesson level
 			 */
 			Long totalLessonScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId,gooruUUID, collectionType, SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInLesson = getAssessmentCount(lessonGooruId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId, gooruUUID)).putColumn(
-					SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId, gooruUUID, collectionType))
-					.putColumn(SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
-
+			if (assessmentsCountInLesson > 0) {
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID))
+						.putColumn(SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()),
+						generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType)).putColumn(SCORE_IN_PERCENTAGE,
+						(totalLessonScore / assessmentsCountInLesson));
+			}
 			m.execute();
 		} catch (Exception e) {
 			logger.error("Exception", e);
