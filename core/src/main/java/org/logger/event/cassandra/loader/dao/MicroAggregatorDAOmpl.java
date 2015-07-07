@@ -240,7 +240,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	
 	private Long getAssessmentCount(String key){
 		ColumnList<String> contentMetadata = baseCassandraDao.readWithKey(ColumnFamily.CONTENT_META.getColumnFamily(), key, 0);
-		return contentMetadata.getLongValue("assessment_count", 0L);
+		return contentMetadata.getLongValue(ASSESSMENT_COUNT, 0L);
 	}
 	
 	private List<String> generateClassActivityKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID,String collectionType) {
