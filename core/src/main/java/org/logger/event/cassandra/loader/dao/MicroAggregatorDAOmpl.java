@@ -355,14 +355,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventRowKey);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, classSessionKey)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), classSessionKey).putColumnIfNotNull(sessionId, eventType);
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), classSessionKey).putColumnIfNotNull(sessionId, eventRowKey);
 
 			} else {
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(contentGooruId, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventRowKey);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, contentGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), contentGooruId).putColumnIfNotNull(sessionId, eventType);
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), contentGooruId).putColumnIfNotNull(sessionId, eventRowKey);
 			}
 
 		}

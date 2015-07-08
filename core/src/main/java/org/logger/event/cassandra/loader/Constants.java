@@ -70,6 +70,8 @@ public interface Constants {
 	
 	public static final  String COLLECTION_TYPE = "collectionType";
 	
+	public static final  String EVIDENCE = "evidence";
+	
 	public static final  String _EVENT_ID = "event_id";
 	
 	public static final  String EVENT_ID = "eventId";
