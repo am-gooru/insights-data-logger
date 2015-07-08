@@ -6,6 +6,8 @@ public interface Constants {
     
     public static final  String RECENT_SESSION = "RS~";
     
+    public static final  String RS= "RS";
+    
     public static final  String ALL_SESSION = "AS~";
     
     public static final  String SEPERATOR = "~";
@@ -26,13 +28,13 @@ public interface Constants {
 	
 	public static final  String METRICS = "metrics";
 	
-	public static final  String LAST_ACCESSED_USER_UID = "last~accessed~useruid";
+	public static final  String LAST_ACCESSED_USER_UID = "last_accessed_useruid";
 	
-	public static final  String _LAST_ACCESSED_USER = "last~accessed~user";
+	public static final  String _LAST_ACCESSED_USER = "last_accessed_user";
 	
 	public static final  String LAST_ACCESSED_USER = "lastAccessedUser";
 	
-	public static final  String _LAST_ACCESSED = "last~accessed";
+	public static final  String _LAST_ACCESSED = "last_accessed";
 	
 	public static final  String LAST_ACCESSED = "lastAccessed";
 	
@@ -271,7 +273,9 @@ public interface Constants {
 	public static final  String MINUTE_DATE_FORMATTER = "yyyyMMddkkmm";
 
 	public static final  String FIELDS = "fields";
-		
+	
+	public static final  String INFO = "info";
+	
 	public static final  String _START_TIME = "start_time";
 	
 	public static final  String START_TIME = "startTime";
@@ -380,13 +384,15 @@ public interface Constants {
 	
 	public static final  String TOTAL_SCORE = "score";
 	
-	public static final  String SCORE_IN_PERCENTAGE = "score_in_percentage";
+	public static final  String _SCORE_IN_PERCENTAGE = "score_in_percentage";
+	
+	public static final  String SCORE_IN_PERCENTAGE = "scoreInPercentage";
 	
 	public static final  String TOTAL_QUESTIONS_COUNT = "totalQuestionsCount";
 	
 	public static final  String _QUESTION_COUNT = "question_count";
 	
-	public static final  String _SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	public static final  String _GRADE_IN_PERCENTAGE = "grade_in_percentage";
 	
 	public static final  String ACTIVE = "active";
 	

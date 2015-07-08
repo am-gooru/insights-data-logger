@@ -133,13 +133,13 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		clientResource.post(forms.getWebRepresentation());
 		logger.info("atmos status : {} ", clientResource.getStatus());
 	}
-
-	/**
+/*
+	*//**
 	 * 
 	 * @param atmosphereEndPoint
 	 * @param eventMap
 	 * @throws JSONException
-	 */
+	 *//*
 	public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String, Object> eventMap) throws JSONException {
 
 		JSONObject filtersObj = new JSONObject();
@@ -182,7 +182,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		}
 
 	}
-
+*/
 	/**
 	 * 
 	 * @param geoData
