@@ -24,9 +24,7 @@ package org.logger.event.cassandra.loader.dao;
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,13 +33,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
@@ -55,7 +49,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.retry.ConstantBackoff;
@@ -65,8 +58,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private static final Logger logger = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
 
 	private CassandraConnectionProvider connectionProvider;
-
-	private SimpleDateFormat secondsDateFormatter;
 
 	private BaseCassandraRepoImpl baseCassandraDao;
 
@@ -78,7 +69,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		this.secondsDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 		cache = new LinkedHashMap<String, Object>();
 		this.rawUpdateDAO = new RawDataUpdateDAOImpl(this.connectionProvider);
 	}
@@ -86,7 +76,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {
 			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
-			String gooruUUID = eventMap.containsKey(GOORUID) ? (String)eventMap.get(GOORUID) : null;
+			String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
 			String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? (String) eventMap.get(CONTENT_GOORU_OID) : null;
 			String lessonGooruId = eventMap.get(LESSON_GOORU_OID) != null ? (String) eventMap.get(LESSON_GOORU_OID) : null;
 			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
@@ -95,18 +85,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String parentGooruId = eventMap.get(PARENT_GOORU_OID) != null ? (String) eventMap.get(PARENT_GOORU_OID) : null;
 			String sessionId = eventMap.get(SESSION_ID) != null ? (String) eventMap.get(SESSION_ID) : null;
 			String eventType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
-			
+
 			List<String> keysList = new ArrayList<String>();
 			/**
 			 * Mutation Batch for storing session activity details
 			 */
-			
+
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			/**
 			 * Generate column list with session id
 			 */
 			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, eventType, sessionId);
-		
+
 			/**
 			 * Store session activity details
 			 */
@@ -130,24 +120,27 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				keysList.add(allSessionKey);
 				this.generateColumnList(eventMap, allSessionAggColumns, allSessionCounterColumns);
 			}
-
 			;
+
 			m.execute();
 
 			/**
 			 * Storing the latest collection accessed time
 			 */
 			this.storeLastAccessedTime(contentGooruId, ((Number) eventMap.get(END_TIME)).longValue());
+			/**
+			 * Aggregations steps in close events
+			 */
 			if (STOP.equalsIgnoreCase((String) eventMap.get(TYPE))) {
 				/**
 				 * Sync data from counter CF to aggregator CF
 				 */
-				this.getDataFromCounterToAggregator(keysList,ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(),ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
+				this.getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				/**
 				 * Storing score and time spent in the different type of key combination
 				 */
 				if (LoaderConstants.CPV1.getName().equals(eventName)) {
-					String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT ;
+					String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
 					long scoreInPercentage = ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue();
 					MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 					List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
@@ -190,18 +183,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * calculate score in Course level
 			 */
-			Long totalCourseScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			Long totalCourseScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInCourse = getAssessmentCount(courseGooruId);
 			if (assessmentsCountInCourse > 0) {
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(_SCORE_IN_PERCENTAGE,
-						(totalCourseScore / assessmentsCountInCourse));
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(
+						_SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType)).putColumn(
 						_SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
 			}
 			/**
 			 * calculate score in Unit level
 			 */
-			Long totalUnitScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			Long totalUnitScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInUnit = getAssessmentCount(unitGooruId);
 			if (assessmentsCountInUnit > 0) {
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID)).putColumn(
@@ -212,7 +205,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * calculate score in Lesson level
 			 */
-			Long totalLessonScore = getTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId,gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			Long totalLessonScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
 			Long assessmentsCountInLesson = getAssessmentCount(lessonGooruId);
 			if (assessmentsCountInLesson > 0) {
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID))
@@ -226,42 +219,60 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			logger.error("Exception", e);
 		}
 	}
-	private Long getTotalScore(String key){
+
+	private Long getActivityTotalScore(String key) {
 		long score = 0L;
 		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), key, 0);
-		for(Column<String> scoreColumn : scoreList){
+		for (Column<String> scoreColumn : scoreList) {
 			score += scoreColumn.getLongValue();
 		}
 		return score;
 	}
+
+	private Long getAssessmentTotalScore(String key) {
+		long score = 0L;
+		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), key, 0);
+		for (Column<String> scoreColumn : scoreList) {
+			if(scoreColumn.getName().contains(_QUESTION_STATUS) && scoreColumn.getStringValue().equalsIgnoreCase(LoaderConstants.CORRECT.getName())){				
+				/**
+				 * Here based on question type back end can set any score here in future.Today default is 1 for all type of question
+				 */
+				score += 1L;
+			}
+		}
+		return score;
+	}
 	
-	private Long getAssessmentCount(String key){
+	private Long getAssessmentCount(String key) {
 		ColumnList<String> contentMetadata = baseCassandraDao.readWithKey(ColumnFamily.CONTENT_META.getColumnFamily(), key, 0);
 		return contentMetadata.getLongValue(ASSESSMENT_COUNT, 0L);
 	}
-	
-	private List<String> generateClassActivityKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID,String collectionType) {
+
+	private List<String> generateClassActivityKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID, String collectionType) {
 		List<String> scoreKeyList = new ArrayList<String>();
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId,gooruUUID));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,gooruUUID));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID,collectionType));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID,collectionType));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID,collectionType));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType));
 		return scoreKeyList;
 	}
-	private List<String> generateClassActivityAggregatedKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID,String collectionType) {
+
+	private List<String> generateClassActivityAggregatedKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID, String collectionType) {
 		List<String> scoreKeyList = new ArrayList<String>();
 		String suffix = TIME_SPENT;
-		if(ASSESSMENT.equalsIgnoreCase(collectionType)){
+		if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
 			suffix = _SCORE_IN_PERCENTAGE;
 		}
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID,collectionType,suffix));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID,collectionType,suffix));
-		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID,collectionType,suffix));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, suffix));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, suffix));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType, suffix));
 		return scoreKeyList;
 	}
-	private void columGenerator(Map<String, Object> eventMap,Map.Entry<String, Object> entry,ColumnListMutation<String> aggregatorColumns,ColumnListMutation<String> counterColumns,String columnPrefix){
+
+	private void columGenerator(Map<String, Object> eventMap, Map.Entry<String, Object> entry, ColumnListMutation<String> aggregatorColumns, ColumnListMutation<String> counterColumns,
+			String columnPrefix) {
 		if (eventMap.containsKey(entry.getValue())) {
 			if (eventMap.get(entry.getValue()) instanceof Number) {
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(columnPrefix, entry.getKey()), ((Number) eventMap.get(entry.getValue())).longValue());
@@ -271,27 +282,44 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 		}
 	}
-	
+
 	private void generateColumnList(Map<String, Object> eventMap, ColumnListMutation<String> aggregatorColumns, ColumnListMutation<String> counterColumns) {
 
 		String contentGooruId = (String) eventMap.get(CONTENT_GOORU_OID);
 		String parentGooruId = (String) eventMap.get(PARENT_GOORU_OID);
-		
+
 		if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_PLAY_COLUMNS.entrySet()) {
-				columGenerator(eventMap, entry, aggregatorColumns,counterColumns,contentGooruId);
+				columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 			}
 
-			if (!eventMap.containsKey(VIEWS_COUNT) && START.equalsIgnoreCase((String) eventMap.get(TYPE))) {
+			if (!eventMap.containsKey(VIEWS_COUNT) && START.equals(eventMap.get(TYPE))) {
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, VIEWS), 1L);
 				counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, VIEWS), 1L);
 			}
-			aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _SCORE_IN_PERCENTAGE), ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue());
-			
+			if (!ASSESSMENT_URL.equals(eventMap.get(COLLECTION_TYPE)) && STOP.equals(eventMap.get(TYPE))) {
+				Long scoreInPercentage = 0L;
+				Long score = 0L;
+				if(eventMap.containsKey(TOTAL_QUESTIONS_COUNT)){
+					Long questionCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+					if(questionCount > 0 ){
+						score = getAssessmentTotalScore((String)eventMap.get(SESSION_ID));
+						scoreInPercentage = (100 * score/questionCount);
+					}
+					eventMap.put(SCORE_IN_PERCENTAGE, scoreInPercentage);
+					eventMap.put(SCORE, score);
+				}
+			}
+			if (eventMap.containsKey(SCORE)) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
+			}
+			if (eventMap.containsKey(SCORE_IN_PERCENTAGE)) {
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _SCORE_IN_PERCENTAGE), ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue());
+			}
 		}
 		if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_RESOURCE_PLAY_COLUMNS.entrySet()) {
-				columGenerator(eventMap, entry, aggregatorColumns, counterColumns,contentGooruId);
+				columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 			}
 
 			if (!eventMap.containsKey(VIEWS_COUNT) && START.equalsIgnoreCase((String) eventMap.get(TYPE))) {
@@ -338,7 +366,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		} else if (LoaderConstants.RUFB.getName().equals(eventMap.get(EVENT_NAME))) {
 			for (Map.Entry<String, Object> entry : EventColumns.USER_FEEDBACK_COLUMNS.entrySet()) {
-				columGenerator(eventMap, entry, aggregatorColumns, counterColumns,contentGooruId);
+				columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 			}
 		}
 	}
@@ -346,23 +374,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void storeSessions(MutationBatch m, Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,
 			String contentGooruId, String gooruUUID, String eventType, String sessionId) {
 		if (LoaderConstants.CPV1.getName().equals(eventName)) {
-			Date eventDateTime = new Date(((Number) eventMap.get(END_TIME)).longValue());
-			String eventRowKey = secondsDateFormatter.format(eventDateTime).toString();
-
+			Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
 			if (classGooruId != null) {
 				String classSessionKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classSessionKey, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
-						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventRowKey);
+						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, classSessionKey)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), classSessionKey).putColumnIfNotNull(sessionId, eventRowKey);
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), classSessionKey).putColumnIfNotNull(sessionId, eventTime);
 
 			} else {
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(contentGooruId, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
-						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventRowKey);
+						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, contentGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), contentGooruId).putColumnIfNotNull(sessionId, eventRowKey);
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), contentGooruId).putColumnIfNotNull(sessionId, eventTime);
 			}
 
 		}
@@ -373,7 +399,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * 
 	 * @param keysList
 	 */
-	private void getDataFromCounterToAggregator(List<String> keysList,String sourceColumnFamily,String targetColumFamily) {
+	private void getDataFromCounterToAggregator(List<String> keysList, String sourceColumnFamily, String targetColumFamily) {
 		try {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 			for (String key : keysList) {
@@ -404,7 +430,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			logger.error("Exception:", e);
 		}
 	}
-
 
 	/**
 	 * 
@@ -998,7 +1023,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
-	
 	private String generateColumnKey(String... columns) {
 		StringBuilder columnKey = new StringBuilder();
 		for (String column : columns) {

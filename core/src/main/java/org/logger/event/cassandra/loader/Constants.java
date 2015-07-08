@@ -246,6 +246,8 @@ public interface Constants {
 	
 	public static final  String ASSESSMENT = "assessment";
 	
+	public static final  String ASSESSMENT_URL = "assessment/url";
+	
 	public static final  String ASSESSMENT_COUNT = "assessmentCount";
 	
 	public static final  String ANSWER_ID = "answerId";
