@@ -17,6 +17,7 @@ public class EventColumns implements Constants{
 		cpColumns.put(VIEWS, VIEWS_COUNT);
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
+		cpColumns.put(EVIDENCE, EVIDENCE);
 		SCORE_AGGREGATE_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
@@ -25,6 +26,7 @@ public class EventColumns implements Constants{
 		cpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
+		cpColumns.put(EVIDENCE, EVIDENCE);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
