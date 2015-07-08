@@ -244,7 +244,7 @@ public interface Constants {
 	
 	public static final  String ASSESSMENT = "assessment";
 	
-	public static final  String ASSESSMENT_COUNT = "assessment_count";
+	public static final  String ASSESSMENT_COUNT = "assessmentCount";
 	
 	public static final  String ANSWER_ID = "answerId";
 	
