@@ -8,6 +8,8 @@ public interface Constants {
     
     public static final  String RS= "RS";
     
+    public static final  String AS= "AS";
+    
     public static final  String ALL_SESSION = "AS~";
     
     public static final  String SEPERATOR = "~";

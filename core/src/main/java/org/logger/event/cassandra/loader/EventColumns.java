@@ -24,7 +24,6 @@ public class EventColumns implements Constants{
 		cpColumns.put(VIEWS, VIEWS_COUNT);
 		cpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
-		cpColumns.put(SCORE, SCORE);
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}

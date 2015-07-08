@@ -121,9 +121,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (eventMap.containsKey(CLASS_GOORU_OID) && eventMap.get(CLASS_GOORU_OID) != null) {
 				String allSessionKey = null;
 				if (LoaderConstants.CPV1.getName().equals(eventName)) {
-					allSessionKey = this.generateColumnKey("AS", classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId);
+					allSessionKey = this.generateColumnKey(AS, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId);
 				} else {
-					allSessionKey = this.generateColumnKey("AS", classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId);
+					allSessionKey = this.generateColumnKey(AS, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId);
 				}
 				ColumnListMutation<String> allSessionAggColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY.getColumnFamily()), allSessionKey);
 				ColumnListMutation<String> allSessionCounterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), allSessionKey);
