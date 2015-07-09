@@ -27,6 +27,8 @@ public class EventColumns implements Constants{
 		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		cpColumns.put(EVIDENCE, EVIDENCE);
+		cpColumns.put(STATUS, TYPE);
+		cpColumns.put(GOORUID, GOORUID);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
@@ -38,6 +40,7 @@ public class EventColumns implements Constants{
 		crpColumns.put(CHOICE, TEXT);
 		crpColumns.put(TYPE, QUESTION_TYPE);
 		crpColumns.put(_ANSWER_OBECT, ANSWER_OBECT);
+		crpColumns.put(STATUS, TYPE);
 		COLLECTION_RESOURCE_PLAY_COLUMNS = Collections.unmodifiableMap(crpColumns);
 	}
 	
