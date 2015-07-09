@@ -28,7 +28,7 @@ public class EventColumns implements Constants{
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		cpColumns.put(EVIDENCE, EVIDENCE);
 		cpColumns.put(STATUS, TYPE);
-		cpColumns.put(GOORUID, GOORUID);
+		cpColumns.put(_GOORU_UID, GOORUID);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
