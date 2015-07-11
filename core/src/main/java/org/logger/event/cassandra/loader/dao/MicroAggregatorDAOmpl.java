@@ -318,7 +318,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_RESOURCE_PLAY_COLUMNS.entrySet()) {
 				columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 			}
-			aggregatorColumns.putColumnIfNotNull(_LAST_ACCESSED_RESOURCE, contentGooruId);
 			if (OE.equals(eventMap.get(QUESTION_TYPE))) {
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, ACTIVE), "false");
 			}
@@ -365,35 +364,35 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	}
 
 	private void storeSessions(MutationBatch m, Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,
-			String contentGooruId, String gooruUUID, String eventType, String sessionId,Boolean isStudent) {
-		if (LoaderConstants.CPV1.getName().equals(eventName)) {
+			String contentGooruId, String gooruUUID, String eventType, String sessionId, Boolean isStudent) {
+		String key = null;
+		if (classGooruId != null && isStudent) {
+			key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+		} else {
+			key = generateColumnKey(contentGooruId, gooruUUID);
+		}
+		if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 			Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
-			if (classGooruId != null && isStudent) {
-				String classSessionKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classSessionKey, INFO))
-						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
-						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, classSessionKey)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), classSessionKey).putColumnIfNotNull(sessionId, eventTime);
-				
-				/**
-				 * This is to check whether the class/course/unit/lesson/collection having atleast one student usage 
-				 */
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO))
+					.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
+					.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 
-			} else {
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(contentGooruId,gooruUUID, INFO))
-						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
-						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, contentGooruId,gooruUUID)).putColumnIfNotNull(_SESSION_ID, sessionId);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(contentGooruId,gooruUUID)).putColumnIfNotNull(sessionId, eventTime);
-			}
+			/**
+			 * This is to check whether the class/course/unit/lesson/collection having atleast one student usage
+			 */
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId, lessonGooruId, contentGooruId)).putColumnIfNotNull(
+					_SESSION_ID, sessionId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId, lessonGooruId)).putColumnIfNotNull(_SESSION_ID,
+					sessionId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
 
+		} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO)).putColumnIfNotNull(
+					generateColumnKey(sessionId, _LAST_ACCESSED_RESOURCE), contentGooruId);
 		}
 	}
 
