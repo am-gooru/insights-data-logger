@@ -40,6 +40,10 @@ public interface Constants {
 	
 	public static final  String LAST_ACCESSED = "lastAccessed";
 	
+	public static final  String LAST_ACCESSED_RESOURCE = "lastAccessedResource";
+	
+	public static final  String _LAST_ACCESSED_RESOURCE = "last_accessed_resource";
+	
 	public static final  String EVENT_NAME = "eventName";
 	
 	public static final  String CONTENT_GOORU_OID = "contentGooruId";
@@ -93,6 +97,8 @@ public interface Constants {
 	public static final  String EVENT_TYPE = "eventType";
 	
 	public static final  String SESSION_ID = "sessionId";
+	
+	public static final  String IS_STUDENT = "isStudent";
 	
 	public static final  String SESSION = "session";
 	
@@ -177,6 +183,8 @@ public interface Constants {
 	public static final  String CLIENT_SOURCE = "clientSource";
 	
 	public static final  String AUTO = "auto";
+	
+	public static final  String PAUSE = "pause";
 	
 	public static final  String STOP = "stop";
 	

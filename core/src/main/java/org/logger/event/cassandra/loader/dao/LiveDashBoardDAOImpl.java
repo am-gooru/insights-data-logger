@@ -78,7 +78,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 								performRating(key, orginalColumn,eventMap,m);		
 								continue;
 							}
-							if (!(eventMap.containsKey(TYPE) && String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
+							if (!(eventMap.containsKey(TYPE) && (String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) || String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(PAUSE)) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
 								performCounter(key, orginalColumn, eventMap, m);					
 							}
 						}
@@ -237,7 +237,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		}
 
 		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
-			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
+			if (eventMap.get(TYPE).equalsIgnoreCase(STOP) || eventMap.get(TYPE).equalsIgnoreCase(PAUSE)) {
 				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
 				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
