@@ -260,6 +260,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		return scoreKeyList;
 	}
 
+	private List<String> generateUsageKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId) {
+		List<String> usageKeyList = new ArrayList<String>();
+		usageKeyList.add(classGooruId);
+		usageKeyList.add(generateColumnKey(classGooruId, courseGooruId));
+		usageKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId));
+		usageKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId));
+		return usageKeyList;
+	}
+
 	private List<String> generateClassActivityAggregatedKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID, String collectionType) {
 		List<String> scoreKeyList = new ArrayList<String>();
 		String suffix = TIME_SPENT;
@@ -379,17 +388,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
 			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 
-			/**
-			 * This is to check whether the class/course/unit/lesson/collection having atleast one student usage
-			 */
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId, lessonGooruId, contentGooruId)).putColumnIfNotNull(
-					_SESSION_ID, sessionId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId, lessonGooruId)).putColumnIfNotNull(_SESSION_ID,
-					sessionId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId, unitGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(courseGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(classGooruId)).putColumnIfNotNull(_SESSION_ID, sessionId);
-
+			if (classGooruId != null && isStudent) {
+				/**
+				 * This is to check whether the class/course/unit/lesson/collection having atleast one student usage
+				 */
+				List<String> keyList =  generateUsageKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId);
+				for(String usageKey : keyList){
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), usageKey)
+					.putColumnIfNotNull(_SESSION_ID, sessionId);
+				}
+			}
 		} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 			m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO)).putColumnIfNotNull(
 					generateColumnKey(sessionId, _LAST_ACCESSED_RESOURCE), contentGooruId);
