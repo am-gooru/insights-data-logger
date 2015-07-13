@@ -36,6 +36,8 @@ import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
@@ -1033,6 +1035,79 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
+	public void processClassActivityOpertaions(Map<String, Object> eventMap) {
+		try {
+			JSONArray classInfo = TypeConverter.stringToAny((String) eventMap.get(""), "JSONArray");
+			for (int index = 0; index < classInfo.length(); index++) {
+				JSONObject classInJson = classInfo.getJSONObject(index);
+				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER.getColumnFamily(), classInJson.getString(CLASS_GOORU_OID), 0);
+				for (Column<String> student : studentList) {
+					reComputerClassMetrics(classInJson.getString(CLASS_GOORU_OID), classInJson.getString(COURSE_GOORU_OID), classInJson.getString(UNIT_GOORU_OID),
+							classInJson.getString(LESSON_GOORU_OID), classInJson.getString(CONTENT_GOORU_OID), student.getName(), (String) eventMap.get(COLLECTION_TYPE));
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+		}
+
+	}
+	private void reComputerClassMetrics(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId, String gooruUUID, String collectionType) {
+		try {
+			List<String> classAggregatedActivityKeys = generateClassActivityAggregatedKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+
+			/**
+			 * Deleting score and timespent data alone
+			 */
+			for (String classAggregatedKey : classAggregatedActivityKeys) {
+				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classAggregatedKey);
+				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classAggregatedKey, 0);
+				if (classCounterColumns != null && !classCounterColumns.isEmpty() && classCounterColumns.getColumnByName(contentGooruId) != null) {
+					counterColumns.incrementCounterColumn(contentGooruId, (classCounterColumns.getLongValue(contentGooruId, 0L) * -1));
+					/**
+					 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
+					 */
+					baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, contentGooruId);
+				}
+			}
+			/**
+			 * Deleting all data aggregated keys
+			 */
+			List<String> classActivityKeys = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+			for (String classActivityKey : classActivityKeys) {
+				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classActivityKey);
+				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classActivityKey, 0);
+				if (classCounterColumns != null && !classCounterColumns.isEmpty()) {
+					for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
+						String columnName = generateColumnKey(contentGooruId, entry.getKey());
+						if (classCounterColumns.getColumnByName(columnName) != null) {
+							counterColumns.incrementCounterColumn(columnName, (classCounterColumns.getLongValue(columnName, 0L) * -1));
+							counterColumns.incrementCounterColumn(entry.getKey(), (classCounterColumns.getLongValue(columnName, 0L) * -1));
+							/**
+							 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
+							 */
+							baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classActivityKey, columnName);
+						}
+					}
+				}
+			}
+			m.execute();
+			/**
+			 * This delay to avoid over load in Cassandra
+			 */
+			Thread.sleep(500);
+			/**
+			 * Re-computations
+			 */
+			if (COLLECTION.equalsIgnoreCase(collectionType)) {
+				this.getDataFromCounterToAggregator(classAggregatedActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
+			} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
+				computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+			}
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+		}
+	}
 	private String generateColumnKey(String... columns) {
 		StringBuilder columnKey = new StringBuilder();
 		for (String column : columns) {
