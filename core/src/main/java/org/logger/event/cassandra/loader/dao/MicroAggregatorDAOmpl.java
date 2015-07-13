@@ -1037,7 +1037,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	public void processClassActivityOpertaions(Map<String, Object> eventMap) {
 		try {
-			JSONArray classInfo = TypeConverter.stringToAny((String) eventMap.get(""), "JSONArray");
+			JSONArray classInfo = TypeConverter.stringToAny((String) eventMap.get("rootHierarchies"), "JSONArray");
 			for (int index = 0; index < classInfo.length(); index++) {
 				JSONObject classInJson = classInfo.getJSONObject(index);
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER.getColumnFamily(), classInJson.getString(CLASS_GOORU_OID), 0);
