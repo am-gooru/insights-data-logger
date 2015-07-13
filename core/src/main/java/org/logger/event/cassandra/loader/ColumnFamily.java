@@ -80,6 +80,8 @@ public enum ColumnFamily {
 	
 	SESSIONS("sessions"),
 	
+	SESSION("session"),
+	
 	SESSION_ACTIVITY("session_activity"),
 	
 	SESSION_ACTIVITY_COUNTER("session_activity_counter"),
@@ -89,6 +91,8 @@ public enum ColumnFamily {
 	CLASS_ACTIVITY_COUNTER("class_activity_counter"),
 	
 	CONTENT_META("content_meta"),
+	
+	USER_GROUP_ASSOCIATION("user_group_association"),
 	;
 	
 	String name;
