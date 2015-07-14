@@ -422,6 +422,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					eventMap.put(SCORE, score);
 				}
 			}
+			aggregatorColumns.putColumnIfNotNull(_GOORU_UID, (String)eventMap.get(GOORUID));
 			if (eventMap.containsKey(SCORE)) {
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
 			}
