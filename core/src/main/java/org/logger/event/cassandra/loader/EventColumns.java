@@ -36,7 +36,6 @@ public class EventColumns implements Constants{
 		crpColumns.put(VIEWS, VIEWS_COUNT);
 		crpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
 		crpColumns.put(TIME_SPENT, TOTALTIMEINMS);
-		crpColumns.put(SCORE, SCORE);
 		crpColumns.put(CHOICE, TEXT);
 		crpColumns.put(TYPE, QUESTION_TYPE);
 		crpColumns.put(_ANSWER_OBECT, ANSWER_OBECT);
