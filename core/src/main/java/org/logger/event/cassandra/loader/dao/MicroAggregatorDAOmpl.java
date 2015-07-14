@@ -1157,13 +1157,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	public void processClassActivityOpertaions(Map<String, Object> eventMap) {
 		try {
-			JSONArray classInfo = TypeConverter.stringToAny((String) eventMap.get("rootHierarchies"), "JSONArray");
-			for (int index = 0; index < classInfo.length(); index++) {
-				JSONObject classInJson = classInfo.getJSONObject(index);
-				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER.getColumnFamily(), classInJson.getString(CLASS_GOORU_OID), 0);
+			List<Map<String,String>> classList = (List<Map<String, String>>) eventMap.get("rootHierarchies");
+			for (Map<String,String> classInfo : classList) {
+				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classInfo.get(CLASS_GOORU_OID), 0);
 				for (Column<String> student : studentList) {
-					reComputerClassMetrics(classInJson.getString(CLASS_GOORU_OID), classInJson.getString(COURSE_GOORU_OID), classInJson.getString(UNIT_GOORU_OID),
-							classInJson.getString(LESSON_GOORU_OID), classInJson.getString(CONTENT_GOORU_OID), student.getName(), (String) eventMap.get(COLLECTION_TYPE));
+					this.reComputeClassMetrics(classInfo.get(CLASS_GOORU_OID), classInfo.get(COURSE_GOORU_OID), classInfo.get(UNIT_GOORU_OID),
+							classInfo.get(LESSON_GOORU_OID), classInfo.get(CONTENT_GOORU_OID), student.getName(), (String) eventMap.get(COLLECTION_TYPE));
 				}
 			}
 		} catch (Exception e) {
@@ -1171,7 +1170,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 
 	}
-	private void reComputerClassMetrics(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId, String gooruUUID, String collectionType) {
+	private void reComputeClassMetrics(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId, String gooruUUID, String collectionType) {
 		try {
 			List<String> classAggregatedActivityKeys = generateClassActivityAggregatedKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1181,13 +1180,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 */
 			for (String classAggregatedKey : classAggregatedActivityKeys) {
 				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classAggregatedKey);
+				ColumnListMutation<String> regularColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classAggregatedKey);
 				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classAggregatedKey, 0);
 				if (classCounterColumns != null && !classCounterColumns.isEmpty() && classCounterColumns.getColumnByName(contentGooruId) != null) {
 					counterColumns.incrementCounterColumn(contentGooruId, (classCounterColumns.getLongValue(contentGooruId, 0L) * -1));
 					/**
 					 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
 					 */
-					baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, contentGooruId);
+					//baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, contentGooruId);
+					regularColumns.deleteColumn(contentGooruId);
 				}
 			}
 			/**
@@ -1196,6 +1197,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			List<String> classActivityKeys = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 			for (String classActivityKey : classActivityKeys) {
 				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classActivityKey);
+				ColumnListMutation<String> regularColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classActivityKey);
 				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classActivityKey, 0);
 				if (classCounterColumns != null && !classCounterColumns.isEmpty()) {
 					for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
@@ -1206,12 +1208,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 							/**
 							 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
 							 */
-							baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classActivityKey, columnName);
+							//baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classActivityKey, columnName);
+							regularColumns.deleteColumn(contentGooruId);
 						}
 					}
 				}
 			}
-			m.execute();
+			m.executeAsync();
 			/**
 			 * This delay to avoid over load in Cassandra
 			 */
@@ -1222,7 +1225,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (COLLECTION.equalsIgnoreCase(collectionType)) {
 				this.getDataFromCounterToAggregator(classAggregatedActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
 			} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
-				computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+				this.computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
