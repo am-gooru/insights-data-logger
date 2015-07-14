@@ -455,6 +455,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
 				counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, OPTIONS), option);
+				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number)eventMap.get(SCORE)).longValue());
 				aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
 			}
 		} else if (LoaderConstants.CRAV1.getName().equals(eventMap.get(EVENT_NAME))) {
