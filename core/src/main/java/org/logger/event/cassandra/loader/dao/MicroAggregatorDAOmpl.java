@@ -233,37 +233,33 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * calculate score in Course level
 			 */
-			Long totalCourseScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
-			Long assessmentsCountInCourse = getAssessmentCount(courseGooruId);
-			if (assessmentsCountInCourse > 0) {
+			Long courseScoreInPercentage = getScoreInPercentage(generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			//Long assessmentsCountInCourse = getAssessmentCount(courseGooruId);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID)).putColumn(
-						_SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
+						_SCORE_IN_PERCENTAGE, courseScoreInPercentage);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, gooruUUID, collectionType)).putColumn(
-						_SCORE_IN_PERCENTAGE, (totalCourseScore / assessmentsCountInCourse));
-			}
+						_SCORE_IN_PERCENTAGE, courseScoreInPercentage);
 			/**
 			 * calculate score in Unit level
 			 */
-			Long totalUnitScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
-			Long assessmentsCountInUnit = getAssessmentCount(unitGooruId);
-			if (assessmentsCountInUnit > 0) {
+			Long unitScoreInPercentage = getScoreInPercentage(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			//Long assessmentsCountInUnit = getAssessmentCount(unitGooruId);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID)).putColumn(
-						_SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
+						_SCORE_IN_PERCENTAGE, unitScoreInPercentage);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, collectionType))
-						.putColumn(_SCORE_IN_PERCENTAGE, (totalUnitScore / assessmentsCountInUnit));
-			}
+						.putColumn(_SCORE_IN_PERCENTAGE, unitScoreInPercentage);
 			/**
 			 * calculate score in Lesson level
 			 */
-			Long totalLessonScore = getActivityTotalScore(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
-			Long assessmentsCountInLesson = getAssessmentCount(lessonGooruId);
-			if (assessmentsCountInLesson > 0) {
+			Long lessonScoreInPercentage = getScoreInPercentage(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType, _SCORE_IN_PERCENTAGE));
+			//Long assessmentsCountInLesson = getAssessmentCount(lessonGooruId);
+			//if (assessmentsCountInLesson > 0) {
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID))
-						.putColumn(_SCORE_IN_PERCENTAGE, (totalLessonScore / assessmentsCountInLesson));
+						.putColumn(_SCORE_IN_PERCENTAGE, lessonScoreInPercentage);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()),
 						generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType)).putColumn(_SCORE_IN_PERCENTAGE,
-						(totalLessonScore / assessmentsCountInLesson));
-			}
+								lessonScoreInPercentage);
+			//}
 			m.execute();
 		} catch (Exception e) {
 			logger.error("Exception", e);
@@ -275,13 +271,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param key
 	 * @return
 	 */
-	private Long getActivityTotalScore(String key) {
+	private Long getScoreInPercentage(String key) {
 		long score = 0L;
+		long attemptedAssessmentCount = 0L;
 		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), key, 0);
 		for (Column<String> scoreColumn : scoreList) {
+			++attemptedAssessmentCount;
 			score += scoreColumn.getLongValue();
 		}
-		return score;
+		return (score/attemptedAssessmentCount);
 	}
 
 	/**
@@ -297,7 +295,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				/**
 				 * Here based on question type back end can set any score here in future.Today default is 1 for all type of question
 				 */
-				score += 1L;
+				++score;
 			}
 		}
 		return score;
@@ -409,17 +407,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_PLAY_COLUMNS.entrySet()) {
 				columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 			}
-			if (!ASSESSMENT_URL.equals(eventMap.get(COLLECTION_TYPE)) && (STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType))) {
+			if ((STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType)) && !ASSESSMENT_URL.equals(eventMap.get(COLLECTION_TYPE))) {
 				Long scoreInPercentage = 0L;
 				Long score = 0L;
 				if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
 					Long questionCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+					logger.info("Question Count : {}",questionCount);
 					if (questionCount > 0) {
 						score = getAssessmentTotalScore((String) eventMap.get(SESSION_ID));
 						scoreInPercentage = (100 * score / questionCount);
 					}
 					eventMap.put(SCORE_IN_PERCENTAGE, scoreInPercentage);
 					eventMap.put(SCORE, score);
+					logger.info("Score In percentage :{} in session : {}",scoreInPercentage,score);
 				}
 			}
 			aggregatorColumns.putColumnIfNotNull(_GOORU_UID, (String)eventMap.get(GOORUID));
