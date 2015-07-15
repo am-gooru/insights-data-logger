@@ -413,6 +413,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					Long score = 0L;
 					if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
 						Long questionCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_COUNT), questionCount);
 						logger.info("Question Count : {}", questionCount);
 						if (questionCount > 0) {
 							score = getAssessmentTotalScore((String) eventMap.get(SESSION_ID));
