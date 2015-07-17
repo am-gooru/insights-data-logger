@@ -25,19 +25,24 @@ package org.logger.event.cassandra.loader.dao;
  ******************************************************************************/
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
@@ -67,6 +72,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	public static Map<String, Object> cache;
 
+	ExecutorService service = Executors.newFixedThreadPool(10);
+	
 	public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
@@ -372,6 +379,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		return scoreKeyList;
 	}
 
+	private List<String> reComputationKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID, String collectionType) {
+		List<String> scoreKeyList = new ArrayList<String>();
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE));
+		scoreKeyList.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE));
+		return scoreKeyList;
+	}
+	
 	/**
 	 * Prepare column list to store data in Cassandra as a Batch
 	 * @param eventMap
@@ -1170,12 +1185,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	public void processClassActivityOpertaions(Map<String, Object> eventMap) {
 		try {
-			List<Map<String,String>> classList = (List<Map<String, String>>) eventMap.get("rootHierarchies");
-			for (Map<String,String> classInfo : classList) {
-				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classInfo.get(CLASS_GOORU_OID), 0);
+			String courseGooruId = (String) eventMap.get(COURSE_GOORU_OID);
+			String unitGooruId = (String) eventMap.get(UNIT_GOORU_OID);
+			String lessonGooruId = (String) eventMap.get(LESSON_GOORU_OID);
+			String contentGooruId = (String) eventMap.get(CONTENT_GOORU_OID);
+			String collectionType = (String) eventMap.get(COLLECTION_TYPE);
+
+			String[] classList = TypeConverter.stringToAny((String) eventMap.get("classGooruIds"), "StringArray");
+			for (String classGooruId : classList) {
+				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
 				for (Column<String> student : studentList) {
-					this.reComputeClassMetrics(classInfo.get(CLASS_GOORU_OID), classInfo.get(COURSE_GOORU_OID), classInfo.get(UNIT_GOORU_OID),
-							classInfo.get(LESSON_GOORU_OID), classInfo.get(CONTENT_GOORU_OID), student.getName(), (String) eventMap.get(COLLECTION_TYPE));
+					this.reComputeClassMetrics(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, student.getName(), collectionType);
 				}
 			}
 		} catch (Exception e) {
@@ -1183,63 +1203,37 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 
 	}
-	private void reComputeClassMetrics(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId, String gooruUUID, String collectionType) {
-		try {
-			List<String> classAggregatedActivityKeys = generateClassActivityAggregatedKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-			/**
-			 * Deleting score and timespent data alone
-			 */
-			for (String classAggregatedKey : classAggregatedActivityKeys) {
-				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classAggregatedKey);
-				ColumnListMutation<String> regularColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classAggregatedKey);
-				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classAggregatedKey, 0);
-				if (classCounterColumns != null && !classCounterColumns.isEmpty() && classCounterColumns.getColumnByName(contentGooruId) != null) {
-					counterColumns.incrementCounterColumn(contentGooruId, (classCounterColumns.getLongValue(contentGooruId, 0L) * -1));
-					/**
-					 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
-					 */
-					//baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, contentGooruId);
-					regularColumns.deleteColumn(contentGooruId);
-				}
+	private void reComputeClassMetrics(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, final String contentGooruId, String gooruUUID, final String collectionType) {
+		try {
+			List<String> classAggregatedActivityKeys = reComputationKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+			final Collection<String> attemptedAssessments = new ArrayList<String>();
+			if (!collectionType.matches(ASSESSMENT_TYPES)) {
+				String parentKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
+				attemptedAssessments.addAll(attemptedAssessmentList.getColumnNames());
 			}
-			/**
-			 * Deleting all data aggregated keys
-			 */
-			List<String> classActivityKeys = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
-			for (String classActivityKey : classActivityKeys) {
-				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classActivityKey);
-				ColumnListMutation<String> regularColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()), classActivityKey);
-				ColumnList<String> classCounterColumns = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), classActivityKey, 0);
-				if (classCounterColumns != null && !classCounterColumns.isEmpty()) {
-					for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
-						String columnName = generateColumnKey(contentGooruId, entry.getKey());
-						if (classCounterColumns.getColumnByName(columnName) != null) {
-							counterColumns.incrementCounterColumn(columnName, (classCounterColumns.getLongValue(columnName, 0L) * -1));
-							counterColumns.incrementCounterColumn(entry.getKey(), (classCounterColumns.getLongValue(columnName, 0L) * -1));
-							/**
-							 * TODO : Re-Visit this delete operation. Currently It is hitting Cassandra to delete single column.
-							 */
-							//baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classActivityKey, columnName);
-							regularColumns.deleteColumn(contentGooruId);
+			Set<Callable<String>> deleteTasks = new HashSet<Callable<String>>();
+			for (final String classAggregatedKey : classAggregatedActivityKeys) {
+				deleteTasks.add(new Callable<String>() {
+					public String call() throws Exception {
+						if (collectionType.matches(ASSESSMENT_TYPES)) {
+							return deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, contentGooruId);
+						} else {
+							for (final String assessmentId : attemptedAssessments) {
+								return deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), classAggregatedKey, assessmentId);
+							}
+							return null;
 						}
 					}
-				}
+				});
+
 			}
-			m.executeAsync();
-			/**
-			 * This delay to avoid over load in Cassandra
-			 */
-			Thread.sleep(500);
-			/**
-			 * Re-computations
-			 */
-			if (COLLECTION.equalsIgnoreCase(collectionType)) {
-				this.getDataFromCounterToAggregator(classAggregatedActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
-			} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
-				this.computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
+			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
+			for (Future<String> taskStatus : taskStatues) {
+				System.out.println("Status = " + taskStatus.get());
 			}
+			this.computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
@@ -1255,4 +1249,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		return columnKey.toString();
 
 	}
+
+	private String deleteColumn(String cfName, String key, String column) {
+		try {
+			if (StringUtils.isNotBlank(column)) {
+				baseCassandraDao.deleteColumn(cfName, key, column);
+			} else if (StringUtils.isNotBlank(key)) {
+				baseCassandraDao.deleteRowKey(cfName, key);
+			}
+			return key + "-Completed";
+		} catch (Exception e) {
+			logger.error("Exception:", e);
+			return key + "-Broken";
+		}
+	}
+
 }

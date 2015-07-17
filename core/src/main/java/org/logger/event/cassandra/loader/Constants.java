@@ -254,6 +254,12 @@ public interface Constants {
 	
 	public static final  String ASSESSMENT = "assessment";
 	
+	public static final  String CLASS = "class";
+	
+	public static final  String UNIT = "unit";
+	
+	public static final  String LESSON = "lesson";
+	
 	public static final  String ASSESSMENT_URL = "assessment/url";
 	
 	public static final  String ASSESSMENT_COUNT = "assessmentCount";
@@ -655,5 +661,12 @@ public interface Constants {
 	public static final String COUNT_SEPARATOR_RATINGS = "count~ratings";
 	
 	public static final String RATE = "rate";
+
+	public static final  String ASSESSMENT_TYPES =  "assessment|assessment/url";
 	
+	public static final  String RECOMPUTATION_COLLECTION_TYPES =  "class|course|unit|lesson|assessment|assessment/url";
+	
+	public static final  String SESSION_ACTIVITY_EVENTS = "collection.play|collection.resource.play|reaction.create|resource.user.feedback";
+	
+	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add";
 }

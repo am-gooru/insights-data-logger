@@ -303,12 +303,12 @@ public class CassandraDataLoader implements Constants {
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
-	public void processMessage(Event event){
+	public void processMessage(Event event) {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
-		String aggregatorJson = null;
-		
+
 		eventMap = JSONDeserializer.deserializeEventv2(event);
-		
+
+		String eventName = (String) eventMap.get(EVENT_NAME);
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
 
@@ -317,7 +317,7 @@ public class CassandraDataLoader implements Constants {
 		// TODO : This should be reject at validation stage.
 		String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 		Map<String, Object> records = new HashMap<String, Object>();
-		records.put(_EVENT_NAME, eventMap.get(EVENT_NAME));
+		records.put(_EVENT_NAME, eventName);
 		records.put(_API_KEY, apiKey);
 		Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(), records);
 
@@ -339,26 +339,24 @@ public class CassandraDataLoader implements Constants {
 
 		baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
-		aggregatorJson = DataLoggerCaches.getCache().get(eventMap.get(EVENT_NAME).toString());
-		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
+		if (eventName.matches(SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(eventMap);
+		} else if (eventName.matches(RAW_DATA_UPDATE_EVENTS)) {
+			liveAggregator.updateRawData(eventMap);
+		}else if(eventMap.get(EVENT_NAME).equals("class.item.delete") &&((String)eventMap.get(COLLECTION_TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES) ){
+			liveAggregator.processClassActivityOpertaions(eventMap);
 		}
-
-		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 
 		if (event.getFields() != null) {
 			microAggregator.sendEventForAggregation(event.getFields());
 		}
 
-		if (aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
-			liveAggregator.updateRawData(eventMap);
-		}
-
+		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 		if (DataLoggerCaches.getCanRunIndexing()) {
 			indexer.indexEvents(event.getFields());
 		}
 
-		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
+		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventName)) {
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
 
