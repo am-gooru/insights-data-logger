@@ -56,6 +56,8 @@ public enum ColumnFamily {
 	
 	COLLECTIONITEM("collection_item"),
 	
+	COLLECTIONITEMASSOC("collection_item_assoc"),
+	
 	COLLECTION("collection"),
 	
 	CLASSPAGE("classpage"),
@@ -79,8 +81,6 @@ public enum ColumnFamily {
 	ANONYMIZEDUSERDATA("anonymized_user_data"),
 	
 	SESSIONS("sessions"),
-	
-	SESSION("session"),
 	
 	SESSION_ACTIVITY("session_activity"),
 	
