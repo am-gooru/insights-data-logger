@@ -308,12 +308,12 @@ public class CassandraDataLoader implements Constants {
 
 		eventMap = JSONDeserializer.deserializeEventv2(event);
 
-		String eventName = (String) eventMap.get(EVENT_NAME);
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
 
 		}
 		eventMap = (Map<String, Object>) this.formatEventObjectMap(event, eventMap);
+		String eventName = (String) eventMap.get(EVENT_NAME);
 		// TODO : This should be reject at validation stage.
 		String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 		Map<String, Object> records = new HashMap<String, Object>();
