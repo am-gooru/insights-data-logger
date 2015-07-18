@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CORSFilter implements Filter {
 	
-	public static String VALID_METHODS = "DELETE, HEAD, GET, OPTIONS, POST, PUT";
+	public static final String VALID_METHODS = "DELETE, HEAD, GET, OPTIONS, POST, PUT";
 
 	public CORSFilter() { 
 	}
