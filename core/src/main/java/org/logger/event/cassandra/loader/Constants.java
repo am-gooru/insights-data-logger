@@ -669,4 +669,7 @@ public interface Constants {
 	public static final  String SESSION_ACTIVITY_EVENTS = "collection.play|collection.resource.play|reaction.create|resource.user.feedback";
 	
 	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add";
+	
+    String COLLECTION_EVENT_MATCH = "collection.play|collection.resource.play";
+
 }
