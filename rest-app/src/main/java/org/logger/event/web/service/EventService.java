@@ -44,7 +44,7 @@ public interface EventService {
 
 	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
 
-	public ActionResponseDTO<Event> processMessage(Event event) throws JSONException, ConnectionException, IOException, GeoIp2Exception;
+	public void processMessage(Event event);
 
 	public AppDO verifyApiKey(String apiKeyToken);
 

@@ -92,17 +92,30 @@ public class ServerValidationUtils {
 		}
 	}
 	
-	public static void rejectIfZeroLongValue(Errors errors, Long data, String field, String eventJson, String errorCode, String errorMsg) {
-		if (data == null || data == 0L) {
-			logger.debug(field +" should not be zero!! RawLog :" + eventJson);
-			errors.rejectValue(field, errorCode, errorMsg);
+	public static void logErrorIfZeroLongValue(Boolean isValidEvent, Long data, String field, String errorCode, String eventJson, String errorMsg) {
+		if (isValidEvent) {
+			if (data == null || data.equals(0)) {
+				isValidEvent = false;
+				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
+			}
 		}
 	}
 	
-	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String eventJson, String errorCode, String errorMsg) {
-		if (data == null || data.equals("") || data.equalsIgnoreCase("null")) {
-			logger.debug(field +" is null! RawLog :" + eventJson);
-			errors.rejectValue(field, errorCode, errorMsg);
+	public static void logErrorIfNullOrEmpty(Boolean isValidEvent, String data, String field, String errorCode, String eventJson, String errorMsg) {
+		if (isValidEvent) {
+			if (data == null || data.equals("") || data.equalsIgnoreCase("null")) {
+				isValidEvent = false;
+				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
+			}
+		}
+	}
+	
+	public static void logErrorIfNull(Boolean isValidEvent, Object data, String field, String errorMsg) {
+		if (isValidEvent) {
+			if (data == null) {
+				isValidEvent = false;
+				logger.error(errorMsg + " : FieldName :" + field + " : ");
+			}
 		}
 	}
 }
