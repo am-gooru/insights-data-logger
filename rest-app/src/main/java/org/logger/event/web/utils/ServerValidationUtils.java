@@ -27,9 +27,13 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.Errors;
 
 public class ServerValidationUtils {
+	
+	protected final static Logger logger = LoggerFactory.getLogger(ServerValidationUtils.class);
 
 	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String errorMsg) {
 		if (data == null || data.equals("")) {
@@ -84,6 +88,20 @@ public class ServerValidationUtils {
 
 	public static void rejectIfInvalid(Errors errors, Double data, String field, String errorCode, String errorMsg, Map<Double, String> ratingScore) {
 		if (!ratingScore.containsKey(data)) {
+			errors.rejectValue(field, errorCode, errorMsg);
+		}
+	}
+	
+	public static void rejectIfZeroLongValue(Errors errors, Long data, String field, String eventJson, String errorCode, String errorMsg) {
+		if (data == null || data.equals(0)) {
+			logger.debug(field +" should not be zero!! RawLog :" + eventJson);
+			errors.rejectValue(field, errorCode, errorMsg);
+		}
+	}
+	
+	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String eventJson, String errorCode, String errorMsg) {
+		if (data == null || data.equals("") || data.equalsIgnoreCase("null")) {
+			logger.debug(field +" is null! RawLog :" + eventJson);
 			errors.rejectValue(field, errorCode, errorMsg);
 		}
 	}
