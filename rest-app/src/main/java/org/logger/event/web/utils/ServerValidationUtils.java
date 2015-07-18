@@ -93,7 +93,7 @@ public class ServerValidationUtils {
 	}
 	
 	public static void rejectIfZeroLongValue(Errors errors, Long data, String field, String eventJson, String errorCode, String errorMsg) {
-		if (data == null || data == 0) {
+		if (data == null || data == 0L) {
 			logger.debug(field +" should not be zero!! RawLog :" + eventJson);
 			errors.rejectValue(field, errorCode, errorMsg);
 		}

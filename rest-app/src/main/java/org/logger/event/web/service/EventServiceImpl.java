@@ -157,7 +157,7 @@ public class EventServiceImpl implements EventService, Constants {
 			if (event.getEventName().matches(COLLECTION_EVENT_MATCH)) {
 				if (!session.has(SESSION_ID)
 						|| (session.has(SESSION_ID) && (session.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
-					logger.debug("Collection Play event : Session Id is null : " + gson.toJson(event).toString());
+					logger.debug("Collection Play event : Session Id is null : " + gson.toJson(event));
 					errors.rejectValue(SESSION, "LA005", SESSION_ID + EMPTY_EXCEPTION);
 				}
 			}
@@ -171,7 +171,7 @@ public class EventServiceImpl implements EventService, Constants {
 				if (!context.has(CONTENT_GOORU_OID)
 						|| (context.has(CONTENT_GOORU_OID) && (context.isNull(CONTENT_GOORU_OID) || (context.get(CONTENT_GOORU_OID) != null && context.getString(CONTENT_GOORU_OID).equalsIgnoreCase(
 								"null"))))) {
-					logger.debug(CONTENT_GOORU_OID + " is null : " + gson.toJson(event).toString());
+					logger.debug(CONTENT_GOORU_OID + " is null : " + gson.toJson(event));
 					errors.rejectValue(CONTENT_GOORU_OID, "LA007", CONTENT_GOORU_OID + EMPTY_EXCEPTION);
 				}
 			}
@@ -222,7 +222,7 @@ public class EventServiceImpl implements EventService, Constants {
 			if (!activity.isEmpty()) {
 				try {
 					// validate JSON
-					jsonElement = new JsonParser().parse(activity.toString());
+					jsonElement = new JsonParser().parse(activity);
 					JsonObject eventObj = jsonElement.getAsJsonObject();
 
 					if (eventObj.get(_CONTENT_GOORU_OID) != null) {
@@ -294,7 +294,7 @@ public class EventServiceImpl implements EventService, Constants {
 
 	public void indexActivity() {
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN, 0).getStringValue();
-		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		String currentTime = minuteDateFormatter.format(new Date());
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;
@@ -319,8 +319,8 @@ public class EventServiceImpl implements EventService, Constants {
 			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 
-			if (Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.valueOf(lastCheckedCount) + 1));
+			if (Integer.parseInt(lastCheckedCount) < Integer.parseInt(lastMaxCount)) {
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));
 			} else {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + 0);
