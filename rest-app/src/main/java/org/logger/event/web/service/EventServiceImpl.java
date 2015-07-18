@@ -134,51 +134,54 @@ public class EventServiceImpl implements EventService, Constants {
 	 * @param event
 	 * @return
 	 */
-	private Errors validateInsertEvent(Event event) {
-		final Errors errors = new BindException(event, "Event");
+	private Boolean validateInsertEvent(Event event) {
+		Boolean isValidEvent = true;
 		if (event == null) {
-			ServerValidationUtils.rejectIfNull(errors, event, "event.all", FIELDS + EMPTY_EXCEPTION);
-			return errors;
+			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", RAW_EVENT_NULL_EXCEPTION);
 		}
 		String eventJson = gson.toJson(event);
 
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVENT_NAME, "LA001", eventJson, EVENT_NAME + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", eventJson, EVENT_ID + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", eventJson, VERSION + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004", eventJson, USER + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getSession(), SESSION, "LA005", eventJson, SESSION + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getMetrics(), METRICS, "LA006", eventJson, METRICS + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getContext(), CONTEXT, "LA007", eventJson, CONTEXT + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getPayLoadObject(), PAY_LOAD, "LA008", eventJson, PAY_LOAD + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfZeroLongValue(errors, event.getStartTime(), START_TIME, "LA009", eventJson, START_TIME + EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfZeroLongValue(errors, event.getEndTime(), END_TIME, "LA010", eventJson, END_TIME + EMPTY_EXCEPTION);
-		try {
-			JSONObject session = new JSONObject(event.getSession());
-			if (event.getEventName().matches(COLLECTION_EVENT_MATCH)) {
-				if (!session.has(SESSION_ID)
-						|| (session.has(SESSION_ID) && (session.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
-					logger.debug("Collection Play event : Session Id is null : " + gson.toJson(event).toString());
-					errors.rejectValue(SESSION, "LA005", SESSION_ID + EMPTY_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), EVENT_NAME, "LA001", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventId(), EVENT_ID, "LA002", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getVersion(), VERSION, "LA003", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getUser(), USER, "LA004", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getSession(), SESSION, "LA005", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getMetrics(), METRICS, "LA006", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getContext(), CONTEXT, "LA007", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject(), PAY_LOAD, "LA008", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getStartTime(), START_TIME, "LA009", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), END_TIME, "LA010", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		if (isValidEvent) {
+			try {
+				JSONObject session = new JSONObject(event.getSession());
+				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
+					if (!session.has(SESSION_ID)
+							|| (session.has(SESSION_ID) && (session.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
+						isValidEvent = false;
+						logger.error(RAW_EVENT_NULL_EXCEPTION + SESSION_ID + " : " + gson.toJson(event).toString());
+					}
 				}
-			}
 
-		} catch (JSONException e) {
-			errors.rejectValue(SESSION, "LA005", SESSION_ID + INVALID_JSON);
-		}
-		try {
-			JSONObject context = new JSONObject(event.getContext());
-			if (event.getEventName().matches(COLLECTION_EVENT_MATCH)) {
-				if (!context.has(CONTENT_GOORU_OID)
-						|| (context.has(CONTENT_GOORU_OID) && (context.isNull(CONTENT_GOORU_OID) || (context.get(CONTENT_GOORU_OID) != null && context.getString(CONTENT_GOORU_OID).equalsIgnoreCase(
-								"null"))))) {
-					logger.debug(CONTENT_GOORU_OID + " is null : " + gson.toJson(event).toString());
-					errors.rejectValue(CONTENT_GOORU_OID, "LA007", CONTENT_GOORU_OID + EMPTY_EXCEPTION);
-				}
+			} catch (JSONException e) {
+				isValidEvent = false;
+				logger.error(RAW_EVENT_JSON_EXCEPTION + SESSION + " : " + gson.toJson(event).toString());
 			}
-		} catch (JSONException e) {
-			errors.rejectValue(CONTENT_GOORU_OID, "LA007", CONTENT_GOORU_OID + INVALID_JSON);
+			try {
+				JSONObject context = new JSONObject(event.getContext());
+				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
+					if (!context.has(CONTENT_GOORU_OID)
+							|| (context.has(CONTENT_GOORU_OID) && (context.isNull(CONTENT_GOORU_OID) || (context.get(CONTENT_GOORU_OID) != null && context.getString(CONTENT_GOORU_OID).equalsIgnoreCase("null"))))) {
+						isValidEvent = false;
+						logger.error(RAW_EVENT_NULL_EXCEPTION + CONTENT_GOORU_OID + " : " + gson.toJson(event).toString());
+					}
+				}
+			} catch (JSONException e) {
+				isValidEvent = false;
+				logger.error(RAW_EVENT_JSON_EXCEPTION + CONTEXT + " : " + gson.toJson(event).toString());
+			}
 		}
-		return errors;
+		
+		return isValidEvent;
 	}
 
 	@Override
@@ -265,14 +268,11 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	@Override
-	@Async
-	public ActionResponseDTO<Event> processMessage(Event event){
-
-		Errors errors = validateInsertEvent(event);
-		if (!errors.hasErrors()) {
-				dataLoaderService.processMessage(event);
+	public void processMessage(Event event){
+		Boolean isValidEvent = validateInsertEvent(event);
+		if (isValidEvent) {
+			dataLoaderService.processMessage(event);
 		}
-		return new ActionResponseDTO<Event>(event, errors);
 	}
 
 	public void runMicroAggregation(String startTime, String endTime) {

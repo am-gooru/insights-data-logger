@@ -670,6 +670,8 @@ public interface Constants {
 	
 	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add";
 	
-    String COLLECTION_EVENT_MATCH = "collection.play|collection.resource.play";
-
+	String RAW_EVENT_NULL_EXCEPTION = "Raw Event NULL Exception : ";
+	
+	String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
+	
 }

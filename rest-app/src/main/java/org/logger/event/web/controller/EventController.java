@@ -164,11 +164,7 @@ public class EventController implements Constants {
 				}
 				event.setFields(field.toString());
 				event.setApiKey(apiKey);
-				eventResultDTO = eventService.processMessage(event);
-				if (eventResultDTO != null && eventResultDTO.getErrors().getErrorCount() > 0) {
-					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					throw new IllegalArgumentException(eventResultDTO.getErrors().getFieldError().getDefaultMessage());
-				}
+				eventService.processMessage(event);
 			}
 		}
 
