@@ -1,10 +1,9 @@
 (function() {
-   window.onbeforeunload = function() {
-  };
   if(typeof(_et.endPoint) == 'undefined' ||  _et.endPoint == '') {
       _et.endPoint =  "logapi.goorulearning.org";
   }
-     var apiEndpoint = ('https:' == document.location.protocol ? 'https://' : 'http://') + _et.endPoint +"/api/log";
+ var apiEndpoint = ('https:' == document.location.protocol ? 'https://' : 'http://') + _et.endPoint +"/api/log";
+
 
   var el = {
     authenticate: function() {
@@ -17,8 +16,11 @@
             if(responseType.indexOf("application/json") != -1) {
                 var json = eval("(" + request.responseText + ")");
                 if (request.status == 403) {
+                    if (window.console)
+                        console.error("ET: Not able to authenticate");
                 } else {
-                    self.setInterval(function(){el.triggerCall()}, 0);
+                    if (window.console)
+                        console.debug("ET: Authentication successful"):
                 }
             }
         }
@@ -28,9 +30,10 @@
 
     triggerCall: function() {
       if (_et.data.length > 0) {
-          console.log(_et.data);
+          if (window.console)
+              console.log(_et.data);
             var request = el.request();
-            request.open('POST',apiEndpoint + "/event?apiKey=" + _et.apiKey ,true);
+            request.open('POST',apiEndpoint + "/event?apiKey=" + _et.apiKey, false);
             request.setRequestHeader("Content-type","application/json");
             request.onreadystatechange=function() {
                 if(request.readyState == 4) {
@@ -57,5 +60,6 @@
     }
   };
   el.authenticate();
+ _et.triggerCall = triggerCall;
 })();
 
