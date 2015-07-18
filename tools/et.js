@@ -16,11 +16,13 @@
             if(responseType.indexOf("application/json") != -1) {
                 var json = eval("(" + request.responseText + ")");
                 if (request.status == 403) {
-                    if (window.console)
+                    if (window.console) {
                         console.error("ET: Not able to authenticate");
+                    }
                 } else {
-                    if (window.console)
-                        console.debug("ET: Authentication successful"):
+                    if (window.console) {
+                        console.debug("ET: Authentication successful");
+                    }
                 }
             }
         }
