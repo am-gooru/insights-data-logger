@@ -176,7 +176,7 @@ public class EventServiceImpl implements EventService, Constants {
 				}
 			}
 		} catch (JSONException e) {
-			errors.rejectValue(CONTENT_GOORU_OID, "LA005", CONTENT_GOORU_OID + INVALID_JSON);
+			errors.rejectValue(CONTENT_GOORU_OID, "LA007", CONTENT_GOORU_OID + INVALID_JSON);
 		}
 		return errors;
 	}
