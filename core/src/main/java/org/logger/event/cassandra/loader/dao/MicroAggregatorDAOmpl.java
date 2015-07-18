@@ -282,12 +282,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private Long getScoreInPercentage(String key) {
 		long score = 0L;
 		long attemptedAssessmentCount = 0L;
+		long scoreInPercentage = 0L;
 		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), key, 0);
 		for (Column<String> scoreColumn : scoreList) {
 			++attemptedAssessmentCount;
 			score += scoreColumn.getLongValue();
 		}
-		return (score/attemptedAssessmentCount);
+		if(attemptedAssessmentCount != 0L){
+			scoreInPercentage = (score/attemptedAssessmentCount);
+		}
+		return scoreInPercentage;
 	}
 
 	/**
@@ -1191,9 +1195,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String lessonGooruId = (String) eventMap.get(LESSON_GOORU_OID);
 			String contentGooruId = (String) eventMap.get(CONTENT_GOORU_OID);
 			String collectionType = (String) eventMap.get(COLLECTION_TYPE);
-
-			String[] classList = TypeConverter.stringToAny((String) eventMap.get("classGooruIds"), "StringArray");
-			for (String classGooruId : classList) {
+			String cassIds = (eventMap.get("classGooruIds")+"").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "");
+			for (String classGooruId : cassIds.split(COMMA)) {
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
 				for (Column<String> student : studentList) {
 					this.reComputeClassMetrics(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, student.getName(), collectionType);
@@ -1232,7 +1235,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
 			for (Future<String> taskStatus : taskStatues) {
-				System.out.println("Status = " + taskStatus.get());
+				logger.info("Status = " + taskStatus.get());
 			}
 			this.computeScoreByLevel(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 		} catch (Exception e) {
