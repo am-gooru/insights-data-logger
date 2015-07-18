@@ -60,6 +60,6 @@
     }
   };
   el.authenticate();
- _et.triggerCall = triggerCall;
+ _et.triggerCall = el.triggerCall;
 })();
 
