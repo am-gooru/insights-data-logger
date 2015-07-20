@@ -423,6 +423,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void generateSessionActivity(Map<String, Object> eventMap, ColumnListMutation<String> aggregatorColumns, ColumnListMutation<String> counterColumns, String contentGooruId,
 			String parentGooruId, String eventType) {
 		try {
+			String sessionId = (String) eventMap.get(SESSION_ID);
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_PLAY_COLUMNS.entrySet()) {
 					columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
@@ -435,7 +436,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_COUNT), questionCount);
 						logger.info("Question Count : {}", questionCount);
 						if (questionCount > 0) {
-							score = getAssessmentTotalScore((String) eventMap.get(SESSION_ID));
+							score = getAssessmentTotalScore(sessionId);
 							scoreInPercentage = (100 * score / questionCount);
 						}
 						eventMap.put(SCORE_IN_PERCENTAGE, scoreInPercentage);
@@ -459,8 +460,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				if (QUESTION.equals(eventMap.get(RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)) || PAUSE.equals(eventMap.get(TYPE)))) {
 					String answerStatus = null;
-					int[] attemptTrySequence = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_TRY_SEQ));
-					int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
+					int[] attemptTrySequence = TypeConverter.stringToIntArray((String)eventMap.get(ATTMPT_TRY_SEQ));
+					int[] attempStatus = TypeConverter.stringToIntArray((String)eventMap.get(ATTMPT_STATUS));
+					
 					int status = 0;
 					status = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
 					if (status != 0) {
@@ -473,12 +475,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} else if (attempStatus[status] == 1) {
 						answerStatus = LoaderConstants.CORRECT.getName();
 					}
+					
 					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, OPTIONS), option);
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
-					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
+					if(!(answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && hasUserAlreadyAnswered(sessionId, contentGooruId))){
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
+					}
 				}
 			} else if (LoaderConstants.CRAV1.getName().equals(eventMap.get(EVENT_NAME))) {
 
@@ -527,10 +532,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				if (classGooruId != null && isStudent) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-					List<String> keyList = generateUsageKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId);
-					for (String usageKey : keyList) {
-						m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), usageKey).putColumnIfNotNull(_SESSION_ID, sessionId);
-					}
 				} else {
 					key = generateColumnKey(contentGooruId, gooruUUID);
 				}
@@ -1253,6 +1254,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	}
 
+	public boolean hasUserAlreadyAnswered(String key, String columnPrefix) {
+		ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), key, 0);
+		boolean status = false;
+		String attemptStatus = counterColumns.getColumnByName(columnPrefix + SEPERATOR + _QUESTION_STATUS) != null ? counterColumns.getStringValue(columnPrefix + SEPERATOR + _QUESTION_STATUS, null) : null;
+		if (attemptStatus != null && attemptStatus.matches(ANSWERING_STATUS)) {
+			status = true;
+		}
+		return status;
+	}
 	private String deleteColumn(String cfName, String key, String column) {
 		try {
 			if (StringUtils.isNotBlank(column)) {

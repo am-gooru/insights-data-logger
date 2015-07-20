@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,17 +43,18 @@ public class TypeConverter {
 
 	public static <T> T stringToIntArray(String arrayAsString) {
 		if (arrayAsString != null) {
-
-			String[] items = arrayAsString.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
-
-			int[] results = new int[items.length];
-
-			for (int i = 0; i < items.length; i++) {
-				try {
-					results[i] = Integer.parseInt(items[i]);
-				} catch (NumberFormatException nfe) {
+			int[] results = new int[0];
+			String value = arrayAsString.replaceAll("\\[", "").replaceAll("\\]", "");
+			if (StringUtils.isNotBlank(value)) {
+				String[] items = value.split(",");
+				results = new int[items.length];
+				for (int i = 0; i < items.length; i++) {
+					try {
+						results[i] = Integer.parseInt(items[i]);
+					} catch (NumberFormatException nfe) {
+						logger.error("Exception", nfe);
+					}
 				}
-				;
 			}
 			return (T) results;
 		}

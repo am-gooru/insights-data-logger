@@ -670,8 +670,10 @@ public interface Constants {
 	
 	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add";
 	
-	String RAW_EVENT_NULL_EXCEPTION = "Raw Event NULL Exception : ";
+	public static final String RAW_EVENT_NULL_EXCEPTION = "Raw Event NULL Exception : ";
 	
-	String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
+	public static final String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
+	
+	public static final  String ANSWERING_STATUS =  "correct|in-correct";
 	
 }
