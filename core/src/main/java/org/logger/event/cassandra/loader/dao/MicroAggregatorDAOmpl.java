@@ -435,7 +435,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_COUNT), questionCount);
 						logger.info("Question Count : {}", questionCount);
 						if (questionCount > 0) {
-							Thread.sleep(1000);
 							score = getAssessmentTotalScore((String) eventMap.get(SESSION_ID));
 							scoreInPercentage = (100 * score / questionCount);
 						}
