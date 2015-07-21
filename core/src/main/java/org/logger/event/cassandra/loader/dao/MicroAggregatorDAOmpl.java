@@ -294,7 +294,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void aggregateClassActivityScore(String scoreKey, MutationBatch m) {
 		String columnName = generateColumnKey(scoreKey, ASSESSMENT, _SCORE_IN_PERCENTAGE);
 		long assessmentAttempted = baseCassandraDao.getCount(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), columnName);
-		System.out.println("assessmentAttempted"+assessmentAttempted);
 		Long scoreInPercentage = getScoreInPercentage(columnName);
 		m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), scoreKey).putColumn(_SCORE_IN_PERCENTAGE, scoreInPercentage);
 		m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(scoreKey, ASSESSMENT)).putColumn(_SCORE_IN_PERCENTAGE, scoreInPercentage);
@@ -1199,9 +1198,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String collectionType = eventMap.get(COLLECTION_TYPE) != null ? (String) eventMap.get(COLLECTION_TYPE) : null;
 			for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
-				for (Column<String> student : studentList) {
-					generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, student.getName(), collectionType);
-				}
+					generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
@@ -1209,15 +1206,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 	}
 
-	private void generateDeleteTasks(final String classGooruId, final String courseGooruId, final String unitGooruId, final String lessonGooruId, final String contentGooruId, final String gooruUUID,
-			final String collectionType) {
+	private void generateDeleteTasks(final String classGooruId, final String courseGooruId, final String unitGooruId, final String lessonGooruId, final String contentGooruId,
+			final Collection<String> studentsIds, final String collectionType) {
 		try {
 			Set<Callable<String>> deleteTasks = new HashSet<Callable<String>>();
-			deleteTasks.add(new Callable<String>() {
-				public String call() throws Exception {
-					return generateKeysAndDeleteColumns(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, collectionType);
-				}
-			});
+			for (final String studentUId : studentsIds) {
+				deleteTasks.add(new Callable<String>() {
+					public String call() throws Exception {
+						return generateKeysAndDeleteColumns(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentUId, collectionType);
+					}
+				});
+			}
 
 			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
 			for (Future<String> taskStatus : taskStatues) {
@@ -1282,7 +1281,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
 		}
-		return "Re Computation is completed for :  " + gooruUUID;
+		return generateColumnKey(RECOMPUTE_SUCCESS_MESSAGE,gooruUUID);
 	}
 
 	private void deleteRowKeys(String cfName, Set<String> keySet) {

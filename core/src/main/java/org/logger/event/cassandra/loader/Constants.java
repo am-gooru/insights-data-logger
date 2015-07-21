@@ -684,4 +684,5 @@ public interface Constants {
 	
 	public static final  String ANSWERING_STATUS =  "correct|in-correct";
 	
+	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 }
