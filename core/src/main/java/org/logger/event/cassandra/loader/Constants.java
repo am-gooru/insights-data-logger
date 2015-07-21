@@ -416,6 +416,14 @@ public interface Constants {
 	
 	public static final  String ACTIVE = "active";
 	
+	public static final  String _UNIQUE_VIEWS = "unique_views";
+	
+	public static final  String _ASSESSEMENT_UNIQUE_VIEWS = "assessment_unique_views";
+	
+	public static final  String _COLLECTION_UNIQUE_VIEWS = "collection_unique_views";
+	
+	public static final  String UNIQUE_VIEWS = "uniqueViews";
+	
 	public static final  String COUNT = "count";
 	
 	public static final  String _TIME_SPENT = "time_spent";
@@ -676,4 +684,5 @@ public interface Constants {
 	
 	public static final  String ANSWERING_STATUS =  "correct|in-correct";
 	
+	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 }
