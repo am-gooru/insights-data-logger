@@ -1379,15 +1379,4 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		return status;
 	}
-
-	public static void main(String args[]) {
-		Set<String> test = new HashSet<String>();
-		test.add("daniel1");
-		test.add("daniel1");
-		test.add("daniel1");
-		test.add("daniel2");
-		for (String t : test) {
-			System.out.print("test : " + t);
-		}
-	}
 }
