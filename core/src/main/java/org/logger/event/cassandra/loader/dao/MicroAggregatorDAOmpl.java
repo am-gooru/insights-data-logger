@@ -474,7 +474,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} else if (attempStatus[status] == 1) {
 						answerStatus = LoaderConstants.CORRECT.getName();
 					}
-
+					logger.info("answerStatus : " + answerStatus);
 					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
