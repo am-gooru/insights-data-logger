@@ -474,7 +474,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} else if (attempStatus[status] == 1) {
 						answerStatus = LoaderConstants.CORRECT.getName();
 					}
-
+					logger.info("answerStatus : " + answerStatus);
 					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
@@ -482,6 +482,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
 					if (!(answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && hasUserAlreadyAnswered(sessionId, contentGooruId))) {
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, CHOICE), eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null);
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _ANSWER_OBECT), eventMap.containsKey(ANSWER_OBECT) ? (String)eventMap.get(ANSWER_OBECT) :null);
 					}
 				}
 			} else if (LoaderConstants.CRAV1.getName().equals(eventMap.get(EVENT_NAME))) {
@@ -1270,7 +1272,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				baseCassandraDao.deleteRowKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey);
 				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 			} else if (collectionType.equalsIgnoreCase(UNIT)) {
-				String parentKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				String parentKey = generateColumnKey(classGooruId, courseGooruId,	 unitGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
 				Set<String> unitMap = generateLessonRowKeys(classGooruId, courseGooruId, unitGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 				deleteRowKeys(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), unitMap);
