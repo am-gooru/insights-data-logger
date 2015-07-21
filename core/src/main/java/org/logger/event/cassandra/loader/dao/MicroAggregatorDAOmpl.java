@@ -1302,6 +1302,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			if (reComputeKeys != null) {
 				for (String key : reComputeKeys) {
 					aggregateClassActivityScore(key, m);
+					logger.info("Re-Computed score for : {}",key);
 				}
 
 				m.execute();
