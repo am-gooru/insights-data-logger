@@ -163,6 +163,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (e instanceof ConnectionException && retryCount < 6) {
 				return readWithKey(cfName, key, ++retryCount);
 			}
+			logger.info("Error while reading row key : {}",key);
 			logger.error("Exception:",e);
 		}
 
@@ -355,6 +356,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).getCount()
 					.execute().getResult();
 		} catch (Exception e) {
+			logger.info("Error while getting column count for - {}",key);
 			logger.error("Exception:",e);
 		}
 
@@ -890,9 +892,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		MutationBatch m = getKeyspace().prepareMutationBatch();
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).delete();
-
 			m.execute();
+			logger.info("Deleted row key - {}",key);
 		} catch (Exception e) {
+			logger.info("Failed to delete row key : {}",key);
 			logger.error("Exception:",e);
 		}
 	}
@@ -909,8 +912,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).deleteColumn(columnName);
 			m.execute();
+			logger.info("Deleted row key : {} and column : {}",key,columnName);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.info("Failed to delete row key : {} and column : {}",key,columnName);
 			logger.error("Exception:",e);
 		}
 	}
