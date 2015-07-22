@@ -685,4 +685,6 @@ public interface Constants {
 	public static final  String ANSWERING_STATUS =  "correct|in-correct";
 	
 	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
+	
+	public static final  String EVENTS_FOR_TIMESPENT_CALCULTION = "collection.play|collection.resource.play|resource.play";
 }
