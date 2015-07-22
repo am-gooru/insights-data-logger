@@ -391,9 +391,9 @@ public class CassandraDataLoader implements Constants {
 	 * @throws ConnectionException
 	 *             If the host is unavailable
 	 */
-	private void calculateTimespent(Map<String,Object> eventMap,Event event) {
+	private void calculateTimespent(Map<String, Object> eventMap, Event event) {
 		try {
-			if (((Number)eventMap.get(TOTALTIMEINMS)).longValue() > 7200000) {
+			if (((Number) eventMap.get(TOTALTIMEINMS)).longValue() > 7200000) {
 				logger.info("Timespent before calculation : {}", eventMap.get(TOTALTIMEINMS));
 				Long timeInMillisecs = 0L;
 				Long endTime = event.getEndTime();
@@ -404,7 +404,9 @@ public class CassandraDataLoader implements Constants {
 					ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getEventId(), 0);
 					if (existingRecord != null && !existingRecord.isEmpty()) {
 						startTime = existingRecord.getLongValue(_START_TIME, null);
-						if ((endTime == null || endTime == 0L)) {
+						if (STOP.equalsIgnoreCase(existingRecord.getStringValue(_EVENT_TYPE, null))) {
+							endTime = existingRecord.getLongValue(_END_TIME, null);
+						} else if ((endTime == null || endTime == 0L)) {
 							endTime = System.currentTimeMillis();
 						}
 					}
@@ -414,11 +416,11 @@ public class CassandraDataLoader implements Constants {
 				 * default time spent as 2 hour
 				 */
 				timeInMillisecs = timeInMillisecs > 7200000 ? 7200000 : timeInMillisecs;
-				JSONObject eventMetrics =  new JSONObject(event.getMetrics());
+				JSONObject eventMetrics = new JSONObject(event.getMetrics());
 				eventMetrics.put(TOTALTIMEINMS, timeInMillisecs);
 				event.setMetrics(eventMetrics.toString());
-				logger.info("Timespent after calculation : {}",timeInMillisecs);
-				eventMap.put(TOTALTIMEINMS,timeInMillisecs);
+				logger.info("Timespent after calculation : {}", timeInMillisecs);
+				eventMap.put(TOTALTIMEINMS, timeInMillisecs);
 			}
 		} catch (Exception e) {
 			logger.error("Exeption while calculting timespent:", e);
