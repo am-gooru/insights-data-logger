@@ -681,7 +681,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
 
-				this.markItemDelete(eventDataMap, eventMap);
+				this.markItemDelete(eventMap);
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
 
@@ -901,11 +901,14 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	private void markDeletedClasspageUser(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
 		Map<String, Object> classpageMap = new HashMap<String, Object>();
+		String classGooruId = eventMap.containsKey(CONTENT_GOORU_OID) ? (String)eventMap.get(CONTENT_GOORU_OID) : null;
+		String userUid = eventMap.containsKey("removedGooruUId")  ? (String)eventMap.get("removedGooruUId") : null;
 		classpageMap.put("groupUId", ((eventMap.containsKey("groupUId") && eventMap.get("groupUId") != null) ? eventMap.get("groupUId").toString() : null));
 		classpageMap.put(DELETED, Integer.valueOf(1));
-		classpageMap.put("classId", ((eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) ? eventMap.get(CONTENT_GOORU_OID).toString() : null));
-		classpageMap.put(USER_UID, ((eventMap.containsKey("removedGooruUId") && eventMap.get("removedGooruUId") != null) ? eventMap.get("removedGooruUId") : null));
+		classpageMap.put("classId", classGooruId);
+		classpageMap.put(USER_UID, userUid);
 		baseCassandraDao.updateClasspageCF(ColumnFamily.CLASSPAGE.getColumnFamily(), classpageMap);
+		baseCassandraDao.deleteColumn(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, userUid);
 	}
 
 	/**
@@ -1172,11 +1175,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param eventDataMap
 	 * @param eventMap
 	 */
-	private void markItemDelete(Map<String, Object> eventDataMap, Map<String, Object> eventMap) {
-		Map<String, Object> collectionItemMap = new HashMap<String, Object>();
-		collectionItemMap.put(COLLECTION_ITEM_ID, (eventMap.containsKey(ITEM_ID) ? eventMap.get(ITEM_ID).toString() : null));
-		collectionItemMap.put(DELETED, Integer.valueOf(1));
-		rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
+	private void markItemDelete(Map<String, Object> eventMap) {
+		if (eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_DELETE.getName())) {
+			Map<String, Object> collectionItemMap = new HashMap<String, Object>();
+			collectionItemMap.put(COLLECTION_ITEM_ID, (eventMap.containsKey(ITEM_ID) ? eventMap.get(ITEM_ID).toString() : null));
+			collectionItemMap.put(DELETED, Integer.valueOf(1));
+			rawUpdateDAO.updateCollectionItemTable(eventMap, collectionItemMap);
+		}
+		baseCassandraDao.deleteColumn(ColumnFamily.COLLECTIONITEMASSOC.getColumnFamily(), (String)eventMap.get(PARENT_GOORU_OID), (String)eventMap.get(CONTENT_GOORU_OID));
+		
 	}
 
 	private void updateResource(Map<String, Object> eventDataMap, Map<String, Object> eventMap, ResourceCo resourceCo, Map<String, Object> collectionMap) {
@@ -1210,6 +1217,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
 				generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
 			}
+			/**
+			 * Removing association from collection_item_assoc
+			 */
+			markItemDelete(eventMap);
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
