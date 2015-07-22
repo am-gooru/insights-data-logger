@@ -26,6 +26,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -220,7 +221,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					if (COLLECTION.equalsIgnoreCase(collectionType)) {
 						ColumnListMutation<String> scoreCounter = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily()),
 								aggregateKeys.getKey());
-						scoreCounter.incrementCounterColumn(aggregateKeys.getKey(), ((Number) eventMap.get(TOTALTIMEINMS)).longValue());
+						scoreCounter.incrementCounterColumn(aggregateKeys.getValue(), ((Number) eventMap.get(TOTALTIMEINMS)).longValue());
 					} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
 						ColumnListMutation<String> scoreAggregator = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), aggregateKeys.getKey());
 						scoreAggregator.putColumnIfNotNull(aggregateKeys.getValue(), scoreInPercentage);
@@ -1201,7 +1202,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String lessonGooruId = eventMap.get(LESSON_GOORU_OID) != null ? (String) eventMap.get(LESSON_GOORU_OID) : null;
 			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
 			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : null;
-			String collectionType = eventMap.get(COLLECTION_TYPE) != null ? (String) eventMap.get(COLLECTION_TYPE) : null;
+			String collectionType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
 			for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
 				/**
 				 * Get Students list for a class
@@ -1239,7 +1240,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
 			for (Future<String> taskStatus : taskStatues) {
-				logger.info("Status = " + taskStatus.get());
+				logger.info(taskStatus.get());
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
@@ -1262,8 +1263,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			Set<String> reComputeKeys = null;
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+			logger.info("processing started at : {} for user : {}",new Date(),gooruUUID);
+			logger.info("Deletion happening at the level: {}",collectionType);
 			if (collectionType.equalsIgnoreCase(COURSE)) {
 				String parentKey = generateColumnKey(classGooruId, courseGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				logger.info("parentKey: {}",parentKey);
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
 				Set<String> unitMap = generateUnitRowKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 				deleteRowKeys(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), unitMap);
@@ -1272,7 +1276,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				baseCassandraDao.deleteRowKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey);
 				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 			} else if (collectionType.equalsIgnoreCase(UNIT)) {
-				String parentKey = generateColumnKey(classGooruId, courseGooruId,	 unitGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				String parentKey = generateColumnKey(classGooruId, courseGooruId,unitGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				logger.info("parentKey: {}",parentKey);
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
 				Set<String> unitMap = generateLessonRowKeys(classGooruId, courseGooruId, unitGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 				deleteRowKeys(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), unitMap);
@@ -1284,6 +1289,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, unitGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
 			} else if (collectionType.equalsIgnoreCase(LESSON)) {
 				String parentKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
+				logger.info("parentKey: {}",parentKey);
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
 				for (String columnKeySuffix : attemptedAssessmentList.getColumnNames()) {
 					baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), generateColumnKey(classGooruId, courseGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE),
@@ -1295,12 +1301,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				baseCassandraDao.deleteRowKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey);
 				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID);
 			} else if (collectionType.matches(ASSESSMENT_TYPES)) {
-				Map<String,String> keysAndColumns = generateKeysAndColumnIfAssessmentDelete(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-				for(Map.Entry<String, String> keyColumnPair : keysAndColumns.entrySet()){
-					baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), keyColumnPair.getKey(), keyColumnPair.getValue());
+				Map<String, String> keysAndColumns = generateKeysAndColumnIfAssessmentDelete(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+				logger.info("parentKey: {}",generateColumnKey(classGooruId, courseGooruId,unitGooruId, lessonGooruId,gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE));
+				for (Map.Entry<String, String> keyColumnPair : keysAndColumns.entrySet()) {
+					if (baseCassandraDao.getCount(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), keyColumnPair.getKey()) > 1) {
+						baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), keyColumnPair.getKey(), keyColumnPair.getValue());
+					} else {
+						baseCassandraDao.deleteRowKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), keyColumnPair.getKey());
+					}
 				}
 				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID);
 			}
+			logger.info("Deletion process is completed at : {} for user : {}",new Date(),gooruUUID);
 			if (reComputeKeys != null) {
 				for (String key : reComputeKeys) {
 					aggregateClassActivityScore(key, m);
@@ -1309,6 +1321,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 				m.execute();
 			}
+			logger.info("Re computation is completed at : {} for user : {}",new Date(),gooruUUID);
 		} catch (Exception e) {
 			logger.error("Exception:" + e);
 		}
