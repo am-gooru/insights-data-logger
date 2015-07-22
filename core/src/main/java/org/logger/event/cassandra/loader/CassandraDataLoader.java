@@ -343,7 +343,7 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.eventProcessor(eventMap);
 		} else if (eventName.matches(RAW_DATA_UPDATE_EVENTS)) {
 			liveAggregator.updateRawData(eventMap);
-		}else if(eventMap.get(EVENT_NAME).equals("class.item.delete") &&((String)eventMap.get(COLLECTION_TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES) ){
+		}else if(eventMap.get(EVENT_NAME).equals("class.item.delete") &&((String)eventMap.get(TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES) ){
 			liveAggregator.processClassActivityOpertaions(eventMap);
 		}
 
