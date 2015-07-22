@@ -1217,10 +1217,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
 				generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
 			}
-			/**
-			 * Removing association from collection_item_assoc
-			 */
-			markItemDelete(eventMap);
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
