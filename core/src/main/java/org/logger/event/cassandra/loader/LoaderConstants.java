@@ -160,6 +160,8 @@ public enum LoaderConstants {
 	SCOLLECTION("scollection"),
 	
 	PATHWAY("pathway"),
+	
+	CLASS_ITEM_DELETE("class.item.delete"),
     
     ;
 	
