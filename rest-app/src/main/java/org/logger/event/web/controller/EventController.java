@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +47,9 @@ import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,7 +70,7 @@ import com.netflix.astyanax.model.Rows;
 @Controller
 @RequestMapping(value = "/event")
 @EnableAsync
-public class EventController implements Constants {
+public class EventController implements Constants,AsyncConfigurer {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventController.class);
 
@@ -595,5 +598,16 @@ public class EventController implements Constants {
 		boolean value = eventService.validateSchedular();
 		logger.debug("Can run scheduler? : "+value);
 		return value;
+	}
+
+     @Override
+	public Executor getAsyncExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(10);
+		executor.setMaxPoolSize(50);
+		executor.setQueueCapacity(100);
+		executor.setThreadNamePrefix("eventExecutor");
+		executor.initialize();
+		return executor;
 	}
 }
