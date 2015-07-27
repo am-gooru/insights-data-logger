@@ -30,7 +30,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -52,41 +51,8 @@ public class JSONDeserializer {
 		}
 		return null;
 	}
-	
+		
 	public static <T> T deserializeEvent(Event event) {
-		
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String,String> map = new HashMap<String,String>();
-		try {
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getUser().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getMetrics().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
-		
-		} catch (Exception e) {
-			logger.error("Exception:", e);
-		}
-		return (T) map;
-	}
-	public static <T> T deserializeEventv2(Event event) {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-		 
-		Map<String,Object> map = new HashMap<String,Object>();
-		try {
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getUser(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getMetrics(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getPayLoadObject(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getContext(), new TypeReference<HashMap<String, Object>>(){}));
-			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getSession(), new TypeReference<HashMap<String, Object>>(){}));
-		
-		} catch (Exception e) {
-			logger.error("Exception:", e);
-		}
-		return (T) map;
-	}
-	public static <T> T deserializeEventv2Gson(Event event) {
 
         Type mapType = new TypeToken <HashMap<String, Object>>() {}.getType();
         Type numberMapType = new TypeToken <HashMap<String, Number>>() {}.getType();
