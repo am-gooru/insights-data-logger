@@ -124,7 +124,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			Event events = new Gson().fromJson(fields, Event.class);
 			Map<String, Object> eventMap = new HashMap<String, Object>();
 			
-			eventMap = JSONDeserializer.deserializeEventv2(events);
+			eventMap = JSONDeserializer.deserializeEvent(events);
 
 			eventMap.put(EVENT_NAME, events.getEventName());
 			eventMap.put(EVENT_ID, events.getEventId());
