@@ -295,7 +295,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void aggregateClassActivityScore(String scoreKey, MutationBatch m) {
 		String columnName = generateColumnKey(scoreKey, ASSESSMENT, _SCORE_IN_PERCENTAGE);
 		long assessmentAttempted = baseCassandraDao.getCount(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), columnName);
-		Long scoreInPercentage = getScoreInPercentage(columnName);
+		Long scoreInPercentage = getScoreInPercentage(columnName,assessmentAttempted);
 		m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), scoreKey).putColumn(_SCORE_IN_PERCENTAGE, scoreInPercentage);
 		m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), generateColumnKey(scoreKey, ASSESSMENT)).putColumn(_SCORE_IN_PERCENTAGE, scoreInPercentage);
 		m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), scoreKey).putColumn(_ASSESSEMENT_UNIQUE_VIEWS, assessmentAttempted);
@@ -308,17 +308,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param key
 	 * @return
 	 */
-	private Long getScoreInPercentage(String key) {
+	private Long getScoreInPercentage(String key,long assessmentAttempted) {
 		long score = 0L;
-		long attemptedAssessmentCount = 0L;
 		long scoreInPercentage = 0L;
 		ColumnList<String> scoreList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), key, 0);
 		for (Column<String> scoreColumn : scoreList) {
-			++attemptedAssessmentCount;
 			score += scoreColumn.getLongValue();
 		}
-		if (attemptedAssessmentCount != 0L) {
-			scoreInPercentage = (score / attemptedAssessmentCount);
+		if (assessmentAttempted != 0L) {
+			scoreInPercentage = (score / assessmentAttempted);
 		}
 		return scoreInPercentage;
 	}
