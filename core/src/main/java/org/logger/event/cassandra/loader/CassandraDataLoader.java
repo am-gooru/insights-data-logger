@@ -305,7 +305,7 @@ public class CassandraDataLoader implements Constants {
 	 */
 	public void processMessage(Event event) {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
-		eventMap = JSONDeserializer.deserializeEventv2(event);
+		eventMap = JSONDeserializer.deserializeEventv2Gson(event);
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
 

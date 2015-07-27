@@ -23,18 +23,25 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class JSONDeserializer {
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
+
+	private static Gson gson = new Gson();
+
 	
 	public static <T> T deserialize(String json, TypeReference<T> type) {
 		ObjectMapper mapper = new ObjectMapper();
@@ -63,8 +70,9 @@ public class JSONDeserializer {
 		return (T) map;
 	}
 	public static <T> T deserializeEventv2(Event event) {
-		
 		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+		 
 		Map<String,Object> map = new HashMap<String,Object>();
 		try {
 			map.putAll((Map<? extends String, ? extends Object>) mapper.readValue(event.getUser(), new TypeReference<HashMap<String, Object>>(){}));
@@ -78,4 +86,24 @@ public class JSONDeserializer {
 		}
 		return (T) map;
 	}
+	public static <T> T deserializeEventv2Gson(Event event) {
+
+        Type mapType = new TypeToken <HashMap<String, Object>>() {}.getType();
+        Type numberMapType = new TypeToken <HashMap<String, Number>>() {}.getType();
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String,Object> map = new HashMap<String,Object>();
+        try {
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getUser(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getMetrics(), numberMapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getPayLoadObject(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getContext(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getSession(), mapType));
+
+        } catch (Exception e) {
+                logger.error("Exception:", e);
+        }
+        return (T) map;
+	}
+
 }
