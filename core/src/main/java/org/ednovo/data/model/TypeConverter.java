@@ -104,16 +104,16 @@ public class TypeConverter {
 					result = new Date(((Number)(value)).longValue());
 				} catch (Exception e) {
 					try {
-						result = formatter.parse((String)value);
+						result = formatter.parse(String.valueOf(value));
 					} catch (Exception e1) {
 						try {
-							result = formatter2.parse((String)value);
+							result = formatter2.parse(String.valueOf(value));
 						} catch (Exception e2) {
 							try {
-								result = formatter3.parse((String)value);
+								result = formatter3.parse(String.valueOf(value));
 							} catch (Exception e3) {
 								try {
-									result = formatter4.parse((String)value);
+									result = formatter4.parse(String.valueOf(value));
 								} catch (Exception e4) {
 									logger.error("Error while convert " + value + " to date");
 								}
@@ -125,7 +125,7 @@ public class TypeConverter {
 			} else if (type.equalsIgnoreCase("Boolean")) {
 				result = ((Boolean)(value));
 			} else if (type.equalsIgnoreCase("String")) {
-				result = (String)value;
+				result = String.valueOf(value);
 			} else if (type.equals("IntegerArray")) {
 
 				String[] items = String.valueOf(value).trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
