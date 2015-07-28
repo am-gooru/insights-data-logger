@@ -65,7 +65,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENT_NAME))) {
-			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), String.valueOf(eventMap.get(EVENT_NAME)), 0);
+			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
@@ -78,7 +78,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 								performRating(key, orginalColumn,eventMap,m);		
 								continue;
 							}
-							if (!(eventMap.containsKey(TYPE) && (String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(STOP) || String.valueOf(eventMap.get(TYPE)).equalsIgnoreCase(PAUSE)) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
+							if (!(eventMap.containsKey(TYPE) && (eventMap.get(TYPE).equals(STOP) || eventMap.get(TYPE).equals(PAUSE)) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
 								performCounter(key, orginalColumn, eventMap, m);					
 							}
 						}
@@ -89,7 +89,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			try {
 				m.execute();
 			} catch (Exception e) {
-				logger.error("Exception: Real Time counter failed." + e);
+				logger.error("Exception: Real Time counter failed:" , e);
 			}
 		}
 	}
@@ -97,15 +97,14 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	private void performCounter(String key,String column,Map<String, Object> eventMap,MutationBatch m){
 		
 		if (column.startsWith(_TIME_SPENT + SEPERATOR)) {
-			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, Long.valueOf(String.valueOf(eventMap.get(TOTALTIMEINMS))), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, ((Number)eventMap.get(TOTALTIMEINMS)).longValue(), m);
 		} else if (column.startsWith(SUM + SEPERATOR)) {
 			String rowKey = column.split(SEPERATOR)[1];
 			baseDao.generateCounter(
 					ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
 					key,
 					column,
-					rowKey.equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString(String.valueOf(eventMap.get(rowKey))) : Long.valueOf(String.valueOf(eventMap
-							.get(rowKey.trim()) == null ? "0" : eventMap.get(rowKey.trim()))), m);
+					rowKey.equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString((String)eventMap.get(rowKey)) : eventMap.containsKey(rowKey.trim()) ? ((Number)eventMap.get(rowKey.trim())).longValue() : 0L, m);
 
 		} else {
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, 1L, m);
@@ -307,14 +306,14 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				subKey = splittedKey.split(":");
 				customDateFormatter = new SimpleDateFormat(subKey[1]);
 				if (eventMap != null) {
-					eventDateTime = new Date(Long.valueOf(String.valueOf(eventMap.get("startTime"))));
+					eventDateTime = new Date(((Number)eventMap.get("startTime")).longValue());
 				}
 				key += "~" + customDateFormatter.format(eventDateTime).toString();
 			}
 			if (splittedKey.startsWith("E:") && eventMap != null) {
 				subKey = splittedKey.split(":");
 				if (eventMap.get(subKey[1]) != null) {
-					key += "~" + String.valueOf(eventMap.get(subKey[1])).toLowerCase();
+					key += "~" + ((String)eventMap.get(subKey[1])).toLowerCase();
 				} else {
 					return null;
 				}
@@ -348,7 +347,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				}
 
 				String typeToChange = DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String";
-				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(String.valueOf(entry.getValue()), typeToChange), m);
+				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny((String)entry.getValue(), typeToChange), m);
 			}
 
 			mutationBatch.execute();
@@ -404,7 +403,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		} else {
 			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
 				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), (1L * -1), m);
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, (Long.valueOf(map.get(PREVIOUS_RATE).toString()) * -1), m);
+				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, (((Number)map.get(PREVIOUS_RATE)).longValue() * -1), m);
 				
 			}else{
 				performCounter(key,column,map,m);
