@@ -1274,7 +1274,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				String parentKey = generateColumnKey(classGooruId, courseGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE);
 				logger.info("parentKey: {}",parentKey);
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), parentKey, 0);
-				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());				
 				Set<String> unitMap = generateUnitRowKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());			
 				deleteRowKeys(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), unitMap);
 				Set<String> lessonMap = generateLessonRowKeys(classGooruId, courseGooruId, gooruUUID, attemptedAssessmentList.getColumnNames());
@@ -1294,7 +1293,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				String parentKey = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID);
 				logger.info("parentKey: {}",generateColumnKey(parentKey,ASSESSMENT, _SCORE_IN_PERCENTAGE));
 				ColumnList<String> attemptedAssessmentList = baseCassandraDao.readWithKey(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), generateColumnKey(parentKey,ASSESSMENT, _SCORE_IN_PERCENTAGE), 0);
-				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID);
+				reComputeKeys = generateRecomputationKeys(classGooruId, courseGooruId, unitGooruId, gooruUUID);
 				for (String columnKeySuffix : attemptedAssessmentList.getColumnNames()) {
 					baseCassandraDao.deleteColumn(ColumnFamily.CLASS_ACTIVITY.getColumnFamily(), generateColumnKey(classGooruId, courseGooruId, gooruUUID, ASSESSMENT, _SCORE_IN_PERCENTAGE),
 							generateColumnKey(unitGooruId, lessonGooruId, columnKeySuffix));
@@ -1330,7 +1329,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			}
 			logger.info("Re computation is completed at : {} for user : {}",new Date(),gooruUUID);
 		} catch (Exception e) {
-			logger.error("Exception:" + e);
+			logger.error("Exception:" , e);
 		}
 		return generateColumnKey(RECOMPUTE_SUCCESS_MESSAGE,gooruUUID);
 	}
@@ -1470,12 +1469,22 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	private Set<String> generateRecomputationKeys(String classGooruId, String courseGooruId, String unitGooruId, String gooruUUID, Collection<String> columnNames) {
 		Set<String> lessonKeys = new HashSet<String>();
-		for (String columnName : columnNames) {
-			String[] lesson = columnName.split(SEPERATOR);
-			lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lesson[0], gooruUUID));
-			lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID));
-			lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID));
-		}
+		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID));
+		return lessonKeys;
+	}
+
+	/**
+	 * Generate Keys to update re-computed score
+	 * @param classGooruId
+	 * @param courseGooruId
+	 * @param unitGooruId
+	 * @param gooruUUID
+	 * @return
+	 */
+	private Set<String> generateRecomputationKeys(String classGooruId, String courseGooruId, String unitGooruId, String gooruUUID) {
+		Set<String> lessonKeys = new HashSet<String>();
+		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID));
+		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID));
 		return lessonKeys;
 	}
 
@@ -1490,12 +1499,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	private Set<String> generateRecomputationKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String gooruUUID) {
 		Set<String> lessonKeys = new HashSet<String>();
-		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID));
+		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId,gooruUUID));
 		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId, gooruUUID));
 		lessonKeys.add(generateColumnKey(classGooruId, courseGooruId, gooruUUID));
 		return lessonKeys;
 	}
-
 	/**
 	 * Append string with ~ seperator
 	 * @param columns
