@@ -110,7 +110,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * Generate column list with session id
 			 */
-			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId, isStudent);
+			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId);
 
 			/**
 			 * Store session activity details
@@ -123,8 +123,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * If user is playing collection from class , we need to generate All students and All session details.
 			 */
-			aggregateAllSessions(m, eventMap, keysList, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, isStudent, eventType);
-
+			if (isStudent) {
+				aggregateAllSessions(m, eventMap, keysList, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType);
+			}
 			m.execute();
 			/**
 			 * Storing the latest collection accessed time
@@ -133,9 +134,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * Aggregations steps in close events
 			 */
-			if (STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType)) {
+			if ((STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType))) {
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
-				generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, isStudent);
+				if(isStudent){
+					generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
@@ -156,11 +159,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param contentGooruId
 	 * @param parentGooruId
 	 * @param gooruUUID
-	 * @param isStudent
 	 * @param eventType
 	 */
 	private void aggregateAllSessions(MutationBatch m, Map<String, Object> eventMap, List<String> keysList, String eventName, String classGooruId, String courseGooruId, String unitGooruId,
-			String lessonGooruId, String contentGooruId, String parentGooruId, String gooruUUID, boolean isStudent, String eventType) {
+			String lessonGooruId, String contentGooruId, String parentGooruId, String gooruUUID, String eventType) {
 		try {
 
 			if (classGooruId != null && courseGooruId != null) {
@@ -192,12 +194,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param lessonGooruId
 	 * @param contentGooruId
 	 * @param gooruUUID
-	 * @param isStudent
 	 */
 	private void generateClassActivity(Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId,
-			String gooruUUID, boolean isStudent) {
+			String gooruUUID) {
 		try {
-			if (LoaderConstants.CPV1.getName().equals(eventName) && eventMap.containsKey(CLASS_GOORU_OID) && eventMap.get(CLASS_GOORU_OID) != null && isStudent) {
+			if (LoaderConstants.CPV1.getName().equals(eventName) && eventMap.containsKey(CLASS_GOORU_OID) && eventMap.get(CLASS_GOORU_OID) != null) {
 				String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
 				long scoreInPercentage = ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue();
 				MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -524,14 +525,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param gooruUUID
 	 * @param eventType
 	 * @param sessionId
-	 * @param isStudent
 	 */
 	private void storeSessions(MutationBatch m, Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,
-			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId, Boolean isStudent) {
+			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId) {
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
-				if (classGooruId != null && isStudent) {
+				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
 					key = generateColumnKey(contentGooruId, gooruUUID);
@@ -544,7 +544,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 
 			} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
-				if (classGooruId != null && isStudent) {
+				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
 				} else {
 					key = generateColumnKey(parentGooruId, gooruUUID);
