@@ -128,13 +128,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 			eventMap.put(EVENT_NAME, events.getEventName());
 			eventMap.put(EVENT_ID, events.getEventId());
-			eventMap.put(EVENT_TIME, String.valueOf(events.getStartTime()));
+			eventMap.put(EVENT_TIME, events.getStartTime());
 			eventMap.put(RESULT_COUNT, events.getHitCount());
 			if (eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
-				eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
-				eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
+				eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
+				eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
 
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
 				if (questionList != null && questionList.size() > 0) {
 					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
 					eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
@@ -150,11 +150,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 			}
 			if (eventMap.get(GOORUID) != null) {
-				eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
+				eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(GOORUID)));
 			}
 			String userIp = null;
 			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
-				userIp = String.valueOf(eventMap.get(USER_IP)).split(COMMA)[0];
+				userIp = ((String)eventMap.get(USER_IP)).split(COMMA)[0];
 			}
 			if (userIp != null) {
 				try {
@@ -175,7 +175,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				} 
 			}
 			
-			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
 			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 				try {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
@@ -196,67 +196,67 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				while (keys.hasNext()) {
 					String key = (String) keys.next();
 
-					eventMap.put(key, String.valueOf(jsonField.get(key)));
+					eventMap.put(key, ((String)jsonField.get(key)));
 
 					/*
-					 * if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){ eventMap.put("gooruOid", String.valueOf(jsonField.get(key)));
+					 * if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){ eventMap.put("gooruOid", ((String)jsonField.get(key)));
 					 * }
 					 */
 
-					if (key.equalsIgnoreCase(EVENT_NAME) && (String.valueOf(jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
+					if (key.equalsIgnoreCase(EVENT_NAME) && (((String)jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
 						eventMap.put(EVENT_NAME, "reaction.create");
 					}
 
 					if (key.equalsIgnoreCase(EVENT_NAME)
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collections-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
+							&& (((String)jsonField.get(key)).equalsIgnoreCase("collection-play") || ((String)jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("collections-played") || ((String)jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
 
 						eventMap.put(EVENT_NAME, "collection.play");
 					}
 
 					if (key.equalsIgnoreCase(EVENT_NAME)
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
+							&& (((String)jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || ((String)jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
 						eventMap.put(EVENT_NAME, "user.login");
 					}
 
 					if (key.equalsIgnoreCase(EVENT_NAME)
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-home") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
+							&& (((String)jsonField.get(key)).equalsIgnoreCase("signUp-home") || ((String)jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
 						eventMap.put(EVENT_NAME, "user.register");
 					}
 
 					if (key.equalsIgnoreCase(EVENT_NAME)
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || String.valueOf(jsonField.get(key)).equalsIgnoreCase(
+							&& (((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || ((String)jsonField.get(key)).equalsIgnoreCase(
 									"collection-resource-question-play-dots"))) {
 						eventMap.put(EVENT_NAME, "collection.resource.play");
 					}
 
 					if (key.equalsIgnoreCase(EVENT_NAME)
-							&& (String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-player") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
-									|| String.valueOf(jsonField.get(key)).equalsIgnoreCase("resources-played") || String.valueOf(jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
+							&& (((String)jsonField.get(key)).equalsIgnoreCase("resource-player") || ((String)jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || ((String)jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
+									|| ((String)jsonField.get(key)).equalsIgnoreCase("resources-played") || ((String)jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
 						eventMap.put(EVENT_NAME, "resource.play");
 					}
 
 					if (key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")) {
-						eventMap.put(GOORUID, String.valueOf(jsonField.get(key)));
+						eventMap.put(GOORUID, ((String)jsonField.get(key)));
 					}
 
 				}
 				if (eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
-					eventMap = this.getTaxonomyInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
-					eventMap = this.getContentInfo(eventMap, String.valueOf(eventMap.get(CONTENT_GOORU_OID)));
+					eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
+					eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
 				}
 				if (eventMap.get(GOORUID) != null) {
-					eventMap = this.getUserInfo(eventMap, String.valueOf(eventMap.get(GOORUID)));
+					eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(GOORUID)));
 				}
 
 				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
-					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), String.valueOf(eventMap.get(CONTENT_GOORU_OID)), 0);
+					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
 					if (questionList != null && questionList.size() > 0) {
 						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
 						eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
@@ -270,7 +270,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
-				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), String.valueOf(eventMap.get("eventId")));
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
 				if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
 					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
@@ -833,7 +833,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 					contentBuilder.field(rowKey,
-							TypeConverter.stringToAny(String.valueOf(entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
+							TypeConverter.stringToAny(((String)entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
 				}
 			}
 		} catch (Exception e) {
