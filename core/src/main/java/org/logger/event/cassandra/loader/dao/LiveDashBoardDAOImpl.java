@@ -347,7 +347,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 				}
 
 				String typeToChange = DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String";
-				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny((String)entry.getValue(), typeToChange), m);
+				baseDao.generateNonCounter(rowKey, TypeConverter.stringToAny(entry.getValue(), typeToChange), m);
 			}
 
 			mutationBatch.execute();

@@ -28,6 +28,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import javax.swing.text.StyledEditorKit.BoldAction;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,35 +63,35 @@ public class TypeConverter {
 		return null;
 	}
 
-	public static <T> T stringToAny(String value, String type) {
+	public static <T> T stringToAny(Object value, String type) {
 		Object result = null;
 		if (value != null && type != null) {
 			if (type.equalsIgnoreCase("Long")) {
 				try {
-					result = Long.valueOf(value.trim());
+					result = ((Number)(value)).longValue();
 				} catch (NumberFormatException nfel) {
 					result = 0L;
 					return (T) result;
 				}
 			} else if (type.equalsIgnoreCase("Double")) {
 				try {
-					result = Double.valueOf(value.trim());
+					result = ((Number)(value)).doubleValue();
 				} catch (NumberFormatException nfel) {
 					result = 0.0;
 					return (T) result;
 				}
 			} else if (type.equalsIgnoreCase("Integer")) {
 				try {
-					result = Integer.valueOf(value.trim());
+					result = ((Number)(value)).intValue();
 				} catch (NumberFormatException nfel) {
 					result = 0;
 					return (T) result;
 				}
 			} else if (type.equalsIgnoreCase("JSONObject")) {
 				try {
-					result = new JSONObject(value.trim());
-				} catch (JSONException e) {
-					logger.error("Unable to convert to JSONObject");
+					result = new JSONObject(value);
+				} catch (Exception e) {
+					logger.error("Unable to convert to JSONObject",e);
 					return (T) new JSONObject();
 				}
 			} else if (type.equalsIgnoreCase("Date")) {
@@ -99,19 +101,19 @@ public class TypeConverter {
 				SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 				SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 				try {
-					result = new Date(Long.valueOf(value));
+					result = new Date(((Number)(value)).longValue());
 				} catch (Exception e) {
 					try {
-						result = formatter.parse(value);
+						result = formatter.parse((String)value);
 					} catch (Exception e1) {
 						try {
-							result = formatter2.parse(value);
+							result = formatter2.parse((String)value);
 						} catch (Exception e2) {
 							try {
-								result = formatter3.parse(value);
+								result = formatter3.parse((String)value);
 							} catch (Exception e3) {
 								try {
-									result = formatter4.parse(value);
+									result = formatter4.parse((String)value);
 								} catch (Exception e4) {
 									logger.error("Error while convert " + value + " to date");
 								}
@@ -121,12 +123,12 @@ public class TypeConverter {
 				}
 
 			} else if (type.equalsIgnoreCase("Boolean")) {
-				result = Boolean.valueOf(value.trim());
+				result = ((Boolean)(value));
 			} else if (type.equalsIgnoreCase("String")) {
-				result = value.trim();
+				result = (String)value;
 			} else if (type.equals("IntegerArray")) {
 
-				String[] items = value.trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
+				String[] items = String.valueOf(value).trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
 
 				int[] results = new int[items.length];
 
@@ -143,7 +145,7 @@ public class TypeConverter {
 				result = results;
 			} else if (type.equalsIgnoreCase("StringArray")) {
 
-				String[] items = value.trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
+				String[] items = String.valueOf(value).trim().replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(",");
 
 				String[] results = new String[items.length];
 
@@ -166,7 +168,7 @@ public class TypeConverter {
 			} else if (type.equalsIgnoreCase("Timestamp")) {
 				// accepting timestamp
 				try {
-					result = new Timestamp(Long.valueOf(value));
+					result = new Timestamp(((Number)value).longValue());
 				} catch (Exception e) {
 					logger.error("Error while convert " + value + " to timestamp");
 				}
