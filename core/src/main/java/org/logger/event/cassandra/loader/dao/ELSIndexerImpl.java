@@ -833,7 +833,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
 					contentBuilder.field(rowKey,
-							TypeConverter.stringToAny(((String)entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
+							TypeConverter.stringToAny((entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
 				}
 			}
 		} catch (Exception e) {
