@@ -56,6 +56,8 @@ public enum ColumnFamily {
 	
 	COLLECTIONITEM("collection_item"),
 	
+	COLLECTIONITEMASSOC("collection_item_assoc"),
+	
 	COLLECTION("collection"),
 	
 	CLASSPAGE("classpage"),
@@ -76,9 +78,21 @@ public enum ColumnFamily {
 	
 	USER("user"),
 	
-	ANONYMIZEDUSERDATA("anonymized_user_data")
+	ANONYMIZEDUSERDATA("anonymized_user_data"),
 	
+	SESSIONS("sessions"),
 	
+	SESSION_ACTIVITY("session_activity"),
+	
+	SESSION_ACTIVITY_COUNTER("session_activity_counter"),
+	
+	CLASS_ACTIVITY("class_activity"),
+	
+	CLASS_ACTIVITY_COUNTER("class_activity_counter"),
+	
+	CONTENT_META("content_meta"),
+	
+	USER_GROUP_ASSOCIATION("user_group_association"),
 	;
 	
 	String name;

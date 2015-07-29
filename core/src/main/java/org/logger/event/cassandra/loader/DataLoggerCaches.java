@@ -29,7 +29,7 @@ public class DataLoggerCaches implements Constants {
 
 	public static Boolean canRunScheduler;
 
-	public static Boolean canRunIndexing;
+	public static Boolean canRunIndexing = false;
 
 	public static Map<String, Object> licenseCache;
 

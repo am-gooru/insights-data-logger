@@ -31,9 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.google.gson.Gson;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamily;
@@ -67,8 +70,10 @@ public class EventServiceImpl implements EventService, Constants {
 	private BaseCassandraRepoImpl baseDao;
 	private SimpleDateFormat minuteDateFormatter;
 	private DataLoggerCaches loggerCache;
+	private final Gson gson;
 	
 	public EventServiceImpl() {
+		gson = new Gson();
 		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
 		this.connectionProvider = dataLoaderService.getConnectionProvider();
@@ -129,21 +134,55 @@ public class EventServiceImpl implements EventService, Constants {
 	 * @param event
 	 * @return
 	 */
-	private Errors validateInsertEvent(Event event) {
-		final Errors errors = new BindException(event, "Event");
+	@Async
+	private Boolean validateInsertEvent(Event event) {
+		Boolean isValidEvent = true;
 		if (event == null) {
-			ServerValidationUtils.rejectIfNull(errors, event, "event.all",FIELDS+EMPTY_EXCEPTION);
-			return errors;
+			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", RAW_EVENT_NULL_EXCEPTION);
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventName(), EVENT_NAME, "LA001", EVENT_NAME+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getEventId(), EVENT_ID, "LA002", EVENT_ID+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getVersion(), VERSION, "LA003", VERSION+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getUser(), USER, "LA004",  USER+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getSession(), SESSION, "LA005",SESSION+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getMetrics(), METRICS, "LA006", METRICS+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getContext(), CONTEXT, "LA007", CONTEXT+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, event.getPayLoadObject(), PAY_LOAD, "LA008", PAY_LOAD+EMPTY_EXCEPTION);
-		return errors;
+		String eventJson = gson.toJson(event);
+
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), EVENT_NAME, "LA001", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventId(), EVENT_ID, "LA002", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getVersion(), VERSION, "LA003", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getUser(), USER, "LA004", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getSession(), SESSION, "LA005", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getMetrics(), METRICS, "LA006", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getContext(), CONTEXT, "LA007", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject(), PAY_LOAD, "LA008", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getStartTime(), START_TIME, "LA009", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), END_TIME, "LA010", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		if (isValidEvent) {
+			try {
+				JSONObject session = new JSONObject(event.getSession());
+				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
+					if (!session.has(SESSION_ID)
+							|| (session.has(SESSION_ID) && (session.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
+						isValidEvent = false;
+						logger.error(RAW_EVENT_NULL_EXCEPTION + SESSION_ID + " : " + gson.toJson(event).toString());
+					}
+				}
+
+			} catch (JSONException e) {
+				isValidEvent = false;
+				logger.error(RAW_EVENT_JSON_EXCEPTION + SESSION + " : " + gson.toJson(event).toString());
+			}
+			try {
+				JSONObject context = new JSONObject(event.getContext());
+				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
+					if (!context.has(CONTENT_GOORU_OID)
+							|| (context.has(CONTENT_GOORU_OID) && (context.isNull(CONTENT_GOORU_OID) || (context.get(CONTENT_GOORU_OID) != null && context.getString(CONTENT_GOORU_OID).equalsIgnoreCase("null"))))) {
+						isValidEvent = false;
+						logger.error(RAW_EVENT_NULL_EXCEPTION + CONTENT_GOORU_OID + " : " + gson.toJson(event).toString());
+					}
+				}
+			} catch (JSONException e) {
+				isValidEvent = false;
+				logger.error(RAW_EVENT_JSON_EXCEPTION + CONTEXT + " : " + gson.toJson(event).toString());
+			}
+		}
+		
+		return isValidEvent;
 	}
 
 	@Override
@@ -187,7 +226,7 @@ public class EventServiceImpl implements EventService, Constants {
 			if (!activity.isEmpty()) {
 				try {
 					// validate JSON
-					jsonElement = new JsonParser().parse(activity.toString());
+					jsonElement = new JsonParser().parse(activity);
 					JsonObject eventObj = jsonElement.getAsJsonObject();
 
 					if (eventObj.get(_CONTENT_GOORU_OID) != null) {
@@ -231,13 +270,11 @@ public class EventServiceImpl implements EventService, Constants {
 
 	@Override
 	@Async
-	public ActionResponseDTO<Event> processMessage(Event event){
-
-		Errors errors = validateInsertEvent(event);
-		if (!errors.hasErrors()) {
-				dataLoaderService.processMessage(event);
+	public void processMessage(Event event){
+		Boolean isValidEvent = validateInsertEvent(event);
+		if (isValidEvent) {
+			dataLoaderService.processMessage(event);
 		}
-		return new ActionResponseDTO<Event>(event, errors);
 	}
 
 	public void runMicroAggregation(String startTime, String endTime) {
@@ -259,7 +296,7 @@ public class EventServiceImpl implements EventService, Constants {
 
 	public void indexActivity() {
 		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN, 0).getStringValue();
-		String currentTime = minuteDateFormatter.format(new Date()).toString();
+		String currentTime = minuteDateFormatter.format(new Date());
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;
@@ -284,8 +321,8 @@ public class EventServiceImpl implements EventService, Constants {
 			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN, 0).getStringValue();
 
-			if (Integer.valueOf(lastCheckedCount) < Integer.valueOf(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.valueOf(lastCheckedCount) + 1));
+			if (Integer.parseInt(lastCheckedCount) < Integer.parseInt(lastMaxCount)) {
+				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));
 			} else {
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
 				baseDao.saveStringValue(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + 0);

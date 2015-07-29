@@ -303,21 +303,26 @@ public class CassandraDataLoader implements Constants {
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
-	public void processMessage(Event event){
+	public void processMessage(Event event) {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
-		String aggregatorJson = null;
-		
-		eventMap = JSONDeserializer.deserializeEventv2(event);
-		
+		eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
 
 		}
 		eventMap = (Map<String, Object>) this.formatEventObjectMap(event, eventMap);
+		String eventName = (String) eventMap.get(EVENT_NAME);
+		/**
+		 * Calculate timespent in server side if more than two hours
+		 */
+		if (STOP.equals(eventMap.get(TYPE)) && eventName.matches(EVENTS_FOR_TIMESPENT_CALCULTION)) {
+			calculateTimespent(eventMap, event);
+		}
+
 		// TODO : This should be reject at validation stage.
 		String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 		Map<String, Object> records = new HashMap<String, Object>();
-		records.put(_EVENT_NAME, eventMap.get(EVENT_NAME));
+		records.put(_EVENT_NAME, eventName);
 		records.put(_API_KEY, apiKey);
 		Collection<String> eventId = baseDao.getKey(ColumnFamily.DIMEVENTS.getColumnFamily(), records);
 
@@ -339,26 +344,25 @@ public class CassandraDataLoader implements Constants {
 
 		baseDao.updateTimelineObject(ColumnFamily.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
-		aggregatorJson = DataLoggerCaches.getCache().get(eventMap.get(EVENT_NAME).toString());
-		if (aggregatorJson != null && !aggregatorJson.isEmpty() && !aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
-			liveAggregator.realTimeMetrics(eventMap, aggregatorJson);
+		if (eventName.matches(SESSION_ACTIVITY_EVENTS)) {
+			liveAggregator.eventProcessor(eventMap);
+		} else if (eventName.matches(RAW_DATA_UPDATE_EVENTS)) {
+			liveAggregator.updateRawData(eventMap);
 		}
-
-		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
+		if (eventName.matches(RECOMPUTATION_EVENTS) && ((String) eventMap.get(TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES)) {
+			liveAggregator.processClassActivityOpertaions(eventMap);
+		}
 
 		if (event.getFields() != null) {
 			microAggregator.sendEventForAggregation(event.getFields());
 		}
 
-		if (aggregatorJson != null && !aggregatorJson.isEmpty() && aggregatorJson.equalsIgnoreCase(RAW_UPDATE)) {
-			liveAggregator.updateRawData(eventMap);
-		}
-
+		liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 		if (DataLoggerCaches.getCanRunIndexing()) {
 			indexer.indexEvents(event.getFields());
 		}
 
-		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventMap.get(EVENT_NAME).toString())) {
+		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventName)) {
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
 
@@ -387,66 +391,42 @@ public class CassandraDataLoader implements Constants {
 	 * @throws ConnectionException
 	 *             If the host is unavailable
 	 */
-	private void updateEventObjectCompletion(Event event) throws ConnectionException {
-
-		Long endTime = event.getEndTime(), startTime = event.getStartTime();
-		long timeInMillisecs = 0L;
-		if (endTime != null && startTime != null) {
-			timeInMillisecs = endTime - startTime;
-		}
-		boolean eventComplete = false;
-
-		event.setTimeInMillSec(timeInMillisecs);
-
-		if (StringUtils.isEmpty(event.getEventId())) {
-			return;
-		}
-
-		ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getEventId(), 0);
-		if (existingRecord != null && !existingRecord.isEmpty()) {
-			if ("stop".equalsIgnoreCase(event.getEventType())) {
-				startTime = existingRecord.getLongValue("start_time", null);
-				// Update startTime with existingRecord, IF
-				// existingRecord.startTime < startTime
-			} else {
-				endTime = existingRecord.getLongValue("end_time", null);
-				// Update endTime with existing record IF existingRecord.endTime
-				// > endTime
+	private void calculateTimespent(Map<String, Object> eventMap, Event event) {
+		try {
+			if (((Number) eventMap.get(TOTALTIMEINMS)).longValue() > 7200000) {
+				logger.info("Timespent before calculation : {}", eventMap.get(TOTALTIMEINMS));
+				Long timeInMillisecs = 0L;
+				Long endTime = event.getEndTime();
+				Long startTime = event.getStartTime();
+				if (endTime != null && startTime != null && startTime != 0L) {
+					timeInMillisecs = endTime - startTime;
+				} else {
+					ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getEventId(), 0);
+					if (existingRecord != null && !existingRecord.isEmpty()) {
+						startTime = existingRecord.getLongValue(_START_TIME, null);
+						if (STOP.equalsIgnoreCase(existingRecord.getStringValue(_EVENT_TYPE, null))) {
+							endTime = existingRecord.getLongValue(_END_TIME, null);
+						} else if ((endTime == null || endTime == 0L)) {
+							endTime = System.currentTimeMillis();
+						}
+					}
+					timeInMillisecs = endTime - startTime;
+				}
+				/**
+				 * default time spent as 2 hour
+				 */
+				timeInMillisecs = timeInMillisecs > 7200000 ? 7200000 : timeInMillisecs;
+				JSONObject eventMetrics = new JSONObject(event.getMetrics());
+				eventMetrics.put(TOTALTIMEINMS, timeInMillisecs);
+				event.setMetrics(eventMetrics.toString());
+				logger.info("Timespent after calculation : {}", timeInMillisecs);
+				eventMap.put(TOTALTIMEINMS, timeInMillisecs);
 			}
-			eventComplete = true;
+		} catch (Exception e) {
+			logger.error("Exeption while calculting timespent:", e);
 		}
-		// Time taken for the event in milliseconds derived from the start /
-		// stop events.
-		if (endTime != null && startTime != null) {
-			timeInMillisecs = endTime - startTime;
-		}
-		if (timeInMillisecs > 1147483647) {
-			// When time in Milliseconds is very very huge, set to min time to
-			// serve the call.
-			timeInMillisecs = 30;
-			// Since this is an error condition, log it.
-		}
-
-		event.setStartTime(startTime);
-		event.setEndTime(endTime);
-
-		if (eventComplete) {
-			event.setTimeInMillSec(timeInMillisecs);
-			event.setEventType(COMPLETED_EVENT);
-			event.setEndTime(endTime);
-			event.setStartTime(startTime);
-		}
-
-		if (!StringUtils.isEmpty(event.getParentEventId())) {
-			ColumnList<String> existingParentRecord = baseDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getParentEventId(), 0);
-			if (existingParentRecord != null && !existingParentRecord.isEmpty()) {
-				Long parentStartTime = existingParentRecord.getLongValue("start_time", null);
-				baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getParentEventId(), "end_time", endTime);
-				baseDao.saveLongValue(ColumnFamily.EVENTDETAIL.getColumnFamily(), event.getParentEventId(), "time_spent_in_millis", (endTime - parentStartTime));
-			}
-		}
-
 	}
+	
 
 	public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap) {
 		Long startTime = activityRow.getLongValue(_START_TIME, 0L), endTime = activityRow.getLongValue(_END_TIME, 0L);

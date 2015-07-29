@@ -6,11 +6,17 @@ public interface Constants {
     
     public static final  String RECENT_SESSION = "RS~";
     
+    public static final  String RS= "RS";
+    
+    public static final  String AS= "AS";
+    
     public static final  String ALL_SESSION = "AS~";
     
     public static final  String SEPERATOR = "~";
     
     public static final  String COMMA = ",";
+    
+    public static final  String EMPTY = "";
     
 	public static final  String CONTEXT = "context";
 	
@@ -24,15 +30,19 @@ public interface Constants {
 	
 	public static final  String METRICS = "metrics";
 	
-	public static final  String LAST_ACCESSED_USER_UID = "last~accessed~useruid";
+	public static final  String LAST_ACCESSED_USER_UID = "last_accessed_useruid";
 	
-	public static final  String _LAST_ACCESSED_USER = "last~accessed~user";
+	public static final  String _LAST_ACCESSED_USER = "last_accessed_user";
 	
 	public static final  String LAST_ACCESSED_USER = "lastAccessedUser";
 	
-	public static final  String _LAST_ACCESSED = "last~accessed";
+	public static final  String _LAST_ACCESSED = "last_accessed";
 	
 	public static final  String LAST_ACCESSED = "lastAccessed";
+	
+	public static final  String LAST_ACCESSED_RESOURCE = "lastAccessedResource";
+	
+	public static final  String _LAST_ACCESSED_RESOURCE = "last_accessed_resource";
 	
 	public static final  String EVENT_NAME = "eventName";
 	
@@ -42,17 +52,37 @@ public interface Constants {
 	
 	public static final  String PARENT_GOORU_OID = "parentGooruId";
 	
+	public static final  String CLASS_GOORU_OID = "classGooruId";
+	
+	public static final  String UNIT_GOORU_OID = "unitGooruId";
+	
+	public static final  String LESSON_GOORU_OID = "lessonGooruId";
+	
+	public static final  String COURSE_GOORU_OID = "courseGooruId";
+	
 	public static final  String TIMEINMSEC = "timeInMillSec";
 	
 	public static final  String TOTALTIMEINMS = "totalTimeSpentInMs";
 	
 	public static final  String TIMESPENTINMS = "timeSpentInMs";
 	
+	public static final  String AVG_TIME_SPENT = "avg_time_spent";
+	
+	public static final  String TIME_SPENT = "time_spent";
+	
+	public static final  String _COLLECTION_TYPE = "collection_type";
+	
+	public static final  String COLLECTION_TYPE = "collectionType";
+	
+	public static final  String EVIDENCE = "evidence";
+	
 	public static final  String _EVENT_ID = "event_id";
 	
 	public static final  String EVENT_ID = "eventId";
 	
 	public static final  String EVENT_TIME = "eventTime";
+	
+	public static final  String _EVENT_TIME = "event_time";
 	
 	public static final  String PARENT_EVENT_ID = "parentEventId";
 	
@@ -67,6 +97,8 @@ public interface Constants {
 	public static final  String EVENT_TYPE = "eventType";
 	
 	public static final  String SESSION_ID = "sessionId";
+	
+	public static final  String IS_STUDENT = "isStudent";
 	
 	public static final  String SESSION = "session";
 	
@@ -122,6 +154,12 @@ public interface Constants {
 	
 	public static final  String REACTION_TYPE = "reactionType";
 	
+	public static final  String REACTION = "reaction";
+	
+	public static final  String TOTAL_REACTION = "total_reaction";
+	
+	public static final  String REACTED_COUNT = "reacted_count";
+	
 	public static final  String RESOURCE_TYPE = "resourceType";
 	
 	public static final  String QUESTION_TYPE = "questionType";
@@ -145,6 +183,8 @@ public interface Constants {
 	public static final  String CLIENT_SOURCE = "clientSource";
 	
 	public static final  String AUTO = "auto";
+	
+	public static final  String PAUSE = "pause";
 	
 	public static final  String STOP = "stop";
 	
@@ -171,6 +211,10 @@ public interface Constants {
 	public static final  String RESOURCE_CONTENT_ID = "resourceContentId";
 	
 	public static final  String VIEWS = "views";
+	
+	public static final  String VIEWS_COUNT = "viewsCount";
+	
+	public static final  String ATTEMPT_COUNT = "attemptCount";
 	
 	public static final  String COMPLETED = "completed";
 	
@@ -208,6 +252,18 @@ public interface Constants {
 	
 	public static final  String COLLECTION = "collection";
 	
+	public static final  String ASSESSMENT = "assessment";
+	
+	public static final  String CLASS = "class";
+	
+	public static final  String UNIT = "unit";
+	
+	public static final  String LESSON = "lesson";
+	
+	public static final  String ASSESSMENT_URL = "assessment/url";
+	
+	public static final  String ASSESSMENT_COUNT = "assessmentCount";
+	
 	public static final  String ANSWER_ID = "answerId";
 	
 	public static final  String OPEN_ENDED_TEXT = "openEndedText";
@@ -237,7 +293,9 @@ public interface Constants {
 	public static final  String MINUTE_DATE_FORMATTER = "yyyyMMddkkmm";
 
 	public static final  String FIELDS = "fields";
-		
+	
+	public static final  String INFO = "info";
+	
 	public static final  String _START_TIME = "start_time";
 	
 	public static final  String START_TIME = "startTime";
@@ -344,11 +402,27 @@ public interface Constants {
 	
 	public static final  String SCORE = "score";
 	
+	public static final  String TOTAL_SCORE = "score";
+	
+	public static final  String _SCORE_IN_PERCENTAGE = "score_in_percentage";
+	
+	public static final  String SCORE_IN_PERCENTAGE = "scoreInPercentage";
+	
+	public static final  String TOTAL_QUESTIONS_COUNT = "totalQuestionsCount";
+	
 	public static final  String _QUESTION_COUNT = "question_count";
 	
-	public static final  String _SCORE_IN_PERCENTAGE = "grade_in_percentage";
+	public static final  String _GRADE_IN_PERCENTAGE = "grade_in_percentage";
 	
 	public static final  String ACTIVE = "active";
+	
+	public static final  String _UNIQUE_VIEWS = "unique_views";
+	
+	public static final  String _ASSESSEMENT_UNIQUE_VIEWS = "assessment_unique_views";
+	
+	public static final  String _COLLECTION_UNIQUE_VIEWS = "collection_unique_views";
+	
+	public static final  String UNIQUE_VIEWS = "uniqueViews";
 	
 	public static final  String COUNT = "count";
 	
@@ -391,6 +465,8 @@ public interface Constants {
 	public static final  String AGG_JSON = "aggregator_json";
 	
 	public static final  String ANONYMOUS_SESSION = "anonymous~session";
+	
+	public static final  String ANONYMOUS = "ANONYMOUS";
 	
 	public static final  String ALL_USER_SESSION = "all~user~session";
 	
@@ -586,10 +662,31 @@ public interface Constants {
 	
 	public static final String CITY = "city";
 	
+	public static final String DEFAULTCOLUMN = "constant_value";
+	
 	public static final String PREVIOUS_RATE = "previousRate";
 	
 	public static final String COUNT_SEPARATOR_RATINGS = "count~ratings";
 	
 	public static final String RATE = "rate";
+
+	public static final  String ASSESSMENT_TYPES =  "assessment|assessment/url";
 	
+	public static final  String RECOMPUTATION_COLLECTION_TYPES =  "class|course|unit|lesson|assessment|assessment/url";
+	
+	public static final  String SESSION_ACTIVITY_EVENTS = "collection.play|collection.resource.play|reaction.create|resource.user.feedback";
+	
+	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add|classpage.user.remove|item.delete|class.item.delete";
+	
+	public static final String RAW_EVENT_NULL_EXCEPTION = "Raw Event NULL Exception : ";
+	
+	public static final String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
+	
+	public static final  String ANSWERING_STATUS =  "correct|in-correct";
+	
+	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
+	
+	public static final  String EVENTS_FOR_TIMESPENT_CALCULTION = "collection.play|collection.resource.play|resource.play";
+	
+	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 }
