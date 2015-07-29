@@ -110,78 +110,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, 1L, m);
 		}
 	}
-	/**
-	 * 
-	 * @param atmosphereEndPoint
-	 * @param eventMap
-	 * @throws JSONException
-	 */
-	public void pushEventForAtmosphere(String atmosphereEndPoint, Map<String, String> eventMap) throws JSONException {
-
-		JSONObject filtersObj = new JSONObject();
-		// filtersObj.put("eventName", eventMap.get("eventName") + "," +
-		// customEventsConfig);
-
-		JSONObject mainObj = new JSONObject();
-		mainObj.put("filters", filtersObj);
-
-		ClientResource clientResource = null;
-		clientResource = new ClientResource(atmosphereEndPoint + "/push/message");
-		Form forms = new Form();
-		forms.add("data", mainObj.toString());
-		clientResource.post(forms.getWebRepresentation());
-		logger.info("atmos status : {} ", clientResource.getStatus());
-	}
-/*
-	*//**
-	 * 
-	 * @param atmosphereEndPoint
-	 * @param eventMap
-	 * @throws JSONException
-	 *//*
-	public void pushEventForAtmosphereProgress(String atmosphereEndPoint, Map<String, Object> eventMap) throws JSONException {
-
-		JSONObject filtersObj = new JSONObject();
-		JSONObject paginateObj = new JSONObject();
-		Collection<String> fields = new ArrayList<String>();
-		fields.add("timeSpent");
-		fields.add("avgTimeSpent");
-		fields.add("resourceGooruOId");
-		fields.add("OE");
-		fields.add("questionType");
-		fields.add("category");
-		fields.add("gooruUId");
-		fields.add("userName");
-		fields.add("userData");
-		fields.add("metaData");
-		fields.add("title");
-		fields.add("reaction");
-		fields.add("description");
-		fields.add("options");
-		fields.add("skip");
-		filtersObj.put("session", "FS");
-		paginateObj.put("sortBy", "itemSequence");
-		paginateObj.put("sortOrder", "ASC");
-
-		List<String> classpage = microAggregatorDAOmpl.getClassPages(eventMap);
-
-		for (String classId : classpage) {
-			filtersObj.put("classId", classId);
-			JSONObject mainObj = new JSONObject();
-			mainObj.put("filters", filtersObj);
-			mainObj.put("paginate", paginateObj);
-			mainObj.put("fields", fields);
-
-			ClientResource clientResource = null;
-			clientResource = new ClientResource(atmosphereEndPoint + "/classpage/users/usage");
-			Form forms = new Form();
-			forms.add("data", mainObj.toString());
-			forms.add("collectionId", eventMap.get(PARENT_GOORU_OID).toString());
-			clientResource.post(forms.getWebRepresentation());
-		}
-
-	}
-*/
+	
 	/**
 	 * 
 	 * @param geoData
@@ -282,7 +211,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:saving data for view count update is failed."+e);
+			logger.error("Exception:saving data for view count update is failed:",e);
 		}
 	}
 
@@ -290,7 +219,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 * C: defines => Constant D: defines => Date format lookup E: defines => eventMap param lookup
 	 * 
 	 * @param value
-	 * @param eventMap
+, * @param eventMap
 	 * @return
 	 */
 	public String formOrginalKeys(String value, Map<String, Object> eventMap) {
@@ -313,7 +242,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			if (splittedKey.startsWith("E:") && eventMap != null) {
 				subKey = splittedKey.split(":");
 				if (eventMap.get(subKey[1]) != null) {
-					key += "~" + ((String)eventMap.get(subKey[1])).toLowerCase();
+					key += "~" + (String.valueOf(eventMap.get(subKey[1]))).toLowerCase();
 				} else {
 					return null;
 				}

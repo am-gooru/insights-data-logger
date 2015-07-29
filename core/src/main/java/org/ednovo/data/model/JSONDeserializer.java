@@ -27,6 +27,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class JSONDeserializer {
+public class JSONDeserializer implements Constants {
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
 
@@ -53,11 +54,8 @@ public class JSONDeserializer {
 	}
 		
 	public static <T> T deserializeEvent(Event event) {
-
         Type mapType = new TypeToken <HashMap<String, Object>>() {}.getType();
         Type numberMapType = new TypeToken <HashMap<String, Number>>() {}.getType();
-
-        ObjectMapper mapper = new ObjectMapper();
         Map<String,Object> map = new HashMap<String,Object>();
         try {
                 map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getUser(), mapType));
@@ -65,7 +63,10 @@ public class JSONDeserializer {
                 map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getPayLoadObject(), mapType));
                 map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getContext(), mapType));
                 map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getSession(), mapType));
-
+                map.put(EVENT_NAME,event.getEventName());
+                map.put(EVENT_ID,event.getEventId());
+                map.put(START_TIME,event.getStartTime());
+                map.put(END_TIME,event.getEndTime());
         } catch (Exception e) {
                 logger.error("Exception:", e);
         }
