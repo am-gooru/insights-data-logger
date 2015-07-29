@@ -187,6 +187,18 @@ public class MessageConsumer extends Thread implements Runnable {
 		}
 
 	}
+	
+	/**
+	 * Clean Shutdown
+	 */
+	public static void shutdownMessageConsumer(){
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			logger.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
+		}
+		consumer.shutdown();
+	}
 
 	
 	/**

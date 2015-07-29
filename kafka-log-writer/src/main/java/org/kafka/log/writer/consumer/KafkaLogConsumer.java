@@ -128,6 +128,18 @@ public class KafkaLogConsumer extends Thread implements Runnable, Constants {
 		initConsumer();
 //		autoReconnectConsumer();
 	}
+	
+	/**
+	 * Clean Shutdown
+	 */
+	public static void shutdownLogConsumer(){
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			logger.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
+		}
+		consumer.shutdown();
+	}
 
 	public void initConsumer() {
 

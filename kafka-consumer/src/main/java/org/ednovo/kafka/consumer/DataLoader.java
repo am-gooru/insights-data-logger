@@ -28,7 +28,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.kafka.log.writer.consumer.KafkaLogConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +88,10 @@ public class DataLoader implements Runnable {
     	runThread();
     }
 
+	public void shutdownMessageConsumer(){
+		MessageConsumer.shutdownMessageConsumer();
+	}
+	
 	public static void runThread() {
 		 // print the value of block-size
     	DataProcessor[] handlers = {new KafkaInputProcessor(), new JSONProcessor(), new CassandraProcessor()};
