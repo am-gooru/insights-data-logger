@@ -1181,7 +1181,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		baseCassandraDao.deleteColumn(ColumnFamily.COLLECTIONITEMASSOC.getColumnFamily(), (String)eventMap.get(PARENT_GOORU_OID), (String)eventMap.get(CONTENT_GOORU_OID));
 		}catch(Exception e){
-			System.out.print("Exception"+e);
+			logger.error("Exception:",e);
 		}
 	}
 
