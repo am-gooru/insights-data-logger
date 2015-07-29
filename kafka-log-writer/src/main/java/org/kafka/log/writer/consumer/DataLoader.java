@@ -28,10 +28,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.kafka.event.microaggregator.consumer.MicroAggregatorConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.intercept.RunAsManager;
 
 public class DataLoader implements Runnable {
 
@@ -68,6 +66,10 @@ public class DataLoader implements Runnable {
     @Override
     public void run(){
     	runThread();
+    }
+    
+    public void shutdownLogConsumer(){
+    	KafkaLogConsumer.shutdownLogConsumer();
     }
 
 	public static void runThread() {

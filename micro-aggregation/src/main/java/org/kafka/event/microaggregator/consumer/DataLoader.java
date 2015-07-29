@@ -67,6 +67,10 @@ public class DataLoader implements Runnable {
     public void run(){
     	runThread();
     }
+    
+    public void shutdownMicroAggregatorConsumer(){
+    	MicroAggregatorConsumer.shutdownMicroAggregatorConsumer();
+    }
 
 	public static void runThread() {
 		MicroAggregatorConsumer consumerThread = new MicroAggregatorConsumer();

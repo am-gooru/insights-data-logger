@@ -64,15 +64,14 @@
     <constructor-arg ref="consumerThread"/>
 </bean>
 
-<bean id="consumerThread" class="org.ednovo.kafka.consumer.DataLoader"/>
-
+<bean id="consumerThread" class="org.ednovo.kafka.consumer.DataLoader"  destroy-method="shutdownMessageConsumer"/>
  <!-- kafka log-writter thread -->
 
 <bean id="kafkaLogWritterThreadPool" class="java.lang.Thread" init-method="start" destroy-method="interrupt">
     <constructor-arg ref="LogWritterThread"/>
 </bean>
 
-<bean id="LogWritterThread" class="org.kafka.log.writer.consumer.DataLoader"/>
+<bean id="LogWritterThread" class="org.kafka.log.writer.consumer.DataLoader" destroy-method="shutdownLogConsumer"/>
 
  <!-- kafka micro-aggregator thread -->
 
@@ -80,7 +79,7 @@
     <constructor-arg ref="microAggregatorThread"/>
 </bean>
 
-<bean id="microAggregatorThread" class="org.kafka.event.microaggregator.consumer.DataLoader"/>
+<bean id="microAggregatorThread" class="org.kafka.event.microaggregator.consumer.DataLoader" destroy-method="shutdownMicroAggregatorConsumer"/>
  
 	<bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />

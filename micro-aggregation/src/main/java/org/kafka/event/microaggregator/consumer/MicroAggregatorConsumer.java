@@ -177,6 +177,18 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka micro-aggregator consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 	}
+	
+	/**
+	 * Clean Shutdown
+	 */
+	public static void shutdownMicroAggregatorConsumer(){
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			logger.debug("Kafka Micro-aggregator Consumer unable to wait for 1000ms before it's shutdown");
+		}
+		consumer.shutdown();
+	}
 
 	/**
 	 * AutoReconnect for loop count is disabled
