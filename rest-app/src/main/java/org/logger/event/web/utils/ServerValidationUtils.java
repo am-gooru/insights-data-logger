@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.Errors;
@@ -36,7 +37,7 @@ public class ServerValidationUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(ServerValidationUtils.class);
 
 	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String errorMsg) {
-		if (data == null || data.equals("")) {
+		if (data == null || StringUtils.isBlank(data)) {
 			errors.rejectValue(field, errorMsg);
 		}
 	}
@@ -68,7 +69,7 @@ public class ServerValidationUtils {
 	}
 
 	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String errorCode, String errorMsg) {
-		if (data == null || data.equals("")) {
+		if (data == null || StringUtils.isBlank(data)) {
 			errors.rejectValue(field, errorCode, errorMsg);
 		}
 	}
@@ -103,7 +104,7 @@ public class ServerValidationUtils {
 	
 	public static void logErrorIfNullOrEmpty(Boolean isValidEvent, String data, String field, String errorCode, String eventJson, String errorMsg) {
 		if (isValidEvent) {
-			if (data == null || data.equals("") || data.equalsIgnoreCase("null")) {
+			if (data == null || StringUtils.isBlank(data) || data.equalsIgnoreCase("null")) {
 				isValidEvent = false;
 				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
 			}

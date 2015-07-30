@@ -691,4 +691,6 @@ public interface Constants {
 	public static final  String EVENTS_FOR_TIMESPENT_CALCULTION = "collection.play|collection.resource.play|resource.play";
 	
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
+	
+	public static final String CUL_IDS_MISSING = "CUL ids missing : ";
 }
