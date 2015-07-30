@@ -676,7 +676,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 				this.markDeletedClasspageUser(eventDataMap, eventMap);
 
-			} else if (eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.ITEM_DOT_DELETE.getName())) {
+			} else if (eventMap.get(EVENT_NAME).toString().matches(DELETE_EVENTS)) {
 
 				this.markItemDelete(eventMap);
 
@@ -1213,6 +1213,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				/**
 				 * Get Students list for a class
 				 */
+				classGooruId = classGooruId.trim();
 				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
 				generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
 			}

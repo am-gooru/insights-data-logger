@@ -678,6 +678,8 @@ public interface Constants {
 	
 	public static final  String RAW_DATA_UPDATE_EVENTS = "item.create|classpage.user.add|classpage.user.remove|item.delete|class.item.delete";
 	
+	public static final  String DELETE_EVENTS = "item.delete|class.item.delete";
+	
 	public static final String RAW_EVENT_NULL_EXCEPTION = "Raw Event NULL Exception : ";
 	
 	public static final String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
