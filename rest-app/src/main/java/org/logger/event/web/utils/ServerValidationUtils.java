@@ -94,7 +94,7 @@ public class ServerValidationUtils {
 	
 	public static void logErrorIfZeroLongValue(Boolean isValidEvent, Long data, String field, String errorCode, String eventJson, String errorMsg) {
 		if (isValidEvent) {
-			if (data == null || data.equals(0)) {
+			if (data == null || data == 0L) {
 				isValidEvent = false;
 				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
 			}

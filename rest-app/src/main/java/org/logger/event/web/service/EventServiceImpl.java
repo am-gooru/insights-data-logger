@@ -175,6 +175,21 @@ public class EventServiceImpl implements EventService, Constants {
 						isValidEvent = false;
 						logger.error(RAW_EVENT_NULL_EXCEPTION + CONTENT_GOORU_OID + " : " + gson.toJson(event).toString());
 					}
+					if ((context.has(CLASS_GOORU_OID) && (context.isNull(CLASS_GOORU_OID) || (context.get(CLASS_GOORU_OID) != null && !context.getString(CLASS_GOORU_OID).equalsIgnoreCase("null"))))) {
+						//Log If class Id is available and any one of the CUL ids are missing 
+						if ((!context.has(COURSE_GOORU_OID) || (context.has(COURSE_GOORU_OID) 
+							&& (context.isNull(COURSE_GOORU_OID) || (context.get(COURSE_GOORU_OID) != null 
+							&& context.getString(COURSE_GOORU_OID).equalsIgnoreCase("null"))))) || 
+							(!context.has(UNIT_GOORU_OID) || (context.has(UNIT_GOORU_OID) 
+									&& (context.isNull(UNIT_GOORU_OID) || (context.get(UNIT_GOORU_OID) != null 
+									&& context.getString(UNIT_GOORU_OID).equalsIgnoreCase("null"))))) ||
+									(!context.has(LESSON_GOORU_OID) || (context.has(LESSON_GOORU_OID) 
+											&& (context.isNull(LESSON_GOORU_OID) || (context.get(LESSON_GOORU_OID) != null 
+											&& context.getString(LESSON_GOORU_OID).equalsIgnoreCase("null")))))) {
+							isValidEvent = false;
+							logger.error(RAW_EVENT_NULL_EXCEPTION + CUL_IDS_MISSING + " : " + gson.toJson(event).toString());
+						}
+					}
 				}
 			} catch (JSONException e) {
 				isValidEvent = false;
