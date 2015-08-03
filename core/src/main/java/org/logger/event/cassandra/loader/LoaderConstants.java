@@ -29,6 +29,8 @@ public enum LoaderConstants {
     
     INCORRECT("in-correct"),
     
+    ATTEMPTED("attempted"),
+    
     VIEWS("resource-view"),
 
 	SKIPPED("skipped"),
