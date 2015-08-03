@@ -459,6 +459,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				if (QUESTION.equals(eventMap.get(RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)) || PAUSE.equals(eventMap.get(TYPE)))) {
 					String answerStatus = null;
+					String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
 					int[] attemptTrySequence = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_TRY_SEQ));
 					int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
 
@@ -474,6 +475,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} else if (attempStatus[status] == 1) {
 						answerStatus = LoaderConstants.CORRECT.getName();
 					}
+					if (OE.equals(eventMap.get(QUESTION_TYPE))) {
+						if(StringUtils.isNotBlank(answerText)){
+							answerStatus = LoaderConstants.ATTEMPTED.getName();
+						}
+						
+					}
 					logger.info("answerStatus : " + answerStatus);
 					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
@@ -482,7 +489,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					if (!(answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && hasUserAlreadyAnswered(sessionId, contentGooruId))) {
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
-						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, CHOICE), eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null);
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, CHOICE), answerText);
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _ANSWER_OBECT), eventMap.containsKey(ANSWER_OBECT) ? (String)eventMap.get(ANSWER_OBECT) :null);
 					}
 				}
