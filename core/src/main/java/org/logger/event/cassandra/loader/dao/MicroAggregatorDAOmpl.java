@@ -134,7 +134,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * Aggregations steps in close events
 			 */
-			if (STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType)) {
+			if (STOP.equalsIgnoreCase(eventType)) {
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				if(isStudent){
 					generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
@@ -427,7 +427,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_PLAY_COLUMNS.entrySet()) {
 					columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 				}
-				if ((STOP.equalsIgnoreCase(eventType) || PAUSE.equalsIgnoreCase(eventType)) && !ASSESSMENT_URL.equals(eventMap.get(COLLECTION_TYPE))) {
+				if ((STOP.equalsIgnoreCase(eventType)) && !ASSESSMENT_URL.equals(eventMap.get(COLLECTION_TYPE))) {
 					Long scoreInPercentage = 0L;
 					Long score = 0L;
 					if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
@@ -457,7 +457,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				if (OE.equals(eventMap.get(QUESTION_TYPE))) {
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, ACTIVE), "false");
 				}
-				if (QUESTION.equals(eventMap.get(RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)) || PAUSE.equals(eventMap.get(TYPE)))) {
+				if (QUESTION.equals(eventMap.get(RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)))) {
 					String answerStatus = null;
 					String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
 					int[] attemptTrySequence = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_TRY_SEQ));
