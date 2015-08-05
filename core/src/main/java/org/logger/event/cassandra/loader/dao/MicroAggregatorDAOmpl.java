@@ -484,9 +484,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					logger.info("answerStatus : " + answerStatus);
 					String option = DataUtils.makeCombinedAnswerSeq(attemptTrySequence.length == 0 ? 0 : attemptTrySequence[status]);
 					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, option), 1L);
-					counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
-					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, OPTIONS), option);
+					if(!(answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName())&& option.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()))){
+						counterColumns.incrementCounterColumn(this.generateColumnKey(contentGooruId, answerStatus), 1L);
+					}
 					if (!(answerStatus.equalsIgnoreCase(LoaderConstants.SKIPPED.getName()) && hasUserAlreadyAnswered(sessionId, contentGooruId))) {
+						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, OPTIONS), option);
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_STATUS), answerStatus);
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, CHOICE), answerText);
