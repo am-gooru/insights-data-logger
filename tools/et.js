@@ -32,8 +32,6 @@
 
     triggerCall: function() {
       if (_et.data.length > 0) {
-          if (window.console)
-              console.log(_et.data);
             var request = el.request();
             request.open('POST',apiEndpoint + "/event?apiKey=" + _et.apiKey, false);
             request.setRequestHeader("Content-type","application/json");
