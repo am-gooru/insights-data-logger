@@ -327,7 +327,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	
 	private void performRating(String key, String column, Map<String, Object> map, MutationBatch m) {
 
-		if (map.get(PREVIOUS_RATE) == null || (map.get(PREVIOUS_RATE) != null && map.get(PREVIOUS_RATE).equals(0))) {
+ 		if (map.get(PREVIOUS_RATE) == null || (map.get(PREVIOUS_RATE) != null && map.get(PREVIOUS_RATE).toString().equals("0"))) {			
 			performCounter(key,column,map,m);
 		} else {
 			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
