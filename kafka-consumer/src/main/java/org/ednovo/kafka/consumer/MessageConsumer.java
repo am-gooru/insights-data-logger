@@ -42,9 +42,15 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
@@ -77,6 +83,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
 	private static String SERVER_NAME;
+	ExecutorService service = Executors.newFixedThreadPool(10);
 	
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
@@ -140,54 +147,67 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	
 	public void run() {
-
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		/**
 		 * get list of kafka stream from specific topic
 		 */
-		Integer noOfThread = 1;
-		//topicCountMap.put(topic, new Integer(noOfThread));
 		try {
-			for (String consumerTopic : topic) {
+			Set<Callable<String>> tasks = new HashSet<Callable<String>>();
+			for (final String consumerTopic : topic) {
 				logger.info("Consumer topic : " + consumerTopic);
-				logger.info("Consumer topicCountMap : " + topicCountMap);
 
-				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-				KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
-				ConsumerIterator<byte[], byte[]> it = stream.iterator();
-				/**
-				 * process consumed data
-				 */
-				while (it.hasNext()) {
-					String message = null;
-					message = new String(it.next().message());
-					Gson gson = new Gson();
-					Map<String, String> messageMap = new HashMap<String, String>();
-					try {
-						messageMap = gson.fromJson(message, messageMap.getClass());
-					} catch (Exception e) {
-						ConsumerLogFactory.errorActivity.error(message);
-						continue;
+				tasks.add(new Callable<String>() {
+					public String call() throws Exception {
+						return consumeMessages(consumerTopic);
 					}
-
-					/**
-					 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-					 **/
-					if (messageMap != null && !messageMap.isEmpty()) {
-						ConsumerLogFactory.activity.info(message);
-						this.rowDataProcessor.processRow(messageMap.get("raw"));
-					} else {
-						ConsumerLogFactory.errorActivity.error(message);
-					}
-				}
+				});
 			}
+
+			List<Future<String>> taskStatues = service.invokeAll(tasks);
+			for (Future<String> taskStatus : taskStatues) {
+				logger.info(taskStatus.get());
+			}
+
 		} catch (Exception e) {
-			logger.error("Message Consumer failed in a loop:" , e);
+			logger.error("Message Consumer failed in a loop:", e);
 			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 
 	}
-	
+
+	private String consumeMessages(String consumerTopic) {
+		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		topicCountMap.put(consumerTopic, new Integer(1));
+		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
+		ConsumerIterator<byte[], byte[]> it = stream.iterator();
+		/**
+		 * process consumed data
+		 */
+		while (it.hasNext()) {
+			String message = null;
+			message = new String(it.next().message());
+			Gson gson = new Gson();
+			Map<String, String> messageMap = new HashMap<String, String>();
+			try {
+				messageMap = gson.fromJson(message, messageMap.getClass());
+			} catch (Exception e) {
+				ConsumerLogFactory.errorActivity.error(message);
+				continue;
+			}
+
+			/**
+			 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+			 **/
+			if (messageMap != null && !messageMap.isEmpty()) {
+				ConsumerLogFactory.activity.info(message);
+				this.rowDataProcessor.processRow(messageMap.get("raw"));
+			} else {
+				ConsumerLogFactory.errorActivity.error(message);
+			}
+		}
+		return consumerTopic+"-running";
+	}
+
 	/**
 	 * Clean Shutdown
 	 */
@@ -198,114 +218,5 @@ public class MessageConsumer extends Thread implements Runnable {
 			logger.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
 		}
 		consumer.shutdown();
-	}
-
-	
-	/**
-	 * AutoReconnect for loop count is disabled
-	 */
-	private void AutoReconnector() {
-
-		Integer noOfThread = 1;
-		int loopCount = 0, status = 1, mailLoopCount = 0;
-		int targetCount = 10;
-		long sleepTime = 0;
-				
-		 baseCassandraDAO = new BaseCassandraRepoImpl(new CassandraConnectionProvider());
-		 baseCassandraDAO.saveValue(ColumnFamily.JOB_TRACKER.getColumnFamily(), Constants.MONITOR_KAFKA_CONSUMER, Constants.STATUS, status);
-		 		
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-
-		/**
-		 * Iterate the loop for few times till the kafka get reconnected
-		 */
-		while (loopCount < targetCount) {
-			try {
-				/**
-				 * Get config settings for kafka consumer
-				 */
-				ColumnList<String> columnList = baseCassandraDAO.readWithKey(ColumnFamily.JOB_TRACKER.getColumnFamily(), Constants.MONITOR_KAFKA_CONSUMER, 0);
-				status = columnList.getIntegerValue(Constants.STATUS, 1);
-				mailLoopCount = columnList.getIntegerValue(Constants.MAIL_LOOP_COUNT, 10);
-				targetCount = columnList.getIntegerValue(Constants.THREAD_LOOP_COUNT, 10);
-				sleepTime = columnList.getLongValue(Constants.THREAD_SLEEP_TIME, 10000L);
-
-				/**
-				 * will kill the thread,if the status is 0
-				 */
-				if (status == 0) {
-					logger.error("kafka consumer stopped due to status:0");
-					return;
-				}
-
-				/**
-				 * will send the mail to developer for kafka failure
-				 * notification
-				 */
-				if (loopCount != 0 && mailLoopCount != 0 && (loopCount % mailLoopCount) == 0) {
-					mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer disconnected,so auto reconnect at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
-				}
-
-				/**
-				 * get list of kafka stream from specific topic
-				 */
-				for (String consumerTopic : topic) {
-					topicCountMap.put(consumerTopic, new Integer(noOfThread));
-					Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-					KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
-					ConsumerIterator<byte[], byte[]> it = stream.iterator();
-
-					/**
-					 * process consumed data
-					 */
-					while (it.hasNext()) {
-						String message = null;
-						try {
-							message = new String(it.next().message());
-							Gson gson = new Gson();
-							Map<String, String> messageMap = new HashMap<String, String>();
-							try {
-								messageMap = gson.fromJson(message, messageMap.getClass());
-							} catch (Exception e) {
-								ConsumerLogFactory.errorActivity.error(message);
-								continue;
-							}
-
-							/**
-							 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-							 **/
-							if (messageMap != null && !messageMap.isEmpty()) {
-								ConsumerLogFactory.activity.info(message);
-								this.rowDataProcessor.processRow(messageMap.get("raw"));
-							} else {
-								ConsumerLogFactory.errorActivity.error(message);
-							}
-						} catch (Exception e) {
-							ConsumerLogFactory.errorActivity.error(message);
-							logger.error("Message Consumer failed in a loop" , e);
-						}
-					}
-				}
-			} catch (Exception e) {
-				logger.error("Message Consumer broken:" , e);
-			} finally {
-				try {
-					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {
-					logger.error("Message Consumer Interrupted:" , e);
-				}
-
-				/**
-				 * Restart the consumer thread
-				 */
-				consumer.shutdown();
-				getKafkaConsumer();
-			}
-			loopCount++;
-		}
-
-		if (loopCount == targetCount) {
-			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server "+SERVER_NAME+" with loop count " + loopCount + " on " + new Date());
-		}
 	}
 }
