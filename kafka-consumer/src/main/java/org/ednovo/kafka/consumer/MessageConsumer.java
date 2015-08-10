@@ -71,7 +71,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	private DataProcessor rowDataProcessor;
 	private MailHandler mailHandler;
 
-	private static String topic;
+	private static String[] topic;
 	private static String ZK_IP;
 	private static String ZK_PORT;
 	private static String KAFKA_TOPIC;
@@ -101,7 +101,7 @@ public class MessageConsumer extends Thread implements Runnable {
 		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
-		MessageConsumer.topic = KAFKA_TOPIC;
+		MessageConsumer.topic = KAFKA_TOPIC.split(",");
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	}
 
@@ -146,43 +146,43 @@ public class MessageConsumer extends Thread implements Runnable {
 		 * get list of kafka stream from specific topic
 		 */
 		Integer noOfThread = 1;
-		topicCountMap.put(topic, new Integer(noOfThread));
+		//topicCountMap.put(topic, new Integer(noOfThread));
 		try {
-			topicCountMap.put(topic, new Integer(1));
-			logger.info("Consumer topic : "+topic);
-			logger.info("Consumer topicCountMap : "+topicCountMap);
-			
-			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-			ConsumerIterator<byte[], byte[]> it = stream.iterator();
-			/**
-			 * process consumed data
-			 */
-			while (it.hasNext()) {
-				String message = null;
-				message = new String(it.next().message());
-				Gson gson = new Gson();
-				Map<String, String> messageMap = new HashMap<String, String>();
-				try {
-					messageMap = gson.fromJson(message, messageMap.getClass());
-				} catch (Exception e) {
-					ConsumerLogFactory.errorActivity.error(message);
-					continue;
-				}
+			for (String consumerTopic : topic) {
+				logger.info("Consumer topic : " + consumerTopic);
+				logger.info("Consumer topicCountMap : " + topicCountMap);
 
+				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+				KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
+				ConsumerIterator<byte[], byte[]> it = stream.iterator();
 				/**
-				 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-				 **/
-				if (messageMap != null && !messageMap.isEmpty()) {
-					ConsumerLogFactory.activity.info(message);
-					this.rowDataProcessor.processRow(messageMap.get("raw"));
-				} else {
-					ConsumerLogFactory.errorActivity.error(message);
+				 * process consumed data
+				 */
+				while (it.hasNext()) {
+					String message = null;
+					message = new String(it.next().message());
+					Gson gson = new Gson();
+					Map<String, String> messageMap = new HashMap<String, String>();
+					try {
+						messageMap = gson.fromJson(message, messageMap.getClass());
+					} catch (Exception e) {
+						ConsumerLogFactory.errorActivity.error(message);
+						continue;
+					}
+
+					/**
+					 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+					 **/
+					if (messageMap != null && !messageMap.isEmpty()) {
+						ConsumerLogFactory.activity.info(message);
+						this.rowDataProcessor.processRow(messageMap.get("raw"));
+					} else {
+						ConsumerLogFactory.errorActivity.error(message);
+					}
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("Message Consumer failed in a loop" + e);
+			logger.error("Message Consumer failed in a loop:" , e);
 			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 
@@ -249,48 +249,50 @@ public class MessageConsumer extends Thread implements Runnable {
 				/**
 				 * get list of kafka stream from specific topic
 				 */
-				topicCountMap.put(topic, new Integer(noOfThread));
-				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-				KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-				ConsumerIterator<byte[], byte[]> it = stream.iterator();
-				/**
-				 * process consumed data
-				 */
-				while (it.hasNext()) {
-					String message = null;
-					try{
-					message = new String(it.next().message());
-					Gson gson = new Gson();
-					Map<String, String> messageMap = new HashMap<String, String>();
-					try {
-						messageMap = gson.fromJson(message, messageMap.getClass());
-					} catch (Exception e) {
-						ConsumerLogFactory.errorActivity.error(message);
-						continue;
-					}
+				for (String consumerTopic : topic) {
+					topicCountMap.put(consumerTopic, new Integer(noOfThread));
+					Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+					KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
+					ConsumerIterator<byte[], byte[]> it = stream.iterator();
 
 					/**
-					 * TODO We're only getting raw data now. We'll have to use
-					 * the server IP as well for extra information.
-					 **/
-					if (messageMap != null && !messageMap.isEmpty()) {
-						ConsumerLogFactory.activity.info(message);
-						this.rowDataProcessor.processRow(messageMap.get("raw"));
-					} else {
-						ConsumerLogFactory.errorActivity.error(message);
+					 * process consumed data
+					 */
+					while (it.hasNext()) {
+						String message = null;
+						try {
+							message = new String(it.next().message());
+							Gson gson = new Gson();
+							Map<String, String> messageMap = new HashMap<String, String>();
+							try {
+								messageMap = gson.fromJson(message, messageMap.getClass());
+							} catch (Exception e) {
+								ConsumerLogFactory.errorActivity.error(message);
+								continue;
+							}
+
+							/**
+							 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
+							 **/
+							if (messageMap != null && !messageMap.isEmpty()) {
+								ConsumerLogFactory.activity.info(message);
+								this.rowDataProcessor.processRow(messageMap.get("raw"));
+							} else {
+								ConsumerLogFactory.errorActivity.error(message);
+							}
+						} catch (Exception e) {
+							ConsumerLogFactory.errorActivity.error(message);
+							logger.error("Message Consumer failed in a loop" , e);
+						}
 					}
-				}catch(Exception e){
-					ConsumerLogFactory.errorActivity.error(message);
-					logger.error("Message Consumer failed in a loop" + e);
-				}
 				}
 			} catch (Exception e) {
-				logger.error("Message Consumer broken:" + e);
+				logger.error("Message Consumer broken:" , e);
 			} finally {
 				try {
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
-					logger.error("Message Consumer Interrupted:" + e);
+					logger.error("Message Consumer Interrupted:" , e);
 				}
 
 				/**

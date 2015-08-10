@@ -68,6 +68,7 @@ public class JSONDeserializer implements Constants {
                 map.put(START_TIME,event.getStartTime());
                 map.put(END_TIME,event.getEndTime());
         } catch (Exception e) {
+        		logger.info("Exception in event : {}",event.getFields());
                 logger.error("Exception:", e);
         }
         return (T) map;
