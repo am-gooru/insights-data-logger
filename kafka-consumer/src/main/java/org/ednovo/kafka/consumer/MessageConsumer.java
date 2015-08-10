@@ -154,7 +154,7 @@ public class MessageConsumer extends Thread implements Runnable {
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			for (final String consumerTopic : topic) {
 				logger.info("Consumer topic : " + consumerTopic);
-				service.submit(new ConsumeMessages(consumerTopic, consumerMap));
+				service.submit(new ConsumeMessages(consumerTopic, consumerMap,rowDataProcessor));
 			}
 
 		} catch (Exception e) {
