@@ -147,11 +147,10 @@ public class MessageConsumer extends Thread implements Runnable {
 		 * get list of kafka stream from specific topic
 		 */
 		try {
-			Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = null;
 			for (final String consumerTopic : topic) {
+				Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 				topicCountMap.put(consumerTopic, new Integer(1));
-				consumerMap = consumer.createMessageStreams(topicCountMap);
+				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 				logger.info("Consumer topic : " + consumerTopic);
 				service.submit(new ConsumeMessages(consumerTopic, consumerMap));
 			}
