@@ -12,21 +12,17 @@ import com.google.gson.Gson;
 
 public final class ConsumeMessages implements Runnable {
 
-	private ConsumerConnector consumer;
+	private Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap;
 	
 	private String consumerTopic;
 
 	private DataProcessor rowDataProcessor;
 	
-	public ConsumeMessages(String consumerTopic, ConsumerConnector consumer) {
+	public ConsumeMessages(String topicCountMap, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap) {
 		this.consumerTopic = consumerTopic;
-		this.consumer = consumer;
+		this.consumerMap = consumerMap;
 	}
 	public void run() {
-
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		topicCountMap.put(consumerTopic, new Integer(1));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 		KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
 		ConsumerIterator<byte[], byte[]> it = stream.iterator();
 		/**
