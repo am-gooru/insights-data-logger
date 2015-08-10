@@ -19,10 +19,10 @@ public final class ConsumeMessages implements Runnable {
 	private String consumerTopic;
 
 	private DataProcessor rowDataProcessor;
-	
+
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
-	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap,DataProcessor rowDataProcessor) {
+	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap, DataProcessor rowDataProcessor) {
 		this.consumerTopic = consumerTopic;
 		this.consumerMap = consumerMap;
 		this.rowDataProcessor = rowDataProcessor;

@@ -40,31 +40,22 @@ package org.ednovo.kafka.consumer;
  */
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
 
 public class MessageConsumer extends Thread implements Runnable {
 
@@ -80,7 +71,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	private static String KAFKA_GROUPID;
 	private static String SERVER_NAME;
 	ExecutorService service = Executors.newFixedThreadPool(10);
-	
+
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
@@ -141,20 +132,19 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	}
 
-	
 	public void run() {
 		/**
 		 * get list of kafka stream from specific topic
 		 */
 		try {
 			Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-			for (final String consumerTopic : topic) {				
+			for (final String consumerTopic : topic) {
 				topicCountMap.put(consumerTopic, new Integer(1));
 			}
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			for (final String consumerTopic : topic) {
 				logger.info("Consumer topic : " + consumerTopic);
-				service.submit(new ConsumeMessages(consumerTopic, consumerMap,rowDataProcessor));
+				service.submit(new ConsumeMessages(consumerTopic, consumerMap, rowDataProcessor));
 			}
 
 		} catch (Exception e) {
@@ -164,44 +154,10 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	}
 
-	private String consumeMessages(String consumerTopic) {
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		topicCountMap.put(consumerTopic, new Integer(1));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-		KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
-		ConsumerIterator<byte[], byte[]> it = stream.iterator();
-		/**
-		 * process consumed data
-		 */
-		while (it.hasNext()) {
-			String message = null;
-			message = new String(it.next().message());
-			Gson gson = new Gson();
-			Map<String, String> messageMap = new HashMap<String, String>();
-			try {
-				messageMap = gson.fromJson(message, messageMap.getClass());
-			} catch (Exception e) {
-				ConsumerLogFactory.errorActivity.error(message);
-				continue;
-			}
-
-			/**
-			 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-			 **/
-			if (messageMap != null && !messageMap.isEmpty()) {
-				ConsumerLogFactory.activity.info(message);
-				this.rowDataProcessor.processRow(messageMap.get("raw"));
-			} else {
-				ConsumerLogFactory.errorActivity.error(message);
-			}
-		}
-		return consumerTopic+"-running";
-	}
-
 	/**
 	 * Clean Shutdown
 	 */
-	public static void shutdownMessageConsumer(){
+	public static void shutdownMessageConsumer() {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
