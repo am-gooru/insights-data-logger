@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
@@ -22,7 +22,7 @@ public final class ConsumeMessages implements Runnable {
 
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
-	public ConsumeMessages(String topicCountMap, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap) {
+	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap) {
 		this.consumerTopic = consumerTopic;
 		this.consumerMap = consumerMap;
 	}
