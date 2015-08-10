@@ -105,7 +105,7 @@ public class MessageConsumer extends Thread implements Runnable {
 		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
 		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
 		MessageConsumer.topic = KAFKA_TOPIC.split(",");
-//		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	}
 
 	private static String buildEndPoint(String ip, String portNo) {
@@ -147,10 +147,12 @@ public class MessageConsumer extends Thread implements Runnable {
 		 * get list of kafka stream from specific topic
 		 */
 		try {
-			for (final String consumerTopic : topic) {
-				Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+			Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+			for (final String consumerTopic : topic) {				
 				topicCountMap.put(consumerTopic, new Integer(1));
-				Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+			}
+			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+			for (final String consumerTopic : topic) {
 				logger.info("Consumer topic : " + consumerTopic);
 				service.submit(new ConsumeMessages(consumerTopic, consumerMap));
 			}
