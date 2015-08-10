@@ -40,6 +40,7 @@ package org.ednovo.kafka.consumer;
  */
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,22 +58,17 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.ColumnFamily;
-import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.netflix.astyanax.model.ColumnList;
 
 public class MessageConsumer extends Thread implements Runnable {
 
 	private CassandraDataLoader cassandraDataLoader;
-	private BaseCassandraRepoImpl baseCassandraDAO;
 	private static ConsumerConnector consumer;
 	private DataProcessor rowDataProcessor;
 	private MailHandler mailHandler;
@@ -154,17 +150,7 @@ public class MessageConsumer extends Thread implements Runnable {
 			Set<Callable<String>> tasks = new HashSet<Callable<String>>();
 			for (final String consumerTopic : topic) {
 				logger.info("Consumer topic : " + consumerTopic);
-
-				tasks.add(new Callable<String>() {
-					public String call() throws Exception {
-						return consumeMessages(consumerTopic);
-					}
-				});
-			}
-
-			List<Future<String>> taskStatues = service.invokeAll(tasks);
-			for (Future<String> taskStatus : taskStatues) {
-				logger.info(taskStatus.get());
+				service.submit(new ConsumeMessages(consumerTopic, consumer));
 			}
 
 		} catch (Exception e) {
