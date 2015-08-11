@@ -527,7 +527,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void balanceCollectionTypeTimespent(String sessionId, String contentGooruId, long timeSpentInEvent) {
 		ColumnList<String> sessionActivityCounter = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), sessionId, 0);
 		long storedTimeSpent = sessionActivityCounter.getLongValue(generateColumnKey(contentGooruId, TIME_SPENT), 0L);
-		if (storedTimeSpent != 0L) {
+		if (timeSpentInEvent != 0L) {
 			try {
 				MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), sessionId);
