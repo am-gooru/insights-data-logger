@@ -3,25 +3,19 @@ package org.logger.event.cassandra.loader.dao;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.TypeConverter;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
-import org.restlet.data.Form;
-import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -327,16 +321,14 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	
 	private void performRating(String key, String column, Map<String, Object> map, MutationBatch m) {
 
- 		if (map.get(PREVIOUS_RATE) == null || (map.get(PREVIOUS_RATE) != null && map.get(PREVIOUS_RATE).toString().equals("0"))) {			
-			performCounter(key,column,map,m);
+		Long previousRate = map.get(PREVIOUS_RATE) != null ? ((Number) map.get(PREVIOUS_RATE)).longValue() : 0;
+		if ((!previousRate.equals(0)) && column.equals(COUNT_SEPARATOR_RATINGS)) {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT + SEPERATOR + previousRate, (1L * -1), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM + SEPERATOR + RATE, (previousRate * -1), m);
 		} else {
-			if (column.equals(COUNT_SEPARATOR_RATINGS)) {
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT+SEPERATOR+map.get(PREVIOUS_RATE), (1L * -1), m);
-				baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM+SEPERATOR+RATE, (((Number)map.get(PREVIOUS_RATE)).longValue() * -1), m);
-				
-			}else{
-				performCounter(key,column,map,m);
-			}
+			Long rate = map.get(RATE) != null ? ((Number) map.get(RATE)).longValue() : 0;
+			String rateColumn = column.replace(map.get(RATE).toString(), rate.toString());
+			performCounter(key, rateColumn, map, m);
 		}
 	}
 }
