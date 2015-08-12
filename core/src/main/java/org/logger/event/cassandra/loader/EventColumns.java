@@ -24,7 +24,6 @@ public class EventColumns implements Constants{
 		Map<String, Object> cpColumns = new HashMap<String, Object>();
 		cpColumns.put(VIEWS, VIEWS_COUNT);
 		cpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
-		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
 		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
 		cpColumns.put(EVIDENCE, EVIDENCE);
 		cpColumns.put(STATUS, TYPE);
