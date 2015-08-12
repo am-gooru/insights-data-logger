@@ -137,7 +137,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 */
 			if (STOP.equalsIgnoreCase(eventType)) {
 				if (LoaderConstants.CPV1.getName().equals(eventName)){
-					balanceCollectionTypeTimespent(sessionId, contentGooruId, ((Number)eventMap.get(TIMESPENTINMS)).longValue());
+					balanceCollectionTypeTimespent(sessionId, contentGooruId, ((Number)eventMap.get(TOTALTIMEINMS)).longValue());
 				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
