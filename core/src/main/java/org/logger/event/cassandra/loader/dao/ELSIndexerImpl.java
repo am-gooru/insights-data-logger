@@ -175,14 +175,16 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				} 
 			}
 			
-			this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
-			if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
+			if(eventMap.get("eventId") != null) {
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
+			}
+			if (eventMap.get(EVENT_NAME) != null && eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
 				try {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
 					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
 						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
 					}
-					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
+					if (eventMap.containsKey(GOORUID) && eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
 						getUserAndIndex(eventMap.get(GOORUID).toString());
 					}
 				} catch (Exception e) {
@@ -194,9 +196,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				Iterator<?> keys = jsonField.keys();
 				Map<String, Object> eventMap = new HashMap<String, Object>();
 				while (keys.hasNext()) {
-					String key = (String) keys.next();
+					String key = String.valueOf(keys.next());
 
-					eventMap.put(key, ((String)jsonField.get(key)));
+					eventMap.put(key, String.valueOf(jsonField.get(key)));
 
 					/*
 					 * if(key.equalsIgnoreCase("contentGooruId") || key.equalsIgnoreCase("gooruOId") || key.equalsIgnoreCase("gooruOid")){ eventMap.put("gooruOid", ((String)jsonField.get(key)));
@@ -270,7 +272,9 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
-				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
+				if(eventMap.get("eventId") != null) {
+					this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
+				}
 				if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
 					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
 					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
