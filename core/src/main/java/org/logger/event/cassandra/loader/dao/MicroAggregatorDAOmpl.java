@@ -122,10 +122,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			/**
 			 * If user is playing collection from class , we need to generate All students and All session details.
-			 */
 			if (isStudent) {
 				aggregateAllSessions(m, eventMap, keysList, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType);
 			}
+			*/
+			
 			m.execute();
 			/**
 			 * Storing the latest collection accessed time
@@ -135,8 +136,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 * Aggregations steps in close events
 			 */
 			if (STOP.equalsIgnoreCase(eventType)) {
+				if (LoaderConstants.CPV1.getName().equals(eventName)){
+					balanceCollectionTypeTimespent(sessionId, contentGooruId, ((Number)eventMap.get(TOTALTIMEINMS)).longValue());
+				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
-				if(isStudent){
+				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
 					generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				}
 			}
@@ -454,6 +458,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_RESOURCE_PLAY_COLUMNS.entrySet()) {
 					columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 				}
+				counterColumns.incrementCounterColumn(this.generateColumnKey(parentGooruId, TIME_SPENT), ((Number)eventMap.get(TOTALTIMEINMS)).longValue());
 				if (OE.equals(eventMap.get(QUESTION_TYPE))) {
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, ACTIVE), "false");
 				}
@@ -519,6 +524,22 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
+	private void balanceCollectionTypeTimespent(String sessionId, String contentGooruId, long timeSpentInEvent) {
+		ColumnList<String> sessionActivityCounter = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), sessionId, 0);
+		long storedTimeSpent = sessionActivityCounter.getLongValue(generateColumnKey(contentGooruId, TIME_SPENT), 0L);
+		if (timeSpentInEvent != 0L) {
+			try {
+				MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
+				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), sessionId);
+				counterColumns.incrementCounterColumn(generateColumnKey(contentGooruId, TIME_SPENT), (timeSpentInEvent - storedTimeSpent));
+				m.execute();
+			} catch (Exception e) {
+				logger.error("Exception:", e);
+			}
+		}
+
+	}
+	
 	/**
 	 * Store all the session ids is session table
 	 * 
