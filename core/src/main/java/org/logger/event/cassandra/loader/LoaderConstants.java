@@ -165,6 +165,8 @@ public enum LoaderConstants {
 	
 	CLASS_ITEM_DELETE("class.item.delete"),
     
+	ENV_END_POINT("env.end.point"),
+	
     ;
 	
 	String name;

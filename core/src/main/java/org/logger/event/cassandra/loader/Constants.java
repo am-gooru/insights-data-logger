@@ -102,6 +102,8 @@ public interface Constants {
 	
 	public static final  String SESSION = "session";
 	
+	public static final  String SESSIONS = "sessions";
+	
 	public static final  String _FIRST_ATTEMPT_STATUS = "first_attempt_status";
 	
 	public static final  String FIRST_ATTEMPT_STATUS = "firstAttemptStatus";
