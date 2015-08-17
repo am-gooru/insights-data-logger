@@ -141,7 +141,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 */
 			if (STOP.equalsIgnoreCase(eventType)) {
 				if (LoaderConstants.CPV1.getName().equals(eventName)){
-					balanceCollectionTypeTimespent(sessionId, contentGooruId, ((Number)eventMap.get(TOTALTIMEINMS)).longValue());
+					balanceCollectionTypeTimespent(sessionId, contentGooruId,eventMap);
 				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
@@ -245,7 +245,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				this.getDataFromCounterToAggregator(classActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
 				this.triggerClassActivityAggregation(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 			
-			logger.info("Class Activit computations completed for the session : {}", eventMap.get(SESSION_ID));
 		} catch (Exception e) {
 			logger.error("Exception", e);
 		}
@@ -533,20 +532,22 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
-	private void balanceCollectionTypeTimespent(String sessionId, String contentGooruId, long timeSpentInEvent) {
+	private void balanceCollectionTypeTimespent(String sessionId, String contentGooruId, Map<String, Object> eventMap) {
+		long timeSpentInEvent = ((Number) eventMap.get(TOTALTIMEINMS)).longValue();
 		ColumnList<String> sessionActivityCounter = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), sessionId, 0);
 		long storedTimeSpent = sessionActivityCounter.getLongValue(generateColumnKey(contentGooruId, TIME_SPENT), 0L);
 		if (timeSpentInEvent != 0L) {
 			try {
 				MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 				ColumnListMutation<String> counterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily()), sessionId);
-				counterColumns.incrementCounterColumn(generateColumnKey(contentGooruId, TIME_SPENT), (timeSpentInEvent - storedTimeSpent));
+				long balancedTimeSpent = (timeSpentInEvent - storedTimeSpent);
+				eventMap.put(TOTALTIMEINMS, balancedTimeSpent);
+				counterColumns.incrementCounterColumn(generateColumnKey(contentGooruId, TIME_SPENT), balancedTimeSpent);
 				m.execute();
 			} catch (Exception e) {
 				logger.error("Exception:", e);
 			}
 		}
-
 	}
 	
 	/**
