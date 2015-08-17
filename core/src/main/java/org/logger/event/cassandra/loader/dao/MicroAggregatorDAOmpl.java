@@ -40,6 +40,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
@@ -71,7 +75,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private RawDataUpdateDAOImpl rawUpdateDAO;
 
 	public static Map<String, Object> cache;
-
+	
 	ExecutorService service = Executors.newFixedThreadPool(10);
 
 	public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
@@ -141,7 +145,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
-					generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+					if (LoaderConstants.CPV1.getName().equals(eventName)){
+						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+					} else{
+						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -202,9 +210,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private void generateClassActivity(Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId, String contentGooruId,
 			String gooruUUID) {
 		try {
-			if (LoaderConstants.CPV1.getName().equals(eventName) && eventMap.containsKey(CLASS_GOORU_OID) && eventMap.get(CLASS_GOORU_OID) != null) {
 				String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
-				long scoreInPercentage = ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue();
+				long scoreInPercentage = eventMap.containsKey(SCORE_IN_PERCENTAGE) ? ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue() : 0L;
 				MutationBatch scoreMutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 				List<String> scoreKeyList = generateClassActivityKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
 				for (String key : scoreKeyList) {
@@ -237,7 +244,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				this.getDataFromCounterToAggregator(scoreKeyList, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
 				this.getDataFromCounterToAggregator(classActivityKeys, ColumnFamily.CLASS_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.CLASS_ACTIVITY.getColumnFamily());
 				this.triggerClassActivityAggregation(classGooruId, courseGooruId, unitGooruId, lessonGooruId, gooruUUID, collectionType);
-			}
+			
 			logger.info("Class Activit computations completed for the session : {}", eventMap.get(SESSION_ID));
 		} catch (Exception e) {
 			logger.error("Exception", e);
@@ -291,7 +298,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 			m.execute();
-			logger.info("Score computation is completed");
 		} catch (Exception e) {
 			logger.error("Exception", e);
 		}
@@ -437,17 +443,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					if (eventMap.containsKey(TOTAL_QUESTIONS_COUNT)) {
 						Long questionCount = ((Number) eventMap.get(TOTAL_QUESTIONS_COUNT)).longValue();
 						aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _QUESTION_COUNT), questionCount);
-						logger.info("Question Count : {}", questionCount);
 						if (questionCount > 0) {
 							score = getAssessmentTotalScore(sessionId);
 							scoreInPercentage = (100 * score / questionCount);
 						}
 						eventMap.put(SCORE_IN_PERCENTAGE, scoreInPercentage);
 						eventMap.put(SCORE, score);
-						logger.info("Score In percentage :{} in session : {}", scoreInPercentage, score);
 					}
 				}
 				aggregatorColumns.putColumnIfNotNull(_GOORU_UID, (String) eventMap.get(GOORUID));
+				aggregatorColumns.putColumnIfNotNull(_EVENT_ID, (String) eventMap.get(EVENT_ID));
+				aggregatorColumns.putColumnIfNotNull(_START_TIME, ((Number) eventMap.get(START_TIME)).longValue());
+				aggregatorColumns.putColumnIfNotNull(_END_TIME, ((Number) eventMap.get(END_TIME)).longValue());
+				
 				if (eventMap.containsKey(SCORE)) {
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, SCORE), ((Number) eventMap.get(SCORE)).longValue());
 				}
@@ -455,6 +463,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					aggregatorColumns.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _SCORE_IN_PERCENTAGE), ((Number) eventMap.get(SCORE_IN_PERCENTAGE)).longValue());
 				}
 			} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+				aggregatorColumns.putColumnIfNotNull(_END_TIME, ((Number) eventMap.get(END_TIME)).longValue());
 				for (Map.Entry<String, Object> entry : EventColumns.COLLECTION_RESOURCE_PLAY_COLUMNS.entrySet()) {
 					columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 				}
@@ -561,6 +570,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+				if (START.equalsIgnoreCase(eventType)) {
+					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
+				}
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
@@ -572,7 +584,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
-
+				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType, 172800);
+				;
 			} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
@@ -582,7 +595,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO)).putColumnIfNotNull(
 						generateColumnKey(sessionId, _LAST_ACCESSED_RESOURCE), contentGooruId);
 			}
-			logger.info("Session storage columns generated for session id :{}", sessionId);
 		} catch (Exception e) {
 			logger.error("Exception : ", e);
 		}
@@ -606,7 +618,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 			m.execute();
-			logger.info("Regular CFs updated from Counter from the session");
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
@@ -1568,5 +1579,5 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			status = true;
 		}
 		return status;
-	}
+	}	
 }
