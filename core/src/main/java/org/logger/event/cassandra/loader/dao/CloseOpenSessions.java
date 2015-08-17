@@ -60,13 +60,13 @@ public class CloseOpenSessions implements Runnable, Constants {
 							metrics.put(VIEWS_COUNT, 1L);
 							JSONObject context = new JSONObject(event.getContext());
 							context.put(TYPE, STOP);
-							context.put("loggedBy", SYSTEM);
+							context.put(LOGGED_BY, SYSTEM);
 							eventJson.put(METRICS, metrics.toString());
 							eventJson.put(CONTEXT, context.toString());
 							StringEntity eventEntity = new StringEntity("[" + eventJson + "]");
-							HttpPost postRequest = new HttpPost(restPoint + "/api/log/event?apiKey="+apiKey);
+							HttpPost postRequest = new HttpPost(restPoint+LOGGING_URL+apiKey);
 							postRequest.setEntity(eventEntity);
-							postRequest.setHeader("Content-type", "application/json; charset=UTF-8");
+							postRequest.setHeader(CONTENT_TYPE,CONTENT_TYPE_VALUES);
 							httpClient = new DefaultHttpClient();
 							HttpResponse response = httpClient.execute(postRequest);
 							logger.info("Status : {} ", response.getStatusLine().getStatusCode());

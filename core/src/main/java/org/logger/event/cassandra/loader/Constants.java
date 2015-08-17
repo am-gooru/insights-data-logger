@@ -695,4 +695,12 @@ public interface Constants {
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 	
 	public static final String CUL_IDS_MISSING = "CUL ids missing : ";
+	
+	public static final String LOGGING_URL = "/api/log/event?apiKey=";
+	
+	public static final String CONTENT_TYPE = "Content-type";
+	
+	public static final String CONTENT_TYPE_VALUES = "application/json; charset=UTF-8";
+	
+	public static final String LOGGED_BY = "loggedBy";
 }

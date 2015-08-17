@@ -570,7 +570,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
-				service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
+				if (START.equalsIgnoreCase(eventType)) {
+					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
+				}
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
@@ -1577,26 +1579,5 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			status = true;
 		}
 		return status;
-	}
-	
-	public static void main(String args[]) {
-		try {
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			StringEntity eventEntity;
-			String apiKey = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
-			eventEntity = new StringEntity(
-					"[{\"startTime\":1439800164242,\"eventId\":\"31819089-FA08-4A4F-BD0A-B91C910AFC2DNEW\",\"session\":\"{\\\"apiKey\\\":\\\"ASERTYUIOMNHBGFDXSDWERT123RTGHYT\\\", \\\"organizationUId\\\":\\\"\\\", \\\"sessionToken\\\":\\\"e4f0495c-d88b-4c02-bfff-b73d84e25d80\\\", \\\"sessionId\\\":\\\"94083010-25D2-4166-B89C-427D7FE16923_NEW\\\"}\",\"metrics\":\"{\\\"totalTimeSpentInMs\\\":0,\\\"score\\\":0,\\\"viewsCount\\\":1}\",\"context\":\"{\\\"collectionType\\\":\\\"collection\\\",\\\"pageLocation\\\":\\\"home\\\",\\\"clientSource\\\":\\\"web\\\",\\\"type\\\":\\\"stop\\\",\\\"classGooruId\\\":\\\"6b91a280-01de-4e48-b9b9-15c614ee8577\\\",\\\"mode\\\":\\\"study\\\",\\\"resourceType\\\":\\\"\\\",\\\"isStudent\\\":true,\\\"contentGooruId\\\":\\\"057b912f-f54b-4230-a9cf-11d9f2b018f1\\\",\\\"totalQuestionsCount\\\":0,\\\"unitGooruId\\\":\\\"2e70d98c-ef1b-4389-bf78-c149fd1ca585\\\",\\\"parentGooruId\\\":\\\"\\\",\\\"parentEventId\\\":\\\"\\\",\\\"courseGooruId\\\":\\\"f2383345-b428-4b71-83d9-e1d5d358b48f\\\",\\\"path\\\":\\\"057b912f-f54b-4230-a9cf-11d9f2b018f1\\\",\\\"lessonGooruId\\\":\\\"2fae2d6c-2bc9-49cd-a1e6-3e8c9ce78bcf\\\"}\",\"eventName\":\"collection.play\",\"endTime\":1439800164242,\"user\":\"{\\\"userIp\\\":\\\"127.0.0.1\\\",\\\"userAgent\\\":\\\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36\\\",\\\"gooruUId\\\":\\\"6537c00b-4c96-4508-9d39-ff04897f4b20\\\"}\",\"payLoadObject\":\"{}\",\"version\":\"{\\\"logApi\\\":\\\"0.1\\\"}\"}]");
-
-			HttpPost postRequest = new HttpPost("http://qa.goorulearning.org/api/log/event?apiKey="+apiKey);
-			postRequest.setHeader("Content-type", "application/json; charset=UTF-8");
-			postRequest.setEntity(eventEntity);
-			
-			HttpResponse response = httpClient.execute(postRequest);
-			logger.info("Status : {} ", response.getStatusLine().getStatusCode());
-			System.out.println("response.getStatusLine().getStatusCode() : " + response.getStatusLine().getStatusCode());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	}	
 }
