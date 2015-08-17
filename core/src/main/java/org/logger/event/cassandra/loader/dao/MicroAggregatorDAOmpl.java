@@ -237,7 +237,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					} else if (ASSESSMENT.equalsIgnoreCase(collectionType)) {
 						ColumnListMutation<String> scoreAggregator = scoreMutation.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.CLASS_ACTIVITY.getColumnFamily()), aggregateKeys.getKey());
 						scoreAggregator.putColumnIfNotNull(aggregateKeys.getValue(), scoreInPercentage);
-						logger.info("Class Activit computations completed for the session : {}", eventMap.get(SESSION_ID));
 					}
 					classActivityKeys.add(aggregateKeys.getKey());
 				}
