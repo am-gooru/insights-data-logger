@@ -145,9 +145,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
 				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
-					if (LoaderConstants.CPV1.getName().equals(eventName)){
+					if (LoaderConstants.CPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
 						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-					} else{
+					}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
 						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
 					}
 				}
