@@ -703,4 +703,14 @@ public interface Constants {
 	public static final String CONTENT_TYPE_VALUES = "application/json; charset=UTF-8";
 	
 	public static final String LOGGED_BY = "loggedBy";
+	
+	String PREVIOUS_SHARING = "previousSharing";
+    
+    String CONTENT_SHARING = "contentSharing";
+    
+    String COLLECTION_ITEM_IDS = "collectionItemIds";
+    
+    String EDIT_EVENT_COUNTER_CONFIG = "C:count~E:contentSharing~E:mode,C:count~E:previousSharing~C:delete";
+    
+    String ALL_TILT = "all~";
 }
