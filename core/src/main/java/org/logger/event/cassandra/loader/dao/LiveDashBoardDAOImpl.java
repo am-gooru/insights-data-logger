@@ -60,7 +60,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENT_NAME))) {
 			if(String.valueOf(eventMap.get(EVENT_NAME)).equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName())) {
-				if (eventMap.get(PREVIOUS_SHARING) != null && eventMap.get(CONTENT_SHARING) != null && eventMap.get(COLLECTION_ITEM_IDS) != null) {
+				if (eventMap.get(PREVIOUS_SHARING) != null && eventMap.get(CONTENT_SHARING) != null && 
+						eventMap.get(COLLECTION_ITEM_IDS) != null && !eventMap.get(PREVIOUS_SHARING).equals(eventMap.get(CONTENT_SHARING))) {
 					for (String collectionItemId : eventMap.get(COLLECTION_ITEM_IDS).toString().split(COMMA)) {
 						prepareColumnAndStoreMetrics(ALL_TILT.concat(collectionItemId), EDIT_EVENT_COUNTER_CONFIG, eventMap, m);
 					}
