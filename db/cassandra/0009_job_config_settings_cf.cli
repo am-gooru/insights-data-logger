@@ -337,3 +337,4 @@ set job_config_settings ['item.search'] ['D:yyyyMM~E:gooruUId'] = utf8('C:count~
 set job_config_settings ['item.search'] ['D:yyyy~E:gooruUId'] = utf8('C:count~E:eventName,C:time_spent~C:total');
 set job_config_settings ['atmosphere.end.point'] ['constant_value'] = utf8('http://atmosphere_endpoint');
 set job_config_settings ['atmosphere.endPoint'] ['constant_value'] = utf8('http://http://atmosphere_endpoint');
+set job_config_settings ['entity_role_opertaions']['Class~View']=utf8('ANONYMOUS,ROLE_GOORU_ADMIN,superadmin,Organization_Admin,Content_Admin,User,user');
