@@ -46,6 +46,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	Collection<String> esEventFields = null;
 	
+	private static String charactersToRemove = "^\\[|\\s|\\]$";
+	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
@@ -57,29 +59,28 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 * @param eventMap
 	 */
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENT_NAME))) {
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
-				String key = this.formOrginalKeys(columnName, eventMap);
-				if (key != null) {
-					for (String value : columnValue.split(COMMA)) {
-						String orginalColumn = this.formOrginalKeys(value, eventMap);
-						if (orginalColumn != null) {
-							if(eventMap.containsKey(EVENT_NAME) && eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_RATE.getName())){
-								performRating(key, orginalColumn,eventMap,m);		
-								continue;
-							}
-							if (!(eventMap.containsKey(TYPE) && (eventMap.get(TYPE).equals(STOP) || eventMap.get(TYPE).equals(PAUSE)) && orginalColumn.startsWith(COUNT + SEPERATOR))) {
-								performCounter(key, orginalColumn, eventMap, m);					
-							}
+				
+				if(eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_EDIT.getName()) && columnName.contains(COLLECTION_ITEM_IDS)) {
+					if (eventMap.get(PREVIOUS_SHARING) != null && eventMap.get(CONTENT_SHARING) != null && 
+							eventMap.get(COLLECTION_ITEM_IDS) != null && !eventMap.get(PREVIOUS_SHARING).equals(eventMap.get(CONTENT_SHARING))) {
+						for (String collectionItemId : eventMap.get(COLLECTION_ITEM_IDS).toString().replaceAll(charactersToRemove, EMPTY).split(COMMA)) {
+							prepareColumnAndStoreMetrics(ALL_TILT.concat(collectionItemId), columnValue, eventMap, m);
 						}
+					}
+				} else {				
+					String key = this.formOriginalKeys(columnName, eventMap);
+					if (key != null) {
+						prepareColumnAndStoreMetrics(key, columnValue, eventMap, m);
 					}
 				}
 			}
-
+			
 			try {
 				m.execute();
 			} catch (Exception e) {
@@ -216,7 +217,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 , * @param eventMap
 	 * @return
 	 */
-	public String formOrginalKeys(String value, Map<String, Object> eventMap) {
+	public String formOriginalKeys(String value, Map<String, Object> eventMap) {
 		Date eventDateTime = new Date();
 		String key = "";
 		for (String splittedKey : value.split("~")) {
@@ -329,6 +330,19 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			Long rate = map.get(RATE) != null ? ((Number) map.get(RATE)).longValue() : 0;
 			String rateColumn = column.replace(map.get(RATE).toString(), rate.toString());
 			performCounter(key, rateColumn, map, m);
+		}
+	}
+	
+	private void prepareColumnAndStoreMetrics(String key, String columnValue, Map<String, Object> eventMap, MutationBatch m) {
+		for (String value : columnValue.split(COMMA)) {
+			String originalColumn = this.formOriginalKeys(value, eventMap);
+			if (originalColumn != null) {
+				if(eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_RATE.getName())){
+					performRating(key, originalColumn,eventMap,m);		
+				} else if (!(eventMap.containsKey(TYPE) && (eventMap.get(TYPE).equals(STOP) || eventMap.get(TYPE).equals(PAUSE)) && originalColumn.startsWith(COUNT + SEPERATOR))) {
+					performCounter(key, originalColumn, eventMap, m);					
+				}
+			}
 		}
 	}
 }
