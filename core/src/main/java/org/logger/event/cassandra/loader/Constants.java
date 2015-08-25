@@ -710,7 +710,5 @@ public interface Constants {
     
     String COLLECTION_ITEM_IDS = "collectionItemIds";
     
-    String EDIT_EVENT_COUNTER_CONFIG = "C:count~E:contentSharing~E:mode,C:count~E:previousSharing~C:delete";
-    
     String ALL_TILT = "all~";
 }

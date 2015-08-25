@@ -46,6 +46,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	Collection<String> esEventFields = null;
 	
+	private static String charactersToRemove = "^\\[|\\s|\\]$";
+	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
@@ -57,26 +59,28 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 * @param eventMap
 	 */
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if ((eventMap.containsKey(EVENT_NAME))) {
-			if(String.valueOf(eventMap.get(EVENT_NAME)).equalsIgnoreCase(LoaderConstants.ITEM_DOT_EDIT.getName())) {
-				if (eventMap.get(PREVIOUS_SHARING) != null && eventMap.get(CONTENT_SHARING) != null && 
-						eventMap.get(COLLECTION_ITEM_IDS) != null && !eventMap.get(PREVIOUS_SHARING).equals(eventMap.get(CONTENT_SHARING))) {
-					for (String collectionItemId : eventMap.get(COLLECTION_ITEM_IDS).toString().split(COMMA)) {
-						prepareColumnAndStoreMetrics(ALL_TILT.concat(collectionItemId), EDIT_EVENT_COUNTER_CONFIG, eventMap, m);
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
+			for (int i = 0; i < eventKeys.size(); i++) {
+				String columnName = eventKeys.getColumnByIndex(i).getName();
+				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+				
+				if(eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_EDIT.getName()) && columnName.contains(COLLECTION_ITEM_IDS)) {
+					if (eventMap.get(PREVIOUS_SHARING) != null && eventMap.get(CONTENT_SHARING) != null && 
+							eventMap.get(COLLECTION_ITEM_IDS) != null && !eventMap.get(PREVIOUS_SHARING).equals(eventMap.get(CONTENT_SHARING))) {
+						for (String collectionItemId : eventMap.get(COLLECTION_ITEM_IDS).toString().replaceAll(charactersToRemove, EMPTY).split(COMMA)) {
+							prepareColumnAndStoreMetrics(ALL_TILT.concat(collectionItemId), columnValue, eventMap, m);
+						}
 					}
-				}
-			} else {
-				eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
-				for (int i = 0; i < eventKeys.size(); i++) {
-					String columnName = eventKeys.getColumnByIndex(i).getName();
-					String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
+				} else {				
 					String key = this.formOriginalKeys(columnName, eventMap);
 					if (key != null) {
 						prepareColumnAndStoreMetrics(key, columnValue, eventMap, m);
 					}
 				}
 			}
+			
 			try {
 				m.execute();
 			} catch (Exception e) {
