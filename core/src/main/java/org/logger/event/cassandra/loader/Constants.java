@@ -711,4 +711,10 @@ public interface Constants {
     String COLLECTION_ITEM_IDS = "collectionItemIds";
     
     String ALL_TILT = "all~";
+    
+    String PARENTSHARING = "parentSharing";
+
+    String ALL = "all";
+
+    String RESOURCE_USED_USER_VALIDATION = "C:count~C:user~E:parentSharing~E:mode|C:count~C:user~E:mode"; 
 }
