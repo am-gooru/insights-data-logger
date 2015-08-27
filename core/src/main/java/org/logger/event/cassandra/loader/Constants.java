@@ -686,7 +686,7 @@ public interface Constants {
 	
 	public static final String RAW_EVENT_JSON_EXCEPTION = "Raw Event JSON Exception : ";
 	
-	public static final  String ANSWERING_STATUS =  "correct|in-correct";
+	public static final  String ANSWERING_STATUS =  "correct|in-correct|attempted";
 	
 	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 	
