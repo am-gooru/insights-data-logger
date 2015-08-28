@@ -51,7 +51,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 	private BaseCassandraRepoImpl baseDao;
 	
-	@Autowired
 	private GeoLocation geoLocation;
 	
 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
@@ -76,6 +75,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+		this.geoLocation = new GeoLocation();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();

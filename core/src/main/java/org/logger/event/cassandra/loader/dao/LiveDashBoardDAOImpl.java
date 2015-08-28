@@ -49,14 +49,15 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	
 	private static String charactersToRemove = "^\\[|\\s|\\]$";
 	
-	@Autowired
 	private GeoLocation geoLocation;
 	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	}
+		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	
+		this.geoLocation = new GeoLocation();
+	}
 
 	/**
 	 * 
