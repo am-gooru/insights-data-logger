@@ -581,11 +581,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			if (columns.getColumnByName("organization.partyUid") != null) {
 				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization.partyUid").getStringValue());
 			}
-			if (columns.getColumnByName("thumbnail") != null && StringUtils.isNotBlank(columns.getColumnByName("thumbnail").getStringValue())) {
+			if (StringUtils.isNotBlank(columns.getStringValue("thumbnail", EMPTY))) {
 				if (columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")) {
 					resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 				} else {
-					resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH() + "/" + columns.getColumnByName("folder").getStringValue() + "/"
+					resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH() + "/" + columns.getStringValue("folder", EMPTY) + "/"
 							+ columns.getColumnByName("thumbnail").getStringValue());
 				}
 			}
