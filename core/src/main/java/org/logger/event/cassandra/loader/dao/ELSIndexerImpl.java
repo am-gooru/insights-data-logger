@@ -2,7 +2,6 @@ package org.logger.event.cassandra.loader.dao;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.Event;
-import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -29,16 +27,16 @@ import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
+import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.ESIndexices;
 import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
-import org.logger.event.cassandra.loader.DataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.Gson;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
@@ -53,6 +51,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 
 	private BaseCassandraRepoImpl baseDao;
 	
+	@Autowired
 	private GeoLocation geoLocation;
 	
 	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss+0000");
@@ -77,7 +76,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		this.geoLocation = new GeoLocation();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();
@@ -157,21 +155,20 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				userIp = ((String)eventMap.get(USER_IP)).split(COMMA)[0];
 			}
 			if (userIp != null) {
-				try {
-					GeoLocation geo = new GeoLocation();
-					CityResponse res = geo.getGeoResponse(userIp);
-					eventMap.put(REGION, geoLocation.getGeoRegionByIP(userIp));
-						if (res != null && res.getCity().getName() != null) {
-							eventMap.put(CITY, res.getCity().getName());
-						}
-						if (res != null && res.getLocation().getLatitude() != null) {
-							eventMap.put(LATITUDE, res.getLocation().getLatitude());
-						}
-						if (res != null && res.getLocation().getLongitude() != null) {
-							eventMap.put(LONGITUDE, res.getLocation().getLongitude());
-						}				
-				} catch (Exception e) {
-					logger.error("Exception while finding geo location.",e);
+				CityResponse cityResponse = geoLocation.getGeoResponse(userIp);
+				if(cityResponse != null) {
+					if(StringUtils.isNotBlank(cityResponse.getCity().getName())) {
+						eventMap.put(CITY, cityResponse.getCity().getName());
+					}
+					if(cityResponse.getLocation().getLatitude() != null) {
+						eventMap.put(CITY, cityResponse.getLocation().getLatitude());
+					}
+					if (cityResponse.getLocation().getLongitude() != null) {
+						eventMap.put(LONGITUDE, cityResponse.getLocation().getLongitude());
+					}
+					if(StringUtils.isNotBlank(cityResponse.getMostSpecificSubdivision().getName())) {
+						eventMap.put(REGION, cityResponse.getMostSpecificSubdivision().getName());
+					}
 				} 
 			}
 			

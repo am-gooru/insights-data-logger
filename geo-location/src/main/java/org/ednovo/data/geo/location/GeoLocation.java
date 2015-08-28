@@ -24,132 +24,135 @@
 package org.ednovo.data.geo.location;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 
-
+@Component
 public class GeoLocation  {
-	File database;
-	DatabaseReader reader;
-	private static String fileNameCity = System.getenv("GEO_LOCATION_DB_FILE");
-    private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
 
-    /**
-     * @return a string country database name from the
-     *         field set on the environment.
-     */
+	private static File database;
+	private DatabaseReader reader;
+	private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
     
-    public String getFileNamemmdb(){
-		String currPath = "";
-		currPath = System.getenv("GEO_LOCATION_DB_FILE");
-		return (currPath);
+	/**
+     * @return a string country database file path from the
+     *         field set on the environment.
+     * @exception will throw if the database file is not set in Environment. 
+     */
+    private String getFileNamemmdb(){
+		String currPath = System.getenv("GEO_LOCATION_DB_FILE");
+		if(StringUtils.isBlank(currPath)) {
+			throw new NullPointerException("GeoLocation Database FileName is not specified!");
+		}
+		return currPath;
     }
     
     /**
-     * @param ip
-     *            IP address to lookup.
-     * @return A string with the city name for the IP address
-     * @throws IOException
-     *             if there is an error opening or reading from the file.
-     * @throws GeoIp2Exception
-     *             if the IP address is not in country database
+     * @return GeoDatabase as a file
      */
-	public String getGeoCityByIP (String ip) throws IOException, GeoIp2Exception {
-		ip = ip.trim();
-		String City = null;
-		database = new File(getFileNamemmdb());
-		reader = new DatabaseReader.Builder(database).build();
-		
-    	try {
-			CityResponse response = reader.city(InetAddress.getByName(ip));
-			City = response.getCity().getName();
-		} catch (IOException e) {
-			reader.close();
-			return (City);
-		} catch (GeoIp2Exception e) {
-			reader.close();
-			return (City);
-		}
-	
-		reader.close();
-		return (City);
-	}
-
+    private File getGeoDatabase() {
+    	if(database == null) {
+    		database = new File(getFileNamemmdb());
+    	}
+    	return database;  
+    }
+    
+    /**
+     * 
+     * @return a DatabaseReader with Geo database
+     * @throws Exception if there is an error occur while opening or reading file and load it into reader.
+     */
+    private DatabaseReader getDatabaseReader() throws Exception {
+    	if(reader == null) {
+    		reader = new DatabaseReader.Builder(getGeoDatabase()).build();
+    	}
+    	return reader;
+    }
     /**
      * @param ip
      *            IP address to lookup.
-     * @return a string with the region name for the IP address
-     * @throws IOException
-     *             if there is an error opening or reading from the file.
-     * @throws GeoIp2Exception
-     *             if the IP address is not in country database
+     * @return A string with the city name for the IP address. Default value is null.
      */
-	public String getGeoRegionByIP (String ip) throws IOException, GeoIp2Exception {
-		ip = ip.trim();
-		String Region = null;
-		database = new File(getFileNamemmdb());
-		reader = new DatabaseReader.Builder(database).build();
+	public String getGeoCityByIP (String ip) {
+		String geoCity = null;
     	try {
-			CityResponse response = reader.city(InetAddress.getByName(ip));
-			Region = response.getMostSpecificSubdivision().getName();
-		} catch (IOException e) {
-			reader.close();
-			return (Region);
-		} catch (GeoIp2Exception e) {
-			reader.close();
-			return (Region);
-		}
-		reader.close();
-		return (Region);
-	}
-	
-    /**
-     * @param ip
-     *            IP address to lookup.
-     * @return A string with the country name for the IP address
-     * @throws IOException
-     *             if there is an error opening or reading from the file.
-     * @throws GeoIp2Exception
-     *             if the IP address is not in country database
-     */
-	public String getGeoCountryByIP (String ip) throws IOException, GeoIp2Exception {
-		ip = ip.trim();
-		String Country = null;
-		database = new File(getFileNamemmdb());
-		reader = new DatabaseReader.Builder(database).build();
-    	try {
-			CityResponse response = reader.city(InetAddress.getByName(ip));
-			Country = response.getCountry().getName();
-		} catch (IOException e) {
-			reader.close();
-			return (Country);
-		} catch (GeoIp2Exception e) {
-			reader.close();
-			return (Country);
-		}
-		reader.close();
-		return (Country);
-	}
-
-	public CityResponse getGeoResponse(String ip) throws IOException{
-		ip = ip.trim();
-		database = new File(getFileNamemmdb());
-		CityResponse response = null;
-		reader = new DatabaseReader.Builder(database).build();
-		try {
-			response = reader.city(InetAddress.getByName(ip));
+			CityResponse response = getDatabaseReader().city(InetAddress.getByName(ip.trim()));
+			geoCity = response.getCity().getName();
 		} catch (Exception e) {
-			reader.close();
-			return null;
-		} 
-		reader.close();
+			logger.error("Error while getting Geo City with ip. {}, {}", ip, e);
+		} finally {
+			closeDatabaseReader();
+		}
+		return geoCity;
+	}
+
+    /**
+     * @param ip
+     *            IP address to lookup.
+     * @return a string with the region name for the IP address. Default value is null.
+     */
+	public String getGeoRegionByIP (String ip) {
+		String geoRegion = null;
+    	try {
+			CityResponse response = getDatabaseReader().city(InetAddress.getByName(ip.trim()));
+			geoRegion = response.getMostSpecificSubdivision().getName();
+		} catch (Exception e) {
+			logger.error("Error while getting Geo Region with ip {}, {}" , ip, e);
+		} finally {
+			closeDatabaseReader();
+		}
+		return geoRegion;
+	}
+	
+    /**
+     * @param ip
+     *            IP address to lookup.
+     * @return A string with the country name for the IP address. Default value is null.
+     */
+	public String getGeoCountryByIP (String ip) {
+		String geoCountry = null;
+    	try {
+			CityResponse response = getDatabaseReader().city(InetAddress.getByName(ip.trim()));
+			geoCountry = response.getCountry().getName();
+		} catch (Exception e) {
+			logger.error("Error while getting Geo Country with ip {}, {}" , ip, e);
+		} finally {
+			closeDatabaseReader();
+		}
+		return geoCountry;
+	}
+
+	/**
+	 * 
+	 * @param ip
+	 * 			IP address to lookup.
+	 * @return
+	 * 			CityResponse from Geo Database for the IP address.
+	 */
+	public CityResponse getGeoResponse(String ip) {
+		CityResponse response = null;
+		try {
+			response = getDatabaseReader().city(InetAddress.getByName(ip.trim()));
+		} catch (Exception e) {
+			logger.error("Error while getting Geo Response with ip {}, {}" , ip, e);
+		} finally {
+			closeDatabaseReader();
+		}
 		return response;
+	}
+	
+	private void closeDatabaseReader() {
+		try {
+			reader.close();
+		} catch (Exception e) {
+			logger.error("Error while closing the Database Reader connection.", e);
+		}
 	}
 }
