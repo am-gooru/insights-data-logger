@@ -350,9 +350,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	private void resourceUsedUserCount(String key, String value, String originalColumn, Map<String, Object> eventMap, MutationBatch m) {
 		String userKey = key.concat(SEPERATOR).concat(eventMap.get(GOORUID).toString());
-		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), userKey, originalColumn, 1L, m);
 		if(!baseDao.checkColumnExist(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),userKey,originalColumn,0)) {
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, originalColumn, 1L, m);
 		}
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), userKey, originalColumn, 1L, m);
 	}
 }
