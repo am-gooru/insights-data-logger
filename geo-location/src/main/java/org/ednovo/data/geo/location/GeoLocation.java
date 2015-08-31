@@ -29,18 +29,26 @@ import java.net.InetAddress;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
 
-@Component
 public class GeoLocation  {
 
 	private static File database;
 	private DatabaseReader reader;
 	private static final Logger logger = LoggerFactory.getLogger(GeoLocation.class);
+	
+	private static GeoLocation geoLocation = null;
+	
+	private GeoLocation() {	}
     
+	public static GeoLocation getInstance() {
+		if(geoLocation == null) {
+			geoLocation = new GeoLocation();
+		}
+		return geoLocation;
+	}
 	/**
      * @return a string country database file path from the
      *         field set on the environment.
