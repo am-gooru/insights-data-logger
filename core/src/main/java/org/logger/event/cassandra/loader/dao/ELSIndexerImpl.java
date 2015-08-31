@@ -75,7 +75,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
-		this.geoLocation = new GeoLocation();
+		this.geoLocation = GeoLocation.getInstance();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
         licenseCache = new LinkedHashMap<String, Object>();
@@ -161,7 +161,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 						eventMap.put(CITY, cityResponse.getCity().getName());
 					}
 					if(cityResponse.getLocation().getLatitude() != null) {
-						eventMap.put(CITY, cityResponse.getLocation().getLatitude());
+						eventMap.put(LATITUDE, cityResponse.getLocation().getLatitude());
 					}
 					if (cityResponse.getLocation().getLongitude() != null) {
 						eventMap.put(LONGITUDE, cityResponse.getLocation().getLongitude());
