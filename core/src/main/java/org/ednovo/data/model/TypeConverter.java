@@ -100,28 +100,29 @@ public class TypeConverter {
 				SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 				SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 				SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
+				String stringAsMS = String.valueOf(value);
+				if(value != null && !stringAsMS.isEmpty())
 				try {
-					result = new Date(((Number)(value)).longValue());
+					result = new Date(Long.valueOf(stringAsMS));
 				} catch (Exception e) {
 					try {
-						result = formatter.parse(String.valueOf(value));
+						result = formatter.format(Long.valueOf(stringAsMS));
 					} catch (Exception e1) {
 						try {
-							result = formatter2.parse(String.valueOf(value));
+							result = formatter2.format(Long.valueOf(stringAsMS));
 						} catch (Exception e2) {
 							try {
-								result = formatter3.parse(String.valueOf(value));
+								result = formatter3.format(Long.valueOf(stringAsMS));
 							} catch (Exception e3) {
 								try {
-									result = formatter4.parse(String.valueOf(value));
+									result = formatter4.format(Long.valueOf(stringAsMS));
 								} catch (Exception e4) {
-									logger.error("Error while convert " + value + " to date");
+									System.out.println("Error while convert " + value + " to date");
 								}
 							}
 						}
 					}
 				}
-
 			} else if (type.equalsIgnoreCase("Boolean")) {
 				result = ((Boolean)(value));
 			} else if (type.equalsIgnoreCase("String")) {

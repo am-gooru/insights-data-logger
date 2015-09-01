@@ -108,6 +108,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @param fields
 	 */
 	public void indexEvents(String fields) {
+		if(fields != null && !fields.isEmpty()) {
 		JSONObject jsonField = null;
 		try {
 			jsonField = new JSONObject(fields);
@@ -286,7 +287,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				throw new RuntimeException();
 			}
 		}
-
+	}
 	}
 
 	/**
