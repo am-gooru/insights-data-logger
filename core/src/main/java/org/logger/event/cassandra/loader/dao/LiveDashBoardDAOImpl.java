@@ -325,7 +325,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	private void performRating(String key, String column, Map<String, Object> map, MutationBatch m) {
 
 		Long previousRate = map.get(PREVIOUS_RATE) != null ? ((Number) map.get(PREVIOUS_RATE)).longValue() : 0;
-		if ((!previousRate.equals(0)) && column.equals(COUNT_SEPARATOR_RATINGS)) {
+		if ((previousRate != 0) && column.equals(COUNT_SEPARATOR_RATINGS)) {
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT + SEPERATOR + previousRate, (1L * -1), m);
 			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM + SEPERATOR + RATE, (previousRate * -1), m);
 		} else {
