@@ -100,24 +100,22 @@ public class TypeConverter {
 				SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 				SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 				SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
-				String stringAsMS = String.valueOf(value);
-				if(value != null && !stringAsMS.isEmpty())
 				try {
-					result = new Date(Long.valueOf(stringAsMS));
+					result = new Date(Long.valueOf(value.toString()));
 				} catch (Exception e) {
 					try {
-						result = formatter.format(Long.valueOf(stringAsMS));
+						result = formatter.parse(String.valueOf(value));
 					} catch (Exception e1) {
 						try {
-							result = formatter2.format(Long.valueOf(stringAsMS));
+							result = formatter2.parse(String.valueOf(value));
 						} catch (Exception e2) {
 							try {
-								result = formatter3.format(Long.valueOf(stringAsMS));
+								result = formatter3.parse(String.valueOf(value));
 							} catch (Exception e3) {
 								try {
-									result = formatter4.format(Long.valueOf(stringAsMS));
+									result = formatter4.parse(String.valueOf(value));
 								} catch (Exception e4) {
-									System.out.println("Error while convert " + value + " to date");
+									logger.error("Error while convert " + value + " to date");
 								}
 							}
 						}
