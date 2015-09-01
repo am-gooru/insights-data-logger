@@ -19,6 +19,7 @@ import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -49,11 +50,15 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	
 	private static String charactersToRemove = "^\\[|\\s|\\]$";
 	
+	private GeoLocation geoLocation;
+	
 	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		this.connectionProvider = connectionProvider;
 		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	}
+		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	
+		this.geoLocation = GeoLocation.getInstance();
+	}
 
 	/**
 	 * 
@@ -290,10 +295,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		if (eventMap.containsKey("userIp") && eventMap.get("userIp") != null && !eventMap.get("userIp").isEmpty()) {
 
 			GeoData geoData = new GeoData();
-
-			GeoLocation geo = new GeoLocation();
-
-			CityResponse res = geo.getGeoResponse(eventMap.get("userIp"));
+			CityResponse res = geoLocation.getGeoResponse(eventMap.get("userIp"));
 
 			if (res != null && res.getCountry().getName() != null) {
 				geoData.setCountry(res.getCountry().getName());

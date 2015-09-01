@@ -220,8 +220,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					scoreAggregator.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _SCORE_IN_PERCENTAGE), scoreInPercentage);
 					scoreAggregator.putColumnIfNotNull(this.generateColumnKey(contentGooruId, _LAST_ACCESSED), ((Number) eventMap.get(END_TIME)).longValue());
 					for (Map.Entry<String, Object> entry : EventColumns.SCORE_AGGREGATE_COLUMNS.entrySet()) {
-						columGenerator(eventMap, entry, scoreAggregator, scoreCounter, contentGooruId);
-						columGenerator(eventMap, entry, scoreAggregator, scoreCounter, null);
+						if(!(LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && entry.getKey().equalsIgnoreCase(VIEWS))) {
+							columGenerator(eventMap, entry, scoreAggregator, scoreCounter, contentGooruId);
+							columGenerator(eventMap, entry, scoreAggregator, scoreCounter, null);
+						}
 					}
 				}
 				List<String> classActivityKeys = new ArrayList<String>();
