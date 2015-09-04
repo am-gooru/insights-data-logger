@@ -716,5 +716,9 @@ public interface Constants {
 
     String ALL = "all";
 
-    String RESOURCE_USED_USER_VALIDATION = "C:count~C:user~E:parentSharing~E:mode|C:count~C:user~E:mode"; 
+    String RESOURCE_USED_USER_VALIDATION = "C:count~C:user~E:parentSharing~E:mode|C:count~C:user~E:mode";
+    
+    String LTI_OUTCOME = "lti.outcome";
+    
+    String LTI_SERVICE_ID = "ltiServiceId";
 }

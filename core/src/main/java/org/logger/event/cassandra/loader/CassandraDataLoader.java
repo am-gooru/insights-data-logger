@@ -43,6 +43,7 @@ import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.logger.event.cassandra.loader.dao.ELSIndexerImpl;
+import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
@@ -87,6 +88,8 @@ public class CassandraDataLoader implements Constants {
 	private ELSIndexerImpl indexer;
 
 	private BaseCassandraRepoImpl baseDao;
+	
+	private LTIServiceHandler ltiServiceHandler;
 
 	/**
 	 * Get Kafka properties from Environment
@@ -147,6 +150,7 @@ public class CassandraDataLoader implements Constants {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		indexer = new ELSIndexerImpl(getConnectionProvider());
+		ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
@@ -347,6 +351,8 @@ public class CassandraDataLoader implements Constants {
 			liveAggregator.eventProcessor(eventMap);
 		} else if (eventName.matches(RAW_DATA_UPDATE_EVENTS)) {
 			liveAggregator.updateRawData(eventMap);
+		} else if(eventName.equalsIgnoreCase(LTI_OUTCOME)){
+			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
 		}
 		if (eventName.matches(RECOMPUTATION_EVENTS) && ((String) eventMap.get(TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES)) {
 			liveAggregator.processClassActivityOpertaions(eventMap);

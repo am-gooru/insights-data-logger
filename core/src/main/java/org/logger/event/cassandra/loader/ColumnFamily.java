@@ -93,6 +93,8 @@ public enum ColumnFamily {
 	CONTENT_META("content_meta"),
 	
 	USER_GROUP_ASSOCIATION("user_group_association"),
+	
+	LTI_ACTIVITY("lti_activity");
 	;
 	
 	String name;
