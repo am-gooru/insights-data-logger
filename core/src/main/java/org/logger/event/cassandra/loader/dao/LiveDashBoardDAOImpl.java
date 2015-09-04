@@ -3,6 +3,7 @@ package org.logger.event.cassandra.loader.dao;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -85,7 +86,6 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 					}
 				}
 			}
-			
 			try {
 				m.execute();
 			} catch (Exception e) {
@@ -341,10 +341,20 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			if (originalColumn != null) {
 				if(eventMap.get(EVENT_NAME).equals(LoaderConstants.ITEM_DOT_RATE.getName())){
 					performRating(key, originalColumn,eventMap,m);		
+				} else if(value.matches(RESOURCE_USED_USER_VALIDATION)) { 
+					resourceUsedUserCount(key, value, originalColumn,eventMap,m);
 				} else if (!(eventMap.containsKey(TYPE) && (eventMap.get(TYPE).equals(STOP) || eventMap.get(TYPE).equals(PAUSE)) && originalColumn.startsWith(COUNT + SEPERATOR))) {
 					performCounter(key, originalColumn, eventMap, m);					
 				}
 			}
 		}
+	}
+
+	private void resourceUsedUserCount(String key, String value, String originalColumn, Map<String, Object> eventMap, MutationBatch m) {
+		String userKey = key.concat(SEPERATOR).concat(eventMap.get(GOORUID).toString());
+		if(!baseDao.checkColumnExist(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),userKey,originalColumn,0)) {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, originalColumn, 1L, m);
+		}
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), userKey, originalColumn, 1L, m);
 	}
 }

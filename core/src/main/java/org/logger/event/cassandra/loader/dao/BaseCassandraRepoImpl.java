@@ -88,6 +88,25 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return result;
 	}
+	
+	public boolean checkColumnExist(String cfName, String key, String columnName, int retryCount) {
+		boolean result = false;
+		ColumnList<String> columnList = null;
+		try {
+			columnList = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute()
+					.getResult();
+
+		} catch (Exception e) {
+			if (e instanceof ConnectionException && retryCount < 6) {
+				return checkColumnExist(cfName, key, columnName, ++retryCount);
+			}
+			logger.error("Exception:",e);
+		}
+		if (columnList != null && columnList.getColumnNames().contains(columnName)) {
+			result = true;
+		}
+		return result;
+	}
 
 	/**
 	 * This method using to read data with single Key and multiple Indexed columns.
@@ -754,7 +773,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public void generateCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).incrementCounterColumn(columnName, value);
 	}
-
+	
 	/**
 	 * Generate Mutation batch for any type of data
 	 * 

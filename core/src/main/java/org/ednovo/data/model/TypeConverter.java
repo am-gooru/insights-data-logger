@@ -101,7 +101,7 @@ public class TypeConverter {
 				SimpleDateFormat formatter3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 				SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy/MM/dd kk:mm:ss.000");
 				try {
-					result = new Date(((Number)(value)).longValue());
+					result = new Date(Long.valueOf(value.toString()));
 				} catch (Exception e) {
 					try {
 						result = formatter.parse(String.valueOf(value));
@@ -121,7 +121,6 @@ public class TypeConverter {
 						}
 					}
 				}
-
 			} else if (type.equalsIgnoreCase("Boolean")) {
 				result = ((Boolean)(value));
 			} else if (type.equalsIgnoreCase("String")) {

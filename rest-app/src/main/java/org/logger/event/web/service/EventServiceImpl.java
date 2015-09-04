@@ -328,7 +328,7 @@ public class EventServiceImpl implements EventService, Constants {
 					logger.debug("Waiting to time complete...");
 				}
 			} catch (Exception e) {
-				logger.error("Exception:" + e);
+				logger.error("Exception:" , e);
 			}
 		} else if (status.equalsIgnoreCase("stop")) {
 			logger.debug("Event indexing stopped...");
