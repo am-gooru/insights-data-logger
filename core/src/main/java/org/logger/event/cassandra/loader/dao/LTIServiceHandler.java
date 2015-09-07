@@ -7,9 +7,9 @@ import java.util.Map.Entry;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
@@ -36,6 +36,8 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	private static HttpPost postRequest;
 	
+	private static URIBuilder builder;
+	
 	private static final String SERVICE_ID = "serviceId"; 
 	
 	private static final String LTI_END_POINT = "lti.end.point"; 
@@ -46,7 +48,13 @@ public class LTIServiceHandler implements Constants, Runnable{
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
 		String url = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN, 0).getStringValue();
-		postRequest = new HttpPost(url);
+		postRequest = new HttpPost();
+		try {
+			builder = new URIBuilder();
+			builder.setPath(url);
+		} catch (Exception e) {
+			logger.error("ERROR while building a LTI API path", e);
+		}
 	}
 	
 	public void ltiEventProcess(String eventName, Map<String, Object> eventMap) {
@@ -72,7 +80,6 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	@Override
 	public void run() {
-		
 		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamily.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), 0);
 		if(ltiColumns == null) {
 			return;
@@ -84,7 +91,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 		}
 		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, SEPERATOR, SCORE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
-		for(int columnCount = ltiColumns.size()-1; columnCount == 0; columnCount--) {
+		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
 			String status = ltiColumns.getColumnByIndex(columnCount).getStringValue();
 			if(status.equals(INPROGRESS)) {
 				String serviceId = ltiColumns.getColumnByIndex(columnCount).getName();
@@ -96,25 +103,30 @@ public class LTIServiceHandler implements Constants, Runnable{
 			}
 		}
 		for(Entry<String, Long> entry : serviceBasedScore.entrySet()) {
-			executeAPI(sessionToken, gooruOId, entry.getKey(), entry.getValue());
+			if(executeAPI(sessionToken, gooruOId, entry.getKey(), entry.getValue())) {
+				baseDao.saveStringValue(ColumnFamily.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), entry.getKey(), COMPLETED);
+			}
 		}
 	}
 	
-	private void executeAPI(String sessionToken, String gooruOId, String serviceId, Long score) {
-		HttpParams params = new BasicHttpParams();
-		params.setParameter(SESSION_TOKEN, sessionToken);
-		params.setParameter(GOORU_OID, gooruOId);
-		params.setParameter(SERVICE_ID, serviceId);
-		params.setParameter(SCORE, score);
-		postRequest.setParams(params);
+	private boolean executeAPI(String sessionToken, String gooruOId, String serviceId, Long score) {
+		builder.setParameter(SESSION_TOKEN, sessionToken);
+		builder.setParameter(GOORU_OID, gooruOId);
+		builder.setParameter(SERVICE_ID, serviceId);
+		builder.setParameter(SCORE, String.valueOf(score));
+		boolean status = false;
 		try {
+			postRequest.setURI(builder.build());
 			HttpResponse response = httpClient.execute(postRequest);
+			EntityUtils.toString(response.getEntity());
 			if(response.getStatusLine().getStatusCode() != 200) {
 				throw new IOException();
 			}
-		} catch (IOException e) {
-			logger.error(buildString("unable to Execute LTI API(",sessionToken,gooruOId,serviceId,score,")"),e);
+			status = true;
+		} catch (Exception e) {
+			logger.error(buildString("unable to Execute LTI API(",sessionToken,SEPERATOR,gooruOId,SEPERATOR,serviceId,SEPERATOR,score,")"),e);
 		}
+		return status;
 	}
 	
 	private String buildString(Object... text) {
