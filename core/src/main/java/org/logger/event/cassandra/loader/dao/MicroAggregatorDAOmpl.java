@@ -40,10 +40,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
@@ -73,7 +69,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private BaseCassandraRepoImpl baseCassandraDao;
 
 	private RawDataUpdateDAOImpl rawUpdateDAO;
-
+	
 	public static Map<String, Object> cache;
 	
 	ExecutorService service = Executors.newFixedThreadPool(10);
@@ -144,11 +140,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					balanceCollectionTypeTimespent(sessionId, contentGooruId,eventMap);
 				}
 				getDataFromCounterToAggregator(keysList, ColumnFamily.SESSION_ACTIVITY_COUNTER.getColumnFamily(), ColumnFamily.SESSION_ACTIVITY.getColumnFamily());
-				if(isStudent && !gooruUUID.equals(ANONYMOUS)){
-					if (LoaderConstants.CPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
-						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-					}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
-						generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
+				if(!gooruUUID.equals(ANONYMOUS)){
+					if(isStudent) {
+						if (LoaderConstants.CPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
+							generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
+						}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
+							generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
+						}
+					}
+					/**
+					 * LTI service Handling in player event
+					 */
+					if (LoaderConstants.CPV1.getName().equals(eventName)) {
+						String sessionToken = eventMap.containsKey(SESSION_TOKEN) ? (String) eventMap.get(SESSION_TOKEN) : null;
+						service.execute(new LTIServiceHandler(sessionToken,contentGooruId,gooruUUID));
 					}
 				}
 			}
