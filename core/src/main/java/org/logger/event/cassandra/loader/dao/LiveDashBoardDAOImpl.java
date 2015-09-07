@@ -42,9 +42,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	private SimpleDateFormat customDateFormatter;
 
-	private BaseCassandraRepoImpl baseDao;
-	
-	ColumnList<String> eventKeys = null;
+	private BaseCassandraRepoImpl baseDao;	
 
 	Collection<String> esEventFields = null;
 	
@@ -66,8 +64,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	 */
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
 		if ((eventMap.containsKey(EVENT_NAME))) {
+			try {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
+			ColumnList<String> eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
@@ -86,9 +85,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 					}
 				}
 			}
-			try {
 				m.execute();
 			} catch (Exception e) {
+				logger.error("Exception event: {}",eventMap.get(EVENT_ID));
 				logger.error("Exception: Real Time counter failed:" , e);
 			}
 		}
