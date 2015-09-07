@@ -578,6 +578,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
+				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
 				if (START.equalsIgnoreCase(eventType)) {
 					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
 				}
@@ -586,7 +587,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				} else {
 					key = generateColumnKey(contentGooruId, gooruUUID);
 				}
-				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
@@ -594,6 +594,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType, 172800);
 				;
+				if (START.equalsIgnoreCase(eventType) && StringUtils.isNotBlank(classGooruId)) {
+					for (String usageKey : generateUsageKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId)) {
+						m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), usageKey).putColumnIfNotNull(sessionId, eventTime);
+					}
+				}
 			} else if (LoaderConstants.CRPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
@@ -1587,5 +1592,28 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			status = true;
 		}
 		return status;
-	}	
+	}
+	
+	/**
+	 * Generate keys to find usage in collection and combination of collections
+	 * @param classGooruId
+	 * @param courseGooruId
+	 * @param unitGooruId
+	 * @param lessonGooruId
+	 * @param contentGooruId
+	 * @return
+	 */
+	private Set<String> generateUsageKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,String contentGooruId) {
+		Set<String> usageKeys = new HashSet<String>();
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, lessonGooruId,contentGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, lessonGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId));
+		usageKeys.add(classGooruId);
+		usageKeys.add(courseGooruId);
+		usageKeys.add(unitGooruId);
+		usageKeys.add(lessonGooruId);
+		usageKeys.add(contentGooruId);
+		return usageKeys;
+	}
 }
