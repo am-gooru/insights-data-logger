@@ -85,10 +85,11 @@ public class LTIServiceHandler implements Constants, Runnable{
 			return;
 		}
 		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamily.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId), 0);
-		if(sessionColumn != null) {
-			String sessionId = sessionColumn.getStringValue(_SESSION_ID, EMPTY);	
-			sessionColumn = baseDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), sessionId, 0);
+		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(_SESSION_ID, null) : null;	
+		if(sessionId == null) {
+			return;
 		}
+		sessionColumn = baseDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), sessionId, 0);
 		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, SEPERATOR, SCORE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
 		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
