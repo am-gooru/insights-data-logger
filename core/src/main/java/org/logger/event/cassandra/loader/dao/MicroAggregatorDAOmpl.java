@@ -147,11 +147,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
 							generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
 						}
-					}
+					} else if (LoaderConstants.CPV1.getName().equals(eventName)) {
 					/**
 					 * LTI service Handling in player event
 					 */
-					if (LoaderConstants.CPV1.getName().equals(eventName)) {
 						String sessionToken = eventMap.containsKey(SESSION_TOKEN) ? (String) eventMap.get(SESSION_TOKEN) : null;
 						service.execute(new LTIServiceHandler(sessionToken,contentGooruId,gooruUUID));
 					}
