@@ -882,24 +882,25 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 * @param retryCount
 	 */
 	public void indexingES(String indexName, String indexType, String id, XContentBuilder contentBuilder, int retryCount) {
-		try {
-			contentBuilder.field("index_updated_time", new Date());
-			getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
-		} catch (Exception e) {
-			if (retryCount < 6) {
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e1) {
-					logger.error("Exception:Thread interrupted in the method indexingES." + e);
+		if (contentBuilder != null) {
+			try {
+				contentBuilder.field("index_updated_time", new Date());
+				getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
+			} catch (Exception e) {
+				if (retryCount < 6) {
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e1) {
+						logger.error("Exception:Thread interrupted in the method indexingES.",e);
+					}
+					logger.info("Retrying count: {}  ", retryCount);
+					retryCount++;
+					indexingES(indexName, indexType, id, contentBuilder, retryCount);
+				} else {
+					logger.error("Exception:Unable to index in the method indexingES.", e);
 				}
-				logger.info("Retrying count: {}  ", retryCount);
-				retryCount++;
-				indexingES(indexName, indexType, id, contentBuilder, retryCount);
-			} else {
-				logger.error("Exception:Unable to index in the method indexingES.", e);
 			}
 		}
-
 	}
 
 	/**
