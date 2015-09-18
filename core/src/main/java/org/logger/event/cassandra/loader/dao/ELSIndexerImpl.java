@@ -887,7 +887,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				contentBuilder.field("index_updated_time", new Date());
 				getESClient().prepareIndex(indexName, indexType, id).setSource(contentBuilder).execute().actionGet();
 			} catch (Exception e) {
-				if (retryCount < 6) {
+				logger.error("Exception:Unable to index in the method indexingES.", e);
+				/*if (retryCount < 6) {
 					try {
 						Thread.sleep(2000);
 					} catch (InterruptedException e1) {
@@ -898,7 +899,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					indexingES(indexName, indexType, id, contentBuilder, retryCount);
 				} else {
 					logger.error("Exception:Unable to index in the method indexingES.", e);
-				}
+				}*/
 			}
 		}
 	}
