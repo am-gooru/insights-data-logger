@@ -193,7 +193,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				keysList.add(allSessionKey);
 				this.generateSessionActivity(eventMap, allSessionAggColumns, allSessionCounterColumns, contentGooruId, parentGooruId, eventType);
 			}
-			logger.info("All session All student aggregation completed for the session id : ", eventMap.get(SESSION_ID));
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
@@ -532,7 +531,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					columGenerator(eventMap, entry, aggregatorColumns, counterColumns, contentGooruId);
 				}
 			}
-			logger.info("Session Activity columns generated for the session : {}", eventMap.get(SESSION_ID));
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}

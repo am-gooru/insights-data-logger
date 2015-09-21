@@ -159,7 +159,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 					 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
 					 */
 					if (messageMap != null && !messageMap.isEmpty()) {
-						AggregatorLogFactory.activity.info(message);
+						//AggregatorLogFactory.activity.info(message);
 						updateActivityStream(messageMap);
 						/**
 						 * Disabled this job due to disable of formula calculation logic staticAggregation(messageMap);
@@ -260,7 +260,7 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 					 *  the server IP as well for extra information.
 					 */
 					if (messageMap != null && !messageMap.isEmpty()) {
-						AggregatorLogFactory.activity.info(message);
+						//AggregatorLogFactory.activity.info(message);
 						updateActivityStream(messageMap);
 						staticAggregation(messageMap);
 					} else {
@@ -298,7 +298,6 @@ public class MicroAggregatorConsumer extends Thread implements Runnable {
 		String eventJson = (String) messageMap.get("raw");
 		if (eventJson != null) {
 			try {
-				logger.info("EventJson:{}", eventJson);
 				microAggregationLoader.updateActivityStream(eventJson);
 			} catch (Exception e) {
 				logger.error("EventJson:{}", eventJson);

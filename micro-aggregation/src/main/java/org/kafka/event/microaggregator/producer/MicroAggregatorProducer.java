@@ -112,8 +112,6 @@ public class MicroAggregatorProducer
 	}
 		
 	private void send(String message) {
-		LOG.info("message: {}",message);
-		LOG.info("topic: {}",topic);
 		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
 		producer.send(data);
 	}

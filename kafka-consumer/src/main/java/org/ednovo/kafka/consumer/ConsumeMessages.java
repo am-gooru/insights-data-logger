@@ -52,7 +52,6 @@ public final class ConsumeMessages implements Runnable {
 				 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
 				 **/
 				if (messageMap != null && !messageMap.isEmpty()) {
-					ConsumerLogFactory.activity.info(message);
 					this.rowDataProcessor.processRow(messageMap.get("raw"));
 				} else {
 					ConsumerLogFactory.errorActivity.error(message);
