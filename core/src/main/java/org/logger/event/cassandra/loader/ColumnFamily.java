@@ -94,7 +94,9 @@ public enum ColumnFamily {
 	
 	USER_GROUP_ASSOCIATION("user_group_association"),
 	
-	LTI_ACTIVITY("lti_activity");
+	LTI_ACTIVITY("lti_activity"),
+	
+	CLASS("class"),
 	;
 	
 	String name;

@@ -729,7 +729,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 			} else if (eventMap.get(EVENT_NAME).toString().matches(DELETE_EVENTS)) {
 
-				this.markItemDelete(eventMap);
+				if(eventMap.get(ITEM_TYPE) != null && eventMap.get(ITEM_TYPE).toString().equalsIgnoreCase(CLASS)) {
+					markcontentDelete(eventMap);
+				} else {
+					this.markItemDelete(eventMap);
+				}
 
 			} else if (!eventDataMap.isEmpty() && eventMap.get(EVENT_NAME).toString().equalsIgnoreCase(LoaderConstants.REGISTER_DOT_USER.getName())) {
 
@@ -1612,5 +1616,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		usageKeys.add(lessonGooruId);
 		usageKeys.add(contentGooruId);
 		return usageKeys;
+	}
+	
+	/**
+	 * 
+	 * @param eventMap
+	 */
+	private void markcontentDelete(Map<String, Object> eventMap) {
+		try{
+			String classId = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
+			if(StringUtils.isNotBlank(classId)) {
+				baseCassandraDao.saveValue(ColumnFamily.CLASS.getColumnFamily(), classId, DELETED, 1);
+			}
+		}catch(Exception e){
+			logger.error("Exception:",e);
+		}
 	}
 }
