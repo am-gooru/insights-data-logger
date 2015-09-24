@@ -1264,13 +1264,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
 			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : null;
 			String collectionType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
-			for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
-				/**
-				 * Get Students list for a class
-				 */
-				classGooruId = classGooruId.trim();
-				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
-				generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
+			if (!collectionType.equalsIgnoreCase(COURSE)) {
+				for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
+					/**
+					 * Get Students list for a class
+					 */
+					classGooruId = classGooruId.trim();
+					ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
+					generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
