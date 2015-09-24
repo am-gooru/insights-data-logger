@@ -1264,7 +1264,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
 			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : null;
 			String collectionType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
-			if (!collectionType.equalsIgnoreCase(COURSE)) {
+			if (collectionType != null && !collectionType.equalsIgnoreCase(COURSE)) {
 				for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
 					/**
 					 * Get Students list for a class
