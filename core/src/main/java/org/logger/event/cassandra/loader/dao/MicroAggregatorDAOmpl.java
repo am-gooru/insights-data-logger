@@ -1609,7 +1609,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	private Set<String> generateUsageKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,String contentGooruId) {
 		Set<String> usageKeys = new HashSet<String>();
 		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId,contentGooruId));
-		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, lessonGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId));
 		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId));
 		usageKeys.add(generateColumnKey(classGooruId, courseGooruId));
 		usageKeys.add(classGooruId);
