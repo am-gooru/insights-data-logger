@@ -1264,13 +1264,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : null;
 			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : null;
 			String collectionType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
-			for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
-				/**
-				 * Get Students list for a class
-				 */
-				classGooruId = classGooruId.trim();
-				ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
-				generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
+			if (collectionType != null && !collectionType.equalsIgnoreCase(COURSE)) {
+				for (String classGooruId : (eventMap.get("classGooruIds") + "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", "").split(COMMA)) {
+					/**
+					 * Get Students list for a class
+					 */
+					classGooruId = classGooruId.trim();
+					ColumnList<String> studentList = baseCassandraDao.readWithKey(ColumnFamily.USER_GROUP_ASSOCIATION.getColumnFamily(), classGooruId, 0);
+					generateDeleteTasks(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, studentList.getColumnNames(), collectionType);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
@@ -1606,8 +1608,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 */
 	private Set<String> generateUsageKeys(String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,String contentGooruId) {
 		Set<String> usageKeys = new HashSet<String>();
-		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, lessonGooruId,contentGooruId));
-		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, lessonGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId,contentGooruId));
+		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId,lessonGooruId));
 		usageKeys.add(generateColumnKey(classGooruId, courseGooruId, unitGooruId));
 		usageKeys.add(generateColumnKey(classGooruId, courseGooruId));
 		usageKeys.add(classGooruId);
