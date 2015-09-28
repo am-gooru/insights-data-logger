@@ -491,6 +491,7 @@ public class EventServiceImpl implements EventService, Constants {
 		}
 
 	}
+	@Async
 	private void processMessage(Event event){
 		Boolean isValidEvent = validateInsertEvent(event);
 		if (isValidEvent) {
