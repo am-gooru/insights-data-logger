@@ -36,13 +36,9 @@ import java.util.concurrent.Executor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.Event;
-import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
-import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,12 +53,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
@@ -76,8 +66,6 @@ public class EventController implements Constants,AsyncConfigurer {
 
 	@Autowired
 	protected EventService eventService;
-
-	private Gson gson = new Gson();
 
 	/**
 	 * Tracks events.
@@ -99,212 +87,8 @@ public class EventController implements Constants,AsyncConfigurer {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-
-		boolean isValid = ensureValidRequest(request, response);
-		if (!isValid) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, INVALID_API_KEY);
-			return;
-		}
-		EventData eventData = null;
-		JsonElement jsonElement = null;
-		JsonArray eventJsonArr = null;
-		ActionResponseDTO<EventData> responseDTO = null;
-		ActionResponseDTO<Event> eventResultDTO = null;
-
-		if (!fields.isEmpty()) {
-
-			try {
-				// validate JSON
-				jsonElement = new JsonParser().parse(fields);
-				eventJsonArr = jsonElement.getAsJsonArray();
-			} catch (JsonParseException e) {
-				// Invalid.
-				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, INVALID_JSON);
-				logger.error(INVALID_JSON, e);
-				return;
-			}
-
-		} else {
-			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, BAD_REQUEST);
-			return;
-		}
-
-		request.setCharacterEncoding("UTF-8");
-		Long timeStamp = System.currentTimeMillis();
-		String userAgent = request.getHeader("User-Agent");
-
-		String userIp = request.getHeader("X-FORWARDED-FOR");
-		if (userIp == null) {
-			userIp = request.getRemoteAddr();
-		}
-
-		for (JsonElement eventJson : eventJsonArr) {
-			JsonObject eventObj = eventJson.getAsJsonObject();
-			String eventString = eventObj.toString();
-			if (eventObj.get(VERSION) == null) {
-				eventData = new EventData();
-				eventData.setStartTime(timeStamp);
-				eventData.setEndTime(timeStamp);
-				eventData.setApiKey(apiKey);
-				eventData.setUserAgent(userAgent);
-				eventData.setUserIp(userIp);
-				eventData.setEventSource(EVENT_SOURCE);
-				eventData.setFields(eventString);
-				responseDTO = this.createEventData(responseDTO, eventData, eventObj);
-
-				if (responseDTO.getErrors().getErrorCount() > 0) {
-					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					throw new IllegalArgumentException(responseDTO.getErrors().getFieldError().getDefaultMessage());
-				}
-			} else {
-				Event event = gson.fromJson(eventObj, Event.class);
-				JSONObject field = new JSONObject(eventString);
-				if(StringUtils.isNotBlank(event.getUser())){
-					JSONObject user = new JSONObject(event.getUser());
-					user.put(USER_IP, userIp);
-					user.put(USER_AGENT, userAgent);
-					field.put(USER, user.toString());
-				}
-				event.setFields(field.toString());
-				event.setApiKey(apiKey);
-				eventService.processMessage(event);
-			}
-		}
-
+		eventService.eventLogging(request, response, fields, apiKey);
 		return;
-	}
-
-	/**
-	 * Create eventData object by iterating json
-	 * 
-	 * @param responseDTO
-	 * @param eventData
-	 * @param eventObj
-	 * @return
-	 */
-	private ActionResponseDTO<EventData> createEventData(ActionResponseDTO<EventData> responseDTO, EventData eventData, JsonObject eventObj) {
-
-		if (eventObj.get(EVENT_NAME) != null) {
-			eventData.setEventName(eventObj.get(EVENT_NAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_ID) != null) {
-			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_ID) != null) {
-			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(CONTENT_GOORU_OID) != null) {
-			eventData.setContentGooruId(eventObj.get(CONTENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(PARENT_GOORU_OID) != null) {
-			eventData.setParentGooruId(eventObj.get(PARENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(PARENT_EVENT_ID) != null) {
-			eventData.setParentEventId(eventObj.get(PARENT_EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(ORGANIZATION_UID) != null) {
-			eventData.setOrganizationUid(eventObj.get(ORGANIZATION_UID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_TYPE) != null) {
-			eventData.setEventType(eventObj.get(EVENT_TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(TYPE) != null) {
-			eventData.setType(eventObj.get(TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(GOORUID) != null) {
-			eventData.setType(eventObj.get(GOORUID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(TIMESPENTINMS) != null) {
-			eventData.setTimeSpentInMs(Long.parseLong(eventObj.get(TIMESPENTINMS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(ATTMPT_TRY_SEQ) != null) {
-			JsonArray jsonArray = eventObj.get(ATTMPT_TRY_SEQ).getAsJsonArray();
-			int[] attempTrySequence = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				attempTrySequence[i] = jsonArray.get(i).getAsInt();
-			}
-
-			eventData.setAttemptTrySequence(attempTrySequence);
-		}
-
-		if (eventObj.get(ATTMPT_STATUS) != null) {
-			JsonArray jsonArray = eventObj.get(ATTMPT_STATUS).getAsJsonArray();
-			int[] attemptStatus = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				attemptStatus[i] = jsonArray.get(i).getAsInt();
-			}
-			eventData.setAttemptStatus(attemptStatus);
-		}
-		if (eventObj.get(ANSWER_ID) != null) {
-			JsonArray jsonArray = eventObj.get(ANSWER_ID).getAsJsonArray();
-			int[] answerId = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				answerId[i] = jsonArray.get(i).getAsInt();
-			}
-			eventData.setAnswerId(answerId);
-		}
-		if (eventObj.get(OPEN_ENDED_TEXT) != null) {
-			eventData.setOpenEndedText((eventObj.get(OPEN_ENDED_TEXT).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(CONTEXT_INFO) != null) {
-			eventData.setContextInfo((eventObj.get(CONTEXT_INFO).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(COLLABORATOR_IDS) != null) {
-			eventData.setCollaboratorIds((eventObj.get(COLLABORATOR_IDS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(MOBILE_DATA) != null) {
-			eventData.setMobileData(Boolean.parseBoolean((eventObj.get(MOBILE_DATA).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
-		}
-		if (eventObj.get(HINT_ID) != null) {
-			eventData.setHintId(Integer.parseInt((eventObj.get(HINT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
-		}
-		// push it to cassandra
-		responseDTO = eventService.handleLogMessage(eventData);
-
-		return responseDTO;
-	}
-
-	/**
-	 * Validating apiKey
-	 * 
-	 * @param request
-	 * @param response
-	 * @return
-	 */
-	private boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response) {
-
-		String apiKeyToken = request.getParameter("apiKey");
-
-		if (apiKeyToken != null && apiKeyToken.length() == 36) {
-			AppDO validKey = eventService.verifyApiKey(apiKeyToken);
-			if (validKey != null) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 * @param responseStatus
-	 * @param message
-	 */
-	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
-		response.setStatus(responseStatus);
-		response.setContentType("application/json");
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-
-		resultMap.put("statusCode", responseStatus);
-		resultMap.put("message", message);
-		JSONObject resultJson = new JSONObject(resultMap);
-
-		try {
-			response.getWriter().write(resultJson.toString());
-		} catch (IOException e) {
-			logger.error("OOPS! Something went wrong", e);
-		}
 	}
 
 	/**
@@ -341,7 +125,7 @@ public class EventController implements Constants,AsyncConfigurer {
 				return;
 			}
 		}
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+		eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 	}
 
@@ -390,7 +174,7 @@ public class EventController implements Constants,AsyncConfigurer {
 				return;
 			}
 		}
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+		eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 
 	}
@@ -405,9 +189,9 @@ public class EventController implements Constants,AsyncConfigurer {
 	public void clearCache(HttpServletRequest request, HttpServletResponse response) {
 		try {
 			eventService.clearCache();
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Cleared Cache");
 		} catch (Exception e) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Something wrong");
 		}
 	}
 	
@@ -424,9 +208,9 @@ public class EventController implements Constants,AsyncConfigurer {
 			try {
 				eventService.index(ids, indexType);
 			} catch (Exception e) {
-				sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Oops!!Indexing failed!!"+e);
+				eventService.sendErrorResponse(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Oops!!Indexing failed!!"+e);
 			}
-			sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_OK, "Indexed successfully!!");
 	}
 
 	/**
@@ -480,7 +264,7 @@ public class EventController implements Constants,AsyncConfigurer {
 				return;
 			}
 		}
-		sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+		eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 
 	}
@@ -567,15 +351,15 @@ public class EventController implements Constants,AsyncConfigurer {
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "PUT");
 
-		boolean isValid = ensureValidRequest(request, response);
+		boolean isValid = eventService.ensureValidRequest(request, response);
 		if (!isValid) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 			return;
 		}
 
 		response.setContentType("application/json");
 		if (!eventName.contains(".") || eventName.startsWith(".")) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
 			return;
 		}
 		Map<String, String> status = new HashMap<String, String>();
@@ -584,7 +368,7 @@ public class EventController implements Constants,AsyncConfigurer {
 			status.put("status", "Created");
 			response.getWriter().write(new JSONObject(status).toString());
 		} else {
-			sendErrorResponse(request, response, HttpServletResponse.SC_CONFLICT, " Event Already Exists : " + eventName);
+			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_CONFLICT, " Event Already Exists : " + eventName);
 			return;
 		}
 
