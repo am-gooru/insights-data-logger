@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,7 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.google.gson.Gson;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
@@ -52,6 +56,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -283,15 +289,214 @@ public class EventServiceImpl implements EventService, Constants {
 		return resultList;
 	}
 
+	/**
+	 * Create eventData object by iterating json
+	 * 
+	 * @param responseDTO
+	 * @param eventData
+	 * @param eventObj
+	 * @return
+	 */
+	private void createEventData(EventData eventData, JsonObject eventObj) {
+
+		if (eventObj.get(EVENT_NAME) != null) {
+			eventData.setEventName(eventObj.get(EVENT_NAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(EVENT_ID) != null) {
+			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(EVENT_ID) != null) {
+			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(CONTENT_GOORU_OID) != null) {
+			eventData.setContentGooruId(eventObj.get(CONTENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(PARENT_GOORU_OID) != null) {
+			eventData.setParentGooruId(eventObj.get(PARENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(PARENT_EVENT_ID) != null) {
+			eventData.setParentEventId(eventObj.get(PARENT_EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(ORGANIZATION_UID) != null) {
+			eventData.setOrganizationUid(eventObj.get(ORGANIZATION_UID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(EVENT_TYPE) != null) {
+			eventData.setEventType(eventObj.get(EVENT_TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(TYPE) != null) {
+			eventData.setType(eventObj.get(TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(GOORUID) != null) {
+			eventData.setType(eventObj.get(GOORUID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+		}
+		if (eventObj.get(TIMESPENTINMS) != null) {
+			eventData.setTimeSpentInMs(Long.parseLong(eventObj.get(TIMESPENTINMS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
+		}
+		if (eventObj.get(ATTMPT_TRY_SEQ) != null) {
+			JsonArray jsonArray = eventObj.get(ATTMPT_TRY_SEQ).getAsJsonArray();
+			int[] attempTrySequence = new int[jsonArray.size()];
+			for (int i = 0; i < jsonArray.size(); i++) {
+				attempTrySequence[i] = jsonArray.get(i).getAsInt();
+			}
+
+			eventData.setAttemptTrySequence(attempTrySequence);
+		}
+
+		if (eventObj.get(ATTMPT_STATUS) != null) {
+			JsonArray jsonArray = eventObj.get(ATTMPT_STATUS).getAsJsonArray();
+			int[] attemptStatus = new int[jsonArray.size()];
+			for (int i = 0; i < jsonArray.size(); i++) {
+				attemptStatus[i] = jsonArray.get(i).getAsInt();
+			}
+			eventData.setAttemptStatus(attemptStatus);
+		}
+		if (eventObj.get(ANSWER_ID) != null) {
+			JsonArray jsonArray = eventObj.get(ANSWER_ID).getAsJsonArray();
+			int[] answerId = new int[jsonArray.size()];
+			for (int i = 0; i < jsonArray.size(); i++) {
+				answerId[i] = jsonArray.get(i).getAsInt();
+			}
+			eventData.setAnswerId(answerId);
+		}
+		if (eventObj.get(OPEN_ENDED_TEXT) != null) {
+			eventData.setOpenEndedText((eventObj.get(OPEN_ENDED_TEXT).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
+		}
+		if (eventObj.get(CONTEXT_INFO) != null) {
+			eventData.setContextInfo((eventObj.get(CONTEXT_INFO).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
+		}
+		if (eventObj.get(COLLABORATOR_IDS) != null) {
+			eventData.setCollaboratorIds((eventObj.get(COLLABORATOR_IDS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
+		}
+		if (eventObj.get(MOBILE_DATA) != null) {
+			eventData.setMobileData(Boolean.parseBoolean((eventObj.get(MOBILE_DATA).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
+		}
+		if (eventObj.get(HINT_ID) != null) {
+			eventData.setHintId(Integer.parseInt((eventObj.get(HINT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
+		}
+		// push it to cassandra
+		handleLogMessage(eventData);
+	}
+
+	/**
+	 * Validating apiKey
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response) {
+
+		String apiKeyToken = request.getParameter("apiKey");
+
+		if (apiKeyToken != null && apiKeyToken.length() == 36) {
+			AppDO validKey = verifyApiKey(apiKeyToken);
+			if (validKey != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @param responseStatus
+	 * @param message
+	 */
+	public void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
+		response.setStatus(responseStatus);
+		response.setContentType("application/json");
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+
+		resultMap.put("statusCode", responseStatus);
+		resultMap.put("message", message);
+		JSONObject resultJson = new JSONObject(resultMap);
+
+		try {
+			response.getWriter().write(resultJson.toString());
+		} catch (IOException e) {
+			logger.error("OOPS! Something went wrong", e);
+		}
+	}
+
 	@Override
 	@Async
-	public void processMessage(Event event){
+	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey) {
+		boolean isValid = ensureValidRequest(request, response);
+		if (!isValid) {
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, INVALID_API_KEY);
+			return;
+		}
+		EventData eventData = null;
+		JsonElement jsonElement = null;
+		JsonArray eventJsonArr = null;
+		if (!fields.isEmpty()) {
+
+			try {
+				// validate JSON
+				jsonElement = new JsonParser().parse(fields);
+				eventJsonArr = jsonElement.getAsJsonArray();
+			} catch (JsonParseException e) {
+				// Invalid.
+				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, INVALID_JSON);
+				logger.error(INVALID_JSON, e);
+				return;
+			}
+
+		} else {
+			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, BAD_REQUEST);
+			return;
+		}
+
+		try {
+			request.setCharacterEncoding("UTF-8");
+			Long timeStamp = System.currentTimeMillis();
+			String userAgent = request.getHeader("User-Agent");
+
+			String userIp = request.getHeader("X-FORWARDED-FOR");
+			if (userIp == null) {
+				userIp = request.getRemoteAddr();
+			}
+
+			for (JsonElement eventJson : eventJsonArr) {
+				JsonObject eventObj = eventJson.getAsJsonObject();
+				String eventString = eventObj.toString();
+				if (eventObj.get(VERSION) == null) {
+					eventData = new EventData();
+					eventData.setStartTime(timeStamp);
+					eventData.setEndTime(timeStamp);
+					eventData.setApiKey(apiKey);
+					eventData.setUserAgent(userAgent);
+					eventData.setUserIp(userIp);
+					eventData.setEventSource(EVENT_SOURCE);
+					eventData.setFields(eventString);
+					createEventData(eventData, eventObj);
+				} else {
+					Event event = gson.fromJson(eventObj, Event.class);
+					JSONObject field = new JSONObject(eventString);
+					if (StringUtils.isNotBlank(event.getUser())) {
+						JSONObject user = new JSONObject(event.getUser());
+						user.put(USER_IP, userIp);
+						user.put(USER_AGENT, userAgent);
+						field.put(USER, user.toString());
+					}
+					event.setFields(field.toString());
+					event.setApiKey(apiKey);
+					processMessage(event);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Exception : ", e);
+		}
+
+	}
+	private void processMessage(Event event){
 		Boolean isValidEvent = validateInsertEvent(event);
 		if (isValidEvent) {
 			dataLoaderService.processMessage(event);
 		}
 	}
-
 	public void runMicroAggregation(String startTime, String endTime) {
 		dataLoaderService.runMicroAggregation(startTime, endTime);
 	}
@@ -361,6 +566,8 @@ public class EventServiceImpl implements EventService, Constants {
 		}
 	}
 
+
+	
 	public DataLoggerCaches getLoggerCache() {
 		return loggerCache;
 	}

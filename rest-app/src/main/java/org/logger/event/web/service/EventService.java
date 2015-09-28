@@ -23,19 +23,18 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
-import org.json.JSONException;
+import org.ednovo.data.model.EventData;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;
 
-import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
@@ -43,8 +42,6 @@ import com.netflix.astyanax.model.Rows;
 public interface EventService {
 
 	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
-
-	public void processMessage(Event event);
 
 	public AppDO verifyApiKey(String apiKeyToken);
 
@@ -65,4 +62,10 @@ public interface EventService {
 	public void indexActivity();
 	
 	public void index(String ids,String indexType) throws Exception;
+	
+	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response);
+	
+	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey);
+	
+	public void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message);
 }
