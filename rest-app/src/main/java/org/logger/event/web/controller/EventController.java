@@ -387,9 +387,9 @@ public class EventController implements Constants,AsyncConfigurer {
      @Override
 	public Executor getAsyncExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(10);
-		executor.setMaxPoolSize(50);
-		executor.setQueueCapacity(100);
+		executor.setCorePoolSize(15);
+		executor.setMaxPoolSize(80);
+		executor.setQueueCapacity(150);
 		executor.setThreadNamePrefix("eventExecutor");
 		executor.initialize();
 		return executor;
