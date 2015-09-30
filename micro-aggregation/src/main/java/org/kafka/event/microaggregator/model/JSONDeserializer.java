@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.kafka.event.microaggregator.model;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,9 +33,14 @@ import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 public class JSONDeserializer {
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
+
+	private static Gson gson = new Gson();
 	
 	public static <T> T deserialize(String json, TypeReference<T> type) {
 		ObjectMapper mapper = new ObjectMapper();
@@ -47,19 +53,24 @@ public class JSONDeserializer {
 	}
 	
 	public static <T> T deserializeEvent(Event event) throws JSONException {
-		
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String,String> map = new HashMap<String,String>();
-		try {
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getUser().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getMetrics().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getPayLoadObject().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getContext().toString(), new TypeReference<HashMap<String,String>>(){}));
-			map.putAll((Map<? extends String, ? extends String>) mapper.readValue(event.getSession().toString(), new TypeReference<HashMap<String,String>>(){}));
-		} catch (Exception e) {
-			logger.error("Exception:"+e);
-		}
-		return (T) map;
+        Type mapType = new TypeToken <HashMap<String, Object>>() {}.getType();
+        Type numberMapType = new TypeToken <HashMap<String, Number>>() {}.getType();
+        Map<String,Object> map = new HashMap<String,Object>();
+        try {
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getUser(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getMetrics(), numberMapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getPayLoadObject(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getContext(), mapType));
+                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getSession(), mapType));
+                map.put("eventName",event.getEventName());
+                map.put("eventId",event.getEventId());
+                map.put("startTime",event.getStartTime());
+                map.put("endTime",event.getEndTime());
+        } catch (Exception e) {
+        		logger.info("Exception in event : {}",event.getFields());
+                logger.error("Exception:", e);
+        }
+        return (T) map;
 	}
 
 }
