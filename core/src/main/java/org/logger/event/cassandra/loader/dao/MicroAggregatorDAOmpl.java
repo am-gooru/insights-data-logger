@@ -110,7 +110,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * Generate column list with session id
 			 */
-			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId);
+			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId,isStudent);
 
 			/**
 			 * Store session activity details
@@ -571,7 +571,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param sessionId
 	 */
 	private void storeSessions(MutationBatch m, Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,
-			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId) {
+			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId,Boolean isStudent) {
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
@@ -591,7 +591,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType, 172800);
 				;
-				if (START.equalsIgnoreCase(eventType) && StringUtils.isNotBlank(classGooruId)) {
+				if (START.equalsIgnoreCase(eventType) && StringUtils.isNotBlank(classGooruId) && isStudent) {
 					for (String usageKey : generateUsageKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId)) {
 						m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), usageKey).putColumnIfNotNull(sessionId, eventTime);
 					}
