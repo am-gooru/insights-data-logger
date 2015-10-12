@@ -576,9 +576,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
-				if (START.equalsIgnoreCase(eventType)) {
-					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
-				}
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
@@ -589,7 +586,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType, 172800);
+				if (START.equalsIgnoreCase(eventType)) {
+					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType);
+				}else if (STOP.equalsIgnoreCase(eventType)) {
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType,1);
+				}
 				;
 				if (START.equalsIgnoreCase(eventType) && StringUtils.isNotBlank(classGooruId) && isStudent) {
 					for (String usageKey : generateUsageKeys(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId)) {
