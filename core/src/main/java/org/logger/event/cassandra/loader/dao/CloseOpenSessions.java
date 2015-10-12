@@ -75,6 +75,8 @@ public class CloseOpenSessions implements Runnable, Constants {
 					}
 				}
 			}
+			
+			baseCassandraDao.deleteRowKey(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS));
 		} catch (Exception e) {
 			logger.error("Error while closing events", e);
 		}
