@@ -573,19 +573,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
-<<<<<<< HEAD
-				if (START.equalsIgnoreCase(eventType)) {
-					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
-				}
-=======
 				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
->>>>>>> 3c0782d... DO-8640 is fixed
 				if (classGooruId != null) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
 					key = generateColumnKey(contentGooruId, gooruUUID);
 				}
-				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
