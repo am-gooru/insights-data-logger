@@ -46,11 +46,12 @@ public class CloseOpenSessions implements Runnable, Constants {
 				if (session.getStringValue() != null & session.getStringValue().equalsIgnoreCase(START)) {
 					ColumnList<String> sessionInfo = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), session.getName(), 0);
 					if (sessionInfo != null) {
+						logger.info("Closing session : {}",session.getName());
 						long endTime = sessionInfo.getLongValue(_END_TIME, 0L);
 						long totalTimeSpent = (sessionInfo.getLongValue(_END_TIME, 0L) - sessionInfo.getLongValue(_START_TIME, 0L));
 						ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), sessionInfo.getStringValue(_EVENT_ID, null), 0);
 						if (eventDetail != null) {
-							baseCassandraDao.saveStringValue(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), session.getName(), STOP, 172800);
+							baseCassandraDao.saveStringValue(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), session.getName(), STOP, 1);
 							String eventField = eventDetail.getStringValue(FIELDS, null);
 							JSONObject eventJson = new JSONObject(eventField);
 							Event event = gson.fromJson(eventField, Event.class);
@@ -76,7 +77,6 @@ public class CloseOpenSessions implements Runnable, Constants {
 				}
 			}
 			
-			baseCassandraDao.deleteRowKey(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS));
 		} catch (Exception e) {
 			logger.error("Error while closing events", e);
 		}
