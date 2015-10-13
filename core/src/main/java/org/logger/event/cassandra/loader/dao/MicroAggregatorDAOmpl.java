@@ -100,7 +100,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String sessionId = eventMap.get(SESSION_ID) != null ? (String) eventMap.get(SESSION_ID) : null;
 			String eventType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : null;
 			Boolean isStudent = eventMap.get(IS_STUDENT) != null ? (Boolean) eventMap.get(IS_STUDENT) : false;
-
+			String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
+			
 			List<String> keysList = new ArrayList<String>();
 			/**
 			 * Mutation Batch for storing session activity details
@@ -110,7 +111,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			/**
 			 * Generate column list with session id
 			 */
-			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId,isStudent);
+			this.storeSessions(m, eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, parentGooruId, gooruUUID, eventType, sessionId,isStudent,collectionType);
 
 			/**
 			 * Store session activity details
@@ -144,7 +145,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					if(isStudent) {
 						if (LoaderConstants.CPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
 							generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
-						}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId)){
+						}else if (LoaderConstants.CRPV1.getName().equals(eventName) && StringUtils.isNotBlank(classGooruId) && COLLECTION.equalsIgnoreCase(collectionType)){
 							generateClassActivity(eventMap, eventName, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId, gooruUUID);
 						}
 					} else if (LoaderConstants.CPV1.getName().equals(eventName)) {
@@ -571,7 +572,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @param sessionId
 	 */
 	private void storeSessions(MutationBatch m, Map<String, Object> eventMap, String eventName, String classGooruId, String courseGooruId, String unitGooruId, String lessonGooruId,
-			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId,Boolean isStudent) {
+			String contentGooruId, String parentGooruId, String gooruUUID, String eventType, String sessionId,Boolean isStudent,String collectionType) {
 		try {
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
@@ -584,7 +585,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(key, INFO))
 						.putColumnIfNotNull(generateColumnKey(sessionId, _SESSION_ID), sessionId).putColumnIfNotNull(generateColumnKey(sessionId, TYPE), eventType)
 						.putColumnIfNotNull(generateColumnKey(sessionId, _EVENT_TIME), eventTime);
-				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
+				if (START.equalsIgnoreCase(eventType) && COLLECTION.equals(collectionType)) {
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
+				}else if (STOP.equalsIgnoreCase(eventType) && ASSESSMENT.equals(collectionType)) {{
+					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
+				}
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
 				if (START.equalsIgnoreCase(eventType)) {
 					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
