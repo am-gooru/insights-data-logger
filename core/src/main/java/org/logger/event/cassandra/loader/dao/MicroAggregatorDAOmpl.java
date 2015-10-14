@@ -577,7 +577,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			String key = null;
 			if (LoaderConstants.CPV1.getName().equals(eventMap.get(EVENT_NAME))) {
 				Long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
-				if (classGooruId != null) {
+				if (StringUtils.isNotBlank(classGooruId) && StringUtils.isNotBlank(courseGooruId) && StringUtils.isNotBlank(unitGooruId) && StringUtils.isNotBlank(lessonGooruId)) {
 					key = generateColumnKey(classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID);
 				} else {
 					key = generateColumnKey(contentGooruId, gooruUUID);
