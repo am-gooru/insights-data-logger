@@ -591,10 +591,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(RS, key)).putColumnIfNotNull(_SESSION_ID, sessionId);
 				}
 				m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), key).putColumnIfNotNull(sessionId, eventTime);
-				if (START.equalsIgnoreCase(eventType)) {
-					service.submit(new CloseOpenSessions(gooruUUID, baseCassandraDao));
+				if (START.equalsIgnoreCase(eventType) && COLLECTION.equals(collectionType)) {
+					service.submit(new CloseOpenSessions(gooruUUID,sessionId, baseCassandraDao));
 					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType);
-				}else if (STOP.equalsIgnoreCase(eventType)) {
+				}else if (STOP.equalsIgnoreCase(eventType) && COLLECTION.equals(collectionType)) {
 					m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamily.SESSIONS.getColumnFamily()), generateColumnKey(gooruUUID, SESSIONS)).putColumnIfNotNull(sessionId, eventType,1);
 				}
 				;

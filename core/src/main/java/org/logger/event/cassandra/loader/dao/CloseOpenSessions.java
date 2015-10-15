@@ -19,7 +19,9 @@ import com.netflix.astyanax.model.ColumnList;
 public class CloseOpenSessions implements Runnable, Constants {
 
 	private String gooruUId;
-
+	
+	private String sessionId;
+	
 	private BaseCassandraRepoImpl baseCassandraDao;
 
 	private Gson gson = new Gson();
@@ -32,8 +34,9 @@ public class CloseOpenSessions implements Runnable, Constants {
 	
 	private static Logger logger = LoggerFactory.getLogger(CloseOpenSessions.class);
 
-	public CloseOpenSessions(String gooruUId, BaseCassandraRepoImpl baseCassandraDao) {
+	public CloseOpenSessions(String gooruUId, String sessionId, BaseCassandraRepoImpl baseCassandraDao) {
 		this.gooruUId = gooruUId;
+		this.sessionId = sessionId;
 		this.baseCassandraDao = baseCassandraDao;
 		this.restPoint = baseCassandraDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.ENV_END_POINT.getName(), DEFAULT_COLUMN, 0).getStringValue();
 		this.apiKey = baseCassandraDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), _API_KEY, DEFAULT_COLUMN, 0).getStringValue();
@@ -43,7 +46,7 @@ public class CloseOpenSessions implements Runnable, Constants {
 		try {
 			ColumnList<String> sessions = baseCassandraDao.readWithKey(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), 0);
 			for (Column<String> session : sessions) {
-				if (session.getStringValue() != null & session.getStringValue().equalsIgnoreCase(START)) {
+				if (session.getStringValue() != null && !sessionId.equalsIgnoreCase(session.getName()) && session.getStringValue().equalsIgnoreCase(START)) {
 					ColumnList<String> sessionInfo = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), session.getName(), 0);
 					if (sessionInfo != null) {
 						logger.info("Closing session : {}",session.getName());
