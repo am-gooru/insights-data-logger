@@ -30,13 +30,13 @@ package org.logger.event.cassandra.loader;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.net.InetAddress;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.slf4j.Logger;
@@ -136,9 +136,9 @@ public class CassandraConnectionProvider {
             
             if(client == null){
                //Elastic search connection provider
-	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
-	           TransportClient transportClient = new TransportClient(settings);
-	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, 9300));
+                  Settings settings = Settings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
+                  TransportClient transportClient = TransportClient.builder().settings(settings).build()
+			.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(INSIHGHTS_ES_IP), 9300));
 	           client = transportClient;
             }
             
