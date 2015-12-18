@@ -67,7 +67,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_KEYSPACE;
     private Client client;
     private static String CASSANDRA_CLUSTER;
-    private static String INSIHGHTS_ES_IP;
+    private static String INSIGHTS_ES_IP;
     private static String ES_CLUSTER;
     private static String DATACENTER;
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
@@ -78,7 +78,7 @@ public class CassandraConnectionProvider {
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
+        INSIGHTS_ES_IP   = System.getenv("INSIGHTS_ES_IP");
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
         ES_CLUSTER = System.getenv("ES_CLUSTER");
         DATACENTER = System.getenv("DATACENTER");
@@ -141,7 +141,7 @@ public class CassandraConnectionProvider {
                //Elastic search connection provider
                   Settings settings = Settings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
                   TransportClient transportClient = TransportClient.builder().settings(settings).build()
-			.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(INSIHGHTS_ES_IP), 9300));
+			.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(INSIGHTS_ES_IP), 9300));
 	           client = transportClient;
             }
             
