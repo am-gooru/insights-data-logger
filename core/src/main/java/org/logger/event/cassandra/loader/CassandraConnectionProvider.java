@@ -39,6 +39,9 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
+import org.logger.event.cassandra.loader.ESIndexices;
+import org.logger.event.cassandra.loader.EsMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -186,9 +189,11 @@ public class CassandraConnectionProvider {
 					prepareCreate.addMapping(indexType, mapping);
 					prepareCreate.execute().actionGet();
 					logger.info("Index created : " + indexName + "\n");
-				} catch (Exception exception) {
-					logger.info("Already Index availble : " + indexName + "\n");
+				} catch (IndexAlreadyExistsException exception) {
+					logger.info(indexName +" index already exists! \n");
 					//this.getESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setSource(mapping).setIgnoreConflicts(true).execute().actionGet();
+				} catch (Exception e) {
+					logger.info("Unable to create Index : " + indexName + "\n", e.getMessage());
 				}
 			}
 		}
