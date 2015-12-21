@@ -19,7 +19,6 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.JSONDeserializer;
 import org.ednovo.data.model.TypeConverter;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +32,6 @@ import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.google.gson.Gson;
@@ -844,32 +842,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		if(contentBuilder != null){
 			indexingES(indexName, indexType, id, contentBuilder, 0);
 		}
-
-	}
-
-	/**
-	 * 
-	 * @param indexName
-	 * @param indexType
-	 * @param id
-	 * @param eventMap
-	 */
-	public void indexCustomFieldIndex(String indexName, String indexType, String id, Map<String, Object> eventMap) {
-		UpdateRequestBuilder updateRequestBuilder = getESClient().prepareUpdate(indexName, indexType, id);
-		StringBuilder ctxSource = new StringBuilder();
-
-		for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
-			String rowKey = null;
-			if (DataLoggerCaches.getBeFieldName().containsKey(entry.getKey())) {
-				rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
-			}
-			if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
-				updateRequestBuilder.addScriptParam(rowKey, entry.getValue());
-				ctxSource.append(ctxSource.length() == 0 ? "" : ";");
-				ctxSource.append("ctx._source." + rowKey + "=" + rowKey);
-			}
-		}
-		updateRequestBuilder.setScript(ctxSource.toString()).execute().actionGet();
 
 	}
 

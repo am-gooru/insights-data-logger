@@ -30,15 +30,18 @@ package org.logger.event.cassandra.loader;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.net.InetAddress;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
+import org.logger.event.cassandra.loader.ESIndexices;
+import org.logger.event.cassandra.loader.EsMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -64,7 +67,7 @@ public class CassandraConnectionProvider {
     private static String CASSANDRA_KEYSPACE;
     private Client client;
     private static String CASSANDRA_CLUSTER;
-    private static String INSIHGHTS_ES_IP;
+    private static String INSIGHTS_ES_IP;
     private static String ES_CLUSTER;
     private static String DATACENTER;
 	private EntityManager<ResourceCo, String> resourceEntityPersister;
@@ -75,7 +78,7 @@ public class CassandraConnectionProvider {
         properties = new Properties();
         CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
         CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-        INSIHGHTS_ES_IP   = System.getenv("INSIHGHTS_ES_IP");
+        INSIGHTS_ES_IP   = System.getenv("INSIGHTS_ES_IP");
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
         ES_CLUSTER = System.getenv("ES_CLUSTER");
         DATACENTER = System.getenv("DATACENTER");
@@ -136,9 +139,9 @@ public class CassandraConnectionProvider {
             
             if(client == null){
                //Elastic search connection provider
-	           Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
-	           TransportClient transportClient = new TransportClient(settings);
-	           transportClient.addTransportAddress(new InetSocketTransportAddress(INSIHGHTS_ES_IP, 9300));
+                  Settings settings = Settings.settingsBuilder().put("cluster.name", ES_CLUSTER).put("client.transport.sniff", true).build();
+                  TransportClient transportClient = TransportClient.builder().settings(settings).build()
+			.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(INSIGHTS_ES_IP), 9300));
 	           client = transportClient;
             }
             
@@ -186,9 +189,11 @@ public class CassandraConnectionProvider {
 					prepareCreate.addMapping(indexType, mapping);
 					prepareCreate.execute().actionGet();
 					logger.info("Index created : " + indexName + "\n");
-				} catch (Exception exception) {
-					logger.info("Already Index availble : " + indexName + "\n");
+				} catch (IndexAlreadyExistsException exception) {
+					logger.info(indexName +" index already exists! \n");
 					//this.getESClient().admin().indices().preparePutMapping(indexName).setType(indexType).setSource(mapping).setIgnoreConflicts(true).execute().actionGet();
+				} catch (Exception e) {
+					logger.info("Unable to create Index : " + indexName + "\n", e.getMessage());
 				}
 			}
 		}
