@@ -1,6 +1,6 @@
 package org.logger.event.cassandra.loader;
 
-public enum ColumnFamily {
+public enum ColumnFamilySet {
 
 	APIKEY("app_api_key"),
 	
@@ -97,12 +97,14 @@ public enum ColumnFamily {
 	LTI_ACTIVITY("lti_activity"),
 	
 	CLASS("class"),
+	
+	USER_SESSIONS("user_sessions"),
 	;
 	
 	String name;
 
 	
-	private ColumnFamily(String name) {
+	private ColumnFamilySet(String name) {
 		this.name = name;
 	}
 
