@@ -832,8 +832,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					rowKey = DataLoggerCaches.getBeFieldName().get(entry.getKey());
 				}
 				if (rowKey != null && entry.getValue() != null && !entry.getValue().equals("null") && entry.getValue() != "") {
-					contentBuilder.field(rowKey,
-							TypeConverter.stringToAny((entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));
+					contentBuilder.field(rowKey,entry.getValue());
+					/**
+					 * Disabled in release-3.0. Double check indexing running correctly
+					 * contentBuilder.field(rowKey,
+							TypeConverter.stringToAny((entry.getValue()), DataLoggerCaches.getFieldDataTypes().containsKey(entry.getKey()) ? DataLoggerCaches.getFieldDataTypes().get(entry.getKey()) : "String"));*/
 				}
 			}
 		} catch (Exception e) {
@@ -1094,9 +1097,11 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Double")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), sourceValues.getColumnByIndex(i).getDoubleValue());
 					}
-					if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
+					/**
+					 * Disabled in release-3.0. Double check indexing running correctly
+					 * if (DataLoggerCaches.getTaxonomyCodeType().get(sourceValues.getColumnByIndex(i).getName()).equalsIgnoreCase("Date")) {
 						contentBuilder.field(sourceValues.getColumnByIndex(i).getName(), TypeConverter.stringToAny(sourceValues.getColumnByIndex(i).getStringValue(), "Date"));
-					}
+					}*/
 				}
 				contentBuilder.field("index_updated_time", new Date());
 				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
