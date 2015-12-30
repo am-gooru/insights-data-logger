@@ -53,8 +53,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 
-	private static final String INSERT_USER_SESSION = "INSERT INTO user_sessions(collection_uid,user_uid,session_id,class_uid,course_uid,unit_uid,lesson_uid,event_type,event_time)VALUES(?,?,?,?,?,?,?,?,?);";
-	
 	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		// TODO Auto-generated constructor stub
@@ -1618,6 +1616,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return parentId;
 	}
 	
+	/**
+	 * Store all the session IDs if user playing collection from inside and outside of the class
+	 * @param sessionId
+	 * @param classUid
+	 * @param courseUid
+	 * @param unitUid
+	 * @param lessonUid
+	 * @param collectionUid
+	 * @param userUid
+	 * @param eventType
+	 * @param eventTime
+	 * @return true/false -- meaning operation success/fail
+	 */
 	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String eventType,long eventTime) {
 		try {
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
@@ -1636,6 +1647,186 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 		} catch (ConnectionException e) {
 			logger.error("Error while storing user sessions" ,e);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Usage metrics will be store here by session wise 
+	 * @param sessionId
+	 * @param gooruOid
+	 * @param collectionItemId
+	 * @param answerObject
+	 * @param attempts
+	 * @param reaction
+	 * @param resourceFormat
+	 * @param resourceType
+	 * @param score
+	 * @param timeSpent
+	 * @param views
+	 * @return true/false -- meaning - operation success/fail
+	 */
+	public boolean saveUserSessionActivity(String sessionId,String gooruOid,String collectionItemId,String answerObject,long attempts,long reaction,String resourceFormat,String resourceType,long score,long timeSpent,long views) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(INSERT_USER_SESSION_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(sessionId)
+			.withStringValue(gooruOid)
+			.withStringValue(collectionItemId)
+			.withStringValue(answerObject)
+			.withLongValue(attempts)
+			.withLongValue(reaction)
+			.withStringValue(resourceFormat)
+			.withStringValue(resourceType)
+			.withLongValue(score)
+			.withLongValue(timeSpent)
+			.withLongValue(views)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing user sessions activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * CULA/C aggregated metrics will be stored.
+	 * @param classUid
+	 * @param courseUid
+	 * @param unitUid
+	 * @param lessonUid
+	 * @param collectionUid
+	 * @param userUid
+	 * @param collectionType
+	 * @param score
+	 * @param timeSpent
+	 * @param views
+	 * @return true/false -- meaning operation success/fail
+	 */
+	public boolean saveStudentsClassActivity(String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String collectionType,long score,long timeSpent, long views) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
+			.withCql(INSERT_STUDENTS_CLASS_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(classUid)
+			.withStringValue(courseUid)
+			.withStringValue(unitUid)
+			.withStringValue(lessonUid)
+			.withStringValue(collectionUid)
+			.withStringValue(userUid)
+			.withStringValue(collectionType)
+			.withLongValue(score)
+			.withLongValue(timeSpent)
+			.withLongValue(views)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing class activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Taxonomy wise aggregated data will be stored.
+	 * @param subjectId
+	 * @param courseId
+	 * @param domainId
+	 * @param subDomainId
+	 * @param standardsId
+	 * @param learningTargetsId
+	 * @param gooruOid
+	 * @param userUid
+	 * @param resourceFormat
+	 * @param resourceType
+	 * @param score
+	 * @param timeSpent
+	 * @param views
+	 * @return true/false -- meaning operation success/fail
+	 */
+	public boolean saveContentTaxonomyActivity(String subjectId,String courseId,String domainId,String subDomainId,String standardsId,String learningTargetsId,String gooruOid,String userUid,String resourceFormat,String resourceType,long score,long timeSpent,long views) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily()))
+			.withCql(INSERT_CONTENT_TAXONOMY_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(subjectId)
+			.withStringValue(courseId)
+			.withStringValue(domainId)
+			.withStringValue(subDomainId)
+			.withStringValue(standardsId)
+			.withStringValue(learningTargetsId)
+			.withStringValue(gooruOid)
+			.withStringValue(userUid)
+			.withStringValue(resourceFormat)
+			.withStringValue(resourceType)
+			.withLongValue(score)
+			.withLongValue(timeSpent)
+			.withLongValue(views)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing taxonomy activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Students current/left off CULA/CR will be stored
+	 * @param userUid
+	 * @param classUid
+	 * @param courseUid
+	 * @param unitUid
+	 * @param lessonUid
+	 * @param collectionUid
+	 * @param resourceUid
+	 * @param sessionTime
+	 * @return true/false -- meaning operation success/fail
+	 */
+	public boolean saveStudentLocation(String userUid,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String resourceUid,long sessionTime) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDNT_LOCATION.getColumnFamily()))
+			.withCql(INSERT_USER_LOCATION)
+			.asPreparedStatement()
+			.withStringValue(userUid)
+			.withStringValue(classUid)
+			.withStringValue(courseUid)
+			.withStringValue(unitUid)
+			.withStringValue(lessonUid)
+			.withStringValue(collectionUid)
+			.withStringValue(resourceUid)
+			.withLongValue(sessionTime)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing taxonomy activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Tracking active and in active users count in CULA/C level
+	 * @param keyName
+	 * @param activePeerCount
+	 * @param leftPeerCount
+	 * @return true/false -- meaning operation success/fail
+	 */
+	public boolean updatePeersCount(String keyName,long activePeerCount,long leftPeerCount){
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEERS_COUNT.getColumnFamily()))
+			.withCql(UPDATE_PEER_COUNT)	
+			.asPreparedStatement()
+			.withLongValue(activePeerCount)
+			.withLongValue(leftPeerCount)
+			.withStringValue(keyName)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while updating peer count" ,e);
 			return false;
 		}
 		return true;

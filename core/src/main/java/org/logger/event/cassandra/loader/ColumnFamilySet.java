@@ -99,6 +99,16 @@ public enum ColumnFamilySet {
 	CLASS("class"),
 	
 	USER_SESSIONS("user_sessions"),
+	
+	USER_SESSION_ACTIVITY("user_session_activity"),
+	
+	STUDENTS_CLASS_ACTIVITY("students_class_activity"),
+	
+	CONTENT_TAXONOMY_ACTIVITY("content_taxonomy_activity"),
+	
+	STUDNT_LOCATION("student_location"),
+	
+	CLASS_ACTIVITY_PEERS_COUNT("class_activity_peer_counts"),
 	;
 	
 	String name;
