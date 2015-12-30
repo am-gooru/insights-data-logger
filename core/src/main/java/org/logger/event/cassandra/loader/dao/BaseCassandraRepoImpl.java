@@ -22,7 +22,6 @@ import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.cql.CqlStatementResult;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
@@ -53,8 +51,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 
-	private static final String INSERT_USER_SESSION = "INSERT INTO user_sessions(collection_uid,user_uid,session_id,class_uid,course_uid,unit_uid,lesson_uid,event_type,event_time)VALUES(?,?,?,?,?,?,?,?,?);";
-	
 	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
 		// TODO Auto-generated constructor stub
@@ -1616,28 +1612,5 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 		}
 		return parentId;
-	}
-	
-	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String eventType,long eventTime) {
-		try {
-			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
-			.withCql(INSERT_USER_SESSION)
-			.asPreparedStatement()
-			.withStringValue(collectionUid)
-			.withStringValue(userUid)
-			.withStringValue(sessionId)
-			.withStringValue(classUid)
-			.withStringValue(courseUid)
-			.withStringValue(unitUid)
-			.withStringValue(lessonUid)
-			.withStringValue(eventType)
-			.withLongValue(eventTime)
-			.execute()
-			;
-		} catch (ConnectionException e) {
-			logger.error("Error while storing user sessions" ,e);
-			return false;
-		}
-		return true;
 	}
 }
