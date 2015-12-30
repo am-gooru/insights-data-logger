@@ -12,7 +12,7 @@ import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.TypeConverter;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.DataUtils;
@@ -66,7 +66,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 		if ((eventMap.containsKey(EVENT_NAME))) {
 			try {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			ColumnList<String> eventKeys = baseDao.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
+			ColumnList<String> eventKeys = baseDao.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), (String)eventMap.get(EVENT_NAME), 0);
 			for (int i = 0; i < eventKeys.size(); i++) {
 				String columnName = eventKeys.getColumnByIndex(i).getName();
 				String columnValue = eventKeys.getColumnByIndex(i).getStringValue();
@@ -96,17 +96,17 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	private void performCounter(String key,String column,Map<String, Object> eventMap,MutationBatch m){
 		
 		if (column.startsWith(_TIME_SPENT + SEPERATOR)) {
-			baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, column, ((Number)eventMap.get(TOTALTIMEINMS)).longValue(), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, ((Number)eventMap.get(TOTALTIMEINMS)).longValue(), m);
 		} else if (column.startsWith(SUM + SEPERATOR)) {
 			String rowKey = column.split(SEPERATOR)[1];
 			baseDao.generateCounter(
-					ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(),
+					ColumnFamily.LIVEDASHBOARD.getColumnFamily(),
 					key,
 					column,
 					rowKey.equalsIgnoreCase(REACTION_TYPE) ? DataUtils.formatReactionString((String)eventMap.get(rowKey)) : eventMap.containsKey(rowKey.trim()) ? ((Number)eventMap.get(rowKey.trim())).longValue() : 0L, m);
 
 		} else {
-			baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, column, 1L, m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, column, 1L, m);
 		}
 	}
 	
@@ -129,9 +129,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 			logger.error("Exception:unable to get geo locations");
 		}
 		if (columnName != null) {
-			baseDao.saveStringValue(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
+			baseDao.saveStringValue(ColumnFamily.MICROAGGREGATION.getColumnFamily(), rowKey, columnName, json);
 		}
-		baseDao.increamentCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT + SEPERATOR + eventMap.get(EVENT_NAME), 1);
+		baseDao.increamentCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), columnName, COUNT + SEPERATOR + eventMap.get(EVENT_NAME), 1);
 	}
 
 	/**
@@ -145,45 +145,45 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
 		if (eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")) {
-			baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ANONYMOUS_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ANONYMOUS_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
 					secondDateFormatter.format(new Date()).toString(), expireTime, m);
 		} else {
-			baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
 					secondDateFormatter.format(new Date()).toString(), expireTime, m);
 		}
-		baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
+		baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID),
 				secondDateFormatter.format(new Date()).toString(), expireTime, m);
 
 		if (eventMap.get(EVENT_NAME).equalsIgnoreCase("logOut") || eventMap.get(EVENT_NAME).equalsIgnoreCase("user.logout")) {
 			if (eventMap.get(GOORUID).equalsIgnoreCase("ANONYMOUS")) {
-				baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
-				baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
 			}
-			baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
+			baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ALL_USER_SESSION, eventMap.get(SESSION_TOKEN) + SEPERATOR + eventMap.get(GOORUID));
 		}
 
 		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.CPV1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP) || eventMap.get(TYPE).equalsIgnoreCase(PAUSE)) {
-				baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
-				baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
 						secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
 		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.RP1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
-				baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
-				baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID), secondDateFormatter
 						.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
 		if (eventMap.get(EVENT_NAME).equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
 			if (eventMap.get(TYPE).equalsIgnoreCase(STOP)) {
-				baseDao.deleteColumn(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
+				baseDao.deleteColumn(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID));
 			} else {
-				baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
+				baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), ACTIVE_COLLECTION_RESOURCE_PLAYS, eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GOORUID),
 						secondDateFormatter.format(new Date()).toString(), contentExpireTime, m);
 			}
 		}
@@ -205,7 +205,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 		logger.info("Key- view : {} ", VIEWS + SEPERATOR + dateKey);
 		if(eventMap.get(CONTENT_GOORU_OID) != null){
-			baseDao.generateTTLColumns(ColumnFamilySet.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + dateKey, eventMap.get(CONTENT_GOORU_OID).toString(), eventMap.get(CONTENT_GOORU_OID).toString(), 2592000, m);
+			baseDao.generateTTLColumns(ColumnFamily.MICROAGGREGATION.getColumnFamily(), VIEWS + SEPERATOR + dateKey, eventMap.get(CONTENT_GOORU_OID).toString(), eventMap.get(CONTENT_GOORU_OID).toString(), 2592000, m);
 		}
 		try {
 			m.execute();
@@ -264,7 +264,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	public void saveInStaging(Map<String, Object> eventMap) {
 		try {
 			MutationBatch mutationBatch = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamilySet.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
+			ColumnListMutation<String> m = mutationBatch.withRow(baseDao.accessColumnFamily(ColumnFamily.STAGING.getColumnFamily()), eventMap.get("eventId").toString());
 			String rowKey = null;
 			for (Map.Entry<String, Object> entry : eventMap.entrySet()) {
 
@@ -325,8 +325,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 		Long previousRate = map.get(PREVIOUS_RATE) != null ? ((Number) map.get(PREVIOUS_RATE)).longValue() : 0;
 		if ((previousRate != 0) && column.equals(COUNT_SEPARATOR_RATINGS)) {
-			baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, COUNT + SEPERATOR + previousRate, (1L * -1), m);
-			baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, SUM + SEPERATOR + RATE, (previousRate * -1), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, COUNT + SEPERATOR + previousRate, (1L * -1), m);
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, SUM + SEPERATOR + RATE, (previousRate * -1), m);
 		} else {
 			Long rate = map.get(RATE) != null ? ((Number) map.get(RATE)).longValue() : 0;
 			String rateColumn = column.replace(map.get(RATE).toString(), rate.toString());
@@ -351,9 +351,9 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	private void resourceUsedUserCount(String key, String value, String originalColumn, Map<String, Object> eventMap, MutationBatch m) {
 		String userKey = key.concat(SEPERATOR).concat(eventMap.get(GOORUID).toString());
-		if(!baseDao.checkColumnExist(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(),userKey,originalColumn,0)) {
-			baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, originalColumn, 1L, m);
+		if(!baseDao.checkColumnExist(ColumnFamily.LIVEDASHBOARD.getColumnFamily(),userKey,originalColumn,0)) {
+			baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, originalColumn, 1L, m);
 		}
-		baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), userKey, originalColumn, 1L, m);
+		baseDao.generateCounter(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), userKey, originalColumn, 1L, m);
 	}
 }

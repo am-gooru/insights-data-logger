@@ -6,7 +6,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.ednovo.data.model.Event;
 import org.json.JSONObject;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
@@ -38,23 +38,23 @@ public class CloseOpenSessions implements Runnable, Constants {
 		this.gooruUId = gooruUId;
 		this.sessionId = sessionId;
 		this.baseCassandraDao = baseCassandraDao;
-		this.restPoint = baseCassandraDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.ENV_END_POINT.getName(), DEFAULT_COLUMN, 0).getStringValue();
-		this.apiKey = baseCassandraDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), _API_KEY, DEFAULT_COLUMN, 0).getStringValue();
+		this.restPoint = baseCassandraDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.ENV_END_POINT.getName(), DEFAULT_COLUMN, 0).getStringValue();
+		this.apiKey = baseCassandraDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), _API_KEY, DEFAULT_COLUMN, 0).getStringValue();
 	}
 
 	public void run() {
 		try {
-			ColumnList<String> sessions = baseCassandraDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), 0);
+			ColumnList<String> sessions = baseCassandraDao.readWithKey(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), 0);
 			for (Column<String> session : sessions) {
 				if (session.getStringValue() != null && !sessionId.equalsIgnoreCase(session.getName()) && session.getStringValue().equalsIgnoreCase(START)) {
-					ColumnList<String> sessionInfo = baseCassandraDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), session.getName(), 0);
+					ColumnList<String> sessionInfo = baseCassandraDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), session.getName(), 0);
 					if (sessionInfo != null) {
 						logger.info("Closing session : {}",session.getName());
 						long endTime = sessionInfo.getLongValue(_END_TIME, 0L);
 						long totalTimeSpent = (sessionInfo.getLongValue(_END_TIME, 0L) - sessionInfo.getLongValue(_START_TIME, 0L));
-						ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), sessionInfo.getStringValue(_EVENT_ID, null), 0);
+						ColumnList<String> eventDetail = baseCassandraDao.readWithKey(ColumnFamily.EVENTDETAIL.getColumnFamily(), sessionInfo.getStringValue(_EVENT_ID, null), 0);
 						if (eventDetail != null) {
-							baseCassandraDao.saveStringValue(ColumnFamilySet.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), session.getName(), STOP, 1);
+							baseCassandraDao.saveStringValue(ColumnFamily.SESSIONS.getColumnFamily(), (gooruUId + SEPERATOR + SESSIONS), session.getName(), STOP, 1);
 							String eventField = eventDetail.getStringValue(FIELDS, null);
 							JSONObject eventJson = new JSONObject(eventField);
 							Event event = gson.fromJson(eventField, Event.class);

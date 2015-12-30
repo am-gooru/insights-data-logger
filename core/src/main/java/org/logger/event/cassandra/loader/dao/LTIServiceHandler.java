@@ -10,7 +10,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 	public LTIServiceHandler(BaseCassandraRepoImpl baseDao) {
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
-		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN, 0).getStringValue();
+		String url = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN, 0).getStringValue();
 		postRequest = new HttpPost();
 		try {
 			builder = new URIBuilder();
@@ -69,7 +69,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 			logger.error(buildString(VALID_FIELDS, " should not be null for ", eventName));
 			return;
 		}
-		baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), serviceId, INPROGRESS, 604800);
+		baseDao.saveStringValue(ColumnFamily.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), serviceId, INPROGRESS, 604800);
 	}
 
 	public LTIServiceHandler(String sessionToken, String gooruOId, String gooruUId) {
@@ -80,16 +80,16 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	@Override
 	public void run() {
-		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), 0);
+		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamily.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), 0);
 		if(ltiColumns == null) {
 			return;
 		}
-		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId), 0);
+		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamily.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId), 0);
 		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(_SESSION_ID, null) : null;	
 		if(sessionId == null) {
 			return;
 		}
-		sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId, 0);
+		sessionColumn = baseDao.readWithKey(ColumnFamily.SESSION_ACTIVITY.getColumnFamily(), sessionId, 0);
 		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, SEPERATOR, _SCORE_IN_PERCENTAGE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
 		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
@@ -105,7 +105,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 		}
 		for(Entry<String, Long> entry : serviceBasedScore.entrySet()) {
 			if(executeAPI(sessionToken, gooruOId, entry.getKey(), entry.getValue())) {
-				baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), entry.getKey(), COMPLETED);
+				baseDao.saveStringValue(ColumnFamily.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), entry.getKey(), COMPLETED);
 			}
 		}
 	}

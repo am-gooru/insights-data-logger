@@ -13,7 +13,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import org.kafka.event.microaggregator.core.Constants;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class MailHandler implements Constants {
 
 	private void setKafkaConfiguration() {
 		kafkaNotificationConfig = new HashMap<String, String>();
-		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER, 0);
+		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER, 0);
 		kafkaNotificationConfig.put("userName", columnList.getStringValue("user_name", null));
 		kafkaNotificationConfig.put("password", columnList.getStringValue("password", null));
 		kafkaNotificationConfig.put("toAdress", columnList.getStringValue("to_address", null));

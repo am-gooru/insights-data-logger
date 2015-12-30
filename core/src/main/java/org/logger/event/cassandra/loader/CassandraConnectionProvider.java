@@ -76,10 +76,10 @@ public class CassandraConnectionProvider {
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
-        CASSANDRA_IP = "127.0.0.1";
-        CASSANDRA_KEYSPACE = "event_logger_insights";
+        CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
+        CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
         INSIGHTS_ES_IP   = System.getenv("INSIGHTS_ES_IP");
-        CASSANDRA_CLUSTER = "Test Cluster";
+        CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
         ES_CLUSTER = System.getenv("ES_CLUSTER");
         DATACENTER = System.getenv("DATACENTER");
        

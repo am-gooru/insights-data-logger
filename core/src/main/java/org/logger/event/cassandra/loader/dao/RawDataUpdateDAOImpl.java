@@ -22,7 +22,7 @@ import org.ednovo.data.model.StatisticsCo;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
 import org.slf4j.Logger;
@@ -572,7 +572,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 							assessmentAnswerMap.put("questionType", questionType);
 							assessmentAnswerMap.put("collectionContentId", assessmentAnswerMap.get("collectionContentId"));
 						}
-						baseCassandraDao.updateAssessmentAnswer(ColumnFamilySet.ASSESSMENTANSWER.getColumnFamily(), assessmentAnswerMap);
+						baseCassandraDao.updateAssessmentAnswer(ColumnFamily.ASSESSMENTANSWER.getColumnFamily(), assessmentAnswerMap);
 					} catch (Exception e) {
 						logger.error("Exception:Unable to save assessment answer." + e);
 					}
@@ -595,7 +595,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 		if (collectionMap.containsKey(GOORU_OID) && collectionMap.get(GOORU_OID) != null) {
 			collectionMap.put("rKey", collectionMap.get(GOORU_OID).toString());
 			Set<Entry<String, String>> collectionCFKeySet = DataUtils.collectionCFKeys.entrySet();
-			updateColumnFamily(ColumnFamilySet.COLLECTION.getColumnFamily(), this.generateCFMap(ColumnFamilySet.COLLECTION.getColumnFamily(), collectionCFKeySet, collectionMap));
+			updateColumnFamily(ColumnFamily.COLLECTION.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTION.getColumnFamily(), collectionCFKeySet, collectionMap));
 		}
 
 	}
@@ -618,7 +618,7 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			}
 			collectionItemMap.put("rKey", collectionItemMap.get("collectionItemId").toString());
 			Set<Entry<String, String>> collectionItemCFKeySet = DataUtils.collectionItemCFKeys.entrySet();
-			updateColumnFamily(ColumnFamilySet.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamilySet.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
+			updateColumnFamily(ColumnFamily.COLLECTIONITEM.getColumnFamily(), this.generateCFMap(ColumnFamily.COLLECTIONITEM.getColumnFamily(), collectionItemCFKeySet, collectionItemMap));
 		} else {
 			logger.info("Collection Item CF is not updated. CollectionItemId is null for event : {}", eventMap.get(EVENT_NAME));
 		}
@@ -636,18 +636,18 @@ public class RawDataUpdateDAOImpl extends BaseDAOCassandraImpl implements RawDat
 			classpageMap.put("rKey", classpageMap.get("classId").toString() + SEPERATOR + classpageMap.get("groupUId").toString() + SEPERATOR + classpageMap.get("userUid").toString());
 			
 			Set<Entry<String, String>> entrySet = DataUtils.classpageTableKeyMap.entrySet();
-			updateColumnFamily(ColumnFamilySet.CLASSPAGE.getColumnFamily(), this.generateCFMap(ColumnFamilySet.CLASSPAGE.getColumnFamily(), entrySet, classpageMap));
+			updateColumnFamily(ColumnFamily.CLASSPAGE.getColumnFamily(), this.generateCFMap(ColumnFamily.CLASSPAGE.getColumnFamily(), entrySet, classpageMap));
 		}
 	}
 	
 	private Map<String, Object> generateCFMap(String cfName, Set<Entry<String, String>> entrySetToInsert, Map<String, Object> eventMap) {
 		Map<String, Object> mapToInsert = new HashMap<String, Object>();
 		Set<Entry<String, String>> dataTypeEntrySet = null;
-		if(cfName.equalsIgnoreCase(ColumnFamilySet.CLASSPAGE.getColumnFamily())) {
+		if(cfName.equalsIgnoreCase(ColumnFamily.CLASSPAGE.getColumnFamily())) {
 			dataTypeEntrySet = DataUtils.classpageCFDataTypeMap.entrySet();
-		} else if(cfName.equalsIgnoreCase(ColumnFamilySet.COLLECTION.getColumnFamily())) {
+		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTION.getColumnFamily())) {
 			dataTypeEntrySet = DataUtils.collectionCFDataTypeMap.entrySet();
-		} else if(cfName.equalsIgnoreCase(ColumnFamilySet.COLLECTIONITEM.getColumnFamily())) {
+		} else if(cfName.equalsIgnoreCase(ColumnFamily.COLLECTIONITEM.getColumnFamily())) {
 			dataTypeEntrySet = DataUtils.collectionItemCFDataTypeMap.entrySet();
 		}
 		if(dataTypeEntrySet != null) {

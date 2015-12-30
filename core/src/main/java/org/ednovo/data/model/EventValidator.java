@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.ColumnFamily;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ public class EventValidator  {
 		this.getConnectionProvider().init(null);
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		acceptedFileds = new HashMap<String, String>();
-        Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(),0);
+        Rows<String, String> rows = baseDao.readAllRows(ColumnFamily.EVENTFIELDS.getColumnFamily(),0);
         for(Row<String, String> row : rows){
         	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
         }
