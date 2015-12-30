@@ -120,8 +120,6 @@ public class CassandraConnectionProvider {
                     .forCluster(CASSANDRA_CLUSTER)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
-                    .setCqlVersion("3.0.0")
-                    .setTargetCassandraVersion("2.1.4")
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
