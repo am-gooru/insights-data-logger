@@ -722,6 +722,8 @@ public interface Constants {
     
     String LTI_SERVICE_ID = "ltiServiceId";
     
+    String NA = "NA";
+    
 	/**
 	 * CQL QUERIES
 	 */
@@ -736,4 +738,6 @@ public interface Constants {
 	String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?);";
 	
 	String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ?;";
+	
+	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 }

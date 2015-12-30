@@ -21,6 +21,7 @@ import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
+import org.ednovo.data.model.UserSessionActivity;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
@@ -1667,22 +1668,22 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param views
 	 * @return true/false -- meaning - operation success/fail
 	 */
-	public boolean saveUserSessionActivity(String sessionId,String gooruOid,String collectionItemId,String answerObject,long attempts,long reaction,String resourceFormat,String resourceType,long score,long timeSpent,long views) {
+	public boolean saveUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(INSERT_USER_SESSION_ACTIVITY)
 			.asPreparedStatement()
-			.withStringValue(sessionId)
-			.withStringValue(gooruOid)
-			.withStringValue(collectionItemId)
-			.withStringValue(answerObject)
-			.withLongValue(attempts)
-			.withLongValue(reaction)
-			.withStringValue(resourceFormat)
-			.withStringValue(resourceType)
-			.withLongValue(score)
-			.withLongValue(timeSpent)
-			.withLongValue(views)
+			.withStringValue(userSessionActivity.getSessionId())
+			.withStringValue(userSessionActivity.getGooruOid())
+			.withStringValue(userSessionActivity.getCollectionItemId())
+			.withStringValue(userSessionActivity.getAnswerObject())
+			.withLongValue(userSessionActivity.getAttempts())
+			.withLongValue(userSessionActivity.getReaction())
+			.withStringValue(userSessionActivity.getResourceFormat())
+			.withStringValue(userSessionActivity.getResourceType())
+			.withLongValue(userSessionActivity.getScore())
+			.withLongValue(userSessionActivity.getTimeSpent())
+			.withLongValue(userSessionActivity.getViews())
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1830,5 +1831,32 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			return false;
 		}
 		return true;
+	}
+	
+	public UserSessionActivity compareAndSetUserSessionActivity(UserSessionActivity userSessionActivity) {
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(userSessionActivity.getSessionId())
+			.withStringValue(userSessionActivity.getGooruOid())
+			.withStringValue(userSessionActivity.getCollectionItemId())
+			.execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
+					userSessionActivity.setAttempts((userSessionActivity.getViews())+columns.getLongValue("attempts", 0L));
+					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
+					userSessionActivity.setScore(columns.getLongValue("score", 0L));
+					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
+					userSessionActivity.setViews((userSessionActivity.getViews())+columns.getLongValue("views", 0L));
+				}
+			}
+		} catch (ConnectionException e) {
+			logger.error("Error while retreving user sessions activity" ,e);
+		}
+		return userSessionActivity;
 	}
 }
