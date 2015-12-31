@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
+import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
@@ -82,6 +83,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {
 			UserSessionActivity userSessionActivity = new UserSessionActivity();
+			StudentsClassActivity studentsClassActivity = new StudentsClassActivity(); 
 			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
 			String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
 			String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? (String) eventMap.get(CONTENT_GOORU_OID) : "NA";
@@ -144,14 +146,28 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			userSessionActivity.setTimeSpent(timespent);
 			userSessionActivity.setViews(views);
 			
+			studentsClassActivity.setClassUid(classGooruId);
+			studentsClassActivity.setCourseUid(courseGooruId);
+			studentsClassActivity.setUnitUid(unitGooruId);
+			studentsClassActivity.setLessonUid(lessonGooruId);
+			studentsClassActivity.setCollectionUid(contentGooruId);
+			studentsClassActivity.setUserUid(gooruUUID);
+			studentsClassActivity.setCollectionType(collectionType);
+			studentsClassActivity.setScore(score);
+			studentsClassActivity.setViews(views);
+			studentsClassActivity.setTimeSpent(timespent);
+			
 			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				baseCassandraDao.saveUserSession(sessionId, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, eventType, eventTime);
 			}
 			
-			
-			baseCassandraDao.compareAndSetUserSessionActivity(userSessionActivity);
+			baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 			
 			baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+			
+			baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
+			
+			baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
 			
 		} catch (Exception e) {
 			logger.error("Exception:", e);

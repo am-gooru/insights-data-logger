@@ -740,4 +740,6 @@ public interface Constants {
 	String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ?;";
 	
 	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
+	
+	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND user_uid = ?;";
 }
