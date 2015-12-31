@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
+import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
@@ -84,6 +85,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			UserSessionActivity userSessionActivity = new UserSessionActivity();
 			StudentsClassActivity studentsClassActivity = new StudentsClassActivity(); 
+			StudentLocation studentLocation = new StudentLocation();
+			
 			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
 			String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
 			String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? (String) eventMap.get(CONTENT_GOORU_OID) : "NA";
@@ -105,7 +108,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long reaction = 0;
 			long timespent = ((Number)eventMap.get(TOTALTIMEINMS)).longValue();
 			long views = ((Number)eventMap.get(VIEWS_COUNT)).longValue();
-			
+			long activePeerCount = 0L;
+			long leftPeerCount = 0L;
 			
 			if (QUESTION.equals(setNAIfNull(eventMap, RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)))) {
 				String answerStatus = null;
@@ -157,8 +161,27 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			studentsClassActivity.setViews(views);
 			studentsClassActivity.setTimeSpent(timespent);
 			
+			studentLocation.setUserUid(gooruUUID);
+			studentLocation.setClassUid(classGooruId);
+			studentLocation.setCourseUid(courseGooruId);
+			studentLocation.setUnitUid(unitGooruId);
+			studentLocation.setLessonUid(lessonGooruId);
+			studentLocation.setCollectionUid(contentGooruId);
+			studentLocation.setResourceUid(contentGooruId);
+			studentLocation.setSessionTime(eventTime);
+			
 			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				baseCassandraDao.saveUserSession(sessionId, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, eventType, eventTime);
+			
+				if(eventType.equalsIgnoreCase(START)){
+					activePeerCount = 1;
+					if(baseCassandraDao.hasClassActivity(studentsClassActivity)){
+						leftPeerCount = -1;
+					}
+				}else if (eventType.equalsIgnoreCase(STOP)){
+					activePeerCount = -1;
+					leftPeerCount = 1;
+				}
 			}
 			
 			baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
@@ -166,51 +189,26 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			baseCassandraDao.saveUserSessionActivity(userSessionActivity);
 			
 			baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
+						
+			baseCassandraDao.saveStudentLocation(studentLocation);
 			
 			baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
 			
+			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(),activePeerCount, leftPeerCount);
+			
+			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(),activePeerCount, leftPeerCount);
+			
+			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(),activePeerCount, leftPeerCount);
+			
+			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
+			
+			
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
 	}
 
-	/**
-	 * Aggregate data for All student and All session data. Key will be start with "AS"
-	 * 
-	 * @param m
-	 * @param eventMap
-	 * @param keysList
-	 * @param eventName
-	 * @param classGooruId
-	 * @param courseGooruId
-	 * @param unitGooruId
-	 * @param lessonGooruId
-	 * @param contentGooruId
-	 * @param parentGooruId
-	 * @param gooruUUID
-	 * @param eventType
-	 */
-	private void aggregateAllSessions(MutationBatch m, Map<String, Object> eventMap, List<String> keysList, String eventName, String classGooruId, String courseGooruId, String unitGooruId,
-			String lessonGooruId, String contentGooruId, String parentGooruId, String gooruUUID, String eventType) {
-		try {
-
-			if (classGooruId != null && courseGooruId != null) {
-				String allSessionKey = null;
-				if (LoaderConstants.CPV1.getName().equals(eventName)) {
-					allSessionKey = this.generateColumnKey(AS, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId);
-				} else {
-					allSessionKey = this.generateColumnKey(AS, classGooruId, courseGooruId, unitGooruId, lessonGooruId, parentGooruId);
-				}
-				ColumnListMutation<String> allSessionAggColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily()), allSessionKey);
-				ColumnListMutation<String> allSessionCounterColumns = m.withRow(baseCassandraDao.accessColumnFamily(ColumnFamilySet.SESSION_ACTIVITY_COUNTER.getColumnFamily()), allSessionKey);
-				keysList.add(allSessionKey);
-				this.generateSessionActivity(eventMap, allSessionAggColumns, allSessionCounterColumns, contentGooruId, parentGooruId, eventType);
-			}
-		} catch (Exception e) {
-			logger.error("Exception:", e);
-		}
-	}
-
+	
 	/**
 	 * Calculate and store different kind of class actvity aggregataion in class_activity CF
 	 * 

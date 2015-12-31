@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
+import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
@@ -1787,19 +1788,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param sessionTime
 	 * @return true/false -- meaning operation success/fail
 	 */
-	public boolean saveStudentLocation(String userUid,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String resourceUid,long sessionTime) {
+	public boolean saveStudentLocation(StudentLocation studentLocation) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDNT_LOCATION.getColumnFamily()))
 			.withCql(INSERT_USER_LOCATION)
 			.asPreparedStatement()
-			.withStringValue(userUid)
-			.withStringValue(classUid)
-			.withStringValue(courseUid)
-			.withStringValue(unitUid)
-			.withStringValue(lessonUid)
-			.withStringValue(collectionUid)
-			.withStringValue(resourceUid)
-			.withLongValue(sessionTime)
+			.withStringValue(studentLocation.getUserUid())
+			.withStringValue(studentLocation.getClassUid())
+			.withStringValue(studentLocation.getCourseUid())
+			.withStringValue(studentLocation.getUnitUid())
+			.withStringValue(studentLocation.getLessonUid())
+			.withStringValue(studentLocation.getCollectionUid())
+			.withStringValue(studentLocation.getResourceUid())
+			.withLongValue(studentLocation.getSessionTime())
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1816,7 +1817,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param leftPeerCount
 	 * @return true/false -- meaning operation success/fail
 	 */
-	public boolean updatePeersCount(String keyName,long activePeerCount,long leftPeerCount){
+	public boolean updatePeersCount(String keyName,String leafgooruOid, long activePeerCount,long leftPeerCount){
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEERS_COUNT.getColumnFamily()))
 			.withCql(UPDATE_PEER_COUNT)	
@@ -1824,6 +1825,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(activePeerCount)
 			.withLongValue(leftPeerCount)
 			.withStringValue(keyName)
+			.withStringValue(leafgooruOid)
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1886,4 +1888,28 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return studentsClassActivity;
 	}
+	public boolean  hasClassActivity(StudentsClassActivity studentsClassActivity) {
+		boolean hasActivity = false;
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(studentsClassActivity.getClassUid())
+			.withStringValue(studentsClassActivity.getCourseUid())
+			.withStringValue(studentsClassActivity.getUnitUid())
+			.withStringValue(studentsClassActivity.getLessonUid())
+			.withStringValue(studentsClassActivity.getCollectionUid())
+			.withStringValue(studentsClassActivity.getUserUid())
+			.execute().getResult().getRows();
+			;
+			System.out.println("Row size : " + result.size());
+			if(result.size() > 0){
+				hasActivity = true;
+			}
+		} catch (ConnectionException e) {
+			logger.error("Error while retreving students class activity" ,e);
+		}
+		return hasActivity;
+	}
+	
 }
