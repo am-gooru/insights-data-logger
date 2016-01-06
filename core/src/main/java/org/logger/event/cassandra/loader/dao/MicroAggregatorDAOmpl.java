@@ -88,121 +88,57 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			StudentLocation studentLocation = new StudentLocation();
 			
 			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
-			String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
-			String contentGooruId = eventMap.get(CONTENT_GOORU_OID) != null ? (String) eventMap.get(CONTENT_GOORU_OID) : "NA";
-			String lessonGooruId = eventMap.get(LESSON_GOORU_OID) != null ? (String) eventMap.get(LESSON_GOORU_OID) : "NA";
-			String unitGooruId = eventMap.get(UNIT_GOORU_OID) != null ? (String) eventMap.get(UNIT_GOORU_OID) : "NA";
-			String courseGooruId = eventMap.get(COURSE_GOORU_OID) != null ? (String) eventMap.get(COURSE_GOORU_OID) : "NA";
-			String classGooruId = eventMap.get(CLASS_GOORU_OID) != null ? (String) eventMap.get(CLASS_GOORU_OID) : "NA";
-			String parentGooruId = eventMap.get(PARENT_GOORU_OID) != null ? (String) eventMap.get(PARENT_GOORU_OID) : "NA";
-			String collectionItemId = eventMap.get(COLLECTION_ITEM_ID) != null ? (String) eventMap.get(COLLECTION_ITEM_ID) : "NA";
-			String sessionId = eventMap.get(SESSION_ID) != null ? (String) eventMap.get(SESSION_ID) : "NA";
-			String eventType = eventMap.get(TYPE) != null ? (String) eventMap.get(TYPE) : "NA";
-			String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
-			String questionType = eventMap.get("questionType") != null ? (String) eventMap.get("questionType") : "NA";
-			String resourceType = eventMap.get("resourceType") != null ? (String) eventMap.get("resourceType") : "NA";
-			String answerObject = eventMap.containsKey(ANSWER_OBECT) ? (String)eventMap.get(ANSWER_OBECT) :"NA";
-			long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
-			int attempts = 0;
-			long score = 0;
-			long reaction = 0;
-			long timespent = ((Number)eventMap.get(TOTALTIMEINMS)).longValue();
-			long views = ((Number)eventMap.get(VIEWS_COUNT)).longValue();
+			
 			long activePeerCount = 0L;
 			long leftPeerCount = 0L;
 			
-			if (QUESTION.equals(setNAIfNull(eventMap, RESOURCE_TYPE)) && (STOP.equals(eventMap.get(TYPE)))) {
-				String answerStatus = null;
-				String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
-				int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
-
-				attempts = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
-				if (attempts != 0) {
-					attempts = attempts - 1;
-				}
-				if (attempStatus.length == 0) {
-					answerStatus = LoaderConstants.SKIPPED.getName();
-				} else if (attempStatus[attempts] == 0) {
-					answerStatus = LoaderConstants.INCORRECT.getName();
-				} else if (attempStatus[attempts] == 1) {
-					score = 1;
-					answerStatus = LoaderConstants.CORRECT.getName();
-				}
-				if (OE.equals(eventMap.get(QUESTION_TYPE))) {
-					if(StringUtils.isNotBlank(answerText)){
-						answerStatus = LoaderConstants.ATTEMPTED.getName();
-					}
-					
-				}
-				logger.info("answerStatus : " + answerStatus);
-				
-			}
+			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, studentLocation);
 			
-			userSessionActivity.setSessionId(setNAIfNull(eventMap, SESSION_ID));
-			userSessionActivity.setGooruOid(setNAIfNull(eventMap, CONTENT_GOORU_OID));
-			userSessionActivity.setCollectionItemId(setNAIfNull(eventMap, COLLECTION_ITEM_ID));
-			userSessionActivity.setAnswerObject(setNAIfNull(eventMap, ANSWER_OBECT));
-			userSessionActivity.setAttempts(attempts);
-			userSessionActivity.setReaction(reaction);
-			userSessionActivity.setResourceType(setNAIfNull(eventMap, RESOURCE_TYPE));
-			userSessionActivity.setResourceFormat(setNAIfNull(eventMap, QUESTION_TYPE));
-			userSessionActivity.setScore(score);
-			userSessionActivity.setTimeSpent(timespent);
-			userSessionActivity.setViews(views);
-			
-			studentsClassActivity.setClassUid(classGooruId);
-			studentsClassActivity.setCourseUid(courseGooruId);
-			studentsClassActivity.setUnitUid(unitGooruId);
-			studentsClassActivity.setLessonUid(lessonGooruId);
-			studentsClassActivity.setCollectionUid(contentGooruId);
-			studentsClassActivity.setUserUid(gooruUUID);
-			studentsClassActivity.setCollectionType(collectionType);
-			studentsClassActivity.setScore(score);
-			studentsClassActivity.setViews(views);
-			studentsClassActivity.setTimeSpent(timespent);
-			
-			studentLocation.setUserUid(gooruUUID);
-			studentLocation.setClassUid(classGooruId);
-			studentLocation.setCourseUid(courseGooruId);
-			studentLocation.setUnitUid(unitGooruId);
-			studentLocation.setLessonUid(lessonGooruId);
-			studentLocation.setCollectionUid(contentGooruId);
-			studentLocation.setResourceUid(contentGooruId);
-			studentLocation.setSessionTime(eventTime);
-			
-			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
-				baseCassandraDao.saveUserSession(sessionId, classGooruId, courseGooruId, unitGooruId, lessonGooruId, contentGooruId, gooruUUID, eventType, eventTime);
-			
-				if(eventType.equalsIgnoreCase(START)){
+			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+				if(userSessionActivity.getEventType().equalsIgnoreCase(START)){
+					baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getEventType(), studentLocation.getSessionTime());
 					activePeerCount = 1;
 					if(baseCassandraDao.hasClassActivity(studentsClassActivity)){
 						leftPeerCount = -1;
 					}
-				}else if (eventType.equalsIgnoreCase(STOP)){
+				}else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
 					activePeerCount = -1;
 					leftPeerCount = 1;
+					long score = baseCassandraDao.getSessionScore(userSessionActivity);
+					userSessionActivity.setScore(score);
+					studentsClassActivity.setScore(score);
 				}
 			}
 			
-			baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
-			
-			baseCassandraDao.saveUserSessionActivity(userSessionActivity);
-			
-			baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
-						
-			baseCassandraDao.saveStudentLocation(studentLocation);
-			
-			baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
-			
-			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(),activePeerCount, leftPeerCount);
-			
-			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(),activePeerCount, leftPeerCount);
-			
-			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(),activePeerCount, leftPeerCount);
-			
-			baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
-			
-			
+			if(eventName.matches(PLAY_EVENTS)){
+				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
+				
+				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+				
+				if(!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null){
+				
+					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
+
+					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
+								
+					baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
+					
+					baseCassandraDao.saveStudentLocation(studentLocation);
+								
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(),activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(),activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(),activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
+					
+				}
+		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+			 baseCassandraDao.updateReaction(userSessionActivity);
+		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+			 
+		 }
 		} catch (Exception e) {
 			logger.error("Exception:", e);
 		}
@@ -1647,7 +1583,93 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			logger.error("Exception:",e);
 		}
 	}
-	
+
+	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, StudentLocation studentLocation){
+		
+		String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
+		String contentGooruId = setNAIfNull(eventMap, CONTENT_GOORU_OID);
+		String lessonGooruId = setNAIfNull(eventMap, LESSON_GOORU_OID);
+		String unitGooruId = setNAIfNull(eventMap, UNIT_GOORU_OID);
+		String courseGooruId = setNAIfNull(eventMap, COURSE_GOORU_OID);
+		String classGooruId = setNAIfNull(eventMap, CLASS_GOORU_OID);
+		String parentGooruId = setNAIfNull(eventMap, PARENT_GOORU_OID);
+		String collectionItemId = setNAIfNull(eventMap, COLLECTION_ITEM_ID);
+		String sessionId = setNAIfNull(eventMap, SESSION_ID);
+		String eventType = setNAIfNull(eventMap, TYPE);
+		String collectionType = eventMap.get(COLLECTION_TYPE).equals(COLLECTION) ? COLLECTION : ASSESSMENT;
+		String questionType = setNAIfNull(eventMap, QUESTION_TYPE);
+		String resourceType = setNAIfNull(eventMap, RESOURCE_TYPE);
+		String answerObject = setNAIfNull(eventMap, ANSWER_OBECT);
+		String answerStatus = "NA";
+		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
+		long score = 0;
+		long reaction = setLongZeroIfNull(eventMap,REACTION_TYPE);
+		long timespent = setLongZeroIfNull(eventMap,TOTALTIMEINMS); 
+		long views = setLongZeroIfNull(eventMap,VIEWS_COUNT);
+		int attempts = 0;
+
+
+		if (QUESTION.equals(resourceType) && (STOP.equals(eventMap.get(TYPE)))) {
+			
+			String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
+			int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
+
+			attempts = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
+			if (attempts != 0) {
+				attempts = attempts - 1;
+			}
+			if (attempStatus.length == 0) {
+				answerStatus = LoaderConstants.SKIPPED.getName();
+			} else if (attempStatus[attempts] == 0) {
+				answerStatus = LoaderConstants.INCORRECT.getName();
+			} else if (attempStatus[attempts] == 1) {
+				score = 1;
+				answerStatus = LoaderConstants.CORRECT.getName();
+			}
+			if (OE.equals(questionType)) {
+				if(StringUtils.isNotBlank(answerText)){
+					answerStatus = LoaderConstants.ATTEMPTED.getName();
+				}
+				
+			}
+			logger.info("answerStatus : " + answerStatus);
+			
+		}
+		
+		userSessionActivity.setSessionId(sessionId);
+		userSessionActivity.setGooruOid(contentGooruId);
+		userSessionActivity.setCollectionItemId(collectionItemId);
+		userSessionActivity.setAnswerObject(answerObject);
+		userSessionActivity.setAttempts(attempts);
+		userSessionActivity.setReaction(reaction);
+		userSessionActivity.setResourceType(resourceType);
+		userSessionActivity.setResourceFormat(questionType);
+		userSessionActivity.setEventType(eventType);
+		userSessionActivity.setAnswerStatus(answerStatus);
+		userSessionActivity.setScore(score);
+		userSessionActivity.setTimeSpent(timespent);
+		userSessionActivity.setViews(views);
+		
+		studentsClassActivity.setClassUid(classGooruId);
+		studentsClassActivity.setCourseUid(courseGooruId);
+		studentsClassActivity.setUnitUid(unitGooruId);
+		studentsClassActivity.setLessonUid(lessonGooruId);
+		studentsClassActivity.setCollectionUid(contentGooruId);
+		studentsClassActivity.setUserUid(gooruUUID);
+		studentsClassActivity.setCollectionType(collectionType);
+		studentsClassActivity.setScore(score);
+		studentsClassActivity.setViews(views);
+		studentsClassActivity.setTimeSpent(timespent);
+		
+		studentLocation.setUserUid(gooruUUID);
+		studentLocation.setClassUid(classGooruId);
+		studentLocation.setCourseUid(courseGooruId);
+		studentLocation.setUnitUid(unitGooruId);
+		studentLocation.setLessonUid(lessonGooruId);
+		studentLocation.setCollectionUid(contentGooruId);
+		studentLocation.setResourceUid(contentGooruId);
+		studentLocation.setSessionTime(eventTime);
+	}
 	private String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
 		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
 			return (String) eventMap.get(fieldName);

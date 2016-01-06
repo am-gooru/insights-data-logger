@@ -70,12 +70,12 @@ CREATE TABLE event_logger_insights.user_sessions (
 	CREATE INDEX user_sessions_unit_uid_idx ON event_logger_insights.user_sessions (unit_uid);
 	
 //This columnfamily contains usage data by session wise
-
 CREATE TABLE event_logger_insights.user_session_activity (
     session_id text,
     gooru_oid text,
     collection_item_id text,
     answer_object text,
+    answer_status text,
     attempts bigint,
     reaction bigint,
     resource_format text,
@@ -99,7 +99,7 @@ CREATE TABLE event_logger_insights.user_session_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-	CREATE INDEX user_session_activity_resource_type_idx ON event_logger_insights.user_session_activity (resource_type);
+CREATE INDEX user_session_activity_resource_type_idx ON event_logger_insights.user_session_activity (resource_type);
 
 //This columnfamily contains usage by standards and learning target wise
 //This will captures data only if student playing a collection or assessment from class
@@ -164,9 +164,11 @@ CREATE TABLE event_logger_insights.student_location (
 //This columnfamily contains no.of active and in active users count
     
 CREATE TABLE event_logger_insights.class_activity_peer_counts (
-    row_key text PRIMARY KEY,
+    row_key text,
+    leaf_gooru_oid text,
     active_peer_count counter,
-    left_peer_count counter
+    left_peer_count counter,
+    PRIMARY KEY(row_key,leaf_gooru_oid)
 ) WITH bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -181,3 +183,28 @@ CREATE TABLE event_logger_insights.class_activity_peer_counts (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
     
+CREATE TABLE event_logger_insights.students_class_activity_v2 (
+    row_key text,
+    leaf_node text,
+    collection_type text,
+    user_uid text,
+    score bigint,
+    time_spent bigint,
+    views bigint,
+    PRIMARY KEY (row_key, leaf_node, collection_type, user_uid)
+) WITH CLUSTERING ORDER BY (leaf_node ASC, collection_type ASC, user_uid ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
+    AND comment = ''
+    AND compaction = {'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99.0PERCENTILE';
+
+

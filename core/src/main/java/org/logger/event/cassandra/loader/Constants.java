@@ -690,7 +690,7 @@ public interface Constants {
 	
 	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 	
-	public static final  String EVENTS_FOR_TIMESPENT_CALCULTION = "collection.play|collection.resource.play|resource.play";
+	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|resource.play";
 	
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 	
@@ -729,7 +729,7 @@ public interface Constants {
 	 */
     String INSERT_USER_SESSION = "INSERT INTO user_sessions(collection_uid,user_uid,session_id,class_uid,course_uid,unit_uid,lesson_uid,event_type,event_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,reaction,resource_format,resource_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?);";	
+	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,reaction,resource_format,resource_type,answer_status,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
 	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?);";
 	
@@ -742,4 +742,12 @@ public interface Constants {
 	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 	
 	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND user_uid = ?;";
+	
+	String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
+	
+	String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,score)VALUES(?,?,?,?);";
+	
+	String SELECT_STUDENTS_CLASS_ACTIVITY_V2 = "SELECT * FROM students_class_activity_v2 WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
+	
+	String INSERT_STUDENTS_CLASS_ACTIVITY_V2 = "INSERT INTO students_class_activity_v2(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
 }

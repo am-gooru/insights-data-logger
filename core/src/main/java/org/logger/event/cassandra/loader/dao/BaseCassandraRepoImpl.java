@@ -1682,6 +1682,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(userSessionActivity.getReaction())
 			.withStringValue(userSessionActivity.getResourceFormat())
 			.withStringValue(userSessionActivity.getResourceType())
+			.withStringValue(userSessionActivity.getAnswerStatus())
 			.withLongValue(userSessionActivity.getScore())
 			.withLongValue(userSessionActivity.getTimeSpent())
 			.withLongValue(userSessionActivity.getViews())
@@ -1864,7 +1865,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
@@ -1888,10 +1889,27 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return studentsClassActivity;
 	}
+	public boolean updateReaction(UserSessionActivity userSessionActivity) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(UPDATE_REACTION)
+			.asPreparedStatement()
+			.withStringValue(userSessionActivity.getSessionId())
+			.withStringValue(userSessionActivity.getGooruOid())
+			.withStringValue(userSessionActivity.getCollectionItemId())
+			.withLongValue(userSessionActivity.getReaction())
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing user sessions activity" ,e);
+			return false;
+		}
+		return true;
+	}
 	public boolean  hasClassActivity(StudentsClassActivity studentsClassActivity) {
 		boolean hasActivity = false;
 		try {
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
@@ -1902,7 +1920,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(studentsClassActivity.getUserUid())
 			.execute().getResult().getRows();
 			;
-			System.out.println("Row size : " + result.size());
 			if(result.size() > 0){
 				hasActivity = true;
 			}
@@ -1911,5 +1928,87 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return hasActivity;
 	}
+
+	public long getSessionScore(UserSessionActivity userSessionActivity) {
+		long score = 0L;
+		long attemptedCount = 0L;
+		long scoreInPercentage = 0L;
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(userSessionActivity.getSessionId())
+			.withStringValue(userSessionActivity.getGooruOid())
+			.withStringValue(userSessionActivity.getCollectionItemId())
+			.execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+					if(userSessionActivity.getGooruOid().equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
+						attemptedCount++;
+						score += columns.getLongValue("score", 0L);
+					}
+				}
+				scoreInPercentage = (100 * score / attemptedCount);
+			}
+		} catch (ConnectionException e) {
+			logger.error("Error while retreving user sessions activity" ,e);
+		}
+		return score;
+	}
+
+	public StudentsClassActivity compareAndMergeStudentsClassActivityV2(StudentsClassActivity studentsClassActivity, String rowKey,String leafNode) {
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily()))
+			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY_V2)
+			.asPreparedStatement()
+			.withStringValue(rowKey)
+			.withStringValue(leafNode)
+			.withStringValue(studentsClassActivity.getCollectionType())
+			.withStringValue(studentsClassActivity.getUserUid())
+			.execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+					studentsClassActivity.setScore(columns.getLongValue("score", 0L));
+					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
+					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue("views", 0L));
+				}
+			}
+		} catch (ConnectionException e) {
+			logger.error("Error while retreving students class activity v2" ,e);
+		}
+		return studentsClassActivity;
+	}
 	
+	public boolean saveStudentsClassActivityV2(StudentsClassActivity studentsClassActivity,String rowKey,String leafNode) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily()))
+			.withCql(INSERT_STUDENTS_CLASS_ACTIVITY_V2)
+			.asPreparedStatement()
+			.withStringValue(rowKey)
+			.withStringValue(leafNode)
+			.withStringValue(studentsClassActivity.getCollectionType())
+			.withStringValue(studentsClassActivity.getUserUid())
+			.withLongValue(studentsClassActivity.getScore())
+			.withLongValue(studentsClassActivity.getTimeSpent())
+			.withLongValue(studentsClassActivity.getViews())
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing class activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	public boolean updateSessionScore(UserSessionActivity userSessionActivity){
+	
+		return false;
+	}
+	public boolean classActivitySessionScore(StudentsClassActivity studentsClassActivity){
+		
+		return false;
+	}
 }

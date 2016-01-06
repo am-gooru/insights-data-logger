@@ -19,6 +19,10 @@ public class UserSessionActivity implements Serializable {
  
 	private String resourceFormat;
 	
+	private String eventType;
+	
+	private String answerStatus;
+	
 	private long views;
 
 	private long timeSpent;
@@ -71,6 +75,14 @@ public class UserSessionActivity implements Serializable {
 		this.resourceFormat = resourceFormat;
 	}
 
+	public String getAnswerStatus() {
+		return answerStatus;
+	}
+
+	public void setAnswerStatus(String answerStatus) {
+		this.answerStatus = answerStatus;
+	}
+
 	public long getViews() {
 		return views;
 	}
@@ -117,6 +129,14 @@ public class UserSessionActivity implements Serializable {
 
 	public void setAnswerObject(String answerObject) {
 		this.answerObject = answerObject;
+	}
+
+	public String getEventType() {
+		return eventType;
+	}
+
+	public void setEventType(String eventType) {
+		this.eventType = eventType;
 	}
 
 }
