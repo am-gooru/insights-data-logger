@@ -2,7 +2,7 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-public class StudentsClassActivity implements Serializable{
+public class StudentsClassActivity implements Serializable,Cloneable {
 
 	/**
 	 * 
@@ -29,6 +29,10 @@ public class StudentsClassActivity implements Serializable{
 
 	private long score;
 
+	public Object clone()throws CloneNotSupportedException{  
+		return super.clone();  	
+	}  
+	
 	public String getClassUid() {
 		return classUid;
 	}

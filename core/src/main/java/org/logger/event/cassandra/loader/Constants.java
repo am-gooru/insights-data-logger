@@ -741,7 +741,7 @@ public interface Constants {
 	
 	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 	
-	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND user_uid = ?;";
+	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND collection_type = ? AND user_uid = ?;";
 	
 	String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
 	
@@ -749,5 +749,8 @@ public interface Constants {
 	
 	String SELECT_STUDENTS_CLASS_ACTIVITY_V2 = "SELECT * FROM students_class_activity_v2 WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
 	
+	String SELECT_ALL_CLASS_ACTIVITY_V2 = "SELECT * FROM students_class_activity_v2 WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
+	
 	String INSERT_STUDENTS_CLASS_ACTIVITY_V2 = "INSERT INTO students_class_activity_v2(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
+	
 }

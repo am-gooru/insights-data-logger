@@ -11,13 +11,13 @@ CREATE TABLE event_logger_insights.students_class_activity (
     unit_uid text,
     lesson_uid text,
     collection_uid text,
-    user_uid text,
     collection_type text,
+    user_uid text,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (class_uid, course_uid, unit_uid, lesson_uid, collection_uid, user_uid)
-) WITH CLUSTERING ORDER BY (course_uid ASC, unit_uid ASC, lesson_uid ASC, collection_uid ASC, user_uid ASC)
+    PRIMARY KEY (class_uid, course_uid, unit_uid, lesson_uid, collection_uid, collection_type, user_uid)
+) WITH CLUSTERING ORDER BY (course_uid ASC, unit_uid ASC, lesson_uid ASC, collection_uid ASC, collection_type ASC, user_uid ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -31,8 +31,6 @@ CREATE TABLE event_logger_insights.students_class_activity (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
-    
-    CREATE INDEX ON event_logger_insights.students_class_activity (collection_type);
     
 // This columnfamily contains session ids if user playing a collection or assessment. 
 // If user playing a collection/assessment from outside class, CUL id will be NA.
@@ -185,14 +183,14 @@ CREATE TABLE event_logger_insights.class_activity_peer_counts (
     
 CREATE TABLE event_logger_insights.students_class_activity_v2 (
     row_key text,
-    leaf_node text,
     collection_type text,
     user_uid text,
+    leaf_node text,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (row_key, leaf_node, collection_type, user_uid)
-) WITH CLUSTERING ORDER BY (leaf_node ASC, collection_type ASC, user_uid ASC)
+    PRIMARY KEY (row_key, collection_type, user_uid, leaf_node)
+) WITH CLUSTERING ORDER BY (collection_type ASC, user_uid ASC, leaf_node ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -206,5 +204,6 @@ CREATE TABLE event_logger_insights.students_class_activity_v2 (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
+
 
 

@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
+import org.ednovo.data.model.ClassActivityV2;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
@@ -85,6 +86,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			UserSessionActivity userSessionActivity = new UserSessionActivity();
 			StudentsClassActivity studentsClassActivity = new StudentsClassActivity(); 
+			ClassActivityV2 aggregatedAssessmentActivity = new ClassActivityV2();
 			StudentLocation studentLocation = new StudentLocation();
 			
 			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
@@ -92,7 +94,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long activePeerCount = 0L;
 			long leftPeerCount = 0L;
 			
-			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, studentLocation);
+			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, aggregatedAssessmentActivity, studentLocation);
 			
 			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
 				if(userSessionActivity.getEventType().equalsIgnoreCase(START)){
@@ -117,11 +119,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				if(!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null){
 				
-					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
-
 					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
 								
 					baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
+					
+					aggregatedAssessmentActivity.setViews(studentsClassActivity.getViews());
+					aggregatedAssessmentActivity.setTimeSpent(studentsClassActivity.getTimeSpent());
+					aggregatedAssessmentActivity.setScore(studentsClassActivity.getScore());
+					
+					baseCassandraDao.saveStudentsClassActivityV2(aggregatedAssessmentActivity);
 					
 					baseCassandraDao.saveStudentLocation(studentLocation);
 								
@@ -133,6 +139,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
 					
+					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
 				}
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 			 baseCassandraDao.updateReaction(userSessionActivity);
@@ -1584,7 +1591,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
-	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, StudentLocation studentLocation){
+	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityV2 aggregatedAssessmentActivity, StudentLocation studentLocation){
 		
 		String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
 		String contentGooruId = setNAIfNull(eventMap, CONTENT_GOORU_OID);
@@ -1661,6 +1668,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		studentsClassActivity.setViews(views);
 		studentsClassActivity.setTimeSpent(timespent);
 		
+		/**
+		 * Assessment/Collection wise
+		 */
+		aggregatedAssessmentActivity.setRowKey(generateColumnKey(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()));
+		aggregatedAssessmentActivity.setLeafNode(studentsClassActivity.getCollectionUid());
+		aggregatedAssessmentActivity.setUserUid(studentsClassActivity.getUserUid());
+		aggregatedAssessmentActivity.setCollectionType(studentsClassActivity.getCollectionType());
+		aggregatedAssessmentActivity.setViews(studentsClassActivity.getViews());
+		aggregatedAssessmentActivity.setTimeSpent(studentsClassActivity.getTimeSpent());
+		aggregatedAssessmentActivity.setScore(studentsClassActivity.getScore());
+		
 		studentLocation.setUserUid(gooruUUID);
 		studentLocation.setClassUid(classGooruId);
 		studentLocation.setCourseUid(courseGooruId);
@@ -1694,5 +1712,4 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 		return 0;
 	}
-	
 }

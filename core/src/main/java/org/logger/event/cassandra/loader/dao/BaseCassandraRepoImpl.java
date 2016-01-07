@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import org.ednovo.data.model.ClassActivityV2;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
@@ -42,6 +43,7 @@ import com.netflix.astyanax.model.CqlResult;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
+import com.netflix.astyanax.query.PreparedCqlQuery;
 import com.netflix.astyanax.retry.ConstantBackoff;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
@@ -1873,6 +1875,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(studentsClassActivity.getUnitUid())
 			.withStringValue(studentsClassActivity.getLessonUid())
 			.withStringValue(studentsClassActivity.getCollectionUid())
+			.withStringValue(studentsClassActivity.getCollectionType())
 			.withStringValue(studentsClassActivity.getUserUid())
 			.execute().getResult().getRows();
 			;
@@ -1917,6 +1920,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(studentsClassActivity.getUnitUid())
 			.withStringValue(studentsClassActivity.getLessonUid())
 			.withStringValue(studentsClassActivity.getCollectionUid())
+			.withStringValue(studentsClassActivity.getCollectionType())
 			.withStringValue(studentsClassActivity.getUserUid())
 			.execute().getResult().getRows();
 			;
@@ -1959,8 +1963,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
 
 	public StudentsClassActivity compareAndMergeStudentsClassActivityV2(StudentsClassActivity studentsClassActivity, String rowKey,String leafNode) {
+		StudentsClassActivity studentsClassActivityDup = null;
 		try {
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily()))
+			studentsClassActivityDup = (StudentsClassActivity)studentsClassActivity.clone();
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY_V2)
 			.asPreparedStatement()
 			.withStringValue(rowKey)
@@ -1970,26 +1976,30 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute().getResult().getRows();
 			;
 			if (result.size() > 0) {
+				long score = 0L; long views = 0L ; long timeSpent = 0L;
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					studentsClassActivity.setScore(columns.getLongValue("score", 0L));
-					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
-					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue("views", 0L));
+					score += columns.getLongValue("score", 0L);
+					timeSpent += columns.getLongValue("time_spent", 0L);
+					views += columns.getLongValue("views", 0L);
 				}
+				studentsClassActivityDup.setScore(score);
+				studentsClassActivityDup.setTimeSpent(timeSpent);
+				studentsClassActivityDup.setViews(views);
 			}
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			logger.error("Error while retreving students class activity v2" ,e);
 		}
-		return studentsClassActivity;
+		return studentsClassActivityDup;
 	}
 	
-	public boolean saveStudentsClassActivityV2(StudentsClassActivity studentsClassActivity,String rowKey,String leafNode) {
+	public boolean saveStudentsClassActivityV2(ClassActivityV2 studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily()))
 			.withCql(INSERT_STUDENTS_CLASS_ACTIVITY_V2)
 			.asPreparedStatement()
-			.withStringValue(rowKey)
-			.withStringValue(leafNode)
+			.withStringValue(studentsClassActivity.getRowKey())
+			.withStringValue(studentsClassActivity.getLeafNode())
 			.withStringValue(studentsClassActivity.getCollectionType())
 			.withStringValue(studentsClassActivity.getUserUid())
 			.withLongValue(studentsClassActivity.getScore())
@@ -2003,6 +2013,35 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return true;
 	}
+	
+	public ClassActivityV2 getStudentsClassActivityV2(String rowKey, String userUid, String collectionType) {
+		ClassActivityV2 classActivityV2 = new ClassActivityV2();
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_V2)
+					.asPreparedStatement().withStringValue(rowKey).withStringValue(collectionType).withStringValue(userUid).execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				long score = 0L;
+				long views = 0L;
+				long timeSpent = 0L;
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+					score += columns.getLongValue("score", 0L);
+					timeSpent += columns.getLongValue("time_spent", 0L);
+					views += columns.getLongValue("views", 0L);
+				}
+				classActivityV2.setCollectionType(collectionType);
+				classActivityV2.setUserUid(userUid);
+				classActivityV2.setScore(score);
+				classActivityV2.setTimeSpent(timeSpent);
+				classActivityV2.setViews(views);
+			}
+		} catch (Exception e) {
+			logger.error("Error while retreving students class activity", e);
+		}
+		return classActivityV2;
+	}
+	
 	public boolean updateSessionScore(UserSessionActivity userSessionActivity){
 	
 		return false;
