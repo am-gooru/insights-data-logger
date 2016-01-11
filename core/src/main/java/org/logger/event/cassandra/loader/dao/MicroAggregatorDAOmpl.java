@@ -1617,7 +1617,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		String answerStatus = "NA";
 		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
 		long score = 0;
-		long reaction = setLongZeroIfNull(eventMap, REACTION_TYPE);
+		long reaction = 0L;
 		long timespent = setLongZeroIfNull(eventMap, TOTALTIMEINMS);
 		long views = setLongZeroIfNull(eventMap, VIEWS_COUNT);
 		int attempts = 0;
