@@ -13,12 +13,16 @@ public class UserSessionActivity implements Serializable {
 	
 	private String gooruOid;
 	
+	private String parentGooruOid;
+	
 	private String collectionItemId;
 	
+	private String collectionType;
+
 	private String resourceType;
- 
-	private String resourceFormat;
-	
+ 	
+	private String questionType;
+ 	
 	private String eventType;
 	
 	private String answerStatus;
@@ -65,14 +69,6 @@ public class UserSessionActivity implements Serializable {
 
 	public void setResourceType(String resourceType) {
 		this.resourceType = resourceType;
-	}
-
-	public String getResourceFormat() {
-		return resourceFormat;
-	}
-
-	public void setResourceFormat(String resourceFormat) {
-		this.resourceFormat = resourceFormat;
 	}
 
 	public String getAnswerStatus() {
@@ -137,6 +133,30 @@ public class UserSessionActivity implements Serializable {
 
 	public void setEventType(String eventType) {
 		this.eventType = eventType;
+	}
+
+	public String getCollectionType() {
+		return collectionType;
+	}
+
+	public void setCollectionType(String collectionType) {
+		this.collectionType = collectionType;
+	}
+
+	public String getQuestionType() {
+		return questionType;
+	}
+
+	public void setQuestionType(String questionType) {
+		this.questionType = questionType;
+	}
+
+	public String getParentGooruOid() {
+		return parentGooruOid;
+	}
+
+	public void setParentGooruOid(String parentGooruOid) {
+		this.parentGooruOid = parentGooruOid;
 	}
 
 }
