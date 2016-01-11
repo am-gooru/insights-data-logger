@@ -1,11 +1,11 @@
 // You can run this command in cql client
 // bin/cqlsh < <file path>/release_3.0_schema.cql 
 
-//DROP TABLE event_logger_insights.students_class_activity;
+//DROP TABLE students_class_activity;
 
 //usage data will be available if user playing a collection or assessment from class
 
-CREATE TABLE event_logger_insights.students_class_activity (
+CREATE TABLE students_class_activity (
     class_uid text,
     course_uid text,
     unit_uid text,
@@ -36,7 +36,7 @@ CREATE TABLE event_logger_insights.students_class_activity (
 // If user playing a collection/assessment from outside class, CUL id will be NA.
 // NULL value columns can not filter.
 
-CREATE TABLE event_logger_insights.user_sessions (
+CREATE TABLE user_sessions (
     collection_uid text,
     user_uid text,
     session_id text,
@@ -62,13 +62,13 @@ CREATE TABLE event_logger_insights.user_sessions (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-	CREATE INDEX user_sessions_class_uid_idx ON event_logger_insights.user_sessions (class_uid);
-	CREATE INDEX user_sessions_course_uid_idx ON event_logger_insights.user_sessions (course_uid);
-	CREATE INDEX user_sessions_lesson_uid_idx ON event_logger_insights.user_sessions (lesson_uid);
-	CREATE INDEX user_sessions_unit_uid_idx ON event_logger_insights.user_sessions (unit_uid);
+	CREATE INDEX user_sessions_class_uid_idx ON user_sessions (class_uid);
+	CREATE INDEX user_sessions_course_uid_idx ON user_sessions (course_uid);
+	CREATE INDEX user_sessions_lesson_uid_idx ON user_sessions (lesson_uid);
+	CREATE INDEX user_sessions_unit_uid_idx ON user_sessions (unit_uid);
 	
 //This columnfamily contains usage data by session wise
-CREATE TABLE event_logger_insights.user_session_activity (
+CREATE TABLE user_session_activity (
     session_id text,
     gooru_oid text,
     collection_item_id text,
@@ -97,12 +97,12 @@ CREATE TABLE event_logger_insights.user_session_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-CREATE INDEX user_session_activity_resource_type_idx ON event_logger_insights.user_session_activity (resource_type);
+CREATE INDEX user_session_activity_resource_type_idx ON user_session_activity (resource_type);
 
 //This columnfamily contains usage by standards and learning target wise
 //This will captures data only if student playing a collection or assessment from class
 	
-CREATE TABLE event_logger_insights.content_taxonomy_activity (
+CREATE TABLE content_taxonomy_activity (
     subject_id text,
     course_id text,
     domain_id text,
@@ -134,7 +134,7 @@ CREATE TABLE event_logger_insights.content_taxonomy_activity (
 
 //This columnfamily contains data where student is working actively
 
-CREATE TABLE event_logger_insights.student_location (
+CREATE TABLE student_location (
     user_uid text,
     class_uid text,
     collection_uid text,
@@ -161,7 +161,7 @@ CREATE TABLE event_logger_insights.student_location (
 
 //This columnfamily contains no.of active and in active users count
     
-CREATE TABLE event_logger_insights.class_activity_peer_counts (
+CREATE TABLE class_activity_peer_counts (
     row_key text,
     leaf_gooru_oid text,
     active_peer_count counter,
@@ -181,7 +181,7 @@ CREATE TABLE event_logger_insights.class_activity_peer_counts (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
     
-CREATE TABLE event_logger_insights.students_class_activity_v2 (
+CREATE TABLE students_class_activity_v2 (
     row_key text,
     collection_type text,
     user_uid text,
@@ -205,5 +205,10 @@ CREATE TABLE event_logger_insights.students_class_activity_v2 (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
+ALTER TABLE user_session_activity ADD collection_type text;
+
+ALTER TABLE user_session_activity ADD question_type text;
+
+ALTER TABLE user_session_activity DROP resource_format;
 
 

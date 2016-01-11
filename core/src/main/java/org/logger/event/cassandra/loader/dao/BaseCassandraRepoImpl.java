@@ -1682,8 +1682,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(userSessionActivity.getAnswerObject())
 			.withLongValue(userSessionActivity.getAttempts())
 			.withLongValue(userSessionActivity.getReaction())
-			.withStringValue(userSessionActivity.getResourceFormat())
+			.withStringValue(userSessionActivity.getCollectionType())
 			.withStringValue(userSessionActivity.getResourceType())
+			.withStringValue(userSessionActivity.getQuestionType())
 			.withStringValue(userSessionActivity.getAnswerStatus())
 			.withLongValue(userSessionActivity.getScore())
 			.withLongValue(userSessionActivity.getTimeSpent())
@@ -1852,7 +1853,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
 					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
-					userSessionActivity.setAttempts((userSessionActivity.getViews())+columns.getLongValue("attempts", 0L));
+					userSessionActivity.setAttempts((userSessionActivity.getAttempts())+columns.getLongValue("attempts", 0L));
 					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
 					userSessionActivity.setScore(columns.getLongValue("score", 0L));
 					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
@@ -1865,6 +1866,40 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return userSessionActivity;
 	}
 	
+	public UserSessionActivity getUserSessionActivity(String sessionId, String gooruOid, String collectionItemId) {
+		UserSessionActivity userSessionActivity = null;
+		try {
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(sessionId)
+			.withStringValue(gooruOid)
+			.withStringValue(collectionItemId)
+			.execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				userSessionActivity = new UserSessionActivity();
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+					userSessionActivity.setGooruOid(columns.getStringValue("gooru_oid", null));
+					userSessionActivity.setCollectionItemId(columns.getStringValue("collection_item_id", null));
+					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
+					userSessionActivity.setAnswerStatus(columns.getStringValue("answer_status", null));
+					userSessionActivity.setResourceType(columns.getStringValue("resource_type", null));
+					userSessionActivity.setCollectionType(columns.getStringValue("collection_type", null));
+					userSessionActivity.setQuestionType(columns.getStringValue("question_type", null));
+					userSessionActivity.setAttempts(columns.getLongValue("attempts", 0L));
+					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
+					userSessionActivity.setScore(columns.getLongValue("score", 0L));
+					userSessionActivity.setTimeSpent(columns.getLongValue("time_spent", 0L));
+					userSessionActivity.setViews(columns.getLongValue("views", 0L));
+				}
+			}
+		} catch (ConnectionException e) {
+			logger.error("Error while retreving user sessions activity" ,e);
+		}
+		return userSessionActivity;
+	}
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
@@ -1935,8 +1970,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	public long getSessionScore(UserSessionActivity userSessionActivity) {
 		long score = 0L;
-		long attemptedCount = 0L;
-		long scoreInPercentage = 0L;
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_USER_SESSION_ACTIVITY)
@@ -1950,11 +1983,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
 					if(userSessionActivity.getGooruOid().equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
-						attemptedCount++;
 						score += columns.getLongValue("score", 0L);
 					}
 				}
-				scoreInPercentage = (100 * score / attemptedCount);
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
@@ -2040,14 +2071,5 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			logger.error("Error while retreving students class activity", e);
 		}
 		return classActivityV2;
-	}
-	
-	public boolean updateSessionScore(UserSessionActivity userSessionActivity){
-	
-		return false;
-	}
-	public boolean classActivitySessionScore(StudentsClassActivity studentsClassActivity){
-		
-		return false;
 	}
 }

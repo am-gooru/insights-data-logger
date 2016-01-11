@@ -46,6 +46,7 @@ import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
@@ -89,14 +90,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			ClassActivityV2 aggregatedAssessmentActivity = new ClassActivityV2();
 			StudentLocation studentLocation = new StudentLocation();
 			
-			String eventName = eventMap.containsKey(EVENT_NAME) ? (String) eventMap.get(EVENT_NAME) : null;
+			String eventName = setNAIfNull(eventMap, EVENT_NAME);
 			
 			long activePeerCount = 0L;
 			long leftPeerCount = 0L;
 			
 			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, aggregatedAssessmentActivity, studentLocation);
 			
-			if(eventName != null && eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){			
+			
+		if(eventName.matches(PLAY_EVENTS)){
+				
+				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
+				
+				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+
 				if(userSessionActivity.getEventType().equalsIgnoreCase(START)){
 					baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getEventType(), studentLocation.getSessionTime());
 					activePeerCount = 1;
@@ -106,18 +113,25 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
 					activePeerCount = -1;
 					leftPeerCount = 1;
-					long score = baseCassandraDao.getSessionScore(userSessionActivity);
-					userSessionActivity.setScore(score);
-					studentsClassActivity.setScore(score);
 				}
-			}
-			
-			if(eventName.matches(PLAY_EVENTS)){
-				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 				
-				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+				baseCassandraDao.saveStudentLocation(studentLocation);
 				
-				if(!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null){
+				baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(),activePeerCount, leftPeerCount);
+				
+				baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(),activePeerCount, leftPeerCount);
+				
+				baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(),activePeerCount, leftPeerCount);
+				
+				baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
+				
+				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
+					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
+					baseCassandraDao.saveUserSessionActivity(userCollectionData);	
+					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
+				}
+				
+				if(studentsClassActivity != null){
 				
 					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
 								
@@ -129,21 +143,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					baseCassandraDao.saveStudentsClassActivityV2(aggregatedAssessmentActivity);
 					
-					baseCassandraDao.saveStudentLocation(studentLocation);
-								
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(),activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(),activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(),activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),activePeerCount, leftPeerCount);
-					
 					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
 				}
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+			 userSessionActivity.setReaction(DataUtils.formatReactionString((String) eventMap.get(REACTION_TYPE)));
 			 baseCassandraDao.updateReaction(userSessionActivity);
-		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
+		 }else{
 			 
 		 }
 		} catch (Exception e) {
@@ -1591,9 +1596,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
-	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityV2 aggregatedAssessmentActivity, StudentLocation studentLocation){
-		
-		String gooruUUID = eventMap.containsKey(GOORUID) ? (String) eventMap.get(GOORUID) : null;
+	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityV2 aggregatedAssessmentActivity,
+			StudentLocation studentLocation) {
+
+		String gooruUUID = setNullIfEmpty(eventMap, GOORUID);
+		String eventName = setNullIfEmpty(eventMap, EVENT_NAME);
 		String contentGooruId = setNAIfNull(eventMap, CONTENT_GOORU_OID);
 		String lessonGooruId = setNAIfNull(eventMap, LESSON_GOORU_OID);
 		String unitGooruId = setNAIfNull(eventMap, UNIT_GOORU_OID);
@@ -1610,15 +1617,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		String answerStatus = "NA";
 		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
 		long score = 0;
-		long reaction = setLongZeroIfNull(eventMap,REACTION_TYPE);
-		long timespent = setLongZeroIfNull(eventMap,TOTALTIMEINMS); 
-		long views = setLongZeroIfNull(eventMap,VIEWS_COUNT);
+		long reaction = setLongZeroIfNull(eventMap, REACTION_TYPE);
+		long timespent = setLongZeroIfNull(eventMap, TOTALTIMEINMS);
+		long views = setLongZeroIfNull(eventMap, VIEWS_COUNT);
 		int attempts = 0;
 
+		if (QUESTION.equals(resourceType) && (STOP.equals(eventType))) {
 
-		if (QUESTION.equals(resourceType) && (STOP.equals(eventMap.get(TYPE)))) {
-			
-			String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
 			int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
 
 			attempts = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
@@ -1634,51 +1639,65 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				answerStatus = LoaderConstants.CORRECT.getName();
 			}
 			if (OE.equals(questionType)) {
-				if(StringUtils.isNotBlank(answerText)){
-					answerStatus = LoaderConstants.ATTEMPTED.getName();
+				try {
+					JSONObject answerObj = new JSONObject(answerObject);
+					if (StringUtils.isNotBlank(answerObj.getString(TEXT))) {
+						answerStatus = LoaderConstants.ATTEMPTED.getName();
+					}
+				} catch (Exception e) {
+					logger.error("Exception", e);
 				}
-				
 			}
 			logger.info("answerStatus : " + answerStatus);
-			
+
 		}
-		
+
 		userSessionActivity.setSessionId(sessionId);
 		userSessionActivity.setGooruOid(contentGooruId);
+		userSessionActivity.setParentGooruOid(parentGooruId);
 		userSessionActivity.setCollectionItemId(collectionItemId);
 		userSessionActivity.setAnswerObject(answerObject);
 		userSessionActivity.setAttempts(attempts);
 		userSessionActivity.setReaction(reaction);
+		userSessionActivity.setCollectionType(collectionType);
 		userSessionActivity.setResourceType(resourceType);
-		userSessionActivity.setResourceFormat(questionType);
+		userSessionActivity.setQuestionType(questionType);
 		userSessionActivity.setEventType(eventType);
 		userSessionActivity.setAnswerStatus(answerStatus);
-		userSessionActivity.setScore(score);
 		userSessionActivity.setTimeSpent(timespent);
 		userSessionActivity.setViews(views);
-		
+		if ((collectionType.equalsIgnoreCase(ASSESSMENT) || (collectionType.equalsIgnoreCase(COLLECTION) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName))) && STOP.equals(eventType)) {
+			score = baseCassandraDao.getSessionScore(userSessionActivity);
+		}
+		userSessionActivity.setScore(score);
+
 		studentsClassActivity.setClassUid(classGooruId);
 		studentsClassActivity.setCourseUid(courseGooruId);
 		studentsClassActivity.setUnitUid(unitGooruId);
 		studentsClassActivity.setLessonUid(lessonGooruId);
-		studentsClassActivity.setCollectionUid(contentGooruId);
+		if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+			studentsClassActivity.setCollectionUid(parentGooruId);
+		} else {
+			studentsClassActivity.setCollectionUid(contentGooruId);
+		}
 		studentsClassActivity.setUserUid(gooruUUID);
 		studentsClassActivity.setCollectionType(collectionType);
 		studentsClassActivity.setScore(score);
 		studentsClassActivity.setViews(views);
 		studentsClassActivity.setTimeSpent(timespent);
-		
+
 		/**
 		 * Assessment/Collection wise
 		 */
-		aggregatedAssessmentActivity.setRowKey(generateColumnKey(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()));
+		aggregatedAssessmentActivity.setRowKey(generateColumnKey(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+				studentsClassActivity.getLessonUid()));
 		aggregatedAssessmentActivity.setLeafNode(studentsClassActivity.getCollectionUid());
 		aggregatedAssessmentActivity.setUserUid(studentsClassActivity.getUserUid());
 		aggregatedAssessmentActivity.setCollectionType(studentsClassActivity.getCollectionType());
 		aggregatedAssessmentActivity.setViews(studentsClassActivity.getViews());
 		aggregatedAssessmentActivity.setTimeSpent(studentsClassActivity.getTimeSpent());
 		aggregatedAssessmentActivity.setScore(studentsClassActivity.getScore());
-		
+
 		studentLocation.setUserUid(gooruUUID);
 		studentLocation.setClassUid(classGooruId);
 		studentLocation.setCourseUid(courseGooruId);
@@ -1689,13 +1708,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		studentLocation.setSessionTime(eventTime);
 	}
 	private String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
 			return (String) eventMap.get(fieldName);
 		}
 		return NA;
 	}
 	private String setNullIfEmpty(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
 			return (String) eventMap.get(fieldName);
 		}
 		return null;
@@ -1705,11 +1724,5 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			return ((Number) eventMap.get(fieldName)).longValue();
 		}
 		return 0L;
-	}
-	private int setIntZeroIfNull(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
-			return ((Number) eventMap.get(fieldName)).intValue();
-		}
-		return 0;
 	}
 }

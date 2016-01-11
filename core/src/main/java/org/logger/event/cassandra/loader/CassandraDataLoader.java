@@ -149,8 +149,8 @@ public class CassandraDataLoader implements Constants {
 		this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
-		/*indexer = new ELSIndexerImpl(getConnectionProvider());
-		ltiServiceHandler = new LTIServiceHandler(baseDao);*/
+		indexer = new ELSIndexerImpl(getConnectionProvider());
+		ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
@@ -311,7 +311,6 @@ public class CassandraDataLoader implements Constants {
 		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
 		eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
-			logger.info("Field : {}" ,event.getFields());
 			kafkaLogWriter.sendEventLog(event.getFields());
 
 		}
@@ -319,10 +318,11 @@ public class CassandraDataLoader implements Constants {
 		/**
 		 * Calculate timespent in server side if more than two hours
 		 */
-		if (STOP.equals(eventMap.get(TYPE)) && eventName.matches(PLAY_EVENTS)) {
-			calculateTimespent(eventMap, event);
+		if (eventName.matches(PLAY_EVENTS)) {
+			calculateTimespentAndViews(eventMap, event);
 		}
 
+		logger.info("Field : {}" ,event.getFields());
 		// TODO : This should be reject at validation stage.
 		String apiKey = event.getApiKey() != null ? event.getApiKey() : DEFAULT_API_KEY;
 		Map<String, Object> records = new HashMap<String, Object>();
@@ -396,39 +396,32 @@ public class CassandraDataLoader implements Constants {
 	 * @throws ConnectionException
 	 *             If the host is unavailable
 	 */
-	private void calculateTimespent(Map<String, Object> eventMap, Event event) {
+	private void calculateTimespentAndViews(Map<String, Object> eventMap, Event event) {
 		try {
-			if (((Number) eventMap.get(TOTALTIMEINMS)).longValue() > 7200000) {
-				logger.info("Timespent before calculation : {}", eventMap.get(TOTALTIMEINMS));
-				Long timeInMillisecs = 0L;
-				Long endTime = event.getEndTime();
-				Long startTime = event.getStartTime();
-				if (endTime != null && startTime != null && startTime != 0L) {
-					timeInMillisecs = endTime - startTime;
-				} else {
-					ColumnList<String> existingRecord = baseDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), event.getEventId(), 0);
-					if (existingRecord != null && !existingRecord.isEmpty()) {
-						startTime = existingRecord.getLongValue(_START_TIME, null);
-						if (STOP.equalsIgnoreCase(existingRecord.getStringValue(_EVENT_TYPE, null))) {
-							endTime = existingRecord.getLongValue(_END_TIME, null);
-						} else if ((endTime == null || endTime == 0L)) {
-							endTime = System.currentTimeMillis();
-						}
-					}
-					timeInMillisecs = endTime - startTime;
-				}
-				/**
-				 * default time spent as 2 hour
-				 */
-				timeInMillisecs = timeInMillisecs > 7200000 ? 7200000 : timeInMillisecs;
-				JSONObject eventMetrics = new JSONObject(event.getMetrics());
-				eventMetrics.put(TOTALTIMEINMS, timeInMillisecs);
-				event.setMetrics(eventMetrics.toString());
-				logger.info("Timespent after calculation : {}", timeInMillisecs);
-				eventMap.put(TOTALTIMEINMS, timeInMillisecs);
+			long views = 1L;
+			long timeSpent = (event.getEndTime() - event.getStartTime());
+			String collectionType = eventMap.containsKey(COLLECTION_TYPE) ? (String)eventMap.get(COLLECTION_TYPE) : null;
+			String eventType = eventMap.containsKey(TYPE) ? (String)eventMap.get(TYPE) : null;
+			if((START.equals(eventType) && ASSESSMENT.equalsIgnoreCase(collectionType)) || (STOP.equals(eventType) && !ASSESSMENT.equalsIgnoreCase(collectionType))){
+				views = 0L;
 			}
+			
+			if(timeSpent > 7200000 || timeSpent < 0){
+				timeSpent = 7200000;
+			}
+			JSONObject eventMetrics = new JSONObject(event.getMetrics());
+			eventMetrics.put(TOTALTIMEINMS, timeSpent);
+			eventMetrics.put(VIEWS_COUNT, views);
+			event.setMetrics(eventMetrics.toString());
+			
+			JSONObject eventFields = new JSONObject(event.getFields());
+			eventFields.put(METRICS, eventMetrics.toString());
+			event.setFields(eventFields.toString());
+			
+			eventMap.put(VIEWS_COUNT, views);
+			eventMap.put(TOTALTIMEINMS, timeSpent);
 		} catch (Exception e) {
-			logger.error("Exeption while calculting timespent:", e);
+			logger.error("Exeption while calculting timespent & views:", e);
 		}
 	}
 	
