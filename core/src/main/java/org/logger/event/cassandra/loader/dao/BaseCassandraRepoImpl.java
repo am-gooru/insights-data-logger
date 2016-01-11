@@ -1886,6 +1886,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
 					userSessionActivity.setAnswerStatus(columns.getStringValue("answer_status", null));
 					userSessionActivity.setResourceType(columns.getStringValue("resource_type", null));
+					userSessionActivity.setCollectionType(columns.getStringValue("collection_type", null));
+					userSessionActivity.setQuestionType(columns.getStringValue("question_type", null));
 					userSessionActivity.setAttempts(columns.getLongValue("attempts", 0L));
 					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
 					userSessionActivity.setScore(columns.getLongValue("score", 0L));
