@@ -164,10 +164,12 @@ CREATE TABLE student_location (
 CREATE TABLE class_activity_peer_counts (
     row_key text,
     leaf_gooru_oid text,
+    collection_type text,
     active_peer_count counter,
     left_peer_count counter,
-    PRIMARY KEY(row_key,leaf_gooru_oid)
-) WITH bloom_filter_fp_chance = 0.01
+    PRIMARY KEY (row_key, leaf_gooru_oid,collection_type)
+) WITH CLUSTERING ORDER BY (leaf_gooru_oid ASC)
+    AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
     AND compaction = {'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32'}
@@ -180,7 +182,7 @@ CREATE TABLE class_activity_peer_counts (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
-    
+        
 CREATE TABLE students_class_activity_v2 (
     row_key text,
     collection_type text,
@@ -213,3 +215,4 @@ ALTER TABLE user_session_activity DROP resource_format;
 
 ALTER TABLE student_location ADD collection_type text;
 
+ALTER TABLE class_activity_peer_counts ADD collection_type text;
