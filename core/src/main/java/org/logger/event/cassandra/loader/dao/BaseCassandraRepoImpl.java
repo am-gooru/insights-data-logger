@@ -28,6 +28,7 @@ import org.ednovo.data.model.UserSessionActivity;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1968,23 +1969,31 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return hasActivity;
 	}
 
-	public long getSessionScore(UserSessionActivity userSessionActivity) {
+	public long getSessionScore(UserSessionActivity userSessionActivity, String eventName) {
 		long score = 0L;
 		try {
+			String gooruOid = "";
+			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+				gooruOid = userSessionActivity.getGooruOid();
+			}else if (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
+				gooruOid = userSessionActivity.getGooruOid();
+			}			
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_USER_SESSION_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
-			.withStringValue(userSessionActivity.getGooruOid())
+			.withStringValue(gooruOid)
 			.withStringValue(userSessionActivity.getCollectionItemId())
 			.execute().getResult().getRows();
 			;
+			logger.info("session : "+ userSessionActivity.getSessionId());
+			logger.info("gooruOid : "+ userSessionActivity.getGooruOid());
+			logger.info("ItemId : "+ userSessionActivity.getCollectionItemId());
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					if(userSessionActivity.getGooruOid().equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
+					logger.info("score : " + columns.getLongValue("score", 0L));
 						score += columns.getLongValue("score", 0L);
-					}
 				}
 			}
 		} catch (ConnectionException e) {
