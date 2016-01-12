@@ -21,6 +21,8 @@ public class StudentLocation implements Serializable {
 	
 	private String collectionUid;
 	
+	private String collectionType;
+	
 	private String resourceUid;
 	
 	private long sessionTime;
@@ -87,6 +89,14 @@ public class StudentLocation implements Serializable {
 
 	public void setSessionTime(long sessionTime) {
 		this.sessionTime = sessionTime;
+	}
+
+	public String getCollectionType() {
+		return collectionType;
+	}
+
+	public void setCollectionType(String collectionType) {
+		this.collectionType = collectionType;
 	}
 
 }
