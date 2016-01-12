@@ -1634,9 +1634,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				answerStatus = LoaderConstants.SKIPPED.getName();
 			} else if (attempStatus[attempts] == 0) {
 				answerStatus = LoaderConstants.INCORRECT.getName();
-				score = 1;
+				score = 0;
 			} else if (attempStatus[attempts] == 1) {
 				answerStatus = LoaderConstants.CORRECT.getName();
+				score = 1;
 			}
 			if (OE.equals(questionType)) {
 				try {

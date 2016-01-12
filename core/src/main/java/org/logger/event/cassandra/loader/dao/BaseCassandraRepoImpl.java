@@ -1803,6 +1803,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(studentLocation.getUnitUid())
 			.withStringValue(studentLocation.getLessonUid())
 			.withStringValue(studentLocation.getCollectionUid())
+			.withStringValue(studentLocation.getCollectionType())
 			.withStringValue(studentLocation.getResourceUid())
 			.withLongValue(studentLocation.getSessionTime())
 			.execute()
@@ -1852,10 +1853,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
 					userSessionActivity.setAttempts((userSessionActivity.getAttempts())+columns.getLongValue("attempts", 0L));
-					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
-					userSessionActivity.setScore(columns.getLongValue("score", 0L));
+					userSessionActivity.setScore(userSessionActivity.getScore());
 					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
 					userSessionActivity.setViews((userSessionActivity.getViews())+columns.getLongValue("views", 0L));
 				}
