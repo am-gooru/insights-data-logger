@@ -211,4 +211,5 @@ ALTER TABLE user_session_activity ADD question_type text;
 
 ALTER TABLE user_session_activity DROP resource_format;
 
+ALTER TABLE student_location ADD collection_type text;
 

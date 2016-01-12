@@ -1881,6 +1881,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				userSessionActivity = new UserSessionActivity();
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
+					userSessionActivity.setSessionId(columns.getStringValue("session_id", null));
 					userSessionActivity.setGooruOid(columns.getStringValue("gooru_oid", null));
 					userSessionActivity.setCollectionItemId(columns.getStringValue("collection_item_id", null));
 					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
