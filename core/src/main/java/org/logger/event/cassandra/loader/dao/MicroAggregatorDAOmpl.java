@@ -1615,6 +1615,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		String resourceType = setNAIfNull(eventMap, RESOURCE_TYPE);
 		String answerObject = setNAIfNull(eventMap, ANSWER_OBECT);
 		String answerStatus = "NA";
+		long totalNoOfQuestions = setLongZeroIfNull(eventMap, TOTAL_QUESTIONS_COUNT);
 		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
 		long score = 0;
 		long reaction = 0L;
@@ -1668,7 +1669,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setTimeSpent(timespent);
 		userSessionActivity.setViews(views);
 		if (((collectionType.equalsIgnoreCase(ASSESSMENT) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) || (collectionType.equalsIgnoreCase(COLLECTION) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName))) && STOP.equals(eventType)) {
-			score = baseCassandraDao.getSessionScore(userSessionActivity);
+			score = (baseCassandraDao.getSessionScore(userSessionActivity)/totalNoOfQuestions);
 		}
 		userSessionActivity.setScore(score);
 
