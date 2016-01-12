@@ -1976,7 +1976,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
 				gooruOid = userSessionActivity.getGooruOid();
 			}else if (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
-				gooruOid = userSessionActivity.getGooruOid();
+				gooruOid = userSessionActivity.getParentGooruOid();
 			}			
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_USER_SESSION_ACTIVITY)
@@ -1992,9 +1992,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					logger.info("score : " + columns.getLongValue("score", 0L));
-						score += columns.getLongValue("score", 0L);
+						if(!gooruOid.equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
+							logger.info("score : " + columns.getLongValue("score", 0L));
+							score += columns.getLongValue("score", 0L);
+						}
 				}
+				score = (score/(result.size() - 1));
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);

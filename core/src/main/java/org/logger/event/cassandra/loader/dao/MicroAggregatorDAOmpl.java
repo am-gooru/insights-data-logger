@@ -1662,14 +1662,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setAttempts(attempts);
 		userSessionActivity.setReaction(reaction);
 		userSessionActivity.setCollectionType(collectionType);
-		userSessionActivity.setResourceType(resourceType);
+		if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+			userSessionActivity.setResourceType(collectionType);
+		}else{
+			userSessionActivity.setResourceType(resourceType);
+		}
 		userSessionActivity.setQuestionType(questionType);
 		userSessionActivity.setEventType(eventType);
 		userSessionActivity.setAnswerStatus(answerStatus);
 		userSessionActivity.setTimeSpent(timespent);
 		userSessionActivity.setViews(views);
 		if (((collectionType.equalsIgnoreCase(ASSESSMENT) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) || (collectionType.equalsIgnoreCase(COLLECTION) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName))) && STOP.equals(eventType)) {
-			score = (baseCassandraDao.getSessionScore(userSessionActivity,eventName)/totalNoOfQuestions);
+			score = baseCassandraDao.getSessionScore(userSessionActivity,eventName);
 		}
 		userSessionActivity.setScore(score);
 
