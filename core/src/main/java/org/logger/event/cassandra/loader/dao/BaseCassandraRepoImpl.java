@@ -1822,7 +1822,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param leftPeerCount
 	 * @return true/false -- meaning operation success/fail
 	 */
-	public boolean updatePeersCount(String keyName,String leafgooruOid, long activePeerCount,long leftPeerCount){
+	public boolean updatePeersCount(String keyName,String leafgooruOid, String collectionType, long activePeerCount,long leftPeerCount){
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEERS_COUNT.getColumnFamily()))
 			.withCql(UPDATE_PEER_COUNT)	
@@ -1831,6 +1831,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(leftPeerCount)
 			.withStringValue(keyName)
 			.withStringValue(leafgooruOid)
+			.withStringValue(collectionType)
 			.execute()
 			;
 		} catch (ConnectionException e) {
