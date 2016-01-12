@@ -1997,7 +1997,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 							score += columns.getLongValue("score", 0L);
 						}
 				}
-				score = (score/(result.size() - 1));
+				score = (score/result.size());
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
