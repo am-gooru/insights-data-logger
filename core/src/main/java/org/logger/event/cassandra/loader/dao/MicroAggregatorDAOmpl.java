@@ -97,7 +97,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long leftPeerCount = 0L;
 			
 			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, aggregatedAssessmentActivity, studentLocation);
-			
+			userAllSessionActivity = (UserSessionActivity) userSessionActivity.clone();
+			userAllSessionActivity.setSessionId(AS);
 			
 		if(eventName.matches(PLAY_EVENTS)){
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
@@ -105,9 +106,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
-				
-				userAllSessionActivity = (UserSessionActivity) userSessionActivity.clone();
-				userAllSessionActivity.setSessionId(AS);
+
 				baseCassandraDao.compareAndMergeUserSessionActivity(userAllSessionActivity);
 				
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
