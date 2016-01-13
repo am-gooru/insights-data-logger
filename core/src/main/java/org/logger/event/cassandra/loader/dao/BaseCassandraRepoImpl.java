@@ -1984,18 +1984,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(userSessionActivity.getSessionId())
 			.execute().getResult().getRows();
 			;
-			logger.info("session : "+ userSessionActivity.getSessionId());
-			logger.info("gooruOid : "+ userSessionActivity.getGooruOid());
-			logger.info("ItemId : "+ userSessionActivity.getCollectionItemId());
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
 						if(!gooruOid.equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
-							logger.info("score : " + columns.getLongValue("score", 0L));
 							score += columns.getLongValue("score", 0L);
 						}
 				}
-				score = (score/result.size());
+				score = (score/(result.size()-1));
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
