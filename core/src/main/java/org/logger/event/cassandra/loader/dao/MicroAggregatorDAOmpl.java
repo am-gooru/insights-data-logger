@@ -104,15 +104,19 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
 
-				if(userSessionActivity.getEventType().equalsIgnoreCase(START)){
-					baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getEventType(), studentLocation.getSessionTime());
-					activePeerCount = 1;
-					if(baseCassandraDao.hasClassActivity(studentsClassActivity)){
-						leftPeerCount = -1;
+				if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
+					if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
+						baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
+								studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(),
+								userSessionActivity.getEventType(), studentLocation.getSessionTime());
+						activePeerCount = 1;
+						if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
+							leftPeerCount = -1;
+						}
+					} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
+						activePeerCount = -1;
+						leftPeerCount = 1;
 					}
-				}else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
-					activePeerCount = -1;
-					leftPeerCount = 1;
 				}
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){

@@ -402,7 +402,7 @@ public class CassandraDataLoader implements Constants {
 			long timeSpent = (event.getEndTime() - event.getStartTime());
 			String collectionType = eventMap.containsKey(COLLECTION_TYPE) ? (String)eventMap.get(COLLECTION_TYPE) : null;
 			String eventType = eventMap.containsKey(TYPE) ? (String)eventMap.get(TYPE) : null;
-			if((START.equals(eventType) && ASSESSMENT.equalsIgnoreCase(collectionType))){
+			if((START.equals(eventType) && ASSESSMENT.equalsIgnoreCase(collectionType)) || (STOP.equals(eventType) && COLLECTION.equalsIgnoreCase(collectionType))){
 				views = 0L;
 			}
 			
