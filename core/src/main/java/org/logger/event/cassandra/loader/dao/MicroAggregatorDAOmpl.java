@@ -90,6 +90,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			ClassActivityV2 aggregatedAssessmentActivity = new ClassActivityV2();
 			StudentLocation studentLocation = new StudentLocation();
 			
+			UserSessionActivity userAllSessionActivity = null;
+			UserSessionActivity userAllSessionCollectionActivity = null;
+			
 			String eventName = setNAIfNull(eventMap, EVENT_NAME);
 			
 			long activePeerCount = 0L;
@@ -99,11 +102,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			
 			
 		if(eventName.matches(PLAY_EVENTS)){
+				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+					baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
+				}
 				
-				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
-				
+				userAllSessionActivity = userSessionActivity;
+				userAllSessionActivity.setSessionId(AS);
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
-
+				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+				
 				if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
 					if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
 						baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
@@ -121,6 +128,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
 					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
+					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);	
 					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
 				}
