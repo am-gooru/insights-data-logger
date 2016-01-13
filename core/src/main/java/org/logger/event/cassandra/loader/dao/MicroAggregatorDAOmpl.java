@@ -1619,7 +1619,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long score = 0;
 		long timespent = setLongZeroIfNull(eventMap, TOTALTIMEINMS);
 		long views = setLongZeroIfNull(eventMap, VIEWS_COUNT);
-		int attempts = 0;
+		int attempts = setIntegerZeroIfNull(eventMap, ATTEMPT_COUNT);
 
 		if (QUESTION.equals(resourceType) && (STOP.equals(eventType))) {
 
@@ -1732,5 +1732,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			return ((Number) eventMap.get(fieldName)).longValue();
 		}
 		return 0L;
+	}
+	private int setIntegerZeroIfNull(Map<String, Object> eventMap,String fieldName) {
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
+			return ((Number) eventMap.get(fieldName)).intValue();
+		}
+		return 0;
 	}
 }
