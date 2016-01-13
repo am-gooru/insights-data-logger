@@ -108,8 +108,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				userAllSessionActivity = userSessionActivity;
 				userAllSessionActivity.setSessionId(AS);
+				
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
-				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				
 				if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
 					if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
