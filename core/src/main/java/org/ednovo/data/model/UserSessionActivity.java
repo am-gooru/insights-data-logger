@@ -2,7 +2,7 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-public class UserSessionActivity implements Serializable {
+public class UserSessionActivity implements Serializable, Cloneable {
 
 	/**
 	 * 
@@ -39,6 +39,10 @@ public class UserSessionActivity implements Serializable {
 	
 	private String answerObject;
 
+	public Object clone()throws CloneNotSupportedException{  
+		return super.clone();  	
+	}  
+	
 	public String getSessionId() {
 		return sessionId;
 	}
