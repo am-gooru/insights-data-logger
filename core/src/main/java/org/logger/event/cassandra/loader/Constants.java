@@ -741,6 +741,8 @@ public interface Constants {
 	
 	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 	
+	String SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = "SELECT * FROM user_session_activity WHERE session_id = ?;";
+	
 	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND collection_type = ? AND user_uid = ?;";
 	
 	String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";

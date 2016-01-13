@@ -1979,11 +1979,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				gooruOid = userSessionActivity.getParentGooruOid();
 			}			
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.withCql(SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
-			.withStringValue(gooruOid)
-			.withStringValue(userSessionActivity.getCollectionItemId())
 			.execute().getResult().getRows();
 			;
 			logger.info("session : "+ userSessionActivity.getSessionId());
