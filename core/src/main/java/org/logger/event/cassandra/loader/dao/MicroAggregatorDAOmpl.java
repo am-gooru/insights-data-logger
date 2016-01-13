@@ -88,10 +88,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			UserSessionActivity userSessionActivity = new UserSessionActivity();
 			StudentsClassActivity studentsClassActivity = new StudentsClassActivity(); 
 			ClassActivityV2 aggregatedAssessmentActivity = new ClassActivityV2();
-			StudentLocation studentLocation = new StudentLocation();
-			
+			StudentLocation studentLocation = new StudentLocation();			
 			UserSessionActivity userAllSessionActivity = null;
-			UserSessionActivity userAllSessionCollectionActivity = null;
 			
 			String eventName = setNAIfNull(eventMap, EVENT_NAME);
 			
@@ -102,14 +100,16 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			
 			
 		if(eventName.matches(PLAY_EVENTS)){
-				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
 					baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 				}
 				
-				userAllSessionActivity = userSessionActivity;
-				userAllSessionActivity.setSessionId(AS);
-				
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+				
+				userAllSessionActivity = (UserSessionActivity) userSessionActivity.clone();
+				userAllSessionActivity.setSessionId(AS);
+				baseCassandraDao.compareAndMergeUserSessionActivity(userAllSessionActivity);
+				
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				
 				if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
@@ -129,7 +129,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
 					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
-					userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
+					UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
 					
 					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
 					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
@@ -165,7 +165,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
 				}
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
-			 userSessionActivity.setReaction(DataUtils.formatReactionString((String) eventMap.get(REACTION_TYPE)));
+			 long reaction = DataUtils.formatReactionString((String) eventMap.get(REACTION_TYPE));
+			 userSessionActivity.setReaction(reaction);
+			 userAllSessionActivity.setReaction(reaction);
+			 baseCassandraDao.updateReaction(userAllSessionActivity);
 			 baseCassandraDao.updateReaction(userSessionActivity);
 		 }else{
 			 
