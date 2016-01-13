@@ -1682,7 +1682,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(userSessionActivity.getCollectionItemId())
 			.withStringValue(userSessionActivity.getAnswerObject())
 			.withLongValue(userSessionActivity.getAttempts())
-			.withLongValue(userSessionActivity.getReaction())
 			.withStringValue(userSessionActivity.getCollectionType())
 			.withStringValue(userSessionActivity.getResourceType())
 			.withStringValue(userSessionActivity.getQuestionType())

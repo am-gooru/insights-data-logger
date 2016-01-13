@@ -729,7 +729,7 @@ public interface Constants {
 	 */
     String INSERT_USER_SESSION = "INSERT INTO user_sessions(collection_uid,user_uid,session_id,class_uid,course_uid,unit_uid,lesson_uid,event_type,event_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,reaction,collection_type,resource_type,question_type,answer_status,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
 	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?);";
 	
