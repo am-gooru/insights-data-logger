@@ -116,7 +116,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
-					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivityBySessionId(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
+					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);	
 					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
 				}
