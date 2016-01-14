@@ -1919,7 +1919,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					studentsClassActivity.setScore(columns.getLongValue("score", 0L));
 					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
 					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue("views", 0L));
 				}
