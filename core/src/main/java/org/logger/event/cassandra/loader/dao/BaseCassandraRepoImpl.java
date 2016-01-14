@@ -1686,6 +1686,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(userSessionActivity.getResourceType())
 			.withStringValue(userSessionActivity.getQuestionType())
 			.withStringValue(userSessionActivity.getAnswerStatus())
+			.withLongValue(userSessionActivity.getReaction())
 			.withLongValue(userSessionActivity.getScore())
 			.withLongValue(userSessionActivity.getTimeSpent())
 			.withLongValue(userSessionActivity.getViews())
@@ -1857,6 +1858,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					userSessionActivity.setAttempts((userSessionActivity.getAttempts())+columns.getLongValue("attempts", 0L));
 					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
 					userSessionActivity.setViews((userSessionActivity.getViews())+columns.getLongValue("views", 0L));
+					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1972,6 +1974,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		long score = 0L;
 		try {
 			String gooruOid = "";
+			long questionCount = 0;
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
 				gooruOid = userSessionActivity.getGooruOid();
 			}else if (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
@@ -1986,11 +1989,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-						if(!gooruOid.equalsIgnoreCase(columns.getStringValue("gooru_oid", null))){
+						if(!gooruOid.equalsIgnoreCase(columns.getStringValue("gooru_oid", null)) && QUESTION.equalsIgnoreCase(columns.getStringValue("resource_type", null))){
+							questionCount++;
 							score += columns.getLongValue("score", 0L);
 						}
 				}
-				score = (score/(result.size()-1));
+				score = (score/questionCount);
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
