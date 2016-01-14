@@ -104,7 +104,7 @@ public enum ColumnFamilySet {
 	
 	STUDENTS_CLASS_ACTIVITY("students_class_activity"),
 	
-	STUDENTS_CLASS_ACTIVITY_V2("students_class_activity_v2"),
+	CLASS_ACTIVITY_DATACUBE("class_activity_datacube"),
 	
 	CONTENT_TAXONOMY_ACTIVITY("content_taxonomy_activity"),
 	

@@ -39,7 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.ClassActivityV2;
+import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
@@ -87,7 +87,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		try {
 			UserSessionActivity userSessionActivity = new UserSessionActivity();
 			StudentsClassActivity studentsClassActivity = new StudentsClassActivity(); 
-			ClassActivityV2 aggregatedAssessmentActivity = new ClassActivityV2();
+			ClassActivityDatacube classActivityDatacube = new ClassActivityDatacube();
 			StudentLocation studentLocation = new StudentLocation();			
 			UserSessionActivity userAllSessionActivity = null;
 			
@@ -96,7 +96,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			long activePeerCount = 0L;
 			long leftPeerCount = 0L;
 			
-			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, aggregatedAssessmentActivity, studentLocation);
+			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, classActivityDatacube, studentLocation);
 			userAllSessionActivity = (UserSessionActivity) userSessionActivity.clone();
 			userAllSessionActivity.setSessionId(AS);
 			
@@ -124,6 +124,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						activePeerCount = -1;
 						leftPeerCount = 1;
 					}
+				
+					baseCassandraDao.saveStudentLocation(studentLocation);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE ,activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(), UNIT ,activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(), LESSON ,activePeerCount, leftPeerCount);
+					
+					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),activePeerCount, leftPeerCount);
+					
 				}
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
@@ -142,27 +153,17 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
 				}
 				
-				if(!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null){
+				if((!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null) && (COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)) || LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName))) {
 
-					baseCassandraDao.saveStudentLocation(studentLocation);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(), UNIT ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(), LESSON ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),activePeerCount, leftPeerCount);
-					
 					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
 								
 					baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
 					
-					aggregatedAssessmentActivity.setViews(studentsClassActivity.getViews());
-					aggregatedAssessmentActivity.setTimeSpent(studentsClassActivity.getTimeSpent());
-					aggregatedAssessmentActivity.setScore(studentsClassActivity.getScore());
+					classActivityDatacube.setViews(studentsClassActivity.getViews());
+					classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
+					classActivityDatacube.setScore(studentsClassActivity.getScore());
 					
-					baseCassandraDao.saveStudentsClassActivityV2(aggregatedAssessmentActivity);
+					baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
 					
 					service.submit(new ClassActivityAggregator(studentsClassActivity,baseCassandraDao));
 				}
@@ -1620,7 +1621,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
-	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityV2 aggregatedAssessmentActivity,
+	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityDatacube classActivityDataCube,
 			StudentLocation studentLocation) {
 
 		String gooruUUID = setNullIfEmpty(eventMap, GOORUID);
@@ -1707,25 +1708,26 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		studentsClassActivity.setCollectionType(collectionType);
 		if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
 			studentsClassActivity.setCollectionUid(parentGooruId);
+			studentsClassActivity.setViews(0);
 		} else if(eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			studentsClassActivity.setCollectionUid(contentGooruId);
+			studentsClassActivity.setViews(views);
 		}
 		studentsClassActivity.setUserUid(gooruUUID);
 		studentsClassActivity.setScore(score);
-		studentsClassActivity.setViews(views);
 		studentsClassActivity.setTimeSpent(timespent);
 
 		/**
 		 * Assessment/Collection wise
 		 */
-		aggregatedAssessmentActivity.setRowKey(generateColumnKey(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+		classActivityDataCube.setRowKey(generateColumnKey(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 				studentsClassActivity.getLessonUid()));
-		aggregatedAssessmentActivity.setLeafNode(studentsClassActivity.getCollectionUid());
-		aggregatedAssessmentActivity.setUserUid(studentsClassActivity.getUserUid());
-		aggregatedAssessmentActivity.setCollectionType(studentsClassActivity.getCollectionType());
-		aggregatedAssessmentActivity.setViews(studentsClassActivity.getViews());
-		aggregatedAssessmentActivity.setTimeSpent(studentsClassActivity.getTimeSpent());
-		aggregatedAssessmentActivity.setScore(studentsClassActivity.getScore());
+		classActivityDataCube.setLeafNode(studentsClassActivity.getCollectionUid());
+		classActivityDataCube.setUserUid(studentsClassActivity.getUserUid());
+		classActivityDataCube.setCollectionType(studentsClassActivity.getCollectionType());
+		classActivityDataCube.setViews(studentsClassActivity.getViews());
+		classActivityDataCube.setTimeSpent(studentsClassActivity.getTimeSpent());
+		classActivityDataCube.setScore(studentsClassActivity.getScore());
 
 		studentLocation.setUserUid(gooruUUID);
 		studentLocation.setClassUid(classGooruId);

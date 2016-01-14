@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import org.ednovo.data.model.ClassActivityV2;
+import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
@@ -1994,7 +1994,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 							score += columns.getLongValue("score", 0L);
 						}
 				}
-				score = (score/questionCount);
+				score = questionCount > 0 ? (score/questionCount) : 0;
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
@@ -2007,7 +2007,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			studentsClassActivityDup = (StudentsClassActivity)studentsClassActivity.clone();
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY_V2)
+			.withCql(SELECT_CLASS_ACTIVITY_DATACUBE)
 			.asPreparedStatement()
 			.withStringValue(rowKey)
 			.withStringValue(leafNode)
@@ -2033,10 +2033,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return studentsClassActivityDup;
 	}
 	
-	public boolean saveStudentsClassActivityV2(ClassActivityV2 studentsClassActivity) {
+	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
 		try {			
-			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily()))
-			.withCql(INSERT_STUDENTS_CLASS_ACTIVITY_V2)
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily()))
+			.withCql(INSERT_CLASS_ACTIVITY_DATACUBE)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getRowKey())
 			.withStringValue(studentsClassActivity.getLeafNode())
@@ -2054,10 +2054,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
-	public ClassActivityV2 getStudentsClassActivityV2(String rowKey, String userUid, String collectionType) {
-		ClassActivityV2 classActivityV2 = new ClassActivityV2();
+	public ClassActivityDatacube getStudentsClassActivityV2(String rowKey, String userUid, String collectionType) {
+		ClassActivityDatacube classActivityV2 = new ClassActivityDatacube();
 		try {
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY_V2.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_V2)
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_DATACUBE)
 					.asPreparedStatement().withStringValue(rowKey).withStringValue(collectionType).withStringValue(userUid).execute().getResult().getRows();
 			;
 			if (result.size() > 0) {
