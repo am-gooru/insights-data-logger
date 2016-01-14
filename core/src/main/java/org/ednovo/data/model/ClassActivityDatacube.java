@@ -2,7 +2,7 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-public class ClassActivityV2 implements Serializable{
+public class ClassActivityDatacube implements Serializable{
 
 	/**
 	 * 

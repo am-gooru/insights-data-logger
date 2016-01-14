@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.ClassActivityV2;
+import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
@@ -33,26 +33,26 @@ public class ClassActivityAggregator implements Runnable, Constants {
 			/**
 			 * Lesson wise
 			 */
-			ClassActivityV2 aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedLessonActivity.setRowKey(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
 			aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
-			baseCassandraDao.saveStudentsClassActivityV2(aggregatedLessonActivity);
+			baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
 			
 			/**
 			 * Unit wise
 			 */
-			ClassActivityV2 aggregatedUnitActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedUnitActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedUnitActivity.setRowKey(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
 			aggregatedUnitActivity.setLeafNode(studentsClassActivity.getUnitUid());
-			baseCassandraDao.saveStudentsClassActivityV2(aggregatedUnitActivity);
+			baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivity);
 			
 			/**
 			 * Course wise
 			 */
-			ClassActivityV2 aggregatedCourseActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedCourseActivity = baseCassandraDao.getStudentsClassActivityV2(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedCourseActivity.setRowKey(studentsClassActivity.getClassUid());
 			aggregatedCourseActivity.setLeafNode(studentsClassActivity.getCourseUid());
-			baseCassandraDao.saveStudentsClassActivityV2(aggregatedCourseActivity);
+			baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivity);
 			
 			
 			
@@ -63,7 +63,7 @@ public class ClassActivityAggregator implements Runnable, Constants {
 		
 	}
 	
-	private ClassActivityV2 setAggregatedActivity(Rows<String, String> result , ClassActivityV2 aggregatedActivity){
+	private ClassActivityDatacube setAggregatedActivity(Rows<String, String> result , ClassActivityDatacube aggregatedActivity){
 		if (result.size() > 0) {
 			long score = 0L; long views = 0L ; long timeSpent = 0L; long attemptedCount = 0;
 			for (Row<String, String> row : result) {

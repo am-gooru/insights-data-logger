@@ -183,7 +183,7 @@ CREATE TABLE class_activity_peer_counts (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
         
-CREATE TABLE students_class_activity_v2 (
+CREATE TABLE class_activity_datacube (
     row_key text,
     collection_type text,
     user_uid text,

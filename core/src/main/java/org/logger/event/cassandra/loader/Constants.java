@@ -749,10 +749,10 @@ public interface Constants {
 	
 	String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,score)VALUES(?,?,?,?);";
 	
-	String SELECT_STUDENTS_CLASS_ACTIVITY_V2 = "SELECT * FROM students_class_activity_v2 WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
+	String SELECT_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
 	
-	String SELECT_ALL_CLASS_ACTIVITY_V2 = "SELECT * FROM students_class_activity_v2 WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
+	String SELECT_ALL_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
 	
-	String INSERT_STUDENTS_CLASS_ACTIVITY_V2 = "INSERT INTO students_class_activity_v2(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
+	String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
 	
 }
