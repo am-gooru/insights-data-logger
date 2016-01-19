@@ -1842,6 +1842,24 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
+	public boolean updatePeersDetail(String keyName,String leafgooruOid, String collectionType, String gooruUId, String query){
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEER_DETAIL.getColumnFamily()))
+			.withCql(query)	
+			.asPreparedStatement()
+			.withStringValue(gooruUId)
+			.withStringValue(gooruUId)
+			.withStringValue(keyName)
+			.withStringValue(leafgooruOid)
+			.withStringValue(collectionType)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while updating peer detail" ,e);
+			return false;
+		}
+		return true;
+	}
 	public UserSessionActivity compareAndMergeUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))

@@ -116,15 +116,21 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
 								studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(),
 								userSessionActivity.getEventType(), studentLocation.getSessionTime());
-						activePeerCount = 1;
-						if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
-							leftPeerCount = -1;
-						}
-					} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
-						activePeerCount = -1;
-						leftPeerCount = 1;
 					}
-				
+					if (!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) {
+						String peerUpdatQuery = null;
+						
+						if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
+							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_START;
+							activePeerCount = 1;
+							if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
+								leftPeerCount = -1;
+							}
+						} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
+							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_STOP;
+							activePeerCount = -1;
+							leftPeerCount = 1;
+						}
 					baseCassandraDao.saveStudentLocation(studentLocation);
 					
 					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE ,activePeerCount, leftPeerCount);
@@ -135,6 +141,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					baseCassandraDao.updatePeersCount(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),activePeerCount, leftPeerCount);
 					
+					/**
+					 * Update peer count v2
+					 */
+					baseCassandraDao.updatePeersDetail(generateColumnKey(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE , studentsClassActivity.getUserUid(), peerUpdatQuery);
+					
+					baseCassandraDao.updatePeersDetail(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(), UNIT , studentsClassActivity.getUserUid(), peerUpdatQuery);
+					
+					baseCassandraDao.updatePeersDetail(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(), LESSON , studentsClassActivity.getUserUid(), peerUpdatQuery);
+					
+					baseCassandraDao.updatePeersDetail(generateColumnKey(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),studentsClassActivity.getUserUid(), peerUpdatQuery);
+					
+					}					
 				}
 				
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
@@ -154,7 +172,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
 				}
 				
-				if((!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) || studentsClassActivity.getClassUid() != null) && (COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)) || LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName))) {
+				if((!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) && (COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)) || LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName))) {
 
 					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
 								
