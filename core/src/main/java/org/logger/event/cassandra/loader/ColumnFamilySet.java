@@ -111,6 +111,8 @@ public enum ColumnFamilySet {
 	STUDNT_LOCATION("student_location"),
 	
 	CLASS_ACTIVITY_PEERS_COUNT("class_activity_peer_counts"),
+	
+	CLASS_ACTIVITY_PEER_DETAIL("class_activity_peer_detail"),
 	;
 	
 	String name;
