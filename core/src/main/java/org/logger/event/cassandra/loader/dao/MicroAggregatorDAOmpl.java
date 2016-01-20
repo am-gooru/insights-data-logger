@@ -101,6 +101,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			userAllSessionActivity.setSessionId(AS);
 			
 		if(eventName.matches(PLAY_EVENTS)){
+			
+				if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
+					/**
+					 * Collection timespent is already calculated in resource level. This custom code will avoid duplicate timespent addition for collections.
+					 */
+					userSessionActivity.setTimeSpent(0L);
+				}
 				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 				
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
