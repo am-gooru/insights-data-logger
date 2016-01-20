@@ -1667,19 +1667,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		long reaction = 0;
 
 		if (QUESTION.equals(resourceType) && (STOP.equals(eventType))) {
-
+			int attemptSeq = 0;
 			int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
 
-			attempts = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
 			if (attempts != 0) {
-				attempts = attempts - 1;
+				attemptSeq = attempts - 1;
 			}
 			if (attempStatus.length == 0) {
 				answerStatus = LoaderConstants.SKIPPED.getName();
-			} else if (attempStatus[attempts] == 0) {
+			} else if (attempStatus[attemptSeq] == 0) {
 				answerStatus = LoaderConstants.INCORRECT.getName();
 				score = 0;
-			} else if (attempStatus[attempts] == 1) {
+			} else if (attempStatus[attemptSeq] == 1) {
 				answerStatus = LoaderConstants.CORRECT.getName();
 				score = 100;
 			}
