@@ -121,13 +121,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						String peerUpdatQuery = null;
 						
 						if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
-							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_START;
+							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_START.replaceAll(GOORUID, studentsClassActivity.getUserUid());
 							activePeerCount = 1;
 							if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
 								leftPeerCount = -1;
 							}
 						} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
-							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_STOP;
+							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_STOP.replaceAll(GOORUID, studentsClassActivity.getUserUid());
 							activePeerCount = -1;
 							leftPeerCount = 1;
 						}

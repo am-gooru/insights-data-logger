@@ -739,9 +739,9 @@ public interface Constants {
 	
 	String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ? AND leaf_gooru_oid = ? AND collection_type = ? ;";
 	
-	String UPDATE_PEER_DETAILS_ON_START = "UPDATE class_activity_peer_detail SET active_peers = active_peers + {?} , left_peers = left_peers - {?} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
+	String UPDATE_PEER_DETAILS_ON_START = "UPDATE class_activity_peer_detail SET active_peers = active_peers + {'"+GOORUID+"'} , left_peers = left_peers - {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
 	
-	String UPDATE_PEER_DETAILS_ON_STOP = "UPDATE class_activity_peer_detail SET active_peers = active_peers - {?} , left_peers = left_peers + {?} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
+	String UPDATE_PEER_DETAILS_ON_STOP = "UPDATE class_activity_peer_detail SET active_peers = active_peers - {'"+GOORUID+"'} , left_peers = left_peers + {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
 	
 	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 	
