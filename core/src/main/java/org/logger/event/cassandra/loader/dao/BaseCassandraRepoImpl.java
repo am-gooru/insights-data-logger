@@ -1872,9 +1872,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setAttempts((userSessionActivity.getAttempts())+columns.getLongValue("attempts", 0L));
+					userSessionActivity.setAttempts((userSessionActivity.getAttempts()) + columns.getLongValue("attempts", 0L));
 					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
-					userSessionActivity.setViews((userSessionActivity.getViews())+columns.getLongValue("views", 0L));
+					userSessionActivity.setViews((userSessionActivity.getViews() + columns.getLongValue("views", 0L)));
 					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
 				}
 			}
