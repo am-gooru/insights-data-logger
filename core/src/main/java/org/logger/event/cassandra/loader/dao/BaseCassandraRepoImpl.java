@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
@@ -44,8 +45,8 @@ import com.netflix.astyanax.model.CqlResult;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
-import com.netflix.astyanax.query.PreparedCqlQuery;
 import com.netflix.astyanax.retry.ConstantBackoff;
+import com.netflix.astyanax.serializers.SetSerializer;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
@@ -1843,12 +1844,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
 	
 	public boolean updatePeersDetail(String keyName,String leafgooruOid, String collectionType, String gooruUId, String query){
-		try {			
+		try {	
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEER_DETAIL.getColumnFamily()))
 			.withCql(query)	
 			.asPreparedStatement()
-			.withStringValue(gooruUId)
-			.withStringValue(gooruUId)
 			.withStringValue(keyName)
 			.withStringValue(leafgooruOid)
 			.withStringValue(collectionType)
