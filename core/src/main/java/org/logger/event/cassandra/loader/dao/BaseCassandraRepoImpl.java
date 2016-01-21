@@ -17,8 +17,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.cassandra.db.marshal.UTF8Type;
 import org.ednovo.data.model.ClassActivityDatacube;
+import org.ednovo.data.model.ContentTaxonomyActivity;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
@@ -46,7 +46,6 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
 import com.netflix.astyanax.retry.ConstantBackoff;
-import com.netflix.astyanax.serializers.SetSerializer;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
@@ -1738,41 +1737,24 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
-	/**
-	 * Taxonomy wise aggregated data will be stored.
-	 * @param subjectId
-	 * @param courseId
-	 * @param domainId
-	 * @param subDomainId
-	 * @param standardsId
-	 * @param learningTargetsId
-	 * @param gooruOid
-	 * @param userUid
-	 * @param resourceFormat
-	 * @param resourceType
-	 * @param score
-	 * @param timeSpent
-	 * @param views
-	 * @return true/false -- meaning operation success/fail
-	 */
-	public boolean saveContentTaxonomyActivity(String subjectId,String courseId,String domainId,String subDomainId,String standardsId,String learningTargetsId,String gooruOid,String userUid,String resourceFormat,String resourceType,long score,long timeSpent,long views) {
+	public boolean saveContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily()))
 			.withCql(INSERT_CONTENT_TAXONOMY_ACTIVITY)
 			.asPreparedStatement()
-			.withStringValue(subjectId)
-			.withStringValue(courseId)
-			.withStringValue(domainId)
-			.withStringValue(subDomainId)
-			.withStringValue(standardsId)
-			.withStringValue(learningTargetsId)
-			.withStringValue(gooruOid)
-			.withStringValue(userUid)
-			.withStringValue(resourceFormat)
-			.withStringValue(resourceType)
-			.withLongValue(score)
-			.withLongValue(timeSpent)
-			.withLongValue(views)
+			.withStringValue(contentTaxonomyActivity.getUserUid())
+			.withStringValue(contentTaxonomyActivity.getSubjectId())
+			.withStringValue(contentTaxonomyActivity.getCourseId())
+			.withStringValue(contentTaxonomyActivity.getDomainId())
+			.withStringValue(contentTaxonomyActivity.getSubDomainId())
+			.withStringValue(contentTaxonomyActivity.getStandardsId())
+			.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
+			.withStringValue(contentTaxonomyActivity.getGooruOid())
+			.withStringValue(contentTaxonomyActivity.getResourceType())
+			.withStringValue(contentTaxonomyActivity.getQuestionType())
+			.withLongValue(contentTaxonomyActivity.getScore())
+			.withLongValue(contentTaxonomyActivity.getTimeSpent())
+			.withLongValue(contentTaxonomyActivity.getViews())
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1872,10 +1854,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setAttempts((userSessionActivity.getAttempts()) + columns.getLongValue("attempts", 0L));
-					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
-					userSessionActivity.setViews((userSessionActivity.getViews() + columns.getLongValue("views", 0L)));
-					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
+					userSessionActivity.setAttempts((userSessionActivity.getAttempts()) + columns.getLongValue(ATTEMPTS, 0L));
+					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue(_TIME_SPENT, 0L)));
+					userSessionActivity.setViews((userSessionActivity.getViews() + columns.getLongValue(VIEWS, 0L)));
+					userSessionActivity.setReaction(columns.getLongValue(REACTION, 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1899,19 +1881,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				userSessionActivity = new UserSessionActivity();
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setSessionId(columns.getStringValue("session_id", null));
-					userSessionActivity.setGooruOid(columns.getStringValue("gooru_oid", null));
-					userSessionActivity.setCollectionItemId(columns.getStringValue("collection_item_id", null));
-					userSessionActivity.setAnswerObject(columns.getStringValue("answer_object", null));
-					userSessionActivity.setAnswerStatus(columns.getStringValue("answer_status", null));
-					userSessionActivity.setResourceType(columns.getStringValue("resource_type", null));
-					userSessionActivity.setCollectionType(columns.getStringValue("collection_type", null));
-					userSessionActivity.setQuestionType(columns.getStringValue("question_type", null));
-					userSessionActivity.setAttempts(columns.getLongValue("attempts", 0L));
-					userSessionActivity.setReaction(columns.getLongValue("reaction", 0L));
-					userSessionActivity.setScore(columns.getLongValue("score", 0L));
-					userSessionActivity.setTimeSpent(columns.getLongValue("time_spent", 0L));
-					userSessionActivity.setViews(columns.getLongValue("views", 0L));
+					userSessionActivity.setSessionId(columns.getStringValue(_SESSION_ID, null));
+					userSessionActivity.setGooruOid(columns.getStringValue(_GOORU_OID, null));
+					userSessionActivity.setCollectionItemId(columns.getStringValue(_COLLECTION_ITEM_ID, null));
+					userSessionActivity.setAnswerObject(columns.getStringValue(_ANSWER_OBECT, null));
+					userSessionActivity.setAnswerStatus(columns.getStringValue(_ANSWER_STATUS, null));
+					userSessionActivity.setResourceType(columns.getStringValue(_RESOURCE_TYPE, null));
+					userSessionActivity.setCollectionType(columns.getStringValue(_COLLECTION_TYPE, null));
+					userSessionActivity.setQuestionType(columns.getStringValue(_QUESTION_TYPE, null));
+					userSessionActivity.setAttempts(columns.getLongValue(ATTEMPTS, 0L));
+					userSessionActivity.setReaction(columns.getLongValue(REACTION, 0L));
+					userSessionActivity.setScore(columns.getLongValue(SCORE, 0L));
+					userSessionActivity.setTimeSpent(columns.getLongValue(_TIME_SPENT, 0L));
+					userSessionActivity.setViews(columns.getLongValue(VIEWS, 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1936,8 +1918,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue("time_spent", 0L)));
-					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue("views", 0L));
+					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue(_TIME_SPENT, 0L)));
+					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue(VIEWS, 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -2005,9 +1987,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-						if(!gooruOid.equalsIgnoreCase(columns.getStringValue("gooru_oid", null)) && QUESTION.equalsIgnoreCase(columns.getStringValue("resource_type", null))){
+						if(!gooruOid.equalsIgnoreCase(columns.getStringValue(_GOORU_OID, null)) && QUESTION.equalsIgnoreCase(columns.getStringValue("resource_type", null))){
 							questionCount++;
-							score += columns.getLongValue("score", 0L);
+							score += columns.getLongValue(SCORE, 0L);
 						}
 				}
 				score = questionCount > 0 ? (score/questionCount) : 0;
@@ -2070,8 +2052,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
-	public ClassActivityDatacube getStudentsClassActivityV2(String rowKey, String userUid, String collectionType) {
-		ClassActivityDatacube classActivityV2 = new ClassActivityDatacube();
+	public ClassActivityDatacube getStudentsClassActivityDatacube(String rowKey, String userUid, String collectionType) {
+		ClassActivityDatacube classActivityDatacube = new ClassActivityDatacube();
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_DATACUBE)
 					.asPreparedStatement().withStringValue(rowKey).withStringValue(collectionType).withStringValue(userUid).execute().getResult().getRows();
@@ -2082,19 +2064,52 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				long timeSpent = 0L;
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					score += columns.getLongValue("score", 0L);
-					timeSpent += columns.getLongValue("time_spent", 0L);
-					views += columns.getLongValue("views", 0L);
+					score += columns.getLongValue(SCORE, 0L);
+					timeSpent += columns.getLongValue(_TIME_SPENT, 0L);
+					views += columns.getLongValue(VIEWS, 0L);
 				}
-				classActivityV2.setCollectionType(collectionType);
-				classActivityV2.setUserUid(userUid);
-				classActivityV2.setScore(score);
-				classActivityV2.setTimeSpent(timeSpent);
-				classActivityV2.setViews(views);
+				classActivityDatacube.setCollectionType(collectionType);
+				classActivityDatacube.setUserUid(userUid);
+				classActivityDatacube.setScore(score);
+				classActivityDatacube.setTimeSpent(timeSpent);
+				classActivityDatacube.setViews(views);
 			}
 		} catch (Exception e) {
 			logger.error("Error while retreving students class activity", e);
 		}
-		return classActivityV2;
+		return classActivityDatacube;
+	}
+	
+	public Rows<String, String> getTaxonomy(String rowKey){
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_TREE.getColumnFamily())).withCql(SELECT_TAXONOMY_TREE)
+					.asPreparedStatement().withStringValue(rowKey).execute().getResult().getRows();
+			;
+		} catch (Exception e) {
+			logger.error("Error while retreving txonomy tree", e);
+		}
+		return result;
+	}
+	
+	public Rows<String, String> getTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
+					.asPreparedStatement()
+					.withStringValue(contentTaxonomyActivity.getUserUid())
+					.withStringValue(contentTaxonomyActivity.getSubjectId())
+					.withStringValue(contentTaxonomyActivity.getCourseId())
+					.withStringValue(contentTaxonomyActivity.getDomainId())
+					.withStringValue(contentTaxonomyActivity.getSubDomainId())
+					.withStringValue(contentTaxonomyActivity.getStandardsId())
+					.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
+					.withStringValue(contentTaxonomyActivity.getGooruOid())
+					.execute().getResult().getRows();
+			;
+		} catch (Exception e) {
+			logger.error("Error while retreving students class activity", e);
+		}
+		return result;
 	}
 }

@@ -164,6 +164,8 @@ public interface Constants {
 	
 	public static final  String RESOURCE_TYPE = "resourceType";
 	
+	public static final  String _RESOURCE_TYPE = "resource_type";
+	
 	public static final  String QUESTION_TYPE = "questionType";
 
 	public static final  String OE = "OE";
@@ -644,6 +646,14 @@ public interface Constants {
 	
 	public static final String COURSE = "course";
 	
+	public static final String DOMAIN = "domain";
+	
+	public static final String SUB_DOMAIN = "sub_domain";
+	
+	public static final String STANDARDS = "standards";
+	
+	public static final String LEARNING_TARGETS = "learning_targets";
+	
 	public static final String GRADE = "grade";
 	
 	public static final String GRADE_FIELD = "grade1";
@@ -733,7 +743,7 @@ public interface Constants {
 	
 	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,user_uid,resource_format,resource_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
 	String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
@@ -759,4 +769,7 @@ public interface Constants {
 	
 	String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
 	
+	String SELECT_TAXONOMY_TREE = "SELECT * FROM taxonomy_tree where row_key = ?;";
+	
+	String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND sub_domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
 }
