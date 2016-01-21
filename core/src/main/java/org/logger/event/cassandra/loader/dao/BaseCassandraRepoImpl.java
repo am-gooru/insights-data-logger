@@ -1750,6 +1750,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(contentTaxonomyActivity.getStandardsId())
 			.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
 			.withStringValue(contentTaxonomyActivity.getGooruOid())
+			.withStringValue(contentTaxonomyActivity.getClassUid())
 			.withStringValue(contentTaxonomyActivity.getResourceType())
 			.withStringValue(contentTaxonomyActivity.getQuestionType())
 			.withLongValue(contentTaxonomyActivity.getScore())
@@ -2083,7 +2084,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getTaxonomy(String rowKey){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_TREE.getColumnFamily())).withCql(SELECT_TAXONOMY_TREE)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_PARENT_NODE.getColumnFamily())).withCql(SELECT_TAXONOMY_PARENT_NODE)
 					.asPreparedStatement().withStringValue(rowKey).execute().getResult().getRows();
 			;
 		} catch (Exception e) {

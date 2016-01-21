@@ -114,7 +114,7 @@ public enum ColumnFamilySet {
 	
 	CLASS_ACTIVITY_PEER_DETAIL("class_activity_peer_detail"),
 	
-	TAXONOMY_TREE("taxonomy_tree"),
+	TAXONOMY_PARENT_NODE("taxonomy_parent_node"),
 	
 	;
 	
