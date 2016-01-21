@@ -113,6 +113,9 @@ public enum ColumnFamilySet {
 	CLASS_ACTIVITY_PEERS_COUNT("class_activity_peer_counts"),
 	
 	CLASS_ACTIVITY_PEER_DETAIL("class_activity_peer_detail"),
+	
+	TAXONOMY_PARENT_NODE("taxonomy_parent_node"),
+	
 	;
 	
 	String name;

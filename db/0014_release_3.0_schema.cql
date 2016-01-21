@@ -101,8 +101,9 @@ CREATE INDEX user_session_activity_resource_type_idx ON user_session_activity (r
 
 //This columnfamily contains usage by standards and learning target wise
 //This will captures data only if student playing a collection or assessment from class
-	
+
 CREATE TABLE content_taxonomy_activity (
+    user_uid text,
     subject_id text,
     course_id text,
     domain_id text,
@@ -110,14 +111,14 @@ CREATE TABLE content_taxonomy_activity (
     standards_id text,
     learning_targets_id text,
     gooru_oid text,
-    user_uid text,
+    class_uid text,
     resource_format text,
     resource_type text,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (subject_id, course_id, domain_id, sub_domain_id, standards_id, learning_targets_id, gooru_oid, user_uid)
-) WITH CLUSTERING ORDER BY (course_id ASC, domain_id ASC, sub_domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC, user_uid ASC)
+    PRIMARY KEY (user_uid, subject_id, course_id, domain_id, sub_domain_id, standards_id, learning_targets_id, gooru_oid)
+) WITH CLUSTERING ORDER BY (subject_id ASC, course_id ASC, domain_id ASC, sub_domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -132,6 +133,9 @@ CREATE TABLE content_taxonomy_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
+CREATE INDEX content_taxonomy_activity_class_uid_idx ON content_taxonomy_activity (class_uid);
+
+	
 //This columnfamily contains data where student is working actively
 
 CREATE TABLE student_location (
