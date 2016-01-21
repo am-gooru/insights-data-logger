@@ -743,7 +743,7 @@ public interface Constants {
 	
 	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
 	String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
