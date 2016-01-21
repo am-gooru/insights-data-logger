@@ -133,7 +133,7 @@ CREATE TABLE content_taxonomy_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-CREATE INDEX content_taxonomy_activity_class_uid_idx ON insights_qa.content_taxonomy_activity (class_uid);
+CREATE INDEX content_taxonomy_activity_class_uid_idx ON content_taxonomy_activity (class_uid);
 
 	
 //This columnfamily contains data where student is working actively
