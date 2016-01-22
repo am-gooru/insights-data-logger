@@ -2024,6 +2024,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	
 	public ClassActivityDatacube getStudentsClassActivityDatacube(String rowKey, String userUid, String collectionType) {
 		ClassActivityDatacube classActivityDatacube = new ClassActivityDatacube();
+		long itemCount = 0L;
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_DATACUBE)
 					.asPreparedStatement().withStringValue(rowKey).withStringValue(collectionType).withStringValue(userUid).execute().getResult().getRows();
@@ -2034,13 +2035,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				long timeSpent = 0L;
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
+					itemCount++;
 					score += columns.getLongValue(SCORE, 0L);
 					timeSpent += columns.getLongValue(_TIME_SPENT, 0L);
 					views += columns.getLongValue(VIEWS, 0L);
 				}
 				classActivityDatacube.setCollectionType(collectionType);
 				classActivityDatacube.setUserUid(userUid);
-				classActivityDatacube.setScore(score);
+				classActivityDatacube.setScore(itemCount > 0 ? (score/itemCount) : 0L);
 				classActivityDatacube.setTimeSpent(timeSpent);
 				classActivityDatacube.setViews(views);
 			}
