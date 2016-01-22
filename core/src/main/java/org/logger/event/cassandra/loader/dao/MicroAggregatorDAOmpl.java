@@ -94,7 +94,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			ContentTaxonomyActivity contentTaxonomyActivity = new ContentTaxonomyActivity();
 			
 			String eventName = setNAIfNull(eventMap, EVENT_NAME);
-			String[] taxonomyIds = eventMap.containsKey("taxonomyIds") ? TypeConverter.stringToIntArray((String) eventMap.get("taxonomyIds")) : null;
+			String[] taxonomyIds = (String[]) (eventMap.containsKey("taxonomyIds") ? TypeConverter.stringToIntArray((String) eventMap.get("taxonomyIds")) : null);
 			long activePeerCount = 0L;
 			long leftPeerCount = 0L;
 			

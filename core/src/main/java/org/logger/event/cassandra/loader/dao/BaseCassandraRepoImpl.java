@@ -2001,37 +2001,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return score;
 	}
 
-	public StudentsClassActivity compareAndMergeStudentsClassActivityV2(StudentsClassActivity studentsClassActivity, String rowKey,String leafNode) {
-		StudentsClassActivity studentsClassActivityDup = null;
-		try {
-			studentsClassActivityDup = (StudentsClassActivity)studentsClassActivity.clone();
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_CLASS_ACTIVITY_DATACUBE)
-			.asPreparedStatement()
-			.withStringValue(rowKey)
-			.withStringValue(leafNode)
-			.withStringValue(studentsClassActivity.getCollectionType())
-			.withStringValue(studentsClassActivity.getUserUid())
-			.execute().getResult().getRows();
-			;
-			if (result.size() > 0) {
-				long score = 0L; long views = 0L ; long timeSpent = 0L;
-				for (Row<String, String> row : result) {
-					ColumnList<String> columns = row.getColumns();
-					score += columns.getLongValue("score", 0L);
-					timeSpent += columns.getLongValue("time_spent", 0L);
-					views += columns.getLongValue("views", 0L);
-				}
-				studentsClassActivityDup.setScore(score);
-				studentsClassActivityDup.setTimeSpent(timeSpent);
-				studentsClassActivityDup.setViews(views);
-			}
-		} catch (Exception e) {
-			logger.error("Error while retreving students class activity v2" ,e);
-		}
-		return studentsClassActivityDup;
-	}
-	
 	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily()))
