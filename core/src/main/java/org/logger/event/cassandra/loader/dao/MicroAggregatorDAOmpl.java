@@ -119,11 +119,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				
 				if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
-					if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
 						baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
 								studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(),
-								userSessionActivity.getEventType(), studentLocation.getSessionTime());
-					}
+								userSessionActivity.getCollectionType(),userSessionActivity.getEventType(), studentLocation.getSessionTime());
 					if (!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) {
 						String peerUpdatQuery = null;
 						
