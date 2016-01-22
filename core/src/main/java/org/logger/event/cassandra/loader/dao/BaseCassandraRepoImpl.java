@@ -1634,7 +1634,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param eventTime
 	 * @return true/false -- meaning operation success/fail
 	 */
-	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String eventType,long eventTime) {
+	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String collectionType, String eventType,long eventTime) {
 		try {
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
 			.withCql(INSERT_USER_SESSION)
@@ -1646,6 +1646,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(courseUid)
 			.withStringValue(unitUid)
 			.withStringValue(lessonUid)
+			.withStringValue(collectionType)
 			.withStringValue(eventType)
 			.withLongValue(eventTime)
 			.execute()
