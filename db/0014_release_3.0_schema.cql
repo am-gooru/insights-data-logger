@@ -111,7 +111,6 @@ CREATE TABLE content_taxonomy_activity (
     standards_id text,
     learning_targets_id text,
     gooru_oid text,
-    class_uid text,
     resource_format text,
     resource_type text,
     score bigint,
@@ -133,7 +132,36 @@ CREATE TABLE content_taxonomy_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-CREATE INDEX content_taxonomy_activity_class_uid_idx ON content_taxonomy_activity (class_uid);
+CREATE TABLE content_class_taxonomy_activity (
+    user_uid text,
+    class_uid text,
+    subject_id text,
+    course_id text,
+    domain_id text,
+    sub_domain_id text,
+    standards_id text,
+    learning_targets_id text,
+    gooru_oid text,
+    resource_format text,
+    resource_type text,
+    score bigint,
+    time_spent bigint,
+    views bigint,
+    PRIMARY KEY (user_uid, class_uid, subject_id, course_id, domain_id, sub_domain_id, standards_id, learning_targets_id, gooru_oid)
+) WITH CLUSTERING ORDER BY (class_uid ASC, subject_id ASC, course_id ASC, domain_id ASC, sub_domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
+    AND comment = ''
+    AND compaction = {'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99.0PERCENTILE';
 
 	
 //This columnfamily contains data where student is working actively
@@ -242,3 +270,5 @@ ALTER TABLE user_session_activity DROP resource_format;
 ALTER TABLE student_location ADD collection_type text;
 
 ALTER TABLE class_activity_peer_counts ADD collection_type text;
+
+ALTER TABLE user_sessions add collection_type text;

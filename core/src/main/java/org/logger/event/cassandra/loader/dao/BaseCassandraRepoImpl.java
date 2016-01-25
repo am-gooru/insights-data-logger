@@ -1766,6 +1766,35 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
+	public boolean saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily()))
+			.withCql(INSERT_CONTENT_TAXONOMY_ACTIVITY)
+			.asPreparedStatement()
+			.withStringValue(contentTaxonomyActivity.getUserUid())
+			.withStringValue(contentTaxonomyActivity.getClassUid())
+			.withStringValue(contentTaxonomyActivity.getSubjectId())
+			.withStringValue(contentTaxonomyActivity.getCourseId())
+			.withStringValue(contentTaxonomyActivity.getDomainId())
+			.withStringValue(contentTaxonomyActivity.getSubDomainId())
+			.withStringValue(contentTaxonomyActivity.getStandardsId())
+			.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
+			.withStringValue(contentTaxonomyActivity.getGooruOid())
+			.withStringValue(contentTaxonomyActivity.getClassUid())
+			.withStringValue(contentTaxonomyActivity.getResourceType())
+			.withStringValue(contentTaxonomyActivity.getQuestionType())
+			.withLongValue(contentTaxonomyActivity.getScore())
+			.withLongValue(contentTaxonomyActivity.getTimeSpent())
+			.withLongValue(contentTaxonomyActivity.getViews())
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing taxonomy activity" ,e);
+			return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * Students current/left off CULA/CR will be stored
 	 * @param userUid
@@ -2065,12 +2094,33 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 	
-	public Rows<String, String> getTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
+	public Rows<String, String> getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
 					.asPreparedStatement()
 					.withStringValue(contentTaxonomyActivity.getUserUid())
+					.withStringValue(contentTaxonomyActivity.getSubjectId())
+					.withStringValue(contentTaxonomyActivity.getCourseId())
+					.withStringValue(contentTaxonomyActivity.getDomainId())
+					.withStringValue(contentTaxonomyActivity.getSubDomainId())
+					.withStringValue(contentTaxonomyActivity.getStandardsId())
+					.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
+					.withStringValue(contentTaxonomyActivity.getGooruOid())
+					.execute().getResult().getRows();
+			;
+		} catch (Exception e) {
+			logger.error("Error while retreving students class activity", e);
+		}
+		return result;
+	}
+	public Rows<String, String> getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
+					.asPreparedStatement()
+					.withStringValue(contentTaxonomyActivity.getUserUid())
+					.withStringValue(contentTaxonomyActivity.getClassUid())
 					.withStringValue(contentTaxonomyActivity.getSubjectId())
 					.withStringValue(contentTaxonomyActivity.getCourseId())
 					.withStringValue(contentTaxonomyActivity.getDomainId())

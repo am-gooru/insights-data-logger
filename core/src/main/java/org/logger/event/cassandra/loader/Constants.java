@@ -745,6 +745,8 @@ public interface Constants {
 	
 	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
+	String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+	
 	String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
 	String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ? AND leaf_gooru_oid = ? AND collection_type = ? ;";
@@ -772,4 +774,6 @@ public interface Constants {
 	String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
 	
 	String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND sub_domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+	
+	String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE user_uid = ? AND class_uid AND subject_id = ? AND course_id = ? AND domain_id = ? AND sub_domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
 }
