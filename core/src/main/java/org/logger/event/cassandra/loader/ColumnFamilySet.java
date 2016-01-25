@@ -108,6 +108,8 @@ public enum ColumnFamilySet {
 	
 	CONTENT_TAXONOMY_ACTIVITY("content_taxonomy_activity"),
 	
+	CONTENT_CLASS_TAXONOMY_ACTIVITY("content_class_taxonomy_activity"),
+	
 	STUDNT_LOCATION("student_location"),
 	
 	CLASS_ACTIVITY_PEERS_COUNT("class_activity_peer_counts"),
