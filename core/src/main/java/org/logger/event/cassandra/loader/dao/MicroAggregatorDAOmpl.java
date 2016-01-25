@@ -122,20 +122,18 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 								studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(),
 								userSessionActivity.getCollectionType(),userSessionActivity.getEventType(), studentLocation.getSessionTime());
 				}
+
 				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
 					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
 					UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
-					
 					long aggScore = baseCassandraDao.getSessionScore(userSessionActivity, eventName);
 					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
 					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
 					userCollectionData.setScore(aggScore);
 					userAllSessionCollectionActivity.setScore(aggScore);
 					studentsClassActivity.setScore(aggScore);
-
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);
 					baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
-					
 					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
 					studentsClassActivity.setScore(userCollectionData.getScore());
 				}
@@ -190,17 +188,12 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	}
 
 	private void callClassActitivityDataCubeGenerator(StudentsClassActivity studentsClassActivity, ClassActivityDatacube classActivityDatacube){
-		
 		baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
-		
 		baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
-		
 		classActivityDatacube.setViews(studentsClassActivity.getViews());
 		classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
 		classActivityDatacube.setScore(studentsClassActivity.getScore());
-		
 		baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
-		
 		service.submit(new ClassActivityDataCubeGenerator(studentsClassActivity,baseCassandraDao));	
 	}
 	
