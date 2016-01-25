@@ -95,8 +95,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			
 			String eventName = setNAIfNull(eventMap, EVENT_NAME);
 			String[] taxonomyIds = (String[]) (eventMap.containsKey("taxonomyIds") ? TypeConverter.stringToIntArray((String) eventMap.get("taxonomyIds")) : null);
-			long activePeerCount = 0L;
-			long leftPeerCount = 0L;
 			
 			generateDAOs(eventMap, userSessionActivity, studentsClassActivity, classActivityDatacube, studentLocation);
 			userAllSessionActivity = (UserSessionActivity) userSessionActivity.clone();
@@ -109,6 +107,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					 * Collection timespent is already calculated in resource level. This custom code will avoid duplicate timespent addition for collections.
 					 */
 					userSessionActivity.setTimeSpent(0L);
+					studentsClassActivity.setTimeSpent(0L);
 				}
 				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 				
@@ -122,33 +121,33 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
 								studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(),
 								userSessionActivity.getCollectionType(),userSessionActivity.getEventType(), studentLocation.getSessionTime());
+				}
+
+				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
+					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
+					UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
+					long aggScore = baseCassandraDao.getSessionScore(userSessionActivity, eventName);
+					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
+					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
+					userCollectionData.setScore(aggScore);
+					userAllSessionCollectionActivity.setScore(aggScore);
+					studentsClassActivity.setScore(aggScore);
+					baseCassandraDao.saveUserSessionActivity(userCollectionData);
+					baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
+					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
+					studentsClassActivity.setScore(userCollectionData.getScore());
+				}
 					if (!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) {
 						String peerUpdatQuery = null;
-						
 						if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
 							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_START.replaceAll(GOORUID, studentsClassActivity.getUserUid());
-							activePeerCount = 1;
 							if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
-								leftPeerCount = -1;
 							}
 						} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
 							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_STOP.replaceAll(GOORUID, studentsClassActivity.getUserUid());
-							activePeerCount = -1;
-							leftPeerCount = 1;
 						}
 					baseCassandraDao.saveStudentLocation(studentLocation);
 					
-					baseCassandraDao.updatePeersCount(appendTildaSeperator(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(), UNIT ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid()), studentsClassActivity.getLessonUid(), LESSON ,activePeerCount, leftPeerCount);
-					
-					baseCassandraDao.updatePeersCount(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),activePeerCount, leftPeerCount);
-					
-					/**
-					 * Update peer count v2
-					 */
 					baseCassandraDao.updatePeersDetail(appendTildaSeperator(studentsClassActivity.getClassUid()), studentsClassActivity.getCourseUid(), COURSE , studentsClassActivity.getUserUid(), peerUpdatQuery);
 					
 					baseCassandraDao.updatePeersDetail(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid()), studentsClassActivity.getUnitUid(), UNIT , studentsClassActivity.getUserUid(), peerUpdatQuery);
@@ -157,49 +156,23 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					baseCassandraDao.updatePeersDetail(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),studentsClassActivity.getUserUid(), peerUpdatQuery);
 					
+					if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+						callClassActitivityDataCubeGenerator(studentsClassActivity, classActivityDatacube);
+					}
+					
+					if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
+						if(COLLECTION.equalsIgnoreCase(studentsClassActivity.getCollectionType())){
+							callClassActitivityDataCubeGenerator(studentsClassActivity, classActivityDatacube);
+						}
+						contentTaxonomyActivity.setUserUid(studentsClassActivity.getUserUid());
+						contentTaxonomyActivity.setViews(userSessionActivity.getViews());
+						contentTaxonomyActivity.setTimeSpent(userSessionActivity.getTimeSpent());
+						contentTaxonomyActivity.setScore(userSessionActivity.getScore());
+						contentTaxonomyActivity.setTaxonomyIds(taxonomyIds);
+						contentTaxonomyActivity.setClassUid(studentsClassActivity.getClassUid());
+						service.submit(new MastryGenerator(contentTaxonomyActivity,baseCassandraDao));	
+					}
 					}					
-				}
-				
-				if(COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)){
-					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
-					UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
-					
-					long aggScore = baseCassandraDao.getSessionScore(userSessionActivity, eventName);
-					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
-					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
-					userCollectionData.setScore(aggScore);
-					userAllSessionCollectionActivity.setScore(aggScore);
-					studentsClassActivity.setScore(aggScore);
-
-					baseCassandraDao.saveUserSessionActivity(userCollectionData);
-					baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
-					
-					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
-				}
-				
-				if((!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) && LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
-
-					baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
-								
-					baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
-					
-					classActivityDatacube.setViews(studentsClassActivity.getViews());
-					classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
-					classActivityDatacube.setScore(studentsClassActivity.getScore());
-					
-					baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
-					
-					service.submit(new ClassActivityDataCubeGenerator(studentsClassActivity,baseCassandraDao));
-				}
-				if((!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName) && userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
-					contentTaxonomyActivity.setUserUid(studentsClassActivity.getUserUid());
-					contentTaxonomyActivity.setViews(1L);
-					contentTaxonomyActivity.setTimeSpent(contentTaxonomyActivity.getTimeSpent());
-					contentTaxonomyActivity.setScore(contentTaxonomyActivity.getScore());
-					contentTaxonomyActivity.setTaxonomyIds(taxonomyIds);
-					contentTaxonomyActivity.setClassUid(studentsClassActivity.getClassUid());
-					service.submit(new MastryGenerator(contentTaxonomyActivity,baseCassandraDao));
-				}
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())){
 			 long reaction = DataUtils.formatReactionString((String) eventMap.get(REACTION_TYPE));
 			 userSessionActivity.setReaction(reaction);
@@ -214,6 +187,15 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		}
 	}
 
+	private void callClassActitivityDataCubeGenerator(StudentsClassActivity studentsClassActivity, ClassActivityDatacube classActivityDatacube){
+		baseCassandraDao.compareAndMergeStudentsClassActivity(studentsClassActivity);
+		baseCassandraDao.saveStudentsClassActivity(studentsClassActivity);
+		classActivityDatacube.setViews(studentsClassActivity.getViews());
+		classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
+		classActivityDatacube.setScore(studentsClassActivity.getScore());
+		baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
+		service.submit(new ClassActivityDataCubeGenerator(studentsClassActivity,baseCassandraDao));	
+	}
 	
 	/**
 	 * Calculate and store different kind of class actvity aggregataion in class_activity CF

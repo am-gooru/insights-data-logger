@@ -1830,31 +1830,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return true;
 	}
 	
-	/**
-	 * Tracking active and in active users count in CULA/C level
-	 * @param keyName
-	 * @param activePeerCount
-	 * @param leftPeerCount
-	 * @return true/false -- meaning operation success/fail
-	 */
-	public boolean updatePeersCount(String keyName,String leafgooruOid, String collectionType, long activePeerCount,long leftPeerCount){
-		try {			
-			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_PEERS_COUNT.getColumnFamily()))
-			.withCql(UPDATE_PEER_COUNT)	
-			.asPreparedStatement()
-			.withLongValue(leftPeerCount)
-			.withLongValue(activePeerCount)
-			.withStringValue(keyName)
-			.withStringValue(leafgooruOid)
-			.withStringValue(collectionType)
-			.execute()
-			;
-		} catch (ConnectionException e) {
-			logger.error("Error while updating peer count" ,e);
-			return false;
-		}
-		return true;
-	}
 	
 	public boolean updatePeersDetail(String keyName,String leafgooruOid, String collectionType, String gooruUId, String query){
 		try {	
