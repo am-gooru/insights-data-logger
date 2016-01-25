@@ -134,7 +134,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					studentsClassActivity.setScore(aggScore);
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);
 					baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
-					studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
+					studentsClassActivity.setTimeSpent(userSessionActivity.getTimeSpent());
 					studentsClassActivity.setScore(userCollectionData.getScore());
 				}
 					if (!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) {
