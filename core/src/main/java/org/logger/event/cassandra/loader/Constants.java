@@ -776,4 +776,10 @@ public interface Constants {
 	String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND sub_domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
 	
 	String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE user_uid = ? AND class_uid AND subject_id = ? AND course_id = ? AND domain_id = ? AND sub_domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+	
+	String INSERT_USER_QUESTION_GRADE = "INSERT INTO user_question_grade(teacher_id,user_id,session_id,question_id,score)VALUES(?,?,?,?,?);";
+	
+	String SELECT_USER_QUESTION_GRADE_BY_SESSION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ?;";
+	
+	String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ? AND question_id = ?;";
 }

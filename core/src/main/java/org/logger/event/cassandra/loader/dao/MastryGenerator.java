@@ -72,7 +72,7 @@ public class MastryGenerator implements Runnable, Constants {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Exception while generate Mastry data.");
+			logger.error("Exception while generate Mastery data", e);
 		}
 		
 	}

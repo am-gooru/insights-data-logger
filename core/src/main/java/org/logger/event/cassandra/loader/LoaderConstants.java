@@ -159,6 +159,8 @@ public enum LoaderConstants {
 	
 	COLLECTION_DOT_RESOURCE("collection.resource"),
 	
+	QUESTION_GRADE("question.grade"),
+	
 	SCOLLECTION("scollection"),
 	
 	PATHWAY("pathway"),
