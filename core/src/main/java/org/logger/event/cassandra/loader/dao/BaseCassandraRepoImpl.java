@@ -2124,7 +2124,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing class activity" ,e);
+			logger.error("Error while storing question grade" ,e);
 			return false;
 		}
 		return true;
