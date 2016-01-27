@@ -118,6 +118,8 @@ public enum ColumnFamilySet {
 	
 	TAXONOMY_PARENT_NODE("taxonomy_parent_node"),
 	
+	USER_QUESTION_GRADE("user_question_grade"),
+	
 	;
 	
 	String name;

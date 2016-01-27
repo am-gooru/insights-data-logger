@@ -2110,4 +2110,45 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return result;
 	}
+	
+	public boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily()))
+			.withCql(INSERT_USER_QUESTION_GRADE)
+			.asPreparedStatement()
+			.withStringValue(teacherId)
+			.withStringValue(userId)
+			.withStringValue(sessionId)
+			.withStringValue(questionId)
+			.withLongValue(score)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing class activity" ,e);
+			return false;
+		}
+		return true;
+	}
+
+	public Rows<String, String> getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId) {
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).execute().getResult().getRows();
+		} catch (Exception e) {
+			logger.error("Exception while read questions grade by session", e);
+		}
+		return result;
+	}
+	
+	public Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId) {
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).withStringValue(questionId).execute().getResult().getRows();
+		} catch (Exception e) {
+			logger.error("Exception while read questions grade by session", e);
+		}
+		return result;
+	}
 }

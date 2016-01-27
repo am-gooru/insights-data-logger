@@ -64,6 +64,7 @@ import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.retry.ConstantBackoff;
+import com.sun.xml.internal.bind.v2.TODO;
 
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
 
@@ -141,8 +142,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						String peerUpdatQuery = null;
 						if (userSessionActivity.getEventType().equalsIgnoreCase(START)) {
 							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_START.replaceAll(GOORUID, studentsClassActivity.getUserUid());
-							if (baseCassandraDao.hasClassActivity(studentsClassActivity)) {
-							}
 						} else if (userSessionActivity.getEventType().equalsIgnoreCase(STOP)) {
 							peerUpdatQuery = UPDATE_PEER_DETAILS_ON_STOP.replaceAll(GOORUID, studentsClassActivity.getUserUid());
 						}
@@ -156,6 +155,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					
 					baseCassandraDao.updatePeersDetail(appendTildaSeperator(studentsClassActivity.getClassUid(),studentsClassActivity.getCourseUid(),studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),studentsClassActivity.getUserUid(), peerUpdatQuery);
 					
+					// TODO Add validation using grading type
 					if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
 						callClassActitivityDataCubeGenerator(studentsClassActivity, classActivityDatacube);
 					}
@@ -179,6 +179,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 userAllSessionActivity.setReaction(reaction);
 			 baseCassandraDao.updateReaction(userAllSessionActivity);
 			 baseCassandraDao.updateReaction(userSessionActivity);
+		 }else if(eventName.equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())){
+			 service.submit(new ManualGrading(baseCassandraDao, (String)eventMap.get(CONTENT_GOORU_OID), (String)eventMap.get(GOORUID), (String)eventMap.get("teacherId"), (String)eventMap.get(SESSION_ID),((Number) eventMap.get(SCORE)).longValue()));
 		 }else{
 			 
 		 }
