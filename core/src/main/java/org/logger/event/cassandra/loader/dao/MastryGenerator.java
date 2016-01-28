@@ -26,7 +26,7 @@ public class MastryGenerator implements Runnable, Constants {
 	@Override
 	public void run() {
 		try {
-			if(contentTaxonomyActivity != null){
+			if(contentTaxonomyActivity != null && contentTaxonomyActivity.getTaxonomyIds() != null){
 			for (String taxId : contentTaxonomyActivity.getTaxonomyIds()) {
 				ContentTaxonomyActivity contentTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();
 				ContentTaxonomyActivity contentClassTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();

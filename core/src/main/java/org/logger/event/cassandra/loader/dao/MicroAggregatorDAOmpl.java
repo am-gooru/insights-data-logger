@@ -1708,7 +1708,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setAttempts(attempts);
 		userSessionActivity.setCollectionType(collectionType);
 		if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
-			studentsClassActivity.setAttemptStatus(INPROGRESS);
 			userSessionActivity.setResourceType(collectionType);
 		}else{
 			userSessionActivity.setResourceType(resourceType);
@@ -1719,6 +1718,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setReaction(reaction);
 		userSessionActivity.setTimeSpent(timespent);
 		userSessionActivity.setViews(views);
+		studentsClassActivity.setAttemptStatus(INPROGRESS);
 		if ((LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) && STOP.equals(eventType)) {
 			studentsClassActivity.setAttemptStatus(ATTEMPTED);
 			if(gradeType.equalsIgnoreCase(SYSTEM)){
