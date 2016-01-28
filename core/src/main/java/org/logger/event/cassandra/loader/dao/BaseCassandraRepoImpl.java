@@ -2054,6 +2054,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				classActivityDatacube.setScore(itemCount > 0 ? (score/itemCount) : 0L);
 				classActivityDatacube.setTimeSpent(timeSpent);
 				classActivityDatacube.setViews(views);
+				classActivityDatacube.setCompletedCount(itemCount);
 			}
 		} catch (Exception e) {
 			logger.error("Error while retreving students class activity", e);
