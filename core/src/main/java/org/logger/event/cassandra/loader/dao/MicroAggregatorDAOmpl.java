@@ -64,7 +64,6 @@ import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.retry.ConstantBackoff;
-import com.sun.xml.internal.bind.v2.TODO;
 
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
 
@@ -195,6 +194,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		classActivityDatacube.setViews(studentsClassActivity.getViews());
 		classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
 		classActivityDatacube.setScore(studentsClassActivity.getScore());
+		if(studentsClassActivity.getAttemptStatus().equalsIgnoreCase(COMPLETED)){
+			classActivityDatacube.setCompletedCount(1L);
+		}else{
+			classActivityDatacube.setCompletedCount(0L);
+		}
 		baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
 		service.submit(new ClassActivityDataCubeGenerator(studentsClassActivity,baseCassandraDao));	
 	}
@@ -480,7 +484,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					String answerStatus = null;
 					String answerText = eventMap.containsKey(TEXT) ? (String)eventMap.get(TEXT) :null;
 					int[] attemptTrySequence = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_TRY_SEQ));
-					int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
+					int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTEMPT_STATUS));
 
 					int status = 0;
 					status = ((Number) eventMap.get(ATTEMPT_COUNT)).intValue();
@@ -1657,6 +1661,8 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		String resourceType = setNAIfNull(eventMap, RESOURCE_TYPE);
 		String answerObject = setNAIfNull(eventMap, ANSWER_OBECT);
 		String answerStatus = "NA";
+		String gradeType = eventMap.containsValue(GRADE_TYPE) ? (String)eventMap.get(GRADE_TYPE) : SYSTEM;
+		
 		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
 		long score = 0;
 		long timespent = setLongZeroIfNull(eventMap, TOTALTIMEINMS);
@@ -1666,7 +1672,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 
 		if (QUESTION.equals(resourceType) && (STOP.equals(eventType))) {
 			int attemptSeq = 0;
-			int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTMPT_STATUS));
+			int[] attempStatus = TypeConverter.stringToIntArray((String) eventMap.get(ATTEMPT_STATUS));
 
 			if (attempts != 0) {
 				attemptSeq = attempts - 1;
@@ -1702,6 +1708,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setAttempts(attempts);
 		userSessionActivity.setCollectionType(collectionType);
 		if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
+			studentsClassActivity.setAttemptStatus(INPROGRESS);
 			userSessionActivity.setResourceType(collectionType);
 		}else{
 			userSessionActivity.setResourceType(resourceType);
@@ -1713,7 +1720,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		userSessionActivity.setTimeSpent(timespent);
 		userSessionActivity.setViews(views);
 		if ((LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) && STOP.equals(eventType)) {
-			score = baseCassandraDao.getSessionScore(userSessionActivity,eventName);
+			studentsClassActivity.setAttemptStatus(ATTEMPTED);
+			if(gradeType.equalsIgnoreCase(SYSTEM)){
+				studentsClassActivity.setAttemptStatus(COMPLETED);
+				score = baseCassandraDao.getSessionScore(userSessionActivity,eventName);
+			}
 		}
 		userSessionActivity.setScore(score);
 

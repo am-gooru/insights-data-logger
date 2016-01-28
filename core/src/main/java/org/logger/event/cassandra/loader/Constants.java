@@ -150,6 +150,8 @@ public interface Constants {
 	
 	public static final  String ATTEMPTS = "attempts";
 	
+	public static final  String ATTEMPTED = "attempted";
+	
 	public static final  String OPTIONS = "options";
 	
 	public static final  String COUNTER = "counter";
@@ -252,7 +254,9 @@ public interface Constants {
 
 	public static final  String ATTMPT_TRY_SEQ = "attemptTrySequence";
 	
-	public static final  String ATTMPT_STATUS = "attemptStatus";
+	public static final  String ATTEMPT_STATUS = "attemptStatus";
+	
+	public static final  String _ATTEMPT_STATUS = "attempt_status";
 	
 	public static final  String COLLECTION = "collection";
 	
@@ -656,6 +660,8 @@ public interface Constants {
 	
 	public static final String GRADE = "grade";
 	
+	public static final String GRADE_TYPE = "gradeType";
+	
 	public static final String GRADE_FIELD = "grade1";
 	
 	public static final String SUBJECT_CODE_ID = "subject_code_id";
@@ -741,7 +747,7 @@ public interface Constants {
 	
 	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
-	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?);";
+	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,attempt_status,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?);";
 	
 	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
@@ -769,7 +775,7 @@ public interface Constants {
 	
 	String SELECT_ALL_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
 	
-	String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views)VALUES(?,?,?,?,?,?,?);";
+	String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views,completed_count)VALUES(?,?,?,?,?,?,?,?);";
 	
 	String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
 	

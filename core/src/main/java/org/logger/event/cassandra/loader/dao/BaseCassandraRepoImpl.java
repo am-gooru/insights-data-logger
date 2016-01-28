@@ -1726,6 +1726,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(studentsClassActivity.getCollectionUid())
 			.withStringValue(studentsClassActivity.getUserUid())
 			.withStringValue(studentsClassActivity.getCollectionType())
+			.withStringValue(studentsClassActivity.getAttemptStatus())
 			.withLongValue(studentsClassActivity.getScore())
 			.withLongValue(studentsClassActivity.getTimeSpent())
 			.withLongValue(studentsClassActivity.getViews())
@@ -2018,6 +2019,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(studentsClassActivity.getScore())
 			.withLongValue(studentsClassActivity.getTimeSpent())
 			.withLongValue(studentsClassActivity.getViews())
+			.withLongValue(studentsClassActivity.getCompletedCount())
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -2040,8 +2042,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				long timeSpent = 0L;
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					itemCount++;
-					score += columns.getLongValue(SCORE, 0L);
+					if(columns.getStringValue(_ATTEMPT_STATUS, COMPLETED).equals(COMPLETED)){
+						itemCount++;
+						score += columns.getLongValue(SCORE, 0L);
+					}
 					timeSpent += columns.getLongValue(_TIME_SPENT, 0L);
 					views += columns.getLongValue(VIEWS, 0L);
 				}
