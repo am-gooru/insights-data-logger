@@ -23,6 +23,8 @@ public class StudentsClassActivity implements Serializable,Cloneable {
 
 	private String collectionType;
 	
+	private String attemptStatus;
+
 	private long views;
 
 	private long timeSpent;
@@ -111,6 +113,14 @@ public class StudentsClassActivity implements Serializable,Cloneable {
 
 	public void setScore(long score) {
 		this.score = score;
+	}
+
+	public String getAttemptStatus() {
+		return attemptStatus;
+	}
+
+	public void setAttemptStatus(String attemptStatus) {
+		this.attemptStatus = attemptStatus;
 	}
 
 }

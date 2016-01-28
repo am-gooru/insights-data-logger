@@ -273,6 +273,10 @@ ALTER TABLE class_activity_peer_counts ADD collection_type text;
 
 ALTER TABLE user_sessions add collection_type text;
 
+ALTER TABLE class_activity_datacube add completed_count bigint;
+
+ALTER TABLE students_class_activity add attempt_status text;
+
 CREATE TABLE event_logger_insights.user_question_grade (
     teacher_id text,
     user_id text,

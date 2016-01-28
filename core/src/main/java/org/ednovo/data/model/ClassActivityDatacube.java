@@ -23,6 +23,8 @@ public class ClassActivityDatacube implements Serializable{
 
 	private long score;
 
+	private long completedCount;
+	
 	public String getRowKey() {
 		return rowKey;
 	}
@@ -77,6 +79,14 @@ public class ClassActivityDatacube implements Serializable{
 
 	public void setScore(long score) {
 		this.score = score;
+	}
+
+	public long getCompletedCount() {
+		return completedCount;
+	}
+
+	public void setCompletedCount(long completedCount) {
+		this.completedCount = completedCount;
 	}
 	
 	

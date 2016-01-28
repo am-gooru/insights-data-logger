@@ -342,8 +342,8 @@ public class EventServiceImpl implements EventService, Constants {
 			eventData.setAttemptTrySequence(attempTrySequence);
 		}
 
-		if (eventObj.get(ATTMPT_STATUS) != null) {
-			JsonArray jsonArray = eventObj.get(ATTMPT_STATUS).getAsJsonArray();
+		if (eventObj.get(ATTEMPT_STATUS) != null) {
+			JsonArray jsonArray = eventObj.get(ATTEMPT_STATUS).getAsJsonArray();
 			int[] attemptStatus = new int[jsonArray.size()];
 			for (int i = 0; i < jsonArray.size(); i++) {
 				attemptStatus[i] = jsonArray.get(i).getAsInt();
