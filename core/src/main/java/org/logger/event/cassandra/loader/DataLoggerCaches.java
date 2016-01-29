@@ -72,11 +72,11 @@ public class DataLoggerCaches implements Constants {
 			 * Disabled in release-3.0 Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0); cache = new LinkedHashMap<String, String>(); for
 			 * (Row<String, String> row : operators) { cache.put(row.getKey(), row.getColumns().getStringValue(AGG_JSON, null)); }
 			 */
-			cache.put(VIEW_EVENTS, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), _VIEW_EVENTS, DEFAULT_COLUMN, 0).getStringValue());
+			//cache.put(VIEW_EVENTS, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), _VIEW_EVENTS, DEFAULT_COLUMN, 0).getStringValue());
 			/**
 			 * Disabled in release-3.0 cache.put(ATMOSPHERE_END_POINT, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), ATM_END_POINT, DEFAULT_COLUMN, 0).getStringValue());
 			 */
-			cache.put(VIEW_UPDATE_END_POINT, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULT_COLUMN, 0)
+			/*cache.put(VIEW_UPDATE_END_POINT, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULT_COLUMN, 0)
 					.getStringValue());
 			cache.put(SESSION_TOKEN, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SESSIONTOKEN.getName(), DEFAULT_COLUMN, 0).getStringValue());
 			cache.put(SEARCH_INDEX_API, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.SEARCHINDEXAPI.getName(), DEFAULT_COLUMN, 0).getStringValue());
@@ -107,7 +107,7 @@ public class DataLoggerCaches implements Constants {
 				canRunIndexing = false;
 			} else {
 				canRunIndexing = true;
-			}
+			}*/
 			if (kafkaConfigurationCache == null && kafkaConfigurationCache.size() < 0) {
 
 				kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
