@@ -35,7 +35,6 @@ import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
@@ -146,8 +145,7 @@ public class EventServiceImpl implements EventService, Constants {
 		if (event == null) {
 			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", RAW_EVENT_NULL_EXCEPTION);
 		}
-		String eventJson = gson.toJson(event);
-
+		String eventJson = event.getFields();
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), EVENT_NAME, "LA001", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventId(), EVENT_ID, "LA002", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getVersion(), VERSION, "LA003", eventJson, RAW_EVENT_NULL_EXCEPTION);
@@ -155,54 +153,10 @@ public class EventServiceImpl implements EventService, Constants {
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getSession(), SESSION, "LA005", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getMetrics(), METRICS, "LA006", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getContext(), CONTEXT, "LA007", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject(), PAY_LOAD, "LA008", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject().toString(), PAY_LOAD, "LA008", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getStartTime(), START_TIME, "LA009", eventJson, RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), END_TIME, "LA010", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		if (isValidEvent) {
-			try {
-				JSONObject session = new JSONObject(event.getSession());
-				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
-					if (!session.has(SESSION_ID)
-							|| (session.has(SESSION_ID) && (session.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
-						isValidEvent = false;
-						logger.error(RAW_EVENT_NULL_EXCEPTION + SESSION_ID + " : " + gson.toJson(event).toString());
-					}
-				}
-
-			} catch (JSONException e) {
-				isValidEvent = false;
-				logger.error(RAW_EVENT_JSON_EXCEPTION + SESSION + " : " + gson.toJson(event).toString());
-			}
-			try {
-				JSONObject context = new JSONObject(event.getContext());
-				if (event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
-					if (!context.has(CONTENT_GOORU_OID)
-							|| (context.has(CONTENT_GOORU_OID) && (context.isNull(CONTENT_GOORU_OID) || (context.get(CONTENT_GOORU_OID) != null && context.getString(CONTENT_GOORU_OID).equalsIgnoreCase("null"))))) {
-						isValidEvent = false;
-						logger.error(RAW_EVENT_NULL_EXCEPTION + CONTENT_GOORU_OID + " : " + gson.toJson(event).toString());
-					}
-					if ((context.has(CLASS_GOORU_OID) && (context.isNull(CLASS_GOORU_OID) || (context.get(CLASS_GOORU_OID) != null && !context.getString(CLASS_GOORU_OID).equalsIgnoreCase("null"))))) {
-						//Log If class Id is available and any one of the CUL ids are missing 
-						if ((!context.has(COURSE_GOORU_OID) || (context.has(COURSE_GOORU_OID) 
-							&& (context.isNull(COURSE_GOORU_OID) || (context.get(COURSE_GOORU_OID) != null 
-							&& context.getString(COURSE_GOORU_OID).equalsIgnoreCase("null"))))) || 
-							(!context.has(UNIT_GOORU_OID) || (context.has(UNIT_GOORU_OID) 
-									&& (context.isNull(UNIT_GOORU_OID) || (context.get(UNIT_GOORU_OID) != null 
-									&& context.getString(UNIT_GOORU_OID).equalsIgnoreCase("null"))))) ||
-									(!context.has(LESSON_GOORU_OID) || (context.has(LESSON_GOORU_OID) 
-											&& (context.isNull(LESSON_GOORU_OID) || (context.get(LESSON_GOORU_OID) != null 
-											&& context.getString(LESSON_GOORU_OID).equalsIgnoreCase("null")))))) {
-							isValidEvent = false;
-							logger.error(RAW_EVENT_NULL_EXCEPTION + CUL_IDS_MISSING + " : " + gson.toJson(event).toString());
-						}
-					}
-				}
-			} catch (JSONException e) {
-				isValidEvent = false;
-				logger.error(RAW_EVENT_JSON_EXCEPTION + CONTEXT + " : " + gson.toJson(event).toString());
-			}
-		}
-		
+		ServerValidationUtils.deepEventCheck(isValidEvent, event, eventJson);
 		return isValidEvent;
 	}
 
@@ -428,7 +382,6 @@ public class EventServiceImpl implements EventService, Constants {
 			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, INVALID_API_KEY);
 			return;
 		}
-		EventData eventData = null;
 		JsonElement jsonElement = null;
 		JsonArray eventJsonArr = null;
 		if (!fields.isEmpty()) {
@@ -458,33 +411,20 @@ public class EventServiceImpl implements EventService, Constants {
 			if (userIp == null) {
 				userIp = request.getRemoteAddr();
 			}
-
 			for (JsonElement eventJson : eventJsonArr) {
 				JsonObject eventObj = eventJson.getAsJsonObject();
-				String eventString = eventObj.toString();
-				if (eventObj.get(VERSION) == null) {
-					eventData = new EventData();
-					eventData.setStartTime(timeStamp);
-					eventData.setEndTime(timeStamp);
-					eventData.setApiKey(apiKey);
-					eventData.setUserAgent(userAgent);
-					eventData.setUserIp(userIp);
-					eventData.setEventSource(EVENT_SOURCE);
-					eventData.setFields(eventString);
-					createEventData(eventData, eventObj);
-				} else {
-					Event event = gson.fromJson(eventObj, Event.class);
-					JSONObject field = new JSONObject(eventString);
-					if (StringUtils.isNotBlank(event.getUser())) {
-						JSONObject user = new JSONObject(event.getUser());
+				String eventString = eventObj.toString();				
+				Event event = new Event(eventString);
+					if (event.getUser() != null && event.getUser().length() > 0) {
+						JSONObject user = event.getUser();
 						user.put(USER_IP, userIp);
 						user.put(USER_AGENT, userAgent);
-						field.put(USER, user.toString());
+						event.put(USER, user);
+						
 					}
-					event.setFields(field.toString());
+					event.setFields((new JSONObject(eventString).put(USER, event.getUser())).toString());
 					event.setApiKey(apiKey);
 					processMessage(event);
-				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception : ", e);

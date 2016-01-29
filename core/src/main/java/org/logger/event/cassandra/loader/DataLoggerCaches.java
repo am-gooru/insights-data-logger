@@ -27,7 +27,7 @@ public class DataLoggerCaches implements Constants {
 
 	public static Collection<String> pushingEvents;
 
-	public static Boolean canRunScheduler;
+	public static Boolean canRunScheduler = false;
 
 	public static Boolean canRunIndexing = false;
 
@@ -43,7 +43,7 @@ public class DataLoggerCaches implements Constants {
 	
 	public static Map<String, String> taxonomyCodeType;
 
-	public static Map<String, Map<String, String>> kafkaConfigurationCache;
+	public static Map<String, Map<String, String>> kafkaConfigurationCache = new HashMap<String, Map<String, String>>();;
 
 	public static Map<String, String> fieldDataTypes = null;
 
@@ -89,7 +89,7 @@ public class DataLoggerCaches implements Constants {
 				cache.put(schdulersStatus.getColumnByIndex(i).getName(), schdulersStatus.getColumnByIndex(i).getStringValue());
 			}
 			pushingEvents = baseDao.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), DEFAULTKEY, 0).getColumnNames();
-			String host = baseDao.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, null);
+			String host = baseDao.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), SCH_HOST, 0).getStringValue(HOST, "localhost");
 
 			String localHost = "" + InetAddress.getLocalHost();
 			logger.debug("localHost: " + localHost);
@@ -108,7 +108,7 @@ public class DataLoggerCaches implements Constants {
 			} else {
 				canRunIndexing = true;
 			}
-			if (kafkaConfigurationCache == null) {
+			if (kafkaConfigurationCache == null && kafkaConfigurationCache.size() < 0) {
 
 				kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 				String[] kafkaMessager = new String[] { V2_KAFKA_CONSUMER, V2_KAFKA_LOG_WRITER_PRODUCER, V2_KAFKA_LOG_WRITER_CONSUMER, V2_KAFKA_MICRO_PRODUCER, V2_KAFKA_MICRO_CONSUMER };
@@ -125,24 +125,24 @@ public class DataLoggerCaches implements Constants {
 			fieldDataTypes = new LinkedHashMap<String, String>();
 			Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(), 0);
 			for (Row<String, String> row : fieldDescrption) {
-				fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
-				beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+				fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", ""));
+				beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", ""));
 			}
 
 			Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(), 0);
 			licenseCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : licenseRows) {
-				licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
 			}
 			Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(), 0);
 			resourceTypesCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : resourceTypesRows) {
-				resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
 			}
 			Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), 0);
 			categoryCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : categoryRows) {
-				categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
 			}
 
 			taxonomyCodeType = new LinkedHashMap<String, String>();
@@ -154,7 +154,7 @@ public class DataLoggerCaches implements Constants {
 			Rows<String, String> resourceFormatRows = baseDao.readAllRows(ColumnFamilySet.RESOURCEFORMAT.getColumnFamily(), 0);
 			resourceFormatCache = new LinkedHashMap<String, Object>();
 			for (Row<String, String> row : resourceFormatRows) {
-				resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
 			}
 			Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), 0);
 

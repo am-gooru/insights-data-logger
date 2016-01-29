@@ -23,85 +23,104 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import java.io.Serializable;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+public class Event extends JSONObject {
 
-public class Event implements Serializable {
-	
+	public Event() {
+		super();
+	}
+
+	public Event(String json) throws JSONException {
+		super(json);
+		this.build();
+	}
+
 	/**
 	 * @author daniel
 	 */
-	private static final long serialVersionUID = 1L;
 
-	private String context;
-	
-	private String user;
-	
-	private String payLoadObject;
-	
-	private String metrics;
-	
-	private String session;
-
-	private Long startTime;
-	
-	private Long endTime;
-	
-	// Added Specially for Creating the Event
-	private String apiKey;
-	
-	private String eventName;
-	
-	private String contentGooruId;
-	
-	private String parentGooruId;
-	
-	private Long timeInMillSec;
-	
-	private String fields;
-	
 	private String eventId;
+
+	private String eventName;
+
+	private JSONObject context;
+
+	private JSONObject user;
+
+	private JSONObject payLoadObject;
+
+	private JSONObject metrics;
+
+	private JSONObject session;
 	
-	private String parentEventId;
+	private JSONObject version;
 	
-	private String version;
+	private Long startTime;
 
-	private String eventType;
+	private Long endTime;
 
-	private String organizationUid;
-	
-	private Long hitCount;
-	
-	public Long getHitCount() {
-		return hitCount;
+	private String apiKey;
+
+	private String contentGooruId;
+
+	private String fields;
+
+	public String getEventId() {
+		return eventId;
 	}
 
-	public void setHitCount(Long hitCount) {
-		this.hitCount = hitCount;
+	public void setEventId(String eventId) {
+		this.eventId = eventId;
 	}
 
-	public String getEventType() {
-		return eventType;
+	public String getEventName() {
+		return eventName;
 	}
 
-	public void setEventType(String eventType) {
-		this.eventType = eventType;
+	public void setEventName(String eventName) {
+		this.eventName = eventName;
 	}
 
-	public String getOrganizationUid() {
-		return organizationUid;
+	public JSONObject getContext() {
+		return context;
 	}
 
-	public void setOrganizationUid(String organizationUid) {
-		this.organizationUid = organizationUid;
+	public void setContext(JSONObject context) {
+		this.context = context;
 	}
 
-	public String getParentEventId() {
-		return parentEventId;
+	public JSONObject getUser() {
+		return user;
 	}
 
-	public void setParentEventId(String parentEventId) {
-		this.parentEventId = parentEventId;
+	public void setUser(JSONObject user) {
+		this.user = user;
+	}
+
+	public JSONObject getPayLoadObject() {
+		return payLoadObject;
+	}
+
+	public void setPayLoadObject(JSONObject payLoadObject) {
+		this.payLoadObject = payLoadObject;
+	}
+
+	public JSONObject getMetrics() {
+		return metrics;
+	}
+
+	public void setMetrics(JSONObject metrics) {
+		this.metrics = metrics;
+	}
+
+	public JSONObject getSession() {
+		return session;
+	}
+
+	public void setSession(JSONObject session) {
+		this.session = session;
 	}
 
 	public Long getStartTime() {
@@ -120,12 +139,12 @@ public class Event implements Serializable {
 		this.endTime = endTime;
 	}
 
-	public String getEventName() {
-		return eventName;
+	public String getApiKey() {
+		return apiKey;
 	}
 
-	public void setEventName(String eventName) {
-		this.eventName = eventName;
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
 	}
 
 	public String getContentGooruId() {
@@ -136,22 +155,6 @@ public class Event implements Serializable {
 		this.contentGooruId = contentGooruId;
 	}
 
-	public String getParentGooruId() {
-		return parentGooruId;
-	}
-
-	public void setParentGooruId(String parentGooruId) {
-		this.parentGooruId = parentGooruId;
-	}
-
-	public Long getTimeInMillSec() {
-		return timeInMillSec;
-	}
-
-	public void setTimeInMillSec(Long timeInMillSec) {
-		this.timeInMillSec = timeInMillSec;
-	}
-
 	public String getFields() {
 		return fields;
 	}
@@ -160,67 +163,45 @@ public class Event implements Serializable {
 		this.fields = fields;
 	}
 
-	public String getEventId() {
-		return eventId;
-	}
-
-	public void setEventId(String eventId) {
-		this.eventId = eventId;
-	}
-
-	public String getContext() {
-		return context;
-	}
-
-	public void setContext(String context) {
-		this.context = context;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
-	public String getPayLoadObject() {
-		return payLoadObject;
-	}
-
-	public void setPayLoadObject(String payLoadObject) {
-		this.payLoadObject = payLoadObject;
-	}
-
-	public String getMetrics() {
-		return metrics;
-	}
-
-	public void setMetrics(String metrics) {
-		this.metrics = metrics;
-	}
-
-	public String getSession() {
-		return session;
-	}
-
-	public void setSession(String session) {
-		this.session = session;
-	}
-
-	public String getVersion() {
+	public JSONObject getVersion() {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(JSONObject version) {
 		this.version = version;
 	}
 
-	public String getApiKey() {
-		return apiKey;
-	}
+	private Event build() {
+		try {
+			this.context = getJSONObject("context");
+			this.user = getJSONObject("user");
+			this.payLoadObject = getJSONObject("payLoadObject");
+			this.metrics = getJSONObject("metrics");
+			this.session = getJSONObject("session");
+			this.version = getJSONObject("version");
+			this.startTime = getLong("startTime");
+			this.endTime = getLong("endTime");
+			this.eventId = getString("eventId");
+			this.eventName = getString("eventName");
+			this.apiKey = session.getString("apiKey");
+			this.contentGooruId = context.getString("contentGooruId");
 
-	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
+			if (eventName.matches("collection.play|collection.resource.play|resource.play")) {
+				long views = 1L;
+				long timeSpent = (endTime - startTime);
+				String collectionType = context.getString("collectionType");
+				String eventType = context.getString("type");
+				if (("start".equals(eventType) && "assessment".equalsIgnoreCase(collectionType)) || ("stop".equals(eventType) && "collection".equalsIgnoreCase(collectionType))) {
+					views = 0L;
+				}
+				if (timeSpent > 7200000 || timeSpent < 0) {
+					timeSpent = 7200000;
+				}
+				metrics.put("viewsCount", views);
+				metrics.put("totalTimeSpentInMs", timeSpent);
+			}
+		} catch (JSONException e) {
+		}
+		return this;
 	}
 }
