@@ -1741,7 +1741,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			studentsClassActivity.setViews(views);
 		}
 		studentsClassActivity.setUserUid(gooruUUID);
-		logger.info("CA score : " + score);
 		studentsClassActivity.setScore(score);
 		studentsClassActivity.setTimeSpent(timespent);
 
