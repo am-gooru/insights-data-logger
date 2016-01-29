@@ -127,9 +127,11 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), NA);
 					UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(), NA);
 					long aggScore = baseCassandraDao.getSessionScore(userSessionActivity, eventName);
-					userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
+					if(userCollectionData != null){						
+						userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
+						userCollectionData.setScore(aggScore);
+					}
 					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
-					userCollectionData.setScore(aggScore);
 					userAllSessionCollectionActivity.setScore(aggScore);
 					studentsClassActivity.setScore(aggScore);
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);
@@ -1741,7 +1743,6 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			studentsClassActivity.setViews(views);
 		}
 		studentsClassActivity.setUserUid(gooruUUID);
-		logger.info("CA score : " + score);
 		studentsClassActivity.setScore(score);
 		studentsClassActivity.setTimeSpent(timespent);
 

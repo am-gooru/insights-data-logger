@@ -23,7 +23,6 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,18 +32,14 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 public class JSONDeserializer implements Constants {
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
 
-	private static Gson gson = new Gson();
+	private static final ObjectMapper mapper = new ObjectMapper();
 
-	
 	public static <T> T deserialize(String json, TypeReference<T> type) {
-		ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.readValue(json, type);
 		} catch (Exception e) {
@@ -54,15 +49,15 @@ public class JSONDeserializer implements Constants {
 	}
 		
 	public static <T> T deserializeEvent(Event event) {
-        Type mapType = new TypeToken <HashMap<String, Object>>() {}.getType();
-        Type numberMapType = new TypeToken <HashMap<String, Number>>() {}.getType();
+        TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String,Object>>(){};
+        TypeReference<Map<String, Number>> numberMapType = new TypeReference<Map<String,Number>>(){};
         Map<String,Object> map = new HashMap<String,Object>();
         try {
-                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getUser(), mapType));
-                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getMetrics(), numberMapType));
-                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getPayLoadObject(), mapType));
-                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getContext(), mapType));
-                map.putAll((Map<? extends String, ? extends Object>) gson.fromJson(event.getSession(), mapType));
+                map.putAll(deserialize(event.getUser().toString(), mapType));
+                map.putAll(deserialize(event.getMetrics().toString(), numberMapType));
+                map.putAll(deserialize(event.getPayLoadObject().toString(), mapType));
+                map.putAll(deserialize(event.getContext().toString(), mapType));
+                map.putAll(deserialize(event.getSession().toString(), mapType));                
                 map.put(EVENT_NAME,event.getEventName());
                 map.put(EVENT_ID,event.getEventId());
                 map.put(START_TIME,event.getStartTime());

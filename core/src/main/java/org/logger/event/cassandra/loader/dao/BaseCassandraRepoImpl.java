@@ -1081,18 +1081,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.putColumnIfNotNull(_START_TIME, event.getStartTime(), null)
 				.putColumnIfNotNull(_END_TIME, event.getEndTime(), null)
 				.putColumnIfNotNull(FIELDS, event.getFields(), null)
-				.putColumnIfNotNull(_TIME_SPENT_IN_MILLIS, event.getTimeInMillSec(), null)
 				.putColumnIfNotNull(_CONTENT_GOORU_OID, event.getContentGooruId(), null)
-				.putColumnIfNotNull(_PARENT_GOORU_OID, event.getParentGooruId(), null)
 				.putColumnIfNotNull(_EVENT_NAME, event.getEventName(), null)
-				.putColumnIfNotNull(SESSION, event.getSession(), null)
-				.putColumnIfNotNull(METRICS, event.getMetrics(), null)
-				.putColumnIfNotNull(_PAYLOAD_OBJECT, event.getPayLoadObject(), null)
-				.putColumnIfNotNull(USER, event.getUser(), null)
-				.putColumnIfNotNull(CONTEXT, event.getContext(), null)
-				.putColumnIfNotNull(_EVENT_TYPE, event.getEventType(), null)
-				.putColumnIfNotNull(_ORGANIZATION_UID, event.getOrganizationUid(), null)
-				.putColumnIfNotNull(_PARENT_EVENT_ID, event.getParentEventId(), null);
+				.putColumnIfNotNull(SESSION, event.getSession().toString(), null)
+				.putColumnIfNotNull(METRICS, event.getMetrics().toString(), null)
+				.putColumnIfNotNull(_PAYLOAD_OBJECT, event.getPayLoadObject().toString(), null)
+				.putColumnIfNotNull(USER, event.getUser().toString(), null)
+				.putColumnIfNotNull(CONTEXT, event.getContext().toString(), null)
+				;
 		try {
 			m.execute();
 		} catch (Exception e) {

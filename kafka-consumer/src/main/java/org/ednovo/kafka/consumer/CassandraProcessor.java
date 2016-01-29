@@ -31,6 +31,7 @@ import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventValidator;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.slf4j.Logger;
@@ -63,37 +64,17 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	@Override
 	public void handleRow(Object row) throws Exception {
 
-        if (row != null && (row instanceof EventData)) {
-      
-           EventData eventData = (EventData) row;
-           /*
-            * Skip new version  events  
-            */
-           if(eventData.getVersion() != null){
-           	return;
-           }
-           logger.info("EventName : {}",eventData.getEventName());
-           cleanseData(eventData);
-
-           if (eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
-           	return;
-           }
-           // Update into Cassandra through logger-core
-           String fields = eventData.getFields();
-           if (fields == null || fields.isEmpty()) {
-               logger.warn("fields is empty. This is an error");
-               return;
-           }
-           
-   		if ( "Add%20Segment%20Name".equalsIgnoreCase(eventData.getQuery()) ||  "*".equalsIgnoreCase(eventData.getQuery())){
-   			return;
-   		}  
-           eventData.setApiKey(GOORU_EVENT_LOGGER_API_KEY);
-           eventData.setEventSource(EVENT_SOURCE);
-           dataLoader.handleLogMessage(eventData);
-           
-           handleRowByNextHandler(eventData);
-       }
+		/**
+		 * This changes to be revertable
+		 */
+		JSONObject eventJson = new JSONObject(row);
+		eventJson.put("context", new JSONObject(eventJson.getString("context")));
+		eventJson.put("user", new JSONObject(eventJson.getString("user")));
+		eventJson.put("payLoadObject", new JSONObject(eventJson.getString("payLoadObject")));
+		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
+		eventJson.put("session", new JSONObject(eventJson.getString("session")));
+		eventJson.put("version", new JSONObject(eventJson.getString("version")));
+			
         if (row != null && (row instanceof Event)) {
        	
        	 Event event = (Event) row;

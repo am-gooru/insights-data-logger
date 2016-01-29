@@ -126,7 +126,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 			eventMap.put(EVENT_NAME, events.getEventName());
 			eventMap.put(EVENT_ID, events.getEventId());
 			eventMap.put(EVENT_TIME, events.getStartTime());
-			eventMap.put(RESULT_COUNT, events.getHitCount());
+			//eventMap.put(RESULT_COUNT, events.getHitCount());
 			if (eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
 				eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
 				eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));

@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -98,7 +97,7 @@ public class CassandraDataLoader implements Constants {
 		this(null);
 
 		// micro Aggregator producer IP
-		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+/*		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
@@ -110,7 +109,7 @@ public class CassandraDataLoader implements Constants {
 		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-	}
+*/	}
 
 	/**
 	 * 
@@ -119,19 +118,19 @@ public class CassandraDataLoader implements Constants {
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
 		// micro Aggregator producer IP
-		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+/*		String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
-
+*/
 		// Log Writter producer IP
-		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_IP);
+/*		String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_IP);
 		String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PORT);
 		String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_TOPIC);
 		String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
-
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
+*/
+		//microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		//kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
 	} 
 
 	public static long getTimeFromUUID(UUID uuid) {
@@ -147,10 +146,10 @@ public class CassandraDataLoader implements Constants {
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(configOptionsMap);
 		this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
-		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
+		//this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
-		indexer = new ELSIndexerImpl(getConnectionProvider());
-		ltiServiceHandler = new LTIServiceHandler(baseDao);
+		//indexer = new ELSIndexerImpl(getConnectionProvider());
+		//ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
@@ -308,19 +307,18 @@ public class CassandraDataLoader implements Constants {
 	 * @throws GeoIp2Exception
 	 */
 	public void processMessage(Event event) {
-		Map<String, Object> eventMap = new LinkedHashMap<String, Object>();
-		eventMap = JSONDeserializer.deserializeEvent(event);
+		Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
-			kafkaLogWriter.sendEventLog(event.getFields());
+			//kafkaLogWriter.sendEventLog(event.getFields());
 
 		}
-		String eventName = (String) eventMap.get(EVENT_NAME);
+		String eventName = event.getEventName();
 		/**
 		 * Calculate timespent in server side if more than two hours
 		 */
-		if (eventName.matches(PLAY_EVENTS)) {
+		/*if (eventName.matches(PLAY_EVENTS)) {
 			calculateTimespentAndViews(eventMap, event);
-		}
+		}*/
 
 		logger.info("Field : {}" ,event.getFields());
 		// TODO : This should be reject at validation stage.
@@ -366,7 +364,7 @@ public class CassandraDataLoader implements Constants {
 		}
 */
 		if (DataLoggerCaches.getCanRunIndexing()) {
-			indexer.indexEvents(event.getFields());
+			//indexer.indexEvents(event.getFields());
 		}
 
 		/**
@@ -412,7 +410,7 @@ public class CassandraDataLoader implements Constants {
 			JSONObject eventMetrics = new JSONObject(event.getMetrics());
 			eventMetrics.put(TOTALTIMEINMS, timeSpent);
 			eventMetrics.put(VIEWS_COUNT, views);
-			event.setMetrics(eventMetrics.toString());
+			event.setMetrics(eventMetrics);
 			
 			JSONObject eventFields = new JSONObject(event.getFields());
 			eventFields.put(METRICS, eventMetrics.toString());
