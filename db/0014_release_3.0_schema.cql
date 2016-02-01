@@ -36,18 +36,19 @@ CREATE TABLE students_class_activity (
 // If user playing a collection/assessment from outside class, CUL id will be NA.
 // NULL value columns can not filter.
 
-CREATE TABLE user_sessions (
-    collection_uid text,
-    user_uid text,
-    session_id text,
-    class_uid text,
-    course_uid text,
+CREATE TABLE user_sessions (                                                                                                                                              
+    user_uid text,                                                                                                                                                                              
+    collection_uid text,                                                                                                                                                                        
+    collection_type text,                                                                                                                                                                       
+    class_uid text,                                                                                                                                                                             
+    course_uid text,                                                                                                                                                                            
+    unit_uid text,                                                                                                                                                                              
+    lesson_uid text,
     event_time bigint,
     event_type text,
-    lesson_uid text,
-    unit_uid text,
-    PRIMARY KEY (collection_uid, user_uid, session_id)
-) WITH CLUSTERING ORDER BY (user_uid ASC, session_id ASC)
+    session_id text,
+    PRIMARY KEY (user_uid, collection_uid, collection_type, class_uid, course_uid, unit_uid, lesson_uid)
+) WITH CLUSTERING ORDER BY (collection_uid ASC, collection_type ASC, class_uid ASC, course_uid ASC, unit_uid ASC, lesson_uid ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -62,11 +63,6 @@ CREATE TABLE user_sessions (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-	CREATE INDEX user_sessions_class_uid_idx ON user_sessions (class_uid);
-	CREATE INDEX user_sessions_course_uid_idx ON user_sessions (course_uid);
-	CREATE INDEX user_sessions_lesson_uid_idx ON user_sessions (lesson_uid);
-	CREATE INDEX user_sessions_unit_uid_idx ON user_sessions (unit_uid);
-	
 //This columnfamily contains usage data by session wise
 CREATE TABLE user_session_activity (
     session_id text,
@@ -75,8 +71,10 @@ CREATE TABLE user_session_activity (
     answer_object text,
     answer_status text,
     attempts bigint,
+    collection_type text,
+    event_type text,
+    question_type text,
     reaction bigint,
-    resource_format text,
     resource_type text,
     score bigint,
     time_spent bigint,
@@ -97,27 +95,24 @@ CREATE TABLE user_session_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
-CREATE INDEX user_session_activity_resource_type_idx ON user_session_activity (resource_type);
-
 //This columnfamily contains usage by standards and learning target wise
 //This will captures data only if student playing a collection or assessment from class
 
 CREATE TABLE content_taxonomy_activity (
     user_uid text,
+    resource_type text,
     subject_id text,
     course_id text,
     domain_id text,
-    sub_domain_id text,
     standards_id text,
     learning_targets_id text,
     gooru_oid text,
-    resource_format text,
-    resource_type text,
+    question_type text,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (user_uid, subject_id, course_id, domain_id, sub_domain_id, standards_id, learning_targets_id, gooru_oid)
-) WITH CLUSTERING ORDER BY (subject_id ASC, course_id ASC, domain_id ASC, sub_domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
+    PRIMARY KEY (user_uid, resource_type, subject_id, course_id, domain_id, standards_id, learning_targets_id, gooru_oid)
+) WITH CLUSTERING ORDER BY (resource_type ASC, subject_id ASC, course_id ASC, domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -132,23 +127,23 @@ CREATE TABLE content_taxonomy_activity (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
 
+
 CREATE TABLE content_class_taxonomy_activity (
-    user_uid text,
     class_uid text,
+    user_uid text,
+    resource_type text,
     subject_id text,
     course_id text,
     domain_id text,
-    sub_domain_id text,
     standards_id text,
     learning_targets_id text,
     gooru_oid text,
-    resource_format text,
-    resource_type text,
+    question_type text,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (user_uid, class_uid, subject_id, course_id, domain_id, sub_domain_id, standards_id, learning_targets_id, gooru_oid)
-) WITH CLUSTERING ORDER BY (class_uid ASC, subject_id ASC, course_id ASC, domain_id ASC, sub_domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
+    PRIMARY KEY (class_uid, user_uid, resource_type, subject_id, course_id, domain_id, standards_id, learning_targets_id, gooru_oid)
+) WITH CLUSTERING ORDER BY (user_uid ASC, resource_type ASC, subject_id ASC, course_id ASC, domain_id ASC, standards_id ASC, learning_targets_id ASC, gooru_oid ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -277,7 +272,7 @@ ALTER TABLE class_activity_datacube add completed_count bigint;
 
 ALTER TABLE students_class_activity add attempt_status text;
 
-CREATE TABLE event_logger_insights.user_question_grade (
+CREATE TABLE user_question_grade (
     teacher_id text,
     user_id text,
     session_id text,
