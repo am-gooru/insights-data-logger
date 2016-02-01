@@ -53,13 +53,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		// Override and set fields to be the original log message / JSON. 
 	        Event event = null;
 	        try {
-	        	 event = new Event(jsonRowObject);
-	        } catch (Exception e) {
-	            LOG.error("Had a problem trying to parse JSON from the raw line {}", jsonRowObject, e);
-	            return;
-	        }
-	        try {
-	            event = gson.fromJson(jsonRowObject, Event.class);
+	            event = new Event(jsonRowObject);
 	            event.setFields(jsonRowObject);        
 	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {
