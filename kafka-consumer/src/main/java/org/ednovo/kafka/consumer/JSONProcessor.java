@@ -62,7 +62,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));
 	    		
 	            event = new Event(eventJson.toString());
-	            event.setFields(jsonRowObject);        
+	            event.setFields(eventJson.toString());        
 	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {
 	            LOG.error("Had a problem trying to parse EventObject JSON from the raw line {}", jsonRowObject, e);
