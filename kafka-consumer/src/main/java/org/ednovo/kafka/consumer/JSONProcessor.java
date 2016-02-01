@@ -25,14 +25,11 @@ package org.ednovo.kafka.consumer;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.Event;
-
-import com.google.gson.Gson;
+import org.json.JSONObject;
 
 public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
-    private Gson gson;
 
     public JSONProcessor() {
-    	this.gson = new Gson();
 	}
     
 	@Override
@@ -53,7 +50,18 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		// Override and set fields to be the original log message / JSON. 
 	        Event event = null;
 	        try {
-	            event = new Event(jsonRowObject);
+	        	/**
+	        	 * This is revertable change
+	        	 */
+	        	JSONObject eventJson = new JSONObject(jsonRowObject);
+	    		eventJson.put("context", new JSONObject(eventJson.getString("context")));
+	    		eventJson.put("user", new JSONObject(eventJson.getString("user")));
+	    		eventJson.put("payLoadObject", new JSONObject(eventJson.getString("payLoadObject")));
+	    		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
+	    		eventJson.put("session", new JSONObject(eventJson.getString("session")));
+	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));
+	    		
+	            event = new Event(eventJson.toString());
 	            event.setFields(jsonRowObject);        
 	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {

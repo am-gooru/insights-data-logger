@@ -67,7 +67,7 @@ public class CassandraProcessor extends BaseDataProcessor implements
 		/**
 		 * This changes to be revertable
 		 */
-		JSONObject eventJson = new JSONObject(row);
+		JSONObject eventJson = (JSONObject) row;
 		eventJson.put("context", new JSONObject(eventJson.getString("context")));
 		eventJson.put("user", new JSONObject(eventJson.getString("user")));
 		eventJson.put("payLoadObject", new JSONObject(eventJson.getString("payLoadObject")));
