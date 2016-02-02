@@ -10,8 +10,6 @@ public class ContentTaxonomyActivity {
 	
 	private String domainId;
 	
-	private String subDomainId;
-	
 	private String standardsId;
 
 	private String learningTargetsId;
@@ -66,14 +64,6 @@ public class ContentTaxonomyActivity {
 
 	public void setDomainId(String domainId) {
 		this.domainId = domainId;
-	}
-
-	public String getSubDomainId() {
-		return subDomainId;
-	}
-
-	public void setSubDomainId(String subDomainId) {
-		this.subDomainId = subDomainId;
 	}
 
 	public String getStandardsId() {

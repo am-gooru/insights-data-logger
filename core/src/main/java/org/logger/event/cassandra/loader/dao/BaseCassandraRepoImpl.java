@@ -24,6 +24,7 @@ import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
+import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
@@ -1635,16 +1636,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
 			.withCql(INSERT_USER_SESSION)
 			.asPreparedStatement()
-			.withStringValue(collectionUid)
 			.withStringValue(userUid)
-			.withStringValue(sessionId)
+			.withStringValue(collectionUid)
+			.withStringValue(collectionType)
 			.withStringValue(classUid)
 			.withStringValue(courseUid)
 			.withStringValue(unitUid)
 			.withStringValue(lessonUid)
-			.withStringValue(collectionType)
-			.withStringValue(eventType)
 			.withLongValue(eventTime)
+			.withStringValue(eventType)
+			.withStringValue(sessionId)
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1683,6 +1684,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(userSessionActivity.getResourceType())
 			.withStringValue(userSessionActivity.getQuestionType())
 			.withStringValue(userSessionActivity.getAnswerStatus())
+			.withStringValue(userSessionActivity.getEventType())
 			.withLongValue(userSessionActivity.getReaction())
 			.withLongValue(userSessionActivity.getScore())
 			.withLongValue(userSessionActivity.getTimeSpent())
@@ -1744,7 +1746,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(contentTaxonomyActivity.getSubjectId())
 			.withStringValue(contentTaxonomyActivity.getCourseId())
 			.withStringValue(contentTaxonomyActivity.getDomainId())
-			.withStringValue(contentTaxonomyActivity.getSubDomainId())
 			.withStringValue(contentTaxonomyActivity.getStandardsId())
 			.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
 			.withStringValue(contentTaxonomyActivity.getGooruOid())
@@ -1773,7 +1774,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withStringValue(contentTaxonomyActivity.getSubjectId())
 			.withStringValue(contentTaxonomyActivity.getCourseId())
 			.withStringValue(contentTaxonomyActivity.getDomainId())
-			.withStringValue(contentTaxonomyActivity.getSubDomainId())
 			.withStringValue(contentTaxonomyActivity.getStandardsId())
 			.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
 			.withStringValue(contentTaxonomyActivity.getGooruOid())
@@ -1910,12 +1910,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
+			.withStringValue(studentsClassActivity.getUserUid())
+			.withStringValue(studentsClassActivity.getCollectionType())
 			.withStringValue(studentsClassActivity.getCourseUid())
 			.withStringValue(studentsClassActivity.getUnitUid())
 			.withStringValue(studentsClassActivity.getLessonUid())
 			.withStringValue(studentsClassActivity.getCollectionUid())
-			.withStringValue(studentsClassActivity.getCollectionType())
-			.withStringValue(studentsClassActivity.getUserUid())
 			.execute().getResult().getRows();
 			;
 			if (result.size() > 0) {
@@ -2076,10 +2076,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
 					.asPreparedStatement()
 					.withStringValue(contentTaxonomyActivity.getUserUid())
+					.withStringValue(contentTaxonomyActivity.getResourceType())
 					.withStringValue(contentTaxonomyActivity.getSubjectId())
 					.withStringValue(contentTaxonomyActivity.getCourseId())
 					.withStringValue(contentTaxonomyActivity.getDomainId())
-					.withStringValue(contentTaxonomyActivity.getSubDomainId())
 					.withStringValue(contentTaxonomyActivity.getStandardsId())
 					.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
 					.withStringValue(contentTaxonomyActivity.getGooruOid())
@@ -2093,14 +2093,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY)
 					.asPreparedStatement()
-					.withStringValue(contentTaxonomyActivity.getUserUid())
 					.withStringValue(contentTaxonomyActivity.getClassUid())
+					.withStringValue(contentTaxonomyActivity.getUserUid())
+					.withStringValue(contentTaxonomyActivity.getResourceType())
 					.withStringValue(contentTaxonomyActivity.getSubjectId())
 					.withStringValue(contentTaxonomyActivity.getCourseId())
 					.withStringValue(contentTaxonomyActivity.getDomainId())
-					.withStringValue(contentTaxonomyActivity.getSubDomainId())
 					.withStringValue(contentTaxonomyActivity.getStandardsId())
 					.withStringValue(contentTaxonomyActivity.getLearningTargetsId())
 					.withStringValue(contentTaxonomyActivity.getGooruOid())
@@ -2110,6 +2110,65 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			logger.error("Error while retreving students class activity", e);
 		}
 		return result;
+	}
+	
+	public Rows<String, String> getContentTaxonomyActivityDataCube(String rowKey, String columnKey){
+		Rows<String, String> result = null;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_TAXONOMY_ACTIVITY_DATACUBE)
+					.asPreparedStatement()
+					.withStringValue(rowKey)
+					.withStringValue(columnKey)
+					.execute().getResult().getRows();
+			;
+		} catch (Exception e) {
+			logger.error("Error while retreving students class activity", e);
+		}
+		return result;
+	}
+	public long getContentTaxonomyActivityScore(String rowKey){
+		Rows<String, String> result = null;
+		long questionCount = 0L;
+		long score = 0L;
+		try {
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_TAXONOMY_ACTIVITY_DATACUBE)
+					.asPreparedStatement()
+					.withStringValue(rowKey)
+					.execute().getResult().getRows();
+			;
+			if (result.size() > 0) {
+				for (Row<String, String> row : result) {
+					ColumnList<String> columns = row.getColumns();
+							questionCount++;
+							score += columns.getLongValue(SCORE, 0L);
+				}
+				score = questionCount > 0 ? (score/questionCount) : 0;
+			}
+		} catch (Exception e) {
+			logger.error("Error while retreving students class activity", e);
+		}
+		return score;
+	}
+	
+	public boolean saveTaxonomyActivityDataCube(TaxonomyActivityDataCube taxonomyActivityDataCube) {
+		try {						
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily()))
+			.withCql(INSERT_TAXONOMY_ACTIVITY_DATACUBE)
+			.asPreparedStatement()
+			.withStringValue(taxonomyActivityDataCube.getRowKey())
+			.withStringValue(taxonomyActivityDataCube.getLeafNode())
+			.withLongValue(taxonomyActivityDataCube.getViews())
+			.withLongValue(taxonomyActivityDataCube.getAttempts())
+			.withLongValue(taxonomyActivityDataCube.getResourceTimespent())
+			.withLongValue(taxonomyActivityDataCube.getQuestionTimespent())
+			.withLongValue(taxonomyActivityDataCube.getScore())
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing question grade" ,e);
+			return false;
+		}
+		return true;
 	}
 	
 	public boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score) {
