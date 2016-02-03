@@ -181,7 +181,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 baseCassandraDao.updateReaction(userAllSessionActivity);
 			 baseCassandraDao.updateReaction(userSessionActivity);
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())){
-			 service.submit(new ManualGrading(baseCassandraDao, (String)eventMap.get(CONTENT_GOORU_OID), (String)eventMap.get(GOORUID), (String)eventMap.get("teacherId"), (String)eventMap.get(SESSION_ID),((Number) eventMap.get(SCORE)).longValue()));
+			 baseCassandraDao.saveQuestionGrade((String)eventMap.get("teacherId"), (String)eventMap.get(GOORUID), (String)eventMap.get(SESSION_ID), (String)eventMap.get(CONTENT_GOORU_OID), ((Number) eventMap.get(SCORE)).longValue());
 		 }else{
 			 
 		 }

@@ -35,9 +35,7 @@ public class MastryGenerator implements Runnable, Constants {
 				ContentTaxonomyActivity contentTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();
 				ContentTaxonomyActivity contentClassTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();
 				TaxonomyActivityDataCube taxonomyActivityDataCube = new TaxonomyActivityDataCube();
-				TaxonomyActivityDataCube classTaxonomyActivityDataCube = new TaxonomyActivityDataCube();
 				Map<String, String> contentTaxKeyColumnPair = new HashMap<String, String>();
-				Map<String, String> contentClassTaxKeyColumnPair = new HashMap<String, String>();
 				
 				for (String taxId : contentTaxonomyActivity.getTaxonomyIds()) {
 				Rows<String, String> taxRows = baseCassandraDao.getTaxonomy(taxId);
@@ -80,40 +78,37 @@ public class MastryGenerator implements Runnable, Constants {
 						}
 						taxonomyActivityDataCube.setRowKey(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()));
 						taxonomyActivityDataCube.setLeafNode(contentTaxonomyActivity.getGooruOid());
+						generateDataCubeObj(taxonomyActivityDataCube);
+						baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
 						
-						classTaxonomyActivityDataCube.setRowKey(appendTilda(contentTaxonomyActivity.getClassUid(),contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()));
-						classTaxonomyActivityDataCube.setLeafNode(contentTaxonomyActivity.getGooruOid());
+						taxonomyActivityDataCube.setRowKey(appendTilda(contentTaxonomyActivity.getClassUid(),contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()));
+						generateDataCubeObj(taxonomyActivityDataCube);
+						baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
 						
-						generateDataCubeObj(classTaxonomyActivityDataCube);
-						generateDataCubeObj(classTaxonomyActivityDataCube);
-						
-						baseCassandraDao.saveTaxonomyActivityDataCube(classTaxonomyActivityDataCube);
-						baseCassandraDao.saveTaxonomyActivityDataCube(classTaxonomyActivityDataCube);
-						keyPairGenerator(contentTaxKeyColumnPair, contentClassTaxKeyColumnPair, contentTaxonomyActivityInstance);
-						generatedDataCube(contentTaxKeyColumnPair);
-						generatedDataCube(contentClassTaxKeyColumnPair);
+						keyPairGenerator(contentTaxKeyColumnPair, contentTaxonomyActivityInstance);
 					}
 				}
 			}
+				generatedDataCube(contentTaxKeyColumnPair);
 			}
 		} catch (Exception e) {
 			logger.error("Exception while generate Mastery data", e);
 		}
 		
 	}
-
-	private void keyPairGenerator(Map<String, String> contentTaxKeyColumnPair, Map<String, String> contentClassTaxKeyColumnPair, ContentTaxonomyActivity contentTaxonomyActivity) {
+	
+	private void keyPairGenerator(Map<String, String> contentTaxKeyColumnPair, ContentTaxonomyActivity contentTaxonomyActivity) {
 		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()), contentTaxonomyActivity.getGooruOid());
 		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId()), contentTaxonomyActivity.getLearningTargetsId());
 		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId()), contentTaxonomyActivity.getStandardsId());
 		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId()), contentTaxonomyActivity.getDomainId());
 		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId()), contentTaxonomyActivity.getCourseId());
 		
-		contentClassTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()), contentTaxonomyActivity.getGooruOid());
-		contentClassTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId()), contentTaxonomyActivity.getLearningTargetsId());
-		contentClassTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId()), contentTaxonomyActivity.getStandardsId());
-		contentClassTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId()), contentTaxonomyActivity.getDomainId());
-		contentClassTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId()),contentTaxonomyActivity.getCourseId());
+		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()), contentTaxonomyActivity.getGooruOid());
+		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId()), contentTaxonomyActivity.getLearningTargetsId());
+		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId()), contentTaxonomyActivity.getStandardsId());
+		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId()), contentTaxonomyActivity.getDomainId());
+		contentTaxKeyColumnPair.put(appendTilda(contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId()),contentTaxonomyActivity.getCourseId());
 	}
 
 	private TaxonomyActivityDataCube generateDataCubeObj(TaxonomyActivityDataCube taxonomyActivityDataCube) {
