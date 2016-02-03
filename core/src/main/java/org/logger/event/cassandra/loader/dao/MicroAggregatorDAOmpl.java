@@ -1764,9 +1764,9 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		studentLocation.setUnitUid(unitGooruId);
 		studentLocation.setLessonUid(lessonGooruId);
 		if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
-			studentLocation.setCollectionUid(contentGooruId);
-		} else if(eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 			studentLocation.setCollectionUid(parentGooruId);
+		} else if(eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){
+			studentLocation.setCollectionUid(contentGooruId);
 		}
 		studentLocation.setCollectionType(collectionType);
 		studentLocation.setResourceUid(contentGooruId);
