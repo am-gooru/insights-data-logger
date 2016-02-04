@@ -404,7 +404,6 @@ public class EventServiceImpl implements EventService, Constants {
 
 		try {
 			request.setCharacterEncoding("UTF-8");
-			Long timeStamp = System.currentTimeMillis();
 			String userAgent = request.getHeader("User-Agent");
 
 			String userIp = request.getHeader("X-FORWARDED-FOR");
