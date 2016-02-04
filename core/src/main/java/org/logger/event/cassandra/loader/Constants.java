@@ -792,4 +792,5 @@ public interface Constants {
 	String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ? AND question_id = ?;";
 	
 	String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, views, attempts, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
+	
 }

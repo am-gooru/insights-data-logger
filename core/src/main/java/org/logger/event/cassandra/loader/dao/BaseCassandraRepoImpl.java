@@ -2212,4 +2212,22 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		}
 		return result;
 	}
+	
+	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score) {
+		try {			
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
+			.withCql(UPDATE_SESSION_SCORE)
+			.asPreparedStatement()
+			.withStringValue(sessionId)
+			.withStringValue(questionId)
+			.withStringValue(collectionItemId)
+			.withLongValue(score)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			logger.error("Error while storing question grade in session" ,e);
+			return false;
+		}
+		return true;
+	}
 }
