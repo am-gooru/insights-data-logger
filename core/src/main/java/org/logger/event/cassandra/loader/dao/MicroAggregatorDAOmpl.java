@@ -63,6 +63,8 @@ import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Row;
+import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.retry.ConstantBackoff;
 
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
@@ -181,7 +183,20 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 			 baseCassandraDao.updateReaction(userAllSessionActivity);
 			 baseCassandraDao.updateReaction(userSessionActivity);
 		 }else if(eventName.equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())){
-			 baseCassandraDao.saveQuestionGrade((String)eventMap.get("teacherId"), (String)eventMap.get(GOORUID), (String)eventMap.get(SESSION_ID), (String)eventMap.get(CONTENT_GOORU_OID), ((Number) eventMap.get(SCORE)).longValue());
+			 if(eventMap.get("gradeStatus").equals("save")){
+				 baseCassandraDao.saveQuestionGrade((String)eventMap.get("teacherId"), (String)eventMap.get(GOORUID), (String)eventMap.get(SESSION_ID), (String)eventMap.get(CONTENT_GOORU_OID), ((Number) eventMap.get(SCORE)).longValue());
+			 }else if(eventMap.get("gradeStatus").equals("submit")){
+				 Rows<String, String> questionScores = baseCassandraDao.getQuestionsGradeBySessionId((String)eventMap.get("teacherId"), (String)eventMap.get(GOORUID), (String)eventMap.get(SESSION_ID));
+				 if(questionScores != null && questionScores.size() > 0){
+					 for(Row<String, String> questionScore : questionScores){
+						 ColumnList<String> score =  questionScore.getColumns(); 
+						 baseCassandraDao.saveQuestionGradeInSession((String)eventMap.get(SESSION_ID), (String)eventMap.get(CONTENT_GOORU_OID), NA, score.getLongValue(SCORE, 0L));
+					 }
+				 }
+				 UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String)eventMap.get(SESSION_ID), (String)eventMap.get(PARENT_GOORU_OID), NA);
+				 long computedScore = baseCassandraDao.getSessionScore(userCollectionData, LoaderConstants.CPV1.getName());
+				 baseCassandraDao.saveQuestionGradeInSession((String)eventMap.get(SESSION_ID), (String)eventMap.get(PARENT_GOORU_OID), NA, computedScore);
+			 }
 		 }else{
 			 
 		 }
@@ -1665,7 +1680,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		String answerStatus = "NA";
 		String gradeType = eventMap.containsValue(GRADE_TYPE) ? (String)eventMap.get(GRADE_TYPE) : SYSTEM;
 		
-		long eventTime = ((Number) eventMap.get(START_TIME)).longValue();
+		long eventTime = ((Number) eventMap.get(END_TIME)).longValue();
 		long score = 0;
 		long timespent = setLongZeroIfNull(eventMap, TOTALTIMEINMS);
 		long views = setLongZeroIfNull(eventMap, VIEWS_COUNT);
