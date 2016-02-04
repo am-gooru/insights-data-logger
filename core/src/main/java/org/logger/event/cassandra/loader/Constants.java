@@ -706,7 +706,7 @@ public interface Constants {
 	
 	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 	
-	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|resource.play";
+	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|reaction.create";
 	
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 	
