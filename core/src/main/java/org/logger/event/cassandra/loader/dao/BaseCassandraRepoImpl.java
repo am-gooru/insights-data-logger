@@ -1956,11 +1956,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return hasActivity;
 	}
 
-	public long getSessionScore(UserSessionActivity userSessionActivity, String eventName) {
+	public UserSessionActivity getSessionScore(UserSessionActivity userSessionActivity, String eventName) {
 		long score = 0L;
 		try {
 			String gooruOid = "";
 			long questionCount = 0;
+			long reactionCount = 0;
+			long totalReaction = 0;
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
 				gooruOid = userSessionActivity.getGooruOid();
 			}else if (LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)){
@@ -1979,13 +1981,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 							questionCount++;
 							score += columns.getLongValue(SCORE, 0L);
 						}
+						if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && columns.getLongValue(REACTION, 0L) != 0){
+							reactionCount++;
+							totalReaction += columns.getLongValue(REACTION, 0L);
+						}
 				}
-				score = questionCount > 0 ? (score/questionCount) : 0;
+				userSessionActivity.setScore(questionCount > 0 ? (score/questionCount) : 0);
+				userSessionActivity.setReaction(reactionCount > 0 ? (totalReaction/reactionCount) : userSessionActivity.getReaction());
 			}
 		} catch (ConnectionException e) {
 			logger.error("Error while retreving user sessions activity" ,e);
 		}
-		return score;
+		return userSessionActivity;
 	}
 
 	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
