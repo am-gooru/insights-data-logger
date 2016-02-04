@@ -316,9 +316,9 @@ public class CassandraDataLoader implements Constants {
 		/**
 		 * Calculate timespent in server side if more than two hours
 		 */
-		/*if (eventName.matches(PLAY_EVENTS)) {
+		if (eventName.matches(PLAY_EVENTS)) {
 			calculateTimespentAndViews(eventMap, event);
-		}*/
+		}
 
 		logger.info("Field : {}" ,event.getFields());
 		// TODO : This should be reject at validation stage.
@@ -348,13 +348,8 @@ public class CassandraDataLoader implements Constants {
 
 		if (eventName.matches(SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(eventMap);
-		} else if (eventName.matches(RAW_DATA_UPDATE_EVENTS)) {
-			liveAggregator.updateRawData(eventMap);
 		} else if(eventName.equalsIgnoreCase(LTI_OUTCOME)){
 			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
-		}
-		if (eventName.matches(RECOMPUTATION_EVENTS) && ((String) eventMap.get(TYPE)).matches(RECOMPUTATION_COLLECTION_TYPES)) {
-			liveAggregator.processClassActivityOpertaions(eventMap);
 		}
 		
 		/*liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);

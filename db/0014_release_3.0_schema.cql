@@ -37,6 +37,7 @@ CREATE TABLE students_class_activity (
 // This columnfamily contains session ids if user playing a collection or assessment. 
 // If user playing a collection/assessment from outside class, CUL id will be NA.
 // NULL value columns can not filter.
+
 CREATE TABLE user_sessions (
     user_uid text,
     collection_uid text,
@@ -45,11 +46,11 @@ CREATE TABLE user_sessions (
     course_uid text,
     unit_uid text,
     lesson_uid text,
+    event_type text,
     session_id text,
     event_time bigint,
-    event_type text,
-    PRIMARY KEY (user_uid, collection_uid, collection_type, class_uid, course_uid, unit_uid, lesson_uid, session_id)
-) WITH CLUSTERING ORDER BY (collection_uid ASC, collection_type ASC, class_uid ASC, course_uid ASC, unit_uid ASC, lesson_uid ASC, session_id ASC)
+    PRIMARY KEY (user_uid, collection_uid, collection_type, class_uid, course_uid, unit_uid, lesson_uid, event_type, session_id)
+) WITH CLUSTERING ORDER BY (collection_uid ASC, collection_type ASC, class_uid ASC, course_uid ASC, unit_uid ASC, lesson_uid ASC, event_type ASC, session_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
     AND comment = ''
@@ -63,7 +64,6 @@ CREATE TABLE user_sessions (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
-
 
 //This columnfamily contains usage data by session wise
 
