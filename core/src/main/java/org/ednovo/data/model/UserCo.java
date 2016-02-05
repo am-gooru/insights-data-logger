@@ -1,7 +1,6 @@
 package org.ednovo.data.model;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;

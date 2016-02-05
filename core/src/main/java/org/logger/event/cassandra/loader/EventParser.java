@@ -25,8 +25,8 @@ package org.logger.event.cassandra.loader;
 
 import java.util.Map;
 
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
 import org.json.JSONException;
 
 

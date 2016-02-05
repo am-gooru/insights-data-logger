@@ -52,7 +52,7 @@ public class MailHandler implements Constants {
 
 	private void setKafkaConfiguration() {
 		kafkaNotificationConfig = new HashMap<String, String>();
-		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER, 0);
+		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER);
 		kafkaNotificationConfig.put("userName", columnList.getStringValue("user_name", null));
 		kafkaNotificationConfig.put("password", columnList.getStringValue("password", null));
 		kafkaNotificationConfig.put("toAdress", columnList.getStringValue("to_address", null));

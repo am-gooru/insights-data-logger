@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class EsMappingUtil {
 
-	private static final Logger logger = LoggerFactory.getLogger(EsMappingUtil.class);
+	private static final Logger LOG = LoggerFactory.getLogger(EsMappingUtil.class);
 
 	public static String getMappingConfig(String indexType) {
 		return getConfig(indexType, "mappings");
@@ -32,16 +32,16 @@ public class EsMappingUtil {
 		Path currentRelativePath = Paths.get("");
 		String s = currentRelativePath.toAbsolutePath().toString();
 		String filePath = s + settingsPath;
-		logger.info("Current Location : " + s);
+		LOG.info("Current Location : " + s);
 		File file = new File(filePath);
 		try {
-			logger.info("File Locations : " + file.getAbsolutePath());
+			LOG.info("File Locations : " + file.getAbsolutePath());
 			content = FileUtils.readFileToString(file);
 		} catch (FileNotFoundException e) {
 			InputStream resourceStream = EsMappingUtil.class.getClassLoader().getResourceAsStream(settingsPath);
 			content = readFileAsString(resourceStream);
 		} catch (Exception exception) {
-			logger.error("Exception: Unable to get indexing configuration." + exception);
+			LOG.error("Exception: Unable to get indexing configuration." + exception);
 		}
 
 		return content;
@@ -60,13 +60,13 @@ public class EsMappingUtil {
 			}
 
 		} catch (IOException e) {
-			logger.error("Exception:" + e);
+			LOG.error("Exception:" + e);
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					logger.error("Exception:" + e);
+					LOG.error("Exception:" + e);
 				}
 			}
 		}

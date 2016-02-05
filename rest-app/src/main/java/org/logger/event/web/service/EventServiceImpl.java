@@ -38,7 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
@@ -55,7 +54,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -75,13 +73,11 @@ public class EventServiceImpl implements EventService, Constants {
 	private BaseCassandraRepoImpl baseDao;
 	private SimpleDateFormat minuteDateFormatter;
 	private DataLoggerCaches loggerCache;
-	private final Gson gson;
 	
 	public EventServiceImpl() {
-		gson = new Gson();
 		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
-		this.connectionProvider = dataLoaderService.getConnectionProvider();
+		this.connectionProvider = new CassandraConnectionProvider();
 		baseDao = new BaseCassandraRepoImpl(connectionProvider);
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -108,7 +104,7 @@ public class EventServiceImpl implements EventService, Constants {
 
 	@Override
 	public AppDO verifyApiKey(String apiKey) {
-		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamilySet.APIKEY.getColumnFamily(), apiKey, 0);
+		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamilySet.APIKEY.getColumnFamily(), apiKey);
 		AppDO appDO = new AppDO();
 		appDO.setApiKey(apiKey);
 		appDO.setAppName(apiKeyValues.getStringValue("appName", null));
@@ -162,13 +158,13 @@ public class EventServiceImpl implements EventService, Constants {
 
 	@Override
 	public ColumnList<String> readEventDetail(String eventKey) {
-		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventKey, 0);
+		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventKey);
 		return eventColumnList;
 	}
 
 	@Override
 	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead) {
-		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead, 0);
+		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
 		return eventRowList;
 	}
 
@@ -193,7 +189,7 @@ public class EventServiceImpl implements EventService, Constants {
 
 		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamilySet.ACTIVITYSTREAM.getColumnFamily(), userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
 		if ((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = baseDao.readKeyLastNColumns(ColumnFamilySet.ACTIVITYSTREAM.getColumnFamily(), userUid, eventsToRead, 0);
+			activityJsons = baseDao.readKeyLastNColumns(ColumnFamilySet.ACTIVITYSTREAM.getColumnFamily(), userUid, eventsToRead);
 		}
 		for (Column<String> activityJson : activityJsons) {
 			Map<String, Object> valueMap = new HashMap<String, Object>();
@@ -251,85 +247,6 @@ public class EventServiceImpl implements EventService, Constants {
 	 * @param eventObj
 	 * @return
 	 */
-	private void createEventData(EventData eventData, JsonObject eventObj) {
-
-		if (eventObj.get(EVENT_NAME) != null) {
-			eventData.setEventName(eventObj.get(EVENT_NAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_ID) != null) {
-			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_ID) != null) {
-			eventData.setEventId(eventObj.get(EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(CONTENT_GOORU_OID) != null) {
-			eventData.setContentGooruId(eventObj.get(CONTENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(PARENT_GOORU_OID) != null) {
-			eventData.setParentGooruId(eventObj.get(PARENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(PARENT_EVENT_ID) != null) {
-			eventData.setParentEventId(eventObj.get(PARENT_EVENT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(ORGANIZATION_UID) != null) {
-			eventData.setOrganizationUid(eventObj.get(ORGANIZATION_UID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(EVENT_TYPE) != null) {
-			eventData.setEventType(eventObj.get(EVENT_TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(TYPE) != null) {
-			eventData.setType(eventObj.get(TYPE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(GOORUID) != null) {
-			eventData.setType(eventObj.get(GOORUID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
-		}
-		if (eventObj.get(TIMESPENTINMS) != null) {
-			eventData.setTimeSpentInMs(Long.parseLong(eventObj.get(TIMESPENTINMS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(ATTMPT_TRY_SEQ) != null) {
-			JsonArray jsonArray = eventObj.get(ATTMPT_TRY_SEQ).getAsJsonArray();
-			int[] attempTrySequence = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				attempTrySequence[i] = jsonArray.get(i).getAsInt();
-			}
-
-			eventData.setAttemptTrySequence(attempTrySequence);
-		}
-
-		if (eventObj.get(ATTEMPT_STATUS) != null) {
-			JsonArray jsonArray = eventObj.get(ATTEMPT_STATUS).getAsJsonArray();
-			int[] attemptStatus = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				attemptStatus[i] = jsonArray.get(i).getAsInt();
-			}
-			eventData.setAttemptStatus(attemptStatus);
-		}
-		if (eventObj.get(ANSWER_ID) != null) {
-			JsonArray jsonArray = eventObj.get(ANSWER_ID).getAsJsonArray();
-			int[] answerId = new int[jsonArray.size()];
-			for (int i = 0; i < jsonArray.size(); i++) {
-				answerId[i] = jsonArray.get(i).getAsInt();
-			}
-			eventData.setAnswerId(answerId);
-		}
-		if (eventObj.get(OPEN_ENDED_TEXT) != null) {
-			eventData.setOpenEndedText((eventObj.get(OPEN_ENDED_TEXT).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(CONTEXT_INFO) != null) {
-			eventData.setContextInfo((eventObj.get(CONTEXT_INFO).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(COLLABORATOR_IDS) != null) {
-			eventData.setCollaboratorIds((eventObj.get(COLLABORATOR_IDS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING)));
-		}
-		if (eventObj.get(MOBILE_DATA) != null) {
-			eventData.setMobileData(Boolean.parseBoolean((eventObj.get(MOBILE_DATA).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
-		}
-		if (eventObj.get(HINT_ID) != null) {
-			eventData.setHintId(Integer.parseInt((eventObj.get(HINT_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING))));
-		}
-		// push it to cassandra
-		handleLogMessage(eventData);
-	}
 
 	/**
 	 * Validating apiKey
@@ -455,12 +372,12 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public void indexActivity() {
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN, 0).getStringValue();
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date());
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;
-		String status = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, 0).getStringValue();
+		String status = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN).getStringValue();
 		if (status.equalsIgnoreCase(COMPLETED)) {
 			// All past indexing complete. Start new.
 			try {
@@ -478,8 +395,8 @@ public class EventServiceImpl implements EventService, Constants {
 		} else if (status.equalsIgnoreCase("stop")) {
 			logger.debug("Event indexing stopped...");
 		} else {
-			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, 0).getStringValue();
-			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN, 0).getStringValue();
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN).getStringValue();
 
 			if (Integer.parseInt(lastCheckedCount) < Integer.parseInt(lastMaxCount)) {
 				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));

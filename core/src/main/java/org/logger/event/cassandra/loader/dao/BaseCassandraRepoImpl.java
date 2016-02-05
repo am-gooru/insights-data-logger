@@ -55,9 +55,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 	private static CassandraConnectionProvider connectionProvider;
 
-	private static final Logger logger = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
-	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 
 	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
 		super(connectionProvider);
@@ -77,7 +77,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Column<String> readWithKeyColumn(String cfName, String key, String columnName, int retryCount) {
+	public Column<String> readWithKeyColumn(String cfName, String key, String columnName) {
 
 		Column<String> result = null;
 		ColumnList<String> columnList = null;
@@ -86,10 +86,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readWithKeyColumn(cfName, key, columnName, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		if (columnList != null) {
 			result = columnList.getColumnByName(columnName);
@@ -97,7 +94,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 	
-	public boolean checkColumnExist(String cfName, String key, String columnName, int retryCount) {
+	public boolean checkColumnExist(String cfName, String key, String columnName) {
 		boolean result = false;
 		ColumnList<String> columnList = null;
 		try {
@@ -105,10 +102,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return checkColumnExist(cfName, key, columnName, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		if (columnList != null && columnList.getColumnNames().contains(columnName)) {
 			result = true;
@@ -125,7 +119,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public ColumnList<String> readWithKeyColumnList(String cfName, String key, Collection<String> columnList, int retryCount) {
+	public ColumnList<String> readWithKeyColumnList(String cfName, String key, Collection<String> columnList) {
 
 		ColumnList<String> result = null;
 		try {
@@ -133,11 +127,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.withColumnSlice(columnList).execute().getResult();
 
 		} catch (Exception e) {
-
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readWithKeyColumnList(cfName, key, columnList, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -152,7 +142,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readWithKeyListColumnList(String cfName, Collection<String> keys, Collection<String> columnList, int retryCount) {
+	public Rows<String, String> readWithKeyListColumnList(String cfName, Collection<String> keys, Collection<String> columnList) {
 
 		Rows<String, String> result = null;
 		try {
@@ -160,11 +150,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.withColumnSlice(columnList).execute().getResult();
 
 		} catch (Exception e) {
-
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readWithKeyListColumnList(cfName, keys, columnList, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -178,7 +164,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public ColumnList<String> readWithKey(String cfName, String key, int retryCount) {
+	public ColumnList<String> readWithKey(String cfName, String key) {
 
 		ColumnList<String> result = null;
 		try {
@@ -186,12 +172,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.getResult();
 
 		} catch (Exception e) {
-
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readWithKey(cfName, key, ++retryCount);
-			}
-			logger.info("Error while reading row key : {}",key);
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -205,7 +186,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readWithKeyList(String cfName, Collection<String> key, int retryCount) {
+	public Rows<String, String> readWithKeyList(String cfName, Collection<String> key) {
 
 		Rows<String, String> result = null;
 		try {
@@ -213,10 +194,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readWithKeyList(cfName, key, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -230,7 +208,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param key
 	 * @return
 	 */
-	public Rows<String, String> readCommaKeyList(String cfName, int retryCount, String... key) {
+	public Rows<String, String> readCommaKeyList(String cfName, String... key) {
 
 		Rows<String, String> result = null;
 		try {
@@ -238,10 +216,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readCommaKeyList(cfName, ++retryCount, key);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -261,7 +236,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult();
 
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -276,7 +251,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readIndexedColumn(String cfName, String columnName, String value, int retryCount) {
+	public Rows<String, String> readIndexedColumn(String cfName, String columnName, String value) {
 
 		Rows<String, String> result = null;
 		try {
@@ -284,10 +259,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readIndexedColumn(cfName, columnName, value, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return result;
 	}
@@ -301,7 +273,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readIndexedColumn(String cfName, String columnName, long value, int retryCount) {
+	public Rows<String, String> readIndexedColumn(String cfName, String columnName, long value) {
 
 		Rows<String, String> result = null;
 		try {
@@ -309,10 +281,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
 
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readIndexedColumn(cfName, columnName, value, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return result;
 	}
@@ -327,17 +296,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readIndexedColumnLastNrows(String cfName, String columnName, String value, Integer rowsToRead, int retryCount) {
+	public Rows<String, String> readIndexedColumnLastNrows(String cfName, String columnName, String value, Integer rowsToRead) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
 					.autoPaginateRows(true).setRowLimit(rowsToRead.intValue()).addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readIndexedColumnLastNrows(cfName, columnName, value, rowsToRead, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -352,17 +318,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public ColumnList<String> readKeyLastNColumns(String cfName, String key, Integer columnsToRead, int retryCount) {
+	public ColumnList<String> readKeyLastNColumns(String cfName, String key, Integer columnsToRead) {
 
 		ColumnList<String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key)
 					.withColumnRange(new RangeBuilder().setReversed().setLimit(columnsToRead.intValue()).build()).execute().getResult();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readKeyLastNColumns(cfName, key, columnsToRead, retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -383,8 +346,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).getCount()
 					.execute().getResult();
 		} catch (Exception e) {
-			logger.info("Error while getting column count for - {}",key);
-			logger.error("Exception:",e);
+			LOG.info("Error while getting column count for - {}",key);
+			LOG.error("Exception:",e);
 		}
 
 		return columns.longValue();
@@ -398,7 +361,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readIndexedColumnList(String cfName, Map<String, String> columnList, int retryCount) {
+	public Rows<String, String> readIndexedColumnList(String cfName, Map<String, String> columnList) {
 
 		Rows<String, String> result = null;
 		IndexQuery<String, String> query = null;
@@ -412,10 +375,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			result = query.execute().getResult();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readIndexedColumnList(cfName, columnList, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -429,16 +389,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public boolean isRowKeyExists(String cfName, String key, int retryCount) {
+	public boolean isRowKeyExists(String cfName, String key) {
 
 		try {
 			return getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute()
 					.getResult().isEmpty();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return isRowKeyExists(cfName, key, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return false;
 	}
@@ -461,7 +418,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			return cfQuery.execute().getResult().isEmpty();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return false;
 	}
@@ -486,7 +443,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			Rows<String, String> rows = cfQuery.execute().getResult();
 			return rows.getKeys();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return null;
 	}
@@ -512,7 +469,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(rowKey)
 					.withColumnRange(new RangeBuilder().setLimit(rowsToRead).setStart(startColumnPrefix).setEnd(endColumnPrefix).build()).execute().getResult();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -525,7 +482,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public Rows<String, String> readAllRows(String cfName, int retryCount) {
+	public Rows<String, String> readAllRows(String cfName) {
 
 		Rows<String, String> result = null;
 		try {
@@ -541,10 +498,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 						}
 					}).execute().getResult();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return readAllRows(cfName, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		return result;
@@ -569,7 +523,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -592,7 +546,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -629,7 +583,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			mutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -650,7 +604,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -672,7 +626,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -694,7 +648,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -714,7 +668,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -744,7 +698,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -765,7 +719,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -805,14 +759,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			}
 			if (value.getClass().getSimpleName().equalsIgnoreCase("Timestamp")) {
 				try {
-					m.putColumnIfNotNull(columnName, new Timestamp((formatter.parse(value.toString())).getTime()));
+					m.putColumnIfNotNull(columnName, new Timestamp((FORMATTER.parse(value.toString())).getTime()));
 				} catch (Exception e) {
 					e.printStackTrace();
-					logger.error("Exception : columnName" + columnName + ": value : " + value);
+					LOG.error("Exception : columnName" + columnName + ": value : " + value);
 				}
 			}
 		} else {
-			logger.error("Column Value is null");
+			LOG.error("Column Value is null");
 		}
 	}
 
@@ -905,7 +859,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -920,10 +874,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).delete();
 			m.execute();
-			logger.info("Deleted row key - {}",key);
+			LOG.info("Deleted row key - {}",key);
 		} catch (Exception e) {
-			logger.info("Failed to delete row key : {}",key);
-			logger.error("Exception:",e);
+			LOG.info("Failed to delete row key : {}",key);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -939,10 +893,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.withRow(this.accessColumnFamily(cfName), key).deleteColumn(columnName);
 			m.execute();
-			logger.info("Deleted row key : {} and column : {}",key,columnName);
+			LOG.info("Deleted row key : {} and column : {}",key,columnName);
 		} catch (Exception e) {
-			logger.info("Failed to delete row key : {} and column : {}",key,columnName);
-			logger.error("Exception:",e);
+			LOG.info("Failed to delete row key : {} and column : {}",key,columnName);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1011,7 +965,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		if (organizationUid == null) {
 			organizationUid = "NA";
 		}
-		String GooruUId = eventData.getGooruUId();
+		String gooruUId = eventData.getGooruUId();
 
 		String appUid = appOid + "~" + gooruOid;
 		Date dNow = new Date();
@@ -1040,7 +994,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.putColumnIfNotNull("content_gooru_oid", gooruOid, null).putColumnIfNotNull("parent_gooru_oid", parentGooruOid, null).putColumnIfNotNull("event_name", eventData.getEventName(), null)
 				.putColumnIfNotNull("api_key", eventData.getApiKey(), null).putColumnIfNotNull("time_spent_in_millis", eventData.getTimeInMillSec())
 				.putColumnIfNotNull("event_source", eventData.getEventSource()).putColumnIfNotNull("content_id", eventData.getContentId(), null).putColumnIfNotNull("event_value", eventValue, null)
-				.putColumnIfNotNull("gooru_uid", GooruUId, null).putColumnIfNotNull("event_type", eventData.getEventType(), null).putColumnIfNotNull("user_id", eventData.getUserId(), null)
+				.putColumnIfNotNull("gooru_uid", gooruUId, null).putColumnIfNotNull("event_type", eventData.getEventType(), null).putColumnIfNotNull("user_id", eventData.getUserId(), null)
 				.putColumnIfNotNull("organization_uid", organizationUid).putColumnIfNotNull("app_oid", appOid, null).putColumnIfNotNull("app_uid", appUid, null)
 				.putColumnIfNotNull("city", eventData.getCity(), null).putColumnIfNotNull("state", eventData.getState(), null)
 				.putColumnIfNotNull("attempt_number_of_try_sequence", eventData.getAttemptNumberOfTrySequence(), null)
@@ -1054,7 +1008,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return key;
 	}
@@ -1093,7 +1047,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return key;
 
@@ -1107,7 +1061,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param CoulmnValue
 	 * @param event
 	 */
-	public void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, Event event) {
+	public void updateTimelineObject(final String cfName, final String rowKey, final String CoulmnValue, final Event event) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 
@@ -1122,7 +1076,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			eventTimeline.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1148,7 +1102,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			eventTimelineMutation.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1179,7 +1133,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			;
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1213,7 +1167,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					}
 				}
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		if (!isExists) {
 			resultMap.put("isExists", isExists);
@@ -1238,12 +1192,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				sb.append(line + "\n");
 			}
 		} catch (IOException e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		} finally {
 			try {
 				is.close();
 			} catch (Exception e) {
-				logger.error("Exception:",e);
+				LOG.error("Exception:",e);
 			}
 		}
 		return sb.toString();
@@ -1253,24 +1207,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * Get first level parents.
 	 * 
 	 * @param cfName
-	 * @param Key
+	 * @param key
 	 * @param retryCount
 	 * @return
 	 */
-	public List<String> getParentIds(String cfName, String Key, int retryCount) {
+	public List<String> getParentIds(final String cfName, final String key) {
 
 		Rows<String, String> collectionItem = null;
 		List<String> classPages = new ArrayList<String>();
 		String parentId = null;
 		try {
 			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn(_RESOURCE_GOORU_OID).equals().value(Key).execute().getResult();
-		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return getParentIds(cfName, Key, ++retryCount);
-			} else {
-				logger.error("Exception:",e);
-			}
+					.addExpression().whereColumn(_RESOURCE_GOORU_OID).equals().value(key).execute().getResult();
+		} catch (Exception e) {			
+				LOG.error("Exception:",e);
 		}
 		if (collectionItem != null) {
 			for (Row<String, String> collectionItems : collectionItem) {
@@ -1328,7 +1278,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1340,7 +1290,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public boolean getClassPageOwnerInfo(String cfName, String key, String classPageGooruOid, int retryCount) {
+	public boolean getClassPageOwnerInfo(String cfName, String key, String classPageGooruOid) {
 
 		Rows<String, String> result = null;
 		try {
@@ -1348,10 +1298,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.addExpression().whereColumn("gooru_uid").equals().value(key).addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression()
 					.whereColumn("is_group_owner").equals().value(1).execute().getResult();
 		} catch (Exception e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return getClassPageOwnerInfo(cfName, key, classPageGooruOid, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		if (result != null && !result.isEmpty()) {
 			return true;
@@ -1367,17 +1314,14 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param retryCount
 	 * @return
 	 */
-	public boolean isUserPartOfClass(String cfName, String key, String classPageGooruOid, int retryCount) {
+	public boolean isUserPartOfClass(String cfName, String key, String classPageGooruOid) {
 
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
 					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression().whereColumn("gooru_uid").equals().value(key).execute().getResult();
 		} catch (ConnectionException e) {
-			if (e instanceof ConnectionException && retryCount < 6) {
-				return isUserPartOfClass(cfName, key, classPageGooruOid, ++retryCount);
-			}
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 
 		if (result != null && !result.isEmpty()) {
@@ -1395,7 +1339,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			getResourceEntityPersister().put(resourceco);
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1407,7 +1351,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			getUserEntityPersister().put(userCo);
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1435,7 +1379,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		try {
 			m.execute();
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 	}
 
@@ -1466,7 +1410,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (Exception e) {
-				logger.error("Exception:",e);
+				LOG.error("Exception:",e);
 			}
 		}
 	}
@@ -1502,7 +1446,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (Exception e) {
-				logger.error("Exception:",e);
+				LOG.error("Exception:",e);
 			}
 		}
 	}
@@ -1531,7 +1475,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			try {
 				m.execute();
 			} catch (Exception e) {
-				logger.error("Exception:",e);
+				LOG.error("Exception:",e);
 			}
 		}
 	}
@@ -1563,7 +1507,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 						parentIds.add(parentId);
 						if (depth > RECURSION_MAX_DEPTH) {
 							// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
-							logger.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
+							LOG.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
 							return parentIds;
 						}
 						Set<String> grandParents = getAllLevelParents(cfName, parentId, depth + 1);
@@ -1574,7 +1518,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Exception:",e);
+			LOG.error("Exception:",e);
 		}
 		return parentIds;
 	}
@@ -1592,23 +1536,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			        .withStringValue(status)
 			        .execute();
 		} catch (ConnectionException e) {
-			logger.error("Error:",e);
+			LOG.error("Error:",e);
 		}
 	}
 	
-	public String getParentId(String cfName, String Key, int retryCount) {
+	public String getParentId(final String cfName, final String key) {
 		Rows<String, String> collectionItem = null;
 		String parentId = null;
 		try {
 			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn("resource_gooru_oid").equals().value(Key).execute().getResult();
+					.addExpression().whereColumn("resource_gooru_oid").equals().value(key).execute().getResult();
 		} catch (ConnectionException e) {
-			if (retryCount < 6) {
-				retryCount++;
-				return getParentId(cfName, Key, retryCount);
-			} else {
-				e.printStackTrace();
-			}
+				LOG.error("Exception:",e);
 		}
 		if (collectionItem != null) {
 			for (Row<String, String> collectionItems : collectionItem) {
@@ -1649,7 +1588,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing user sessions" ,e);
+			LOG.error("Error while storing user sessions" ,e);
 			return false;
 		}
 		return true;
@@ -1692,7 +1631,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing user sessions activity" ,e);
+			LOG.error("Error while storing user sessions activity" ,e);
 			return false;
 		}
 		return true;
@@ -1731,7 +1670,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing class activity" ,e);
+			LOG.error("Error while storing class activity" ,e);
 			return false;
 		}
 		return true;
@@ -1758,7 +1697,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing taxonomy activity" ,e);
+			LOG.error("Error while storing taxonomy activity" ,e);
 			return false;
 		}
 		return true;
@@ -1786,7 +1725,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing taxonomy activity" ,e);
+			LOG.error("Error while storing taxonomy activity" ,e);
 			return false;
 		}
 		return true;
@@ -1821,7 +1760,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing taxonomy activity" ,e);
+			LOG.error("Error while storing taxonomy activity" ,e);
 			return false;
 		}
 		return true;
@@ -1847,7 +1786,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		} catch (ConnectionException e) {
-			logger.error("Error while retreving user sessions activity" ,e);
+			LOG.error("Error while retreving user sessions activity" ,e);
 		}
 		return userSessionActivity;
 	}
@@ -1884,7 +1823,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		} catch (ConnectionException e) {
-			logger.error("Error while retreving user sessions activity" ,e);
+			LOG.error("Error while retreving user sessions activity" ,e);
 		}
 		return userSessionActivity;
 	}
@@ -1910,7 +1849,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				}
 			}
 		} catch (ConnectionException e) {
-			logger.error("Error while retreving students class activity" ,e);
+			LOG.error("Error while retreving students class activity" ,e);
 		}
 		return studentsClassActivity;
 	}
@@ -1926,7 +1865,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing user sessions activity" ,e);
+			LOG.error("Error while storing user sessions activity" ,e);
 			return false;
 		}
 		return true;
@@ -1950,7 +1889,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				hasActivity = true;
 			}
 		} catch (ConnectionException e) {
-			logger.error("Error while retreving students class activity" ,e);
+			LOG.error("Error while retreving students class activity" ,e);
 		}
 		return hasActivity;
 	}
@@ -1989,7 +1928,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				userSessionActivity.setReaction(reactionCount > 0 ? (totalReaction/reactionCount) : userSessionActivity.getReaction());
 			}
 		} catch (ConnectionException e) {
-			logger.error("Error while retreving user sessions activity" ,e);
+			LOG.error("Error while retreving user sessions activity" ,e);
 		}
 		return userSessionActivity;
 	}
@@ -2010,7 +1949,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing class activity" ,e);
+			LOG.error("Error while storing class activity" ,e);
 			return false;
 		}
 		return true;
@@ -2044,7 +1983,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				classActivityDatacube.setCompletedCount(itemCount);
 			}
 		} catch (Exception e) {
-			logger.error("Error while retreving students class activity", e);
+			LOG.error("Error while retreving students class activity", e);
 		}
 		return classActivityDatacube;
 	}
@@ -2056,7 +1995,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.asPreparedStatement().withStringValue(rowKey).execute().getResult().getRows();
 			;
 		} catch (Exception e) {
-			logger.error("Error while retreving txonomy tree", e);
+			LOG.error("Error while retreving txonomy tree", e);
 		}
 		return result;
 	}
@@ -2077,7 +2016,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult().getRows();
 			;
 		} catch (Exception e) {
-			logger.error("Error while retreving students class activity", e);
+			LOG.error("Error while retreving students class activity", e);
 		}
 		return result;
 	}
@@ -2098,7 +2037,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult().getRows();
 			;
 		} catch (Exception e) {
-			logger.error("Error while retreving students class activity", e);
+			LOG.error("Error while retreving students class activity", e);
 		}
 		return result;
 	}
@@ -2113,7 +2052,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.execute().getResult().getRows();
 			;
 		} catch (Exception e) {
-			logger.error("Error while retreving students class activity", e);
+			LOG.error("Error while retreving students class activity", e);
 		}
 		return result;
 	}
@@ -2136,7 +2075,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				score = questionCount > 0 ? (score/questionCount) : 0;
 			}
 		} catch (Exception e) {
-			logger.error("Error while retreving students class activity", e);
+			LOG.error("Error while retreving students class activity", e);
 		}
 		return score;
 	}
@@ -2156,7 +2095,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing question grade" ,e);
+			LOG.error("Error while storing question grade" ,e);
 			return false;
 		}
 		return true;
@@ -2175,7 +2114,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing question grade" ,e);
+			LOG.error("Error while storing question grade" ,e);
 			return false;
 		}
 		return true;
@@ -2187,7 +2126,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).execute().getResult().getRows();
 		} catch (Exception e) {
-			logger.error("Exception while read questions grade by session", e);
+			LOG.error("Exception while read questions grade by session", e);
 		}
 		return result;
 	}
@@ -2198,7 +2137,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).withStringValue(questionId).execute().getResult().getRows();
 		} catch (Exception e) {
-			logger.error("Exception while read questions grade by session", e);
+			LOG.error("Exception while read questions grade by session", e);
 		}
 		return result;
 	}
@@ -2215,7 +2154,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute()
 			;
 		} catch (ConnectionException e) {
-			logger.error("Error while storing question grade in session" ,e);
+			LOG.error("Error while storing question grade in session" ,e);
 			return false;
 		}
 		return true;

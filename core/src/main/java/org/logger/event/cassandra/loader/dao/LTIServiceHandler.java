@@ -20,9 +20,9 @@ import com.netflix.astyanax.model.ColumnList;
 
 public class LTIServiceHandler implements Constants, Runnable{
 	
-	private static Logger logger = LoggerFactory.getLogger(LTIServiceHandler.class);
+	private static final Logger LOG = LoggerFactory.getLogger(LTIServiceHandler.class);
 	
-	private static String VALID_FIELDS = LTI_SERVICE_ID+COMMA+GOORUID+COMMA+CONTENT_GOORU_OID;
+	private static final String VALID_FIELDS = LTI_SERVICE_ID+COMMA+GOORUID+COMMA+CONTENT_GOORU_OID;
 	
 	private static BaseCassandraRepoImpl baseDao;
 	
@@ -47,13 +47,13 @@ public class LTIServiceHandler implements Constants, Runnable{
 	public LTIServiceHandler(BaseCassandraRepoImpl baseDao) {
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
-		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN, 0).getStringValue();
+		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN).getStringValue();
 		postRequest = new HttpPost();
 		try {
 			builder = new URIBuilder();
 			builder.setPath(url);
 		} catch (Exception e) {
-			logger.error("ERROR while building a LTI API path", e);
+			LOG.error("ERROR while building a LTI API path", e);
 		}
 	}
 	
@@ -66,7 +66,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 		this.gooruOId = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
 		
 		if(serviceId == null || gooruUId == null || gooruOId == null) {
-			logger.error(buildString(VALID_FIELDS, " should not be null for ", eventName));
+			LOG.error(buildString(VALID_FIELDS, " should not be null for ", eventName));
 			return;
 		}
 		baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), serviceId, INPROGRESS, 604800);
@@ -80,16 +80,16 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	@Override
 	public void run() {
-		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), 0);
+		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId));
 		if(ltiColumns == null) {
 			return;
 		}
-		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId), 0);
+		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId));
 		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(_SESSION_ID, null) : null;	
 		if(sessionId == null) {
 			return;
 		}
-		sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId, 0);
+		sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId);
 		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, SEPERATOR, _SCORE_IN_PERCENTAGE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
 		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
@@ -125,7 +125,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 			}
 			status = true;
 		} catch (Exception e) {
-			logger.error(buildString("unable to Execute LTI API(",sessionToken,SEPERATOR,gooruOId,SEPERATOR,serviceId,SEPERATOR,score,")"),e);
+			LOG.error(buildString("unable to Execute LTI API(",sessionToken,SEPERATOR,gooruOId,SEPERATOR,serviceId,SEPERATOR,score,")"),e);
 		}
 		return status;
 	}

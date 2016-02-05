@@ -50,11 +50,11 @@ import com.netflix.astyanax.model.Rows;
 
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
 
-	private static final Logger logger = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
 
-	private CassandraConnectionProvider connectionProvider;
+	private final CassandraConnectionProvider connectionProvider;
 
-	private BaseCassandraRepoImpl baseCassandraDao;
+	private final BaseCassandraRepoImpl baseCassandraDao;
 
 	
 	ExecutorService service = Executors.newFixedThreadPool(10);
@@ -172,7 +172,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Exception:", e);
+			LOG.error("Exception:", e);
 		}
 	}
 
@@ -214,7 +214,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 	 * @return
 	 */
 	public boolean hasUserAlreadyAnswered(String key, String columnPrefix) {
-		ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), key, 0);
+		ColumnList<String> counterColumns = baseCassandraDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), key);
 		boolean status = false;
 		String attemptStatus = counterColumns.getColumnByName(columnPrefix + SEPERATOR + _QUESTION_STATUS) != null ? counterColumns.getStringValue(columnPrefix + SEPERATOR + _QUESTION_STATUS, null)
 				: null;
@@ -276,10 +276,10 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 						answerStatus = LoaderConstants.ATTEMPTED.getName();
 					}
 				} catch (Exception e) {
-					logger.error("Exception", e);
+					LOG.error("Exception", e);
 				}
 			}
-			logger.info("answerStatus : " + answerStatus);
+			LOG.info("answerStatus : " + answerStatus);
 
 		}
 

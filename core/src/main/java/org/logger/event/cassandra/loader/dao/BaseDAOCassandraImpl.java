@@ -54,7 +54,7 @@ public class BaseDAOCassandraImpl {
 	
 	private EntityManager<UserCo, String> userEntityPersister;
     
-    private static final Logger logger = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
     
     
     public BaseDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
@@ -70,7 +70,7 @@ public class BaseDAOCassandraImpl {
             try {
                 this.keyspace = this.connectionProvider.getKeyspace();
             } catch (IOException ex) {
-                logger.info("Error while initializing keyspace{}", ex);
+                LOG.info("Error while initializing keyspace{}", ex);
             }
         }
         return this.keyspace;
@@ -81,7 +81,7 @@ public class BaseDAOCassandraImpl {
             try {
                 this.client = this.connectionProvider.getESClient();
             } catch (IOException ex) {
-                logger.info("Error while initializing elastic search{}", ex);
+                LOG.info("Error while initializing elastic search{}", ex);
             }
         }
         return this.client;
@@ -91,7 +91,7 @@ public class BaseDAOCassandraImpl {
             try {
                 this.resourceEntityPersister = this.connectionProvider.getResourceEntityPersister();
             } catch (IOException ex) {
-                logger.info("Error while initializing resource entity persister", ex);
+                LOG.info("Error while initializing resource entity persister", ex);
             }
         }
         return this.resourceEntityPersister;
@@ -101,7 +101,7 @@ public class BaseDAOCassandraImpl {
             try {
                 this.userEntityPersister = this.connectionProvider.getUserEntityPersister();
             } catch (IOException ex) {
-                logger.info("Error while initializing resource entity persister", ex);
+                LOG.info("Error while initializing resource entity persister", ex);
             }
         }
         return this.userEntityPersister;

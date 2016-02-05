@@ -23,8 +23,6 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -43,7 +41,7 @@ import com.netflix.astyanax.model.Rows;
 
 public class EventValidator  {
 
-	private static final Logger logger = LoggerFactory.getLogger(EventValidator.class);
+	private static final Logger LOG = LoggerFactory.getLogger(EventValidator.class);
 	private  static BaseCassandraRepoImpl baseDao;
 	private  CassandraConnectionProvider connectionProvider;
 	private static Map<String,String> acceptedFileds;
@@ -51,17 +49,15 @@ public class EventValidator  {
 	this(null);
 	}
 	public EventValidator(Map<String ,String> object) {
-		init(object);
-	}
-	private void init(Map<String ,String> object) {
 		this.setConnectionProvider(new CassandraConnectionProvider());
 		this.getConnectionProvider().init(null);
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		acceptedFileds = new HashMap<String, String>();
-        Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(),0);
+        Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){
         	acceptedFileds.put(row.getKey(), row.getColumns().getStringValue("description", null));
         }
+	
 	}
 
 	public static <T> T validateEventObject(Event event) throws JSONException  {
@@ -74,15 +70,15 @@ public class EventValidator  {
 		return null;
 		
 	}
-	 public CassandraConnectionProvider getConnectionProvider() {
+	 private CassandraConnectionProvider getConnectionProvider() {
 	    	return connectionProvider;
 	    }
 	    
 	    /**
 	     * @param connectionProvider the connectionProvider to set
 	     */
-	    public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
+	 private void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
 	    	this.connectionProvider = connectionProvider;
-	    }
+	 }
 	    
 }

@@ -35,15 +35,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JSONDeserializer implements Constants {
 
-	private static final Logger logger = LoggerFactory.getLogger(JSONDeserializer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(JSONDeserializer.class);
 
-	private static final ObjectMapper mapper = new ObjectMapper();
+	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	public static <T> T deserialize(String json, TypeReference<T> type) {
 		try {
-			return mapper.readValue(json, type);
+			return MAPPER.readValue(json, type);
 		} catch (Exception e) {
-			logger.error("Exception:", e);
+			LOG.error("Exception:", e);
 		}
 		return null;
 	}
@@ -63,8 +63,8 @@ public class JSONDeserializer implements Constants {
                 map.put(START_TIME,event.getStartTime());
                 map.put(END_TIME,event.getEndTime());
         } catch (Exception e) {
-        		logger.info("Exception in event : {}",event.getFields());
-                logger.error("Exception:", e);
+        		LOG.info("Exception in event : {}",event.getFields());
+                LOG.error("Exception:", e);
         }
         return (T) map;
 	}

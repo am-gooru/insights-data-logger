@@ -28,8 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
-
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +39,7 @@ import com.google.gson.Gson;
 
 public class TypeConverter {
 
-	private static final Logger logger = LoggerFactory.getLogger(TypeConverter.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TypeConverter.class);
 
 	public static <T> T stringToIntArray(String arrayAsString) {
 		if (arrayAsString != null) {
@@ -54,7 +52,7 @@ public class TypeConverter {
 					try {
 						results[i] = Integer.parseInt(items[i]);
 					} catch (NumberFormatException nfe) {
-						logger.error("Exception", nfe);
+						LOG.error("Exception", nfe);
 					}
 				}
 			}
@@ -91,7 +89,7 @@ public class TypeConverter {
 				try {
 					result = new JSONObject(value);
 				} catch (Exception e) {
-					logger.error("Unable to convert to JSONObject",e);
+					LOG.error("Unable to convert to JSONObject",e);
 					return (T) new JSONObject();
 				}
 			} else if (type.equalsIgnoreCase("Date")) {
@@ -115,7 +113,7 @@ public class TypeConverter {
 								try {
 									result = formatter4.parse(String.valueOf(value));
 								} catch (Exception e4) {
-									logger.error("Error while convert " + value + " to date");
+									LOG.error("Error while convert " + value + " to date");
 								}
 							}
 						}
@@ -137,7 +135,7 @@ public class TypeConverter {
 							results[i] = Integer.parseInt(items[i].trim());
 						}
 					} catch (NumberFormatException nfe) {
-						logger.error("Exeption : " + nfe);
+						LOG.error("Exeption : " + nfe);
 					}
 					;
 				}
@@ -152,7 +150,7 @@ public class TypeConverter {
 					try {
 						results[i] = items[i].trim();
 					} catch (Exception nfe) {
-						logger.error("Exeption : " + nfe);
+						LOG.error("Exeption : " + nfe);
 					}
 					;
 				}
@@ -161,7 +159,7 @@ public class TypeConverter {
 				try {
 					result = new JSONArray(value);
 				} catch (JSONException e) {
-					logger.error("Unable to convert to JSONArray");
+					LOG.error("Unable to convert to JSONArray");
 					return (T) new JSONArray();
 				}
 			} else if (type.equalsIgnoreCase("Timestamp")) {
@@ -169,11 +167,11 @@ public class TypeConverter {
 				try {
 					result = new Timestamp(((Number)value).longValue());
 				} catch (Exception e) {
-					logger.error("Error while convert " + value + " to timestamp");
+					LOG.error("Error while convert " + value + " to timestamp");
 				}
 
 			} else {
-				throw new RuntimeException("Unsupported type " + type + ". Please Contact Admin!!");
+				LOG.error("Unsupported type " + type + ". Please Contact Admin!!");
 			}
 
 			return (T) result;
