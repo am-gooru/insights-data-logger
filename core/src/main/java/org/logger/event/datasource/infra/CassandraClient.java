@@ -41,9 +41,11 @@ public final class CassandraClient implements Register {
 
 		final String cassandraIp = System.getenv("INSIGHTS_CASSANDRA_IP");
 		final String cassKeyspace = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-		final String cassCluster = System.getenv("CASSANDRA_CLUSTER");
+		String cassCluster = System.getenv("CASSANDRA_CLUSTER");
 		final String dataCenter = System.getenv("DATACENTER");
-				
+		if(cassCluster == null){
+		   cassCluster = "gooru-cassandra";
+		}
 		try {
 			LOG.info("CASSANDRA_KEYSPACE-2" + loaderProperties.getProperty("cluster.hosts"));
 			LOG.info("Loading cassandra properties");

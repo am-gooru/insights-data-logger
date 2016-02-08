@@ -28,6 +28,10 @@ public final class ELSClient implements Register {
 		final String elsCluster = System.getenv("ES_CLUSTER");
 
 		LOG.info("ELS IP : " + elsIp);
+		if(elsCluster == null){
+			elsCluster = "gooru-es";
+		}
+
 		if (client == null) {
 			try {
 				// Elastic search connection provider
