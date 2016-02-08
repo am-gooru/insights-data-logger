@@ -10,7 +10,6 @@ import java.util.Map;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.TypeConverter;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
@@ -30,10 +29,6 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	private static final Logger LOG = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 
-	private CassandraConnectionProvider connectionProvider;
-
-	private MicroAggregatorDAOmpl microAggregatorDAOmpl;
-
 	private SimpleDateFormat secondDateFormatter = new SimpleDateFormat("yyyyMMddkkmmss");
 
 	private SimpleDateFormat minDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
@@ -48,11 +43,8 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	
 	private GeoLocation geoLocation;
 	
-	public LiveDashBoardDAOImpl(CassandraConnectionProvider connectionProvider) {
-		super(connectionProvider);
-		this.connectionProvider = connectionProvider;
-		this.microAggregatorDAOmpl = new MicroAggregatorDAOmpl(this.connectionProvider);
-		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);	
+	public LiveDashBoardDAOImpl() {
+		this.baseDao = new BaseCassandraRepoImpl();	
 		this.geoLocation = GeoLocation.getInstance();
 	}
 

@@ -32,7 +32,8 @@ import java.io.IOException;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.elasticsearch.client.Client;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
+import org.logger.event.datasource.infra.CassandraClient;
+import org.logger.event.datasource.infra.ELSClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,68 +43,43 @@ import com.netflix.astyanax.model.ConsistencyLevel;
 
 public class BaseDAOCassandraImpl {
 	
-    protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
-    
-    private static CassandraConnectionProvider connectionProvider;
-    
-    private static Keyspace keyspace;
-        
-    private static Client client;
-    
-	private EntityManager<ResourceCo, String> resourceEntityPersister;
+	private static final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
 	
-	private EntityManager<UserCo, String> userEntityPersister;
-    
-    private static final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
-    
-    
-    public BaseDAOCassandraImpl(CassandraConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-    }
+	protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
-    public void setConectionProvider(CassandraConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-    }
-    
-    public Keyspace getKeyspace() {
-        if(keyspace == null && this.connectionProvider != null) {
-            try {
-                this.keyspace = this.connectionProvider.getKeyspace();
-            } catch (IOException ex) {
-                LOG.info("Error while initializing keyspace{}", ex);
-            }
-        }
-        return this.keyspace;
-    }
-    
-    public Client getESClient() {
-        if(client == null && this.connectionProvider != null) {
-            try {
-                this.client = this.connectionProvider.getESClient();
-            } catch (IOException ex) {
-                LOG.info("Error while initializing elastic search{}", ex);
-            }
-        }
-        return this.client;
-    }
-    public EntityManager<ResourceCo, String> getResourceEntityPersister() {
-        if(resourceEntityPersister == null && this.connectionProvider != null) {
-            try {
-                this.resourceEntityPersister = this.connectionProvider.getResourceEntityPersister();
-            } catch (IOException ex) {
-                LOG.info("Error while initializing resource entity persister", ex);
-            }
-        }
-        return this.resourceEntityPersister;
-    }
-    public EntityManager<UserCo, String> getUserEntityPersister() {
-        if(userEntityPersister == null && this.connectionProvider != null) {
-            try {
-                this.userEntityPersister = this.connectionProvider.getUserEntityPersister();
-            } catch (IOException ex) {
-                LOG.info("Error while initializing resource entity persister", ex);
-            }
-        }
-        return this.userEntityPersister;
-    }
+	public Keyspace getKeyspace() {
+		try {
+			return CassandraClient.getKeyspace();
+		} catch (IOException e) {
+			LOG.error("Exception : ",e);
+		}
+		return null;
+	}
+
+	public Client getESClient() {
+		try {
+			return ELSClient.getESClient();
+		} catch (IOException e) {
+			LOG.error("Exception : ",e);
+		}
+		return null;
+	}
+
+	public EntityManager<ResourceCo, String> getResourceEntityPersister() {
+		try {
+			return CassandraClient.getResourceEntityPersister();
+		} catch (IOException e) {
+			LOG.error("Exception : ",e);
+		}
+		return null;
+	}
+
+	public EntityManager<UserCo, String> getUserEntityPersister() {
+		try {
+			return CassandraClient.getUserEntityPersister();
+		} catch (IOException e) {
+			LOG.error("Exception : ",e);
+		}
+		return null;
+	}
 }

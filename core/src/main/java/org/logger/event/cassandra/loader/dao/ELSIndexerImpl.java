@@ -21,7 +21,6 @@ import org.ednovo.data.model.JSONDeserializer;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
@@ -43,8 +42,6 @@ import com.netflix.astyanax.model.Rows;
 public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ELSIndexerImpl.class);
-
-	private CassandraConnectionProvider connectionProvider;
 
 	private BaseCassandraRepoImpl baseDao;
 	
@@ -68,10 +65,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	
 	public static Map<String, String> cache;
 	
-	public ELSIndexerImpl(CassandraConnectionProvider connectionProvider) {
-		super(connectionProvider);
-		this.connectionProvider = connectionProvider;
-		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
+	public ELSIndexerImpl() {
+		this.baseDao = new BaseCassandraRepoImpl();
 		this.geoLocation = GeoLocation.getInstance();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily());
@@ -1063,7 +1058,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 	    	}
 	    	
 	    	contentBuilder.field("index_updated_time", new Date());
-			connectionProvider.getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+			getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
@@ -1102,7 +1097,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 					}*/
 				}
 				contentBuilder.field("index_updated_time", new Date());
-				connectionProvider.getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
+				getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
 						.setSource(contentBuilder).execute().actionGet();
 			}
 		}

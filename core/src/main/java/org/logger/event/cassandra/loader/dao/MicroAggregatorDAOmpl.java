@@ -36,7 +36,6 @@ import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TypeConverter;
 import org.ednovo.data.model.UserSessionActivity;
 import org.json.JSONObject;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
@@ -51,18 +50,14 @@ import com.netflix.astyanax.model.Rows;
 public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
-
-	private final CassandraConnectionProvider connectionProvider;
-
+	
 	private final BaseCassandraRepoImpl baseCassandraDao;
 
 	
 	ExecutorService service = Executors.newFixedThreadPool(10);
 
-	public MicroAggregatorDAOmpl(CassandraConnectionProvider connectionProvider) {
-		super(connectionProvider);
-		this.connectionProvider = connectionProvider;
-		this.baseCassandraDao = new BaseCassandraRepoImpl(this.connectionProvider);
+	public MicroAggregatorDAOmpl() {
+		this.baseCassandraDao = new BaseCassandraRepoImpl();
 	}
 
 	public void eventProcessor(Map<String, Object> eventMap) {
