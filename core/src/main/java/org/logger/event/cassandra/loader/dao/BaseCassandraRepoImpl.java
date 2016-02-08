@@ -53,20 +53,10 @@ import com.netflix.astyanax.util.TimeUUIDUtils;
 
 public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Constants {
 
-	private static CassandraConnectionProvider connectionProvider;
-
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 
-	public BaseCassandraRepoImpl(CassandraConnectionProvider connectionProvider) {
-		super(connectionProvider);
-		// TODO Auto-generated constructor stub
-	}
-
-	public BaseCassandraRepoImpl() {
-		super(connectionProvider);
-	}
 	
 	/**
 	 * This method using to read data with single Key&Indexed column.

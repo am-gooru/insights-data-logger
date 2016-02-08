@@ -16,8 +16,6 @@ import com.netflix.astyanax.model.Rows;
 
 public class DataLoggerCaches implements Constants {
 
-	private CassandraConnectionProvider connectionProvider;
-
 	private BaseCassandraRepoImpl baseDao;
 
 	public static Map<String, String> cache;
@@ -62,10 +60,7 @@ public class DataLoggerCaches implements Constants {
 
 	private void init() {
 
-		this.setConnectionProvider(new CassandraConnectionProvider());
-		this.getConnectionProvider().init(null);
-
-		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
+		baseDao = new BaseCassandraRepoImpl();
 		try {
 			/**
 			 * Disabled in release-3.0 Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0); cache = new LinkedHashMap<String, String>(); for
@@ -165,15 +160,6 @@ public class DataLoggerCaches implements Constants {
 		} catch (Exception e) {
 			LOG.error("Exception : " + e);
 		}
-	}
-	
-	
-	private CassandraConnectionProvider getConnectionProvider() {
-		return connectionProvider;
-	}
-
-	private void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
-		this.connectionProvider = connectionProvider;
 	}
 
 	public static Map<String, String> getCache() {

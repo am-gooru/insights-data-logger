@@ -41,7 +41,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
 
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
@@ -54,7 +53,6 @@ import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
-@Repository
 public final class CassandraConnectionProvider {
 
     private static Keyspace cassandraKeyspace;
@@ -86,7 +84,7 @@ public final class CassandraConnectionProvider {
         }
 
         try {
-            LOG.info("Loading cassandra properties");
+            LOG.info("Loading cassandra properties"); 
             String hosts = cassandraIp;
             String keyspace = cassKeyspace;
             

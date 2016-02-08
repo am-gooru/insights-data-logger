@@ -39,7 +39,6 @@ import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
@@ -69,7 +68,6 @@ public class EventServiceImpl implements EventService, Constants {
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
 	protected CassandraDataLoader dataLoaderService;
-	private final CassandraConnectionProvider connectionProvider;
 	private BaseCassandraRepoImpl baseDao;
 	private SimpleDateFormat minuteDateFormatter;
 	private DataLoggerCaches loggerCache;
@@ -77,8 +75,7 @@ public class EventServiceImpl implements EventService, Constants {
 	public EventServiceImpl() {
 		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
-		this.connectionProvider = new CassandraConnectionProvider();
-		baseDao = new BaseCassandraRepoImpl(connectionProvider);
+		baseDao = new BaseCassandraRepoImpl();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
@@ -238,15 +235,6 @@ public class EventServiceImpl implements EventService, Constants {
 		resultList.addAll(valueList);
 		return resultList;
 	}
-
-	/**
-	 * Create eventData object by iterating json
-	 * 
-	 * @param responseDTO
-	 * @param eventData
-	 * @param eventObj
-	 * @return
-	 */
 
 	/**
 	 * Validating apiKey

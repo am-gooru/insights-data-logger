@@ -47,13 +47,11 @@ import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOmpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
@@ -73,8 +71,6 @@ public class CassandraDataLoader implements Constants {
 	private SimpleDateFormat minuteDateFormatter;
 
 	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
-
-	private CassandraConnectionProvider connectionProvider;
 
 	private KafkaLogProducer kafkaLogWriter;
 	
@@ -97,7 +93,7 @@ public class CassandraDataLoader implements Constants {
 		this(null);
 
 		// micro Aggregator producer IP
-		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+		/*final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
@@ -108,7 +104,7 @@ public class CassandraDataLoader implements Constants {
 		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);*/
 	}
 
 	/**
@@ -118,7 +114,7 @@ public class CassandraDataLoader implements Constants {
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
 		// micro Aggregator producer IP
-		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+		/*final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
@@ -130,7 +126,7 @@ public class CassandraDataLoader implements Constants {
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
 
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
+		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);*/
 	} 
 
 	public static long getTimeFromUUID(UUID uuid) {
@@ -143,13 +139,11 @@ public class CassandraDataLoader implements Constants {
 	 */
 	private void init(Map<String, String> configOptionsMap) {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-		this.setConnectionProvider(new CassandraConnectionProvider());
-		this.getConnectionProvider().init(configOptionsMap);
-		this.liveAggregator = new MicroAggregatorDAOmpl(getConnectionProvider());
-		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl(getConnectionProvider());
-		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
-		indexer = new ELSIndexerImpl(getConnectionProvider());
-		ltiServiceHandler = new LTIServiceHandler(baseDao);
+		this.liveAggregator = new MicroAggregatorDAOmpl();
+		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
+		baseDao = new BaseCassandraRepoImpl();
+		//indexer = new ELSIndexerImpl(getConnectionProvider());
+		//ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
@@ -468,13 +462,6 @@ public class CassandraDataLoader implements Constants {
 
 	}
 
-	/**
-	 * @return the connectionProvider
-	 */
-	private CassandraConnectionProvider getConnectionProvider() {
-		return connectionProvider;
-	}
-
 	public void runMicroAggregation(String startTime, String endTime) {
 		LOG.debug("start the static loader");
 		JSONObject jsonObject = new JSONObject();
@@ -534,26 +521,6 @@ public class CassandraDataLoader implements Constants {
 				eventData.setAttemptFirstStatus(answerStatus);
 				eventData.setAttemptNumberOfTrySequence(eventData.getAttemptTrySequence().length);
 				eventData.setAnswerFirstId(eventData.getAnswerId()[0]);
-			}
-
-		}
-	}
-
-	@Async
-	public void migrateCF(String cfName) {
-		Rows<String, String> cfData = baseDao.readAllRows(cfName);
-
-		for (Row<String, String> row : cfData) {
-			MutationBatch m = null;
-			try {
-				m = getConnectionProvider().getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
-				String key = row.getKey();
-				for (Column<String> columns : row.getColumns()) {
-					baseDao.generateNonCounter(cfName, key, columns.getName(), columns.getStringValue(), m);
-				}
-				m.execute();
-			} catch (Exception e) {
-				LOG.error("Exception:" + e);
 			}
 
 		}
@@ -865,14 +832,6 @@ public class CassandraDataLoader implements Constants {
 			eventData.setTimeInMillSec(eventData.getTimeSpentInMs());
 		}
 		return baseDao.saveEvent(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventData);
-	}
-
-	/**
-	 * @param connectionProvider
-	 *            the connectionProvider to set
-	 */
-	private void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
-		this.connectionProvider = connectionProvider;
 	}
 
 	public Map<String, String> getKafkaProperty(String propertyName) {

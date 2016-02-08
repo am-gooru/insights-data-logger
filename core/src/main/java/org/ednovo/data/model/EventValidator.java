@@ -43,15 +43,12 @@ public class EventValidator  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(EventValidator.class);
 	private  static BaseCassandraRepoImpl baseDao;
-	private  CassandraConnectionProvider connectionProvider;
 	private static Map<String,String> acceptedFileds;
 	public EventValidator() {
 	this(null);
 	}
 	public EventValidator(Map<String ,String> object) {
-		this.setConnectionProvider(new CassandraConnectionProvider());
-		this.getConnectionProvider().init(null);
-		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
+		baseDao = new BaseCassandraRepoImpl();
 		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){
@@ -70,15 +67,5 @@ public class EventValidator  {
 		return null;
 		
 	}
-	 private CassandraConnectionProvider getConnectionProvider() {
-	    	return connectionProvider;
-	    }
-	    
-	    /**
-	     * @param connectionProvider the connectionProvider to set
-	     */
-	 private void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
-	    	this.connectionProvider = connectionProvider;
-	 }
 	    
 }
