@@ -132,19 +132,6 @@
               </list>
            </property>
        </bean>
-       
-    <bean id="loaderProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-		<property name="properties">
-			<props>
-				<prop key="cluster.name">${cluster.name}</prop>
-				<prop key="cluster.hosts">${cluster.hosts}</prop>
-				<prop key="log.keyspace">${log.keyspace}</prop>
-				<prop key="log.datacentre">${log.datacenter}</prop>
-				<prop key="log.elsip">${log.elsip}</prop>
-				<prop key="log.elscluster">${log.elscluster}</prop>
-			</props>
-		</property>
-	</bean>
 	
 	<bean id="tomcatUsername" class="java.lang.String">
 		<constructor-arg>
