@@ -32,7 +32,6 @@ import org.json.JSONException;
 
 public class EventParser  {
 
-    private CassandraConnectionProvider connectionProvider;
 
 	public EventParser() {
         this(null);
@@ -42,9 +41,7 @@ public class EventParser  {
         init(configOptionsMap);
     }
     private void init(Map<String, String> configOptionsMap) {
-    	this.setConnectionProvider(new CassandraConnectionProvider());
-        this.getConnectionProvider().init(configOptionsMap);
-        //To intialize columnFamlies in future
+    	
     }
 
 	public void parseObject(EventData eventData , Event eventObject) throws JSONException {
@@ -52,18 +49,4 @@ public class EventParser  {
 	
 	}
 	
-	  /**
-     * @return the connectionProvider
-     */
-    public CassandraConnectionProvider getConnectionProvider() {
-    	return connectionProvider;
-    }
-    
-    /**
-     * @param connectionProvider the connectionProvider to set
-     */
-    public void setConnectionProvider(CassandraConnectionProvider connectionProvider) {
-    	this.connectionProvider = connectionProvider;
-    }
-  
 }

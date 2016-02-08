@@ -23,12 +23,9 @@
  ******************************************************************************/
 package org.logger.event.web.listener;
 
-import java.io.IOException;
-
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.logger.event.datasource.infra.CassandraClient;
 import org.logger.event.datasource.infra.Register;
 import org.logger.event.datasource.infra.Registry;
 import org.slf4j.Logger;
@@ -56,13 +53,6 @@ public class StartupListener extends ContextLoaderListener implements ServletCon
     		logger.info("initializing context...");
         }
     	startApplication();
-    	
-    	try {
-			logger.info("Keyspace : " + CassandraClient.getKeyspace().getKeyspaceName());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
         // call Spring's context ContextLoaderListener to initialize
         // all the context files specified in web.xml
         super.contextInitialized(event);
