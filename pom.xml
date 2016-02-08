@@ -578,6 +578,7 @@
 	<modules>
 		<module>geo-location</module>
 		<module>core</module>
+		<module>micro-aggregation</module>
 		<module>rest-app</module>
 		<module>loader</module>
 		<module>kafka-consumer</module>
