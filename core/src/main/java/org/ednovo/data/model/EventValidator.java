@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.json.JSONException;
-import org.logger.event.cassandra.loader.CassandraConnectionProvider;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
