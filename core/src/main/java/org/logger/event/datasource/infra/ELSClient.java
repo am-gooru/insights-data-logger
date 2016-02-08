@@ -25,7 +25,7 @@ public final class ELSClient implements Register {
 	@Override
 	public void init() {
 		final String elsIp = System.getenv("INSIGHTS_ES_IP");
-		final String elsCluster = System.getenv("ES_CLUSTER");
+		String elsCluster = System.getenv("ES_CLUSTER");
 
 		LOG.info("ELS IP : " + elsIp);
 		if(elsCluster == null){
