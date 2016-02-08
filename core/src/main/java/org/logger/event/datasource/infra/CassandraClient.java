@@ -1,6 +1,7 @@
 package org.logger.event.datasource.infra;
 
 import java.io.IOException;
+import java.util.ResourceBundle;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
@@ -27,40 +28,32 @@ public final class CassandraClient implements Register {
 	private static EntityManager<UserCo, String> userEntityPersister;
 
 	@Override
-	public void init() {
+	public void init(ResourceBundle resourceBundle) {
 
-		String cassandraIp = System.getenv("INSIGHTS_CASSANDRA_IP");
-		String cassKeyspace = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
-		String cassCluster = System.getenv("CASSANDRA_CLUSTER");
-		String dataCenter = System.getenv("DATACENTER");
-
-		if (cassCluster == null) {
-			cassCluster = "gooru-cassandra";
-		}
+		final String cassandraIp = resourceBundle.getString("cluster.hosts");
+		final String cassKeyspace = resourceBundle.getString("log.keyspace");
+		final String cassCluster = resourceBundle.getString("cluster.name");
+		final String dataCenter = resourceBundle.getString("log.datacenter");
 
 		try {
 			LOG.info("Loading cassandra properties");
-			String hosts = cassandraIp;
-			String keyspace = cassKeyspace;
-
-			LOG.info("CASSANDRA_CLUSTER" + cassCluster);
-			LOG.info("CASSANDRA_KEYSPACE" + keyspace);
-			LOG.info("CASSANDRA_IP" + hosts);
+			LOG.info("CASSANDRA_KEYSPACE" + cassKeyspace);
+			LOG.info("CASSANDRA_IP" + cassandraIp);
 			LOG.info("DATACENTER" + dataCenter);
 
 			if (cassandraKeyspace == null) {
-				ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool").setPort(9160).setSeeds(hosts).setSocketTimeout(30000)
+				ConnectionPoolConfigurationImpl poolConfig = new ConnectionPoolConfigurationImpl("MyConnectionPool").setPort(9160).setSeeds(cassandraIp).setSocketTimeout(30000)
 						.setMaxTimeoutWhenExhausted(2000).setMaxConnsPerHost(10).setInitConnsPerHost(1)
 
 				;
 
-				if (!hosts.startsWith("127.0")) {
+				if (!cassandraIp.startsWith("127.0")) {
 					poolConfig.setLocalDatacenter(dataCenter);
 				}
 
 				AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
 						.forCluster(cassCluster)
-						.forKeyspace(keyspace)
+						.forKeyspace(cassandraIp)
 						.withAstyanaxConfiguration(
 								new AstyanaxConfigurationImpl().setCqlVersion("3.0.0").setTargetCassandraVersion("2.1.4").setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
 										.setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN)).withConnectionPoolConfiguration(poolConfig)

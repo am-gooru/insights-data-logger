@@ -2,6 +2,7 @@ package org.logger.event.datasource.infra;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ResourceBundle;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.client.Client;
@@ -23,13 +24,11 @@ public final class ELSClient implements Register {
 	private static Client client;
 
 	@Override
-	public void init() {
-		String elsIp = System.getenv("INSIGHTS_ES_IP");
-		String elsCluster = System.getenv("ES_CLUSTER");
+	public void init(ResourceBundle resourceBundle ) {
+		final String elsIp = resourceBundle.getString("log.elsip");
+		final String elsCluster = resourceBundle.getString("log.elscluster");
 
-		if (elsCluster == null) {
-			elsCluster = "gooru-es";
-		}
+		LOG.info("ELS IP : " + elsIp);
 		if (client == null) {
 			try {
 				// Elastic search connection provider

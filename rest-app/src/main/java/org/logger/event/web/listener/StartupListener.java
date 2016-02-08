@@ -23,6 +23,8 @@
  ******************************************************************************/
 package org.logger.event.web.listener;
 
+import java.util.ResourceBundle;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -45,21 +47,24 @@ import org.springframework.web.context.ContextLoaderListener;
  */
 public class StartupListener extends ContextLoaderListener implements ServletContextListener {
     
-	private static final Logger logger = LoggerFactory.getLogger(StartupListener.class);
+	private ResourceBundle resourceBundle = ResourceBundle.getBundle("loader");
+	
+	private static final Logger LOG = LoggerFactory.getLogger(StartupListener.class);
 
     public void contextInitialized(ServletContextEvent event) {
         
-    	if (logger.isInfoEnabled()) {
-    		logger.info("initializing context...");
+    	if (LOG.isInfoEnabled()) {
+    		LOG.info("initializing context...");
         }
+    	
     	startApplication();
         // call Spring's context ContextLoaderListener to initialize
         // all the context files specified in web.xml
         super.contextInitialized(event);
 
         
-        if (logger.isInfoEnabled()) {
-        	logger.info("Event Logger API Context Initialization Complete [OK]");
+        if (LOG.isInfoEnabled()) {
+        	LOG.info("Event Logger API Context Initialization Complete [OK]");
         }
     
     }
@@ -67,10 +72,10 @@ public class StartupListener extends ContextLoaderListener implements ServletCon
         Registry registry = new Registry();
         try {
           for (Register register : registry) {
-        	  	register.init();
+        	  	register.init(resourceBundle);
           }
         } catch(IllegalStateException ie) {
-        	logger.error("Error initializing application", ie);
+        	LOG.error("Error initializing application", ie);
         }
       }
 }
