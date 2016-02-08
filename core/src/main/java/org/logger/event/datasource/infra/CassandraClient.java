@@ -1,16 +1,11 @@
 package org.logger.event.datasource.infra;
 
 import java.io.IOException;
-import java.util.Properties;
-import java.util.ResourceBundle;
-
-import javax.annotation.Resource;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
@@ -23,7 +18,6 @@ import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
-@Component
 public final class CassandraClient implements Register {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraClient.class);
@@ -31,11 +25,7 @@ public final class CassandraClient implements Register {
 	private static CassandraClient cassandraClient = null;
 	private static EntityManager<ResourceCo, String> resourceEntityPersister;
 	private static EntityManager<UserCo, String> userEntityPersister;
-
-	@Resource(name = "loaderProperties")
-	private Properties loaderProperties;
-	 
-	  
+  
 	@Override
 	public void init() {
 
@@ -47,7 +37,6 @@ public final class CassandraClient implements Register {
 		   cassCluster = "gooru-cassandra";
 		}
 		try {
-			LOG.info("CASSANDRA_KEYSPACE-2" + loaderProperties.getProperty("cluster.hosts"));
 			LOG.info("Loading cassandra properties");
 			LOG.info("CASSANDRA_KEYSPACE" + cassKeyspace);
 			LOG.info("CASSANDRA_IP" + cassandraIp);
