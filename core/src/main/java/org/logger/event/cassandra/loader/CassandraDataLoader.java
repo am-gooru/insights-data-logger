@@ -93,7 +93,7 @@ public class CassandraDataLoader implements Constants {
 		this(null);
 
 		// micro Aggregator producer IP
-		/*final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
@@ -104,7 +104,7 @@ public class CassandraDataLoader implements Constants {
 		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
 		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);*/
+		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 	}
 
 	/**
@@ -114,7 +114,7 @@ public class CassandraDataLoader implements Constants {
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
 		// micro Aggregator producer IP
-		/*final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
+		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_IP);
 		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PORT);
 		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_TOPIC);
 		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(V2_KAFKA_MICRO_PRODUCER).get(KAFKA_PRODUCER_TYPE);
@@ -126,8 +126,8 @@ public class CassandraDataLoader implements Constants {
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(V2_KAFKA_LOG_WRITER_PRODUCER).get(KAFKA_PRODUCER_TYPE);
 
 		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);*/
-	} 
+		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);	
+		} 
 
 	public static long getTimeFromUUID(UUID uuid) {
 		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
@@ -142,8 +142,8 @@ public class CassandraDataLoader implements Constants {
 		this.liveAggregator = new MicroAggregatorDAOmpl();
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
 		baseDao = new BaseCassandraRepoImpl();
-		//indexer = new ELSIndexerImpl(getConnectionProvider());
-		//ltiServiceHandler = new LTIServiceHandler(baseDao);
+		indexer = new ELSIndexerImpl();
+		ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
