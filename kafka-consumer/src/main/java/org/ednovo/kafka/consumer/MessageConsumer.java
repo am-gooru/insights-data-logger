@@ -48,6 +48,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.annotation.PostConstruct;
+
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -64,6 +66,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	private CassandraDataLoader cassandraDataLoader;
 	private static ConsumerConnector consumer;
 	private DataProcessor rowDataProcessor;
+	@Autowired
 	private MailHandler mailHandler;
 
 	private static String[] topic;
@@ -76,17 +79,17 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
-	public MessageConsumer(DataProcessor insertRowForLogDB) {
-
-		//cassandraDataLoader = new CassandraDataLoader();
-		mailHandler = new MailHandler();
-		this.rowDataProcessor = insertRowForLogDB;
+	@PostConstruct
+	void init(){
 		getKafkaConsumer();
 		try {
 			SERVER_NAME = InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
 			SERVER_NAME = "UnKnownHost";
 		}
+	}	
+	public MessageConsumer(DataProcessor insertRowForLogDB) {
+		this.rowDataProcessor = insertRowForLogDB;
 	}
 
 	private void getKafkaConsumer() {

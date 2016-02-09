@@ -32,6 +32,7 @@ import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
@@ -50,6 +51,7 @@ import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
+@Component
 public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);

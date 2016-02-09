@@ -36,20 +36,26 @@ import org.logger.event.datasource.infra.CassandraClient;
 import org.logger.event.datasource.infra.ELSClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.model.ConsistencyLevel;
 
+@Component
 public class BaseDAOCassandraImpl {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
 	
 	protected static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
+	@Autowired
+	private CassandraClient cassandraClient;
+	
 	public Keyspace getKeyspace() {
 		try {
-			return CassandraClient.getKeyspace();
+			return cassandraClient.getKeyspace();
 		} catch (IOException e) {
 			LOG.error("Exception : ",e);
 		}

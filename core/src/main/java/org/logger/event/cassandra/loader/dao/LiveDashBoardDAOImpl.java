@@ -17,6 +17,8 @@ import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -25,7 +27,8 @@ import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.ColumnList;
 
-public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDashBoardDAO, Constants {
+@Component
+public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 
@@ -35,6 +38,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 
 	private SimpleDateFormat customDateFormatter;
 
+	@Autowired
 	private BaseCassandraRepoImpl baseDao;	
 
 	Collection<String> esEventFields = null;
@@ -44,7 +48,6 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDa
 	private GeoLocation geoLocation;
 	
 	public LiveDashBoardDAOImpl() {
-		this.baseDao = new BaseCassandraRepoImpl();	
 		this.geoLocation = GeoLocation.getInstance();
 	}
 

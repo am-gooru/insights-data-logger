@@ -14,16 +14,20 @@ import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.ColumnList;
 
 
+@Component
 public class LTIServiceHandler implements Constants, Runnable{
 	
 	private static final Logger LOG = LoggerFactory.getLogger(LTIServiceHandler.class);
 	
 	private static final String VALID_FIELDS = LTI_SERVICE_ID+COMMA+GOORUID+COMMA+CONTENT_GOORU_OID;
 	
+	@Autowired
 	private static BaseCassandraRepoImpl baseDao;
 	
 	private String gooruOId;
@@ -45,7 +49,6 @@ public class LTIServiceHandler implements Constants, Runnable{
 	public LTIServiceHandler() {}
 	
 	public LTIServiceHandler(BaseCassandraRepoImpl baseDao) {
-		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
 		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN).getStringValue();
 		postRequest = new HttpPost();
