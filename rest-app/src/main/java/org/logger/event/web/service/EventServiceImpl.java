@@ -48,6 +48,7 @@ import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
@@ -67,17 +68,20 @@ public class EventServiceImpl implements EventService, Constants {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
-	protected CassandraDataLoader dataLoaderService;
+	@Autowired
+	private CassandraDataLoader dataLoaderService;
+	
+	@Autowired	
 	private BaseCassandraRepoImpl baseDao;
+	
 	private SimpleDateFormat minuteDateFormatter;
+	
+	@Autowired
 	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
-		setLoggerCache(new DataLoggerCaches());
-		dataLoaderService = new CassandraDataLoader();
-		baseDao = new BaseCassandraRepoImpl();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	/**

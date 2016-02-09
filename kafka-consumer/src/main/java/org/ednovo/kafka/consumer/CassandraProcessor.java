@@ -23,30 +23,33 @@
  ******************************************************************************/
 package org.ednovo.kafka.consumer;
 
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventValidator;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.gson.Gson;
 
 public class CassandraProcessor extends BaseDataProcessor implements
 		DataProcessor {
 	protected Properties properties;
+	@Autowired
 	protected CassandraDataLoader dataLoader;
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "5673eaa7-15e3-4d6b-b3ef-5f7729c82de3";
 	private final String EVENT_SOURCE = "kafka-logged";
+	@Autowired
 	private EventValidator eventValidator;
+	@Autowired
 	private DataLoggerCaches loggerCache;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
@@ -56,9 +59,9 @@ public class CassandraProcessor extends BaseDataProcessor implements
 
 	protected void init() {
 		gson = new Gson();
-		setLoggerCache(new DataLoggerCaches());
+		/*setLoggerCache(new DataLoggerCaches());
 		dataLoader = new CassandraDataLoader();
-		eventValidator = new EventValidator(null);
+		eventValidator = new EventValidator(null);*/
 	}
 
 	@Override

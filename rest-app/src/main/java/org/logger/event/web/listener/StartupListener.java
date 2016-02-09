@@ -61,7 +61,7 @@ public class StartupListener extends ContextLoaderListener implements
 			LOG.info("initializing context...");
 		}
 
-		startApplication();
+		//startApplication();
 		// call Spring's context ContextLoaderListener to initialize
 		// all the context files specified in web.xml
 		super.contextInitialized(event);
