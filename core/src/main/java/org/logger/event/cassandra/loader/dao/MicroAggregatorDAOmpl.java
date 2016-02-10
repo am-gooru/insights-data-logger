@@ -112,11 +112,13 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 					userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
 					userAllSessionCollectionActivity.setScore(userSessionActivity.getScore());
 					studentsClassActivity.setScore(userSessionActivity.getScore());
+					studentsClassActivity.setReaction(userSessionActivity.getReaction());
 					userAllSessionCollectionActivity.setReaction(userSessionActivity.getScore());
 					baseCassandraDao.saveUserSessionActivity(userCollectionData);
 					baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
 					studentsClassActivity.setTimeSpent(userSessionActivity.getTimeSpent());
 					studentsClassActivity.setScore(userCollectionData.getScore());
+					studentsClassActivity.setReaction(userCollectionData.getReaction());
 				}
 				if (!studentsClassActivity.getClassUid().equalsIgnoreCase(NA) && studentsClassActivity.getClassUid() != null) {
 
@@ -177,6 +179,7 @@ public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Micro
 		classActivityDatacube.setViews(studentsClassActivity.getViews());
 		classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
 		classActivityDatacube.setScore(studentsClassActivity.getScore());
+		classActivityDatacube.setReaction(studentsClassActivity.getReaction());
 		if(studentsClassActivity.getAttemptStatus().equalsIgnoreCase(COMPLETED)){
 			classActivityDatacube.setCompletedCount(1L);
 		}else{

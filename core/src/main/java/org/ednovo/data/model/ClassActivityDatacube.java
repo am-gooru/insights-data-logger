@@ -23,6 +23,8 @@ public class ClassActivityDatacube implements Serializable{
 
 	private long score;
 
+	private long reaction;
+
 	private long completedCount;
 	
 	public String getRowKey() {
@@ -87,6 +89,14 @@ public class ClassActivityDatacube implements Serializable{
 
 	public void setCompletedCount(long completedCount) {
 		this.completedCount = completedCount;
+	}
+
+	public long getReaction() {
+		return reaction;
+	}
+
+	public void setReaction(long reaction) {
+		this.reaction = reaction;
 	}
 	
 	
