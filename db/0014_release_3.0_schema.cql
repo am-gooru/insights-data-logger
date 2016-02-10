@@ -14,6 +14,7 @@ CREATE TABLE students_class_activity (
     lesson_uid text,
     collection_uid text,
     attempt_status text,
+    reaction bigint,
     score bigint,
     time_spent bigint,
     views bigint,
@@ -32,7 +33,6 @@ CREATE TABLE students_class_activity (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99.0PERCENTILE';
-
     
 // This columnfamily contains session ids if user playing a collection or assessment. 
 // If user playing a collection/assessment from outside class, CUL id will be NA.
@@ -244,6 +244,7 @@ CREATE TABLE class_activity_datacube (
     user_uid text,
     leaf_node text,
     completed_count bigint,
+    reaction bigint,
     score bigint,
     time_spent bigint,
     views bigint,

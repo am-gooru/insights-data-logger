@@ -1656,6 +1656,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(studentsClassActivity.getScore())
 			.withLongValue(studentsClassActivity.getTimeSpent())
 			.withLongValue(studentsClassActivity.getViews())
+			.withLongValue(studentsClassActivity.getReaction())
 			.execute()
 			;
 		} catch (ConnectionException e) {
@@ -1781,7 +1782,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	}
 	
 	public UserSessionActivity getUserSessionActivity(String sessionId, String gooruOid, String collectionItemId) {
-		UserSessionActivity userSessionActivity = null;
+		UserSessionActivity userSessionActivity = new UserSessionActivity();
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(SELECT_USER_SESSION_ACTIVITY)
@@ -1792,7 +1793,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.execute().getResult().getRows();
 			;
 			if (result.size() > 0) {
-				userSessionActivity = new UserSessionActivity();
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
 					userSessionActivity.setSessionId(columns.getStringValue(_SESSION_ID, null));
@@ -1934,6 +1934,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			.withLongValue(studentsClassActivity.getScore())
 			.withLongValue(studentsClassActivity.getTimeSpent())
 			.withLongValue(studentsClassActivity.getViews())
+			.withLongValue(studentsClassActivity.getReaction())
 			.withLongValue(studentsClassActivity.getCompletedCount())
 			.execute()
 			;

@@ -132,8 +132,7 @@
               </list>
            </property>
        </bean>
-       
-    
+	
 	<bean id="tomcatUsername" class="java.lang.String">
 		<constructor-arg>
 			<value>${tomcat.username}</value>

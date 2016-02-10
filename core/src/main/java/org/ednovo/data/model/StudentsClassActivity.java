@@ -31,6 +31,8 @@ public class StudentsClassActivity implements Serializable,Cloneable {
 
 	private long score;
 
+	private long reaction;
+	
 	public Object clone()throws CloneNotSupportedException{  
 		return super.clone();  	
 	}  
@@ -121,6 +123,14 @@ public class StudentsClassActivity implements Serializable,Cloneable {
 
 	public void setAttemptStatus(String attemptStatus) {
 		this.attemptStatus = attemptStatus;
+	}
+
+	public long getReaction() {
+		return reaction;
+	}
+
+	public void setReaction(long reaction) {
+		this.reaction = reaction;
 	}
 
 }
