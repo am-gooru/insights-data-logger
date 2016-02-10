@@ -42,9 +42,10 @@
 	
 	<!-- Scans the classpath for annotated components that will be auto-registered as Spring beans.
 	 For example @Controller and @Service. Make sure to set the correct base-package-->
-	<context:component-scan base-package="org.logger.event" />
+	<context:component-scan base-package="org.logger.event.web" />
+	
+	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
-	<bean id="cassandraClient" class="org.logger.event.datasource.infra.CassandraClient" init-method="init" />
 	
 <!-- 	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
@@ -131,27 +132,17 @@
               </list>
            </property>
        </bean>
-       
-    <bean id="cassandraProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-		<property name="properties">
-			<props>
-				<prop key="cluster.name">${cluster.name}</prop>
-				<prop key="cluster.hosts">${cluster.hosts}</prop>
-				<prop key="log.keyspace">${log.keyspace}</prop>
-				<prop key="log.datacentre">${log.datacenter}</prop>
-			</props>
-		</property>
+	
+	<bean id="tomcatUsername" class="java.lang.String">
+		<constructor-arg>
+			<value>${tomcat.username}</value>
+		</constructor-arg>
 	</bean>
 	
-    <bean id="propertyConfigurer"
-		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-		<property name="locations">
-			<list>
-				<value>file:${configSettings}</value>
-			</list>
-		</property>
-		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	<bean id="tomcatPassword" class="java.lang.String">
+		<constructor-arg>
+			<value>${tomcat.password}</value>
+		</constructor-arg>
 	</bean>
-	
 	
 </beans>

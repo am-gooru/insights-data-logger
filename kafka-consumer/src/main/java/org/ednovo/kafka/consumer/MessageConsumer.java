@@ -56,11 +56,9 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class MessageConsumer extends Thread implements Runnable {
 
-	@Autowired
 	private CassandraDataLoader cassandraDataLoader;
 	private static ConsumerConnector consumer;
 	private DataProcessor rowDataProcessor;
@@ -78,7 +76,7 @@ public class MessageConsumer extends Thread implements Runnable {
 
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
 
-		//cassandraDataLoader = new CassandraDataLoader();
+		cassandraDataLoader = new CassandraDataLoader();
 		mailHandler = new MailHandler();
 		this.rowDataProcessor = insertRowForLogDB;
 		getKafkaConsumer();
