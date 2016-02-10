@@ -28,7 +28,6 @@ public class MastryGenerator implements Runnable, Constants {
 		this.baseCassandraDao = baseCassandraDao;
 	}
 
-	@Override
 	public void run() {
 		try {
 			if(contentTaxonomyActivity != null && contentTaxonomyActivity.getTaxonomyIds() != null){
