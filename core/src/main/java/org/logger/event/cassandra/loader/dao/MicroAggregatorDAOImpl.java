@@ -42,23 +42,22 @@ import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
+@Component
+public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Constants {
 
-	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOImpl.class);
 	
-	private final BaseCassandraRepoImpl baseCassandraDao;
-
+	@Autowired
+	private BaseCassandraRepoImpl baseCassandraDao;
 	
-	ExecutorService service = Executors.newFixedThreadPool(10);
-
-	public MicroAggregatorDAOmpl() {
-		this.baseCassandraDao = new BaseCassandraRepoImpl();
-	}
+	private final ExecutorService service = Executors.newFixedThreadPool(10);
 
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {

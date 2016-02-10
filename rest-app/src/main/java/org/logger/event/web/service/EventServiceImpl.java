@@ -37,21 +37,18 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.Event;
-import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
-import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -67,32 +64,20 @@ public class EventServiceImpl implements EventService, Constants {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
-	protected CassandraDataLoader dataLoaderService;
+	@Autowired
+	private CassandraDataLoader dataLoaderService;
+	
+	@Autowired	
 	private BaseCassandraRepoImpl baseDao;
+	
 	private SimpleDateFormat minuteDateFormatter;
+	
+	@Autowired
 	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
-		setLoggerCache(new DataLoggerCaches());
-		dataLoaderService = new CassandraDataLoader();
-		baseDao = new BaseCassandraRepoImpl();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
-
-	/**
-	 * 
-	 */
-	@Override
-	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData) {
-
-		Errors errors = validateInsertEventData(eventData);
-
-		if (!errors.hasErrors()) {
-			dataLoaderService.handleLogMessage(eventData);
-		}
-
-		return new ActionResponseDTO<EventData>(eventData, errors);
+		this.minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	/**
@@ -115,17 +100,6 @@ public class EventServiceImpl implements EventService, Constants {
 	 * @param eventData
 	 * @return
 	 */
-	private Errors validateInsertEventData(EventData eventData) {
-		final Errors errors = new BindException(eventData, "EventData");
-		if (eventData == null) {
-			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", FIELDS+EMPTY_EXCEPTION);
-			return errors;
-		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENT_NAME, "LA001", EVENT_NAME+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), EVENT_ID, "LA002", EVENT_ID+EMPTY_EXCEPTION);
-
-		return errors;
-	}
 
 	/**
 	 * 

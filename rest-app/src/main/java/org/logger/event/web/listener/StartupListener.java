@@ -23,6 +23,10 @@
  ******************************************************************************/
 package org.logger.event.web.listener;
 
+import java.util.Properties;
+import java.util.ResourceBundle;
+
+import javax.annotation.Resource;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -30,47 +34,52 @@ import org.logger.event.datasource.infra.Register;
 import org.logger.event.datasource.infra.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.ContextLoaderListener;
 
-
 /**
- * <p>StartupListener class used to initialize and database settings
- * and populate any application-wide drop-downs.
+ * <p>
+ * StartupListener class used to initialize and database settings and populate
+ * any application-wide drop-downs.
  * 
- * <p>Keep in mind that this listener is executed outside of OpenSessionInViewFilter,
- * so if you're using Hibernate you'll have to explicitly initialize all loaded data at the 
- * Dao or service level to avoid LazyInitializationException. Hibernate.initialize() works
- * well for doing this.
+ * <p>
+ * Keep in mind that this listener is executed outside of
+ * OpenSessionInViewFilter, so if you're using Hibernate you'll have to
+ * explicitly initialize all loaded data at the Dao or service level to avoid
+ * LazyInitializationException. Hibernate.initialize() works well for doing
+ * this.
  *
  */
-public class StartupListener extends ContextLoaderListener implements ServletContextListener {
-    
-	private static final Logger logger = LoggerFactory.getLogger(StartupListener.class);
+@Component
+public class StartupListener extends ContextLoaderListener implements
+		ServletContextListener {
 
-    public void contextInitialized(ServletContextEvent event) {
-        
-    	if (logger.isInfoEnabled()) {
-    		logger.info("initializing context...");
-        }
-    	startApplication();
-        // call Spring's context ContextLoaderListener to initialize
-        // all the context files specified in web.xml
-        super.contextInitialized(event);
+	private static final Logger LOG = LoggerFactory.getLogger(StartupListener.class);
+	
+	public void contextInitialized(ServletContextEvent event) {
+		if (LOG.isInfoEnabled()) {
+			LOG.info("initializing context...");
+		}
 
-        
-        if (logger.isInfoEnabled()) {
-        	logger.info("Event Logger API Context Initialization Complete [OK]");
-        }
-    
-    }
-    private void startApplication() {
-        Registry registry = new Registry();
-        try {
-          for (Register register : registry) {
-        	  	register.init();
-          }
-        } catch(IllegalStateException ie) {
-        	logger.error("Error initializing application", ie);
-        }
-      }
+		//startApplication();
+		// call Spring's context ContextLoaderListener to initialize
+		// all the context files specified in web.xml
+		super.contextInitialized(event);
+
+		if (LOG.isInfoEnabled()) {
+			LOG.info("Event Logger API Context Initialization Complete [OK]");
+		}
+
+	}
+
+	private void startApplication() {
+		Registry registry = new Registry();
+		try {
+			for (Register register : registry) {
+				register.init();
+			}
+		} catch (IllegalStateException ie) {
+			LOG.error("Error initializing application", ie);
+		}
+	}
 }

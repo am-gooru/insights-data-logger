@@ -24,12 +24,14 @@ public final class ELSClient implements Register {
 
 	@Override
 	public void init() {
-		String elsIp = System.getenv("INSIGHTS_ES_IP");
+		final String elsIp = System.getenv("INSIGHTS_ES_IP");
 		String elsCluster = System.getenv("ES_CLUSTER");
 
-		if (elsCluster == null) {
+		LOG.info("ELS IP : " + elsIp);
+		if(elsCluster == null){
 			elsCluster = "gooru-es";
 		}
+
 		if (client == null) {
 			try {
 				// Elastic search connection provider

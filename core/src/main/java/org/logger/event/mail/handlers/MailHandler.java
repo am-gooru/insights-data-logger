@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.annotation.PostConstruct;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
@@ -17,21 +18,25 @@ import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.ColumnList;
 
+@Component
 public class MailHandler implements Constants {
 
 	private static Session mailSession;
 
-	private static BaseCassandraRepoImpl baseCassandraRepoImpl;
+	@Autowired
+	private BaseCassandraRepoImpl baseCassandraRepoImpl;
 
 	private static Map<String, String> kafkaNotificationConfig;
 
 	private static Logger logger = LoggerFactory.getLogger(MailHandler.class);
 
-	public MailHandler() {
-		baseCassandraRepoImpl = new BaseCassandraRepoImpl();
+	@PostConstruct
+	void init(){
 		setKafkaConfiguration();
 	}
 
