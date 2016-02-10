@@ -61,11 +61,11 @@ public class CassandraConnectionProvider {
     public void init(Map<String, String> configOptionsMap) {
 
         properties = new Properties();
-        CASSANDRA_IP = System.getenv("INSIGHTS_CASSANDRA_IP");
-        CASSANDRA_PORT = System.getenv("INSIGHTS_CASSANDRA_PORT");
-        CASSANDRA_KEYSPACE = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
+        CASSANDRA_IP = "127.0.0.1";
+        CASSANDRA_PORT = "9160";
+        CASSANDRA_KEYSPACE = "event_logger_insights";
         CASSANDRA_CLUSTER = System.getenv("CASSANDRA_CLUSTER");
-        DATACENTER = System.getenv("DATACENTER");
+        DATACENTER = "datacenter1";
         
         if(CASSANDRA_CLUSTER == null){
         	CASSANDRA_CLUSTER = "gooru-cassandra";

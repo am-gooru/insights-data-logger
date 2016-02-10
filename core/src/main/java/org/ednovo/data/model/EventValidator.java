@@ -32,25 +32,22 @@ import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 
-@Component
+
 public class EventValidator  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(EventValidator.class);
-    
-	@Autowired
 	private  static BaseCassandraRepoImpl baseDao;
 	private static Map<String,String> acceptedFileds;
 	public EventValidator() {
 	this(null);
 	}
 	public EventValidator(Map<String ,String> object) {
+		baseDao = new BaseCassandraRepoImpl();
 		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){

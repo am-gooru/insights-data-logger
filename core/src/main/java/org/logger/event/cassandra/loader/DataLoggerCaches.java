@@ -8,18 +8,14 @@ import java.util.Map;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-@Component
 public class DataLoggerCaches implements Constants {
 
-	@Autowired
 	private BaseCassandraRepoImpl baseDao;
 
 	public static Map<String, String> cache;
@@ -64,6 +60,7 @@ public class DataLoggerCaches implements Constants {
 
 	private void init() {
 
+		baseDao = new BaseCassandraRepoImpl();
 		try {
 			/**
 			 * Disabled in release-3.0 Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0); cache = new LinkedHashMap<String, String>(); for

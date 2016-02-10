@@ -14,8 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.geo.location.GeoLocation;
 import org.ednovo.data.model.Event;
@@ -32,9 +30,7 @@ import org.logger.event.cassandra.loader.IndexType;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
 import com.maxmind.geoip2.model.CityResponse;
@@ -43,12 +39,10 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-@Component
-public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
+public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ELSIndexerImpl.class);
 
-	@Autowired
 	private BaseCassandraRepoImpl baseDao;
 	
 	private GeoLocation geoLocation;
@@ -71,8 +65,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 	
 	public static Map<String, String> cache;
 	
-	@PostConstruct
-	void init() {
+	public ELSIndexerImpl() {
+		this.baseDao = new BaseCassandraRepoImpl();
 		this.geoLocation = GeoLocation.getInstance();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily());

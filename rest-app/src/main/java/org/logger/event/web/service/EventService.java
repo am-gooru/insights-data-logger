@@ -30,6 +30,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
+import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventData;
+import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;
 
 import com.netflix.astyanax.model.ColumnList;
@@ -37,6 +40,8 @@ import com.netflix.astyanax.model.Rows;
 
 @Service
 public interface EventService {
+
+	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
 
 	public AppDO verifyApiKey(String apiKeyToken);
 

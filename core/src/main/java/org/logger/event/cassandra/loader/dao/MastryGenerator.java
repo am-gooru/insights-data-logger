@@ -9,21 +9,16 @@ import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 
-
 public class MastryGenerator implements Runnable, Constants {
 
-	@Autowired
 	private BaseCassandraRepoImpl baseCassandraDao;
 	
-	@Autowired
 	private ContentTaxonomyActivity contentTaxonomyActivity;
 	
 	private static Logger logger = LoggerFactory.getLogger(ClassActivityDataCubeGenerator.class);

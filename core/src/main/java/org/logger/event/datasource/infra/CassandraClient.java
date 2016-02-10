@@ -1,15 +1,11 @@
 package org.logger.event.datasource.infra;
 
 import java.io.IOException;
-import java.util.Properties;
-
-import javax.annotation.Resource;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
@@ -22,29 +18,21 @@ import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
-@Component
-public final class CassandraClient {
+public final class CassandraClient implements Register {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraClient.class);
-	
 	private static Keyspace cassandraKeyspace;
-		
+	private static CassandraClient cassandraClient = null;
 	private static EntityManager<ResourceCo, String> resourceEntityPersister;
-	
 	private static EntityManager<UserCo, String> userEntityPersister;
   
-	@Resource(name="cassandraProperties")
-    private Properties cassandraProperties;
-	
+	@Override
 	public void init() {
 
 		final String cassandraIp = System.getenv("INSIGHTS_CASSANDRA_IP");
 		final String cassKeyspace = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
 		String cassCluster = System.getenv("CASSANDRA_CLUSTER");
 		final String dataCenter = System.getenv("DATACENTER");
-		
-		LOG.info("keyspace: " + cassandraProperties.getProperty("cluster.hosts"));
-		
 		if(cassCluster == null){
 		   cassCluster = "gooru-cassandra";
 		}
@@ -90,8 +78,16 @@ public final class CassandraClient {
 
 	}
 
+	public static CassandraClient instance() {
+		if (cassandraClient == null) {
+			synchronized (CassandraClient.class) {
+				cassandraClient = new CassandraClient();
+			}
+		}
+		return cassandraClient;
+	}
 
-	public Keyspace getKeyspace() throws IOException {
+	public static Keyspace getKeyspace() throws IOException {
 		if (cassandraKeyspace == null) {
 			throw new IOException("Keyspace not initialized.");
 		}
