@@ -25,7 +25,7 @@ import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.ColumnList;
 
-public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements LiveDashBoardDAO, Constants {
+public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl implements Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LiveDashBoardDAOImpl.class);
 

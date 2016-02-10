@@ -47,7 +47,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO, Constants {
+public class MicroAggregatorDAOmpl extends BaseDAOCassandraImpl implements Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOmpl.class);
 	

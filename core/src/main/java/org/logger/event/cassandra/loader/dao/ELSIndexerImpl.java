@@ -39,7 +39,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, Constants {
+public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ELSIndexerImpl.class);
 
