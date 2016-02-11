@@ -39,7 +39,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
+public class ELSIndexerImpl extends BaseDAOCassandraImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ELSIndexerImpl.class);
 
@@ -91,8 +91,8 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
         	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 		}
         cache = new LinkedHashMap<String, String>();
-        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN).getStringValue());
-        repoPath = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN).getStringValue();
+        cache.put(Constants.INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.INDEXINGVERSION, Constants.DEFAULTCOLUMN).getStringValue());
+        repoPath = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", Constants.DEFAULTCOLUMN).getStringValue();
 	}
 
 	/**
@@ -111,71 +111,71 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 				LOG.error("Exception:Unable to convert JSON in the method indexEvents." , e2);
 			}
 		}
-		if (jsonField.has(VERSION)) {
+		if (jsonField.has(Constants.VERSION)) {
 			Event events = new Gson().fromJson(fields, Event.class);
 			Map<String, Object> eventMap = new HashMap<String, Object>();
 			
 			eventMap = JSONDeserializer.deserializeEvent(events);
 
-			eventMap.put(EVENT_NAME, events.getEventName());
-			eventMap.put(EVENT_ID, events.getEventId());
-			eventMap.put(EVENT_TIME, events.getStartTime());
+			eventMap.put(Constants.EVENT_NAME, events.getEventName());
+			eventMap.put(Constants.EVENT_ID, events.getEventId());
+			eventMap.put(Constants.EVENT_TIME, events.getStartTime());
 			//eventMap.put(RESULT_COUNT, events.getHitCount());
-			if (eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
-				eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
-				eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
+			if (eventMap.containsKey(Constants.CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(Constants.CONTENT_GOORU_OID).toString())) {
+				eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
+				eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
 
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)));
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
 				if (questionList != null && questionList.size() > 0) {
-					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
-					eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
-					eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
-					eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.QUESTION_COUNT, questionList.getColumnByName(Constants.QUESTION_COUNT) != null ? questionList.getColumnByName(Constants.QUESTION_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.RESOURCE_COUNT, questionList.getColumnByName(Constants.RESOURCE_COUNT) != null ? questionList.getColumnByName(Constants.RESOURCE_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.OE_COUNT, questionList.getColumnByName(Constants.OE_COUNT) != null ? questionList.getColumnByName(Constants.OE_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.MC_COUNT, questionList.getColumnByName(Constants.MC_COUNT) != null ? questionList.getColumnByName(Constants.MC_COUNT).getLongValue() : 0L);
 
-					eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
-					eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
-					eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.FIB_COUNT, questionList.getColumnByName(Constants.FIB_COUNT) != null ? questionList.getColumnByName(Constants.FIB_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.MA_COUNT, questionList.getColumnByName(Constants.MA_COUNT) != null ? questionList.getColumnByName(Constants.MA_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.TF_COUNT, questionList.getColumnByName(Constants.TF_COUNT) != null ? questionList.getColumnByName(Constants.TF_COUNT).getLongValue() : 0L);
 
-					eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
+					eventMap.put(Constants.ITEM_COUNT, questionList.getColumnByName(Constants.ITEM_COUNT) != null ? questionList.getColumnByName(Constants.ITEM_COUNT).getLongValue() : 0L);
 				}
 
 			}
-			if (eventMap.get(GOORUID) != null) {
-				eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(GOORUID)));
+			if (eventMap.get(Constants.GOORUID) != null) {
+				eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(Constants.GOORUID)));
 			}
 			String userIp = null;
-			if( eventMap.containsKey(USER_IP) && eventMap.get(USER_IP) != null) {
-				userIp = ((String)eventMap.get(USER_IP)).split(COMMA)[0];
+			if( eventMap.containsKey(Constants.USER_IP) && eventMap.get(Constants.USER_IP) != null) {
+				userIp = ((String)eventMap.get(Constants.USER_IP)).split(Constants.COMMA)[0];
 			}
 			if (userIp != null) {
 				CityResponse cityResponse = geoLocation.getGeoResponse(userIp);
 				if(cityResponse != null) {
 					if(StringUtils.isNotBlank(cityResponse.getCity().getName())) {
-						eventMap.put(CITY, cityResponse.getCity().getName());
+						eventMap.put(Constants.CITY, cityResponse.getCity().getName());
 					}
 					if(cityResponse.getLocation().getLatitude() != null) {
-						eventMap.put(LATITUDE, cityResponse.getLocation().getLatitude());
+						eventMap.put(Constants.LATITUDE, cityResponse.getLocation().getLatitude());
 					}
 					if (cityResponse.getLocation().getLongitude() != null) {
-						eventMap.put(LONGITUDE, cityResponse.getLocation().getLongitude());
+						eventMap.put(Constants.LONGITUDE, cityResponse.getLocation().getLongitude());
 					}
 					if(StringUtils.isNotBlank(cityResponse.getMostSpecificSubdivision().getName())) {
-						eventMap.put(REGION, cityResponse.getMostSpecificSubdivision().getName());
+						eventMap.put(Constants.REGION, cityResponse.getMostSpecificSubdivision().getName());
 					}
 				} 
 			}
 			
 			if(eventMap.get("eventId") != null) {
-				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
+				this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(Constants.INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
 			}
-			if (eventMap.get(EVENT_NAME) != null && eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
+			if (eventMap.get(Constants.EVENT_NAME) != null && eventMap.get(Constants.EVENT_NAME).toString().matches(Constants.INDEX_EVENTS) && eventMap.containsKey(Constants.CONTENT_GOORU_OID) && eventMap.get(Constants.CONTENT_GOORU_OID) != null) {
 				try {
-					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
-					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
-						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
+					indexResource(eventMap.get(Constants.CONTENT_GOORU_OID).toString());
+					if (eventMap.containsKey(Constants.SOURCE_GOORU_OID)) {
+						indexResource(eventMap.get(Constants.SOURCE_GOORU_OID).toString());
 					}
-					if (eventMap.containsKey(GOORUID) && eventMap.get(GOORUID) != null && !eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
-						getUserAndIndex(eventMap.get(GOORUID).toString());
+					if (eventMap.containsKey(Constants.GOORUID) && eventMap.get(Constants.GOORUID) != null && !eventMap.get(Constants.GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
+						getUserAndIndex(eventMap.get(Constants.GOORUID).toString());
 					}
 				} catch (Exception e) {
 					LOG.error("Exception:Unable to index events in the method indexEvents." , e);
@@ -195,83 +195,83 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 					 * }
 					 */
 
-					if (key.equalsIgnoreCase(EVENT_NAME) && (((String)jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
-						eventMap.put(EVENT_NAME, "reaction.create");
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME) && (((String)jsonField.get(key)).equalsIgnoreCase("create-reaction"))) {
+						eventMap.put(Constants.EVENT_NAME, "reaction.create");
 					}
 
-					if (key.equalsIgnoreCase(EVENT_NAME)
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME)
 							&& (((String)jsonField.get(key)).equalsIgnoreCase("collection-play") || ((String)jsonField.get(key)).equalsIgnoreCase("collection-play-dots")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("collections-played") || ((String)jsonField.get(key)).equalsIgnoreCase("quiz-play"))) {
 
-						eventMap.put(EVENT_NAME, "collection.play");
+						eventMap.put(Constants.EVENT_NAME, "collection.play");
 					}
 
-					if (key.equalsIgnoreCase(EVENT_NAME)
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME)
 							&& (((String)jsonField.get(key)).equalsIgnoreCase("signIn-google-login") || ((String)jsonField.get(key)).equalsIgnoreCase("signIn-google-home") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("anonymous-login"))) {
-						eventMap.put(EVENT_NAME, "user.login");
+						eventMap.put(Constants.EVENT_NAME, "user.login");
 					}
 
-					if (key.equalsIgnoreCase(EVENT_NAME)
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME)
 							&& (((String)jsonField.get(key)).equalsIgnoreCase("signUp-home") || ((String)jsonField.get(key)).equalsIgnoreCase("signUp-login"))) {
-						eventMap.put(EVENT_NAME, "user.register");
+						eventMap.put(Constants.EVENT_NAME, "user.register");
 					}
 
-					if (key.equalsIgnoreCase(EVENT_NAME)
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME)
 							&& (((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-play") || ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-player")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-play-dots")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-question-resource-play-dots")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("collection-resource-oe-play-dots") || ((String)jsonField.get(key)).equalsIgnoreCase(
 									"collection-resource-question-play-dots"))) {
-						eventMap.put(EVENT_NAME, "collection.resource.play");
+						eventMap.put(Constants.EVENT_NAME, "collection.resource.play");
 					}
 
-					if (key.equalsIgnoreCase(EVENT_NAME)
+					if (key.equalsIgnoreCase(Constants.EVENT_NAME)
 							&& (((String)jsonField.get(key)).equalsIgnoreCase("resource-player") || ((String)jsonField.get(key)).equalsIgnoreCase("resource-play-dots")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("resourceplayerstart") || ((String)jsonField.get(key)).equalsIgnoreCase("resourceplayerplay")
 									|| ((String)jsonField.get(key)).equalsIgnoreCase("resources-played") || ((String)jsonField.get(key)).equalsIgnoreCase("question-oe-play-dots") || String
 									.valueOf(jsonField.get(key)).equalsIgnoreCase("question-play-dots"))) {
-						eventMap.put(EVENT_NAME, "resource.play");
+						eventMap.put(Constants.EVENT_NAME, "resource.play");
 					}
 
 					if (key.equalsIgnoreCase("gooruUId") || key.equalsIgnoreCase("gooruUid")) {
-						eventMap.put(GOORUID, ((String)jsonField.get(key)));
+						eventMap.put(Constants.GOORUID, ((String)jsonField.get(key)));
 					}
 
 				}
-				if (eventMap.containsKey(CONTENT_GOORU_OID) && eventMap.get(CONTENT_GOORU_OID) != null) {
-					eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
-					eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
+				if (eventMap.containsKey(Constants.CONTENT_GOORU_OID) && eventMap.get(Constants.CONTENT_GOORU_OID) != null) {
+					eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
+					eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
 				}
-				if (eventMap.get(GOORUID) != null) {
-					eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(GOORUID)));
+				if (eventMap.get(Constants.GOORUID) != null) {
+					eventMap = this.getUserInfo(eventMap, ((String)eventMap.get(Constants.GOORUID)));
 				}
 
-				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
-					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)));
+				if (eventMap.get(Constants.EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(Constants.CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(Constants.CONTENT_GOORU_OID).toString())) {
+					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(Constants.CONTENT_GOORU_OID)));
 					if (questionList != null && questionList.size() > 0) {
-						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
-						eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
-						eventMap.put(OE_COUNT, questionList.getColumnByName(OE_COUNT) != null ? questionList.getColumnByName(OE_COUNT).getLongValue() : 0L);
-						eventMap.put(MC_COUNT, questionList.getColumnByName(MC_COUNT) != null ? questionList.getColumnByName(MC_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.QUESTION_COUNT, questionList.getColumnByName(Constants.QUESTION_COUNT) != null ? questionList.getColumnByName(Constants.QUESTION_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.RESOURCE_COUNT, questionList.getColumnByName(Constants.RESOURCE_COUNT) != null ? questionList.getColumnByName(Constants.RESOURCE_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.OE_COUNT, questionList.getColumnByName(Constants.OE_COUNT) != null ? questionList.getColumnByName(Constants.OE_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.MC_COUNT, questionList.getColumnByName(Constants.MC_COUNT) != null ? questionList.getColumnByName(Constants.MC_COUNT).getLongValue() : 0L);
 
-						eventMap.put(FIB_COUNT, questionList.getColumnByName(FIB_COUNT) != null ? questionList.getColumnByName(FIB_COUNT).getLongValue() : 0L);
-						eventMap.put(MA_COUNT, questionList.getColumnByName(MA_COUNT) != null ? questionList.getColumnByName(MA_COUNT).getLongValue() : 0L);
-						eventMap.put(TF_COUNT, questionList.getColumnByName(TF_COUNT) != null ? questionList.getColumnByName(TF_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.FIB_COUNT, questionList.getColumnByName(Constants.FIB_COUNT) != null ? questionList.getColumnByName(Constants.FIB_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.MA_COUNT, questionList.getColumnByName(Constants.MA_COUNT) != null ? questionList.getColumnByName(Constants.MA_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.TF_COUNT, questionList.getColumnByName(Constants.TF_COUNT) != null ? questionList.getColumnByName(Constants.TF_COUNT).getLongValue() : 0L);
 
-						eventMap.put(ITEM_COUNT, questionList.getColumnByName(ITEM_COUNT) != null ? questionList.getColumnByName(ITEM_COUNT).getLongValue() : 0L);
+						eventMap.put(Constants.ITEM_COUNT, questionList.getColumnByName(Constants.ITEM_COUNT) != null ? questionList.getColumnByName(Constants.ITEM_COUNT).getLongValue() : 0L);
 					}
 				}
 				if(eventMap.get("eventId") != null) {
-					this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
+					this.saveInESIndex(eventMap, ESIndexices.EVENTLOGGERINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(Constants.INDEXING_VERSION), IndexType.EVENTDETAIL.getIndexType(), ((String)eventMap.get("eventId")));
 				}
-				if (eventMap.get(EVENT_NAME).toString().matches(INDEX_EVENTS) && eventMap.containsKey(CONTENT_GOORU_OID)) {
-					indexResource(eventMap.get(CONTENT_GOORU_OID).toString());
-					if (eventMap.containsKey(SOURCE_GOORU_OID)) {
-						indexResource(eventMap.get(SOURCE_GOORU_OID).toString());
+				if (eventMap.get(Constants.EVENT_NAME).toString().matches(Constants.INDEX_EVENTS) && eventMap.containsKey(Constants.CONTENT_GOORU_OID)) {
+					indexResource(eventMap.get(Constants.CONTENT_GOORU_OID).toString());
+					if (eventMap.containsKey(Constants.SOURCE_GOORU_OID)) {
+						indexResource(eventMap.get(Constants.SOURCE_GOORU_OID).toString());
 					}
-					if (!eventMap.get(GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
-						getUserAndIndex(eventMap.get(GOORUID).toString());
+					if (!eventMap.get(Constants.GOORUID).toString().equalsIgnoreCase("ANONYMOUS")) {
+						getUserAndIndex(eventMap.get(Constants.GOORUID).toString());
 					}
 				}
 			} catch (Exception e3) {
@@ -288,7 +288,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 	 * @throws Exception 
 	 */
 	public void indexResource(String ids) throws Exception {
-		for (String id : ids.split(COMMA)) {
+		for (String id : ids.split(Constants.COMMA)) {
 			LOG.info("Indexing resources : {}", id);
 			ColumnList<String> resource = baseDao.readWithKey(ColumnFamilySet.RESOURCE.getColumnFamily(), id);
 			if (resource != null && resource.size() > 0) {
@@ -321,7 +321,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 				for (int i = 0; i < eventDetailsNew.size(); i++) {
 					String columnName = eventDetailsNew.getColumnByIndex(i).getName();
 					String value = eventDetailsNew.getColumnByIndex(i).getStringValue();
-					if (!columnName.equalsIgnoreCase(GRADE) &&  !columnName.equalsIgnoreCase(TAXONOMY_IDS) && value != null) {
+					if (!columnName.equalsIgnoreCase(Constants.GRADE) &&  !columnName.equalsIgnoreCase(Constants.TAXONOMY_IDS) && value != null) {
 						eventMap.put(columnName, value);
 					}
 				}
@@ -397,10 +397,10 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 
 			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), gooruOId);
 			if (questionCount != null && !questionCount.isEmpty()) {
-				long questionCounts = questionCount.getLongValue(QUESTION_COUNT, 0L);
-				eventMap.put(QUESTION_COUNT, questionCounts);
+				long questionCounts = questionCount.getLongValue(Constants.QUESTION_COUNT, 0L);
+				eventMap.put(Constants.QUESTION_COUNT, questionCounts);
 			} else {
-				eventMap.put(QUESTION_COUNT, 0L);
+				eventMap.put(Constants.QUESTION_COUNT, 0L);
 			}
 		}
 
@@ -570,11 +570,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 			if (columns.getColumnByName("organization.partyUid") != null) {
 				resourceMap.put("contentOrganizationId", columns.getColumnByName("organization.partyUid").getStringValue());
 			}
-			if (StringUtils.isNotBlank(columns.getStringValue("thumbnail", EMPTY))) {
+			if (StringUtils.isNotBlank(columns.getStringValue("thumbnail", Constants.EMPTY))) {
 				if (columns.getColumnByName("thumbnail").getStringValue().startsWith("http") || columns.getColumnByName("thumbnail").getStringValue().startsWith("https")) {
 					resourceMap.put("thumbnail", columns.getColumnByName("thumbnail").getStringValue());
 				} else {
-					resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH() + "/" + columns.getStringValue("folder", EMPTY) + "/"
+					resourceMap.put("thumbnail", DataLoggerCaches.getREPOPATH() + "/" + columns.getStringValue("folder", Constants.EMPTY) + "/"
 							+ columns.getColumnByName("thumbnail").getStringValue());
 				}
 			}
@@ -639,7 +639,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 					resourceMap.put("itemCount", questionList.getColumnByName("itemCount") != null ? questionList.getColumnByName("itemCount").getLongValue() : 0L);
 				}
 				resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
+				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + DataLoggerCaches.getCache().get(Constants.INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 			}
 		}
 	}
@@ -752,7 +752,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements Constants {
 			}
 			if (gooruOid != null) {
 				resourceMap = this.getTaxonomyInfo(resourceMap, gooruOid);
-				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + cache.get(INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
+				this.saveInESIndex(resourceMap, ESIndexices.CONTENTCATALOGINFO.getIndex() + "_" + cache.get(Constants.INDEXINGVERSION), IndexType.DIMRESOURCE.getIndexType(), gooruOid);
 			}
 		//}
 	}
@@ -1008,23 +1008,23 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 	    	if(extractedUserData != null) {
 				for (Column<String> column : extractedUserData) {
 					if (StringUtils.isNotBlank(column.getStringValue())) {
-						if (!column.getName().equalsIgnoreCase(GRADE) && !column.getName().equalsIgnoreCase(TAXONOMY_IDS)) {
+						if (!column.getName().equalsIgnoreCase(Constants.GRADE) && !column.getName().equalsIgnoreCase(Constants.TAXONOMY_IDS)) {
 							contentBuilder.field(column.getName(), column.getStringValue());
 						} else {
 							Set<String> grades = new HashSet<String>();
 							Set<Long> subjectCodes = new HashSet<Long>();
 							Set<Long> courseCodes = new HashSet<Long>();
-							for (String field : column.getStringValue().split(COMMA)) {
-								if (column.getName().equalsIgnoreCase(GRADE)) {
+							for (String field : column.getStringValue().split(Constants.COMMA)) {
+								if (column.getName().equalsIgnoreCase(Constants.GRADE)) {
 									grades.add(field);
 								} else {
 									ColumnList<String> extractedCodeData = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), field);
-									if (extractedCodeData != null && extractedCodeData.getColumnNames().contains(SUBJECT_CODE_ID)) {
-										long subject = extractedCodeData.getLongValue(SUBJECT_CODE_ID, 0L);
+									if (extractedCodeData != null && extractedCodeData.getColumnNames().contains(Constants.SUBJECT_CODE_ID)) {
+										long subject = extractedCodeData.getLongValue(Constants.SUBJECT_CODE_ID, 0L);
 										if(subject != 0L) {
 											subjectCodes.add(subject);
 										}
-										long course = extractedCodeData.getLongValue(COURSE_CODE_ID, 0L);
+										long course = extractedCodeData.getLongValue(Constants.COURSE_CODE_ID, 0L);
 										if(course != 0L) {
 											courseCodes.add(course);
 										}
@@ -1032,11 +1032,11 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 								}
 							}
 							if (!grades.isEmpty()) {
-								contentBuilder.field(GRADE_FIELD, grades);
+								contentBuilder.field(Constants.GRADE_FIELD, grades);
 							}
 							if (!subjectCodes.isEmpty() && !courseCodes.isEmpty()) {
-								contentBuilder.field(SUBJECT, subjectCodes);
-								contentBuilder.field(COURSE, courseCodes);
+								contentBuilder.field(Constants.SUBJECT, subjectCodes);
+								contentBuilder.field(Constants.COURSE, courseCodes);
 							}
 						}
 					}
@@ -1058,7 +1058,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 	    	}
 	    	
 	    	contentBuilder.field("index_updated_time", new Date());
-			getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+DataLoggerCaches.getCache().get(INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
+			getESClient().prepareIndex(ESIndexices.USERCATALOG.getIndex()+"_"+DataLoggerCaches.getCache().get(Constants.INDEXINGVERSION), IndexType.DIMUSER.getIndexType(), userId).setSource(contentBuilder).execute().actionGet()			
     		;
 		}else {
 			throw new AccessDeniedException("Invalid Id : " + userId);
@@ -1097,7 +1097,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColum
 					}*/
 				}
 				contentBuilder.field("index_updated_time", new Date());
-				getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
+				getESClient().prepareIndex(ESIndexices.TAXONOMYCATALOG.getIndex() + "_" + DataLoggerCaches.getCache().get(Constants.INDEXING_VERSION), IndexType.TAXONOMYCODE.getIndexType(), id)
 						.setSource(contentBuilder).execute().actionGet();
 			}
 		}

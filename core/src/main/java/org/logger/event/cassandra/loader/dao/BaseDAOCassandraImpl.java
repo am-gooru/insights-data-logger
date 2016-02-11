@@ -41,7 +41,7 @@ import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.model.ConsistencyLevel;
 
-public class BaseDAOCassandraImpl {
+public abstract class BaseDAOCassandraImpl {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
 	

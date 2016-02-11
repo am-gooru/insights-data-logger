@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JSONDeserializer implements Constants {
+public class JSONDeserializer {
 
 	private static final Logger LOG = LoggerFactory.getLogger(JSONDeserializer.class);
 
@@ -58,10 +58,10 @@ public class JSONDeserializer implements Constants {
                 map.putAll(deserialize(event.getPayLoadObject().toString(), mapType));
                 map.putAll(deserialize(event.getContext().toString(), mapType));
                 map.putAll(deserialize(event.getSession().toString(), mapType));                
-                map.put(EVENT_NAME,event.getEventName());
-                map.put(EVENT_ID,event.getEventId());
-                map.put(START_TIME,event.getStartTime());
-                map.put(END_TIME,event.getEndTime());
+                map.put(Constants.EVENT_NAME,event.getEventName());
+                map.put(Constants.EVENT_ID,event.getEventId());
+                map.put(Constants.START_TIME,event.getStartTime());
+                map.put(Constants.END_TIME,event.getEndTime());
         } catch (Exception e) {
         		LOG.info("Exception in event : {}",event.getFields());
                 LOG.error("Exception:", e);

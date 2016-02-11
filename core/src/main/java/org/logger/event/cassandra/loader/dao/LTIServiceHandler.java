@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 import com.netflix.astyanax.model.ColumnList;
 
 
-public class LTIServiceHandler implements Constants, Runnable{
+public class LTIServiceHandler implements Runnable{
 	
 	private static final Logger LOG = LoggerFactory.getLogger(LTIServiceHandler.class);
 	
-	private static final String VALID_FIELDS = LTI_SERVICE_ID+COMMA+GOORUID+COMMA+CONTENT_GOORU_OID;
+	private static final String VALID_FIELDS = Constants.LTI_SERVICE_ID+Constants.COMMA+Constants.GOORUID+Constants.COMMA+Constants.CONTENT_GOORU_OID;
 	
 	private static BaseCassandraRepoImpl baseDao;
 	
@@ -47,7 +47,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 	public LTIServiceHandler(BaseCassandraRepoImpl baseDao) {
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
-		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, DEFAULT_COLUMN).getStringValue();
+		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, Constants.DEFAULT_COLUMN).getStringValue();
 		postRequest = new HttpPost();
 		try {
 			builder = new URIBuilder();
@@ -59,17 +59,17 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	public void ltiEventProcess(String eventName, Map<String, Object> eventMap) {
 		
-		String serviceId = eventMap.get(LTI_SERVICE_ID) != null ? eventMap.get(LTI_SERVICE_ID).toString() : null;	
+		String serviceId = eventMap.get(Constants.LTI_SERVICE_ID) != null ? eventMap.get(Constants.LTI_SERVICE_ID).toString() : null;	
 		
-		this.gooruUId = eventMap.get(GOORUID) != null ? eventMap.get(GOORUID).toString() : null;
+		this.gooruUId = eventMap.get(Constants.GOORUID) != null ? eventMap.get(Constants.GOORUID).toString() : null;
 		
-		this.gooruOId = eventMap.get(CONTENT_GOORU_OID) != null ? eventMap.get(CONTENT_GOORU_OID).toString() : null;
+		this.gooruOId = eventMap.get(Constants.CONTENT_GOORU_OID) != null ? eventMap.get(Constants.CONTENT_GOORU_OID).toString() : null;
 		
 		if(serviceId == null || gooruUId == null || gooruOId == null) {
 			LOG.error(buildString(VALID_FIELDS, " should not be null for ", eventName));
 			return;
 		}
-		baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), serviceId, INPROGRESS, 604800);
+		baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), serviceId, Constants.INPROGRESS, 604800);
 	}
 
 	public LTIServiceHandler(String sessionToken, String gooruOId, String gooruUId) {
@@ -80,21 +80,21 @@ public class LTIServiceHandler implements Constants, Runnable{
 	
 	@Override
 	public void run() {
-		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId));
+		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId));
 		if(ltiColumns == null) {
 			return;
 		}
-		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(RS, SEPERATOR, gooruOId, SEPERATOR, gooruUId));
-		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(_SESSION_ID, null) : null;	
+		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(Constants.RS, Constants.SEPERATOR, gooruOId, Constants.SEPERATOR, gooruUId));
+		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(Constants._SESSION_ID, null) : null;	
 		if(sessionId == null) {
 			return;
 		}
 		sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId);
-		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, SEPERATOR, _SCORE_IN_PERCENTAGE), 0L) : 0;
+		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, Constants.SEPERATOR, Constants._SCORE_IN_PERCENTAGE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
 		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
 			String status = ltiColumns.getColumnByIndex(columnCount).getStringValue();
-			if(status.equals(INPROGRESS)) {
+			if(status.equals(Constants.INPROGRESS)) {
 				String serviceId = ltiColumns.getColumnByIndex(columnCount).getName();
 				if(serviceBasedScore.isEmpty()) {
 					serviceBasedScore.put(serviceId, score);
@@ -105,16 +105,16 @@ public class LTIServiceHandler implements Constants, Runnable{
 		}
 		for(Entry<String, Long> entry : serviceBasedScore.entrySet()) {
 			if(executeAPI(sessionToken, gooruOId, entry.getKey(), entry.getValue())) {
-				baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, SEPERATOR, gooruUId), entry.getKey(), COMPLETED);
+				baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), entry.getKey(), Constants.COMPLETED);
 			}
 		}
 	}
 	
 	private boolean executeAPI(String sessionToken, String gooruOId, String serviceId, Long score) {
-		builder.setParameter(SESSION_TOKEN, sessionToken);
-		builder.setParameter(GOORU_OID, gooruOId);
+		builder.setParameter(Constants.SESSION_TOKEN, sessionToken);
+		builder.setParameter(Constants.GOORU_OID, gooruOId);
 		builder.setParameter(SERVICE_ID, serviceId);
-		builder.setParameter(SCORE, String.valueOf(score));
+		builder.setParameter(Constants.SCORE, String.valueOf(score));
 		boolean status = false;
 		try {
 			postRequest.setURI(builder.build());
@@ -125,7 +125,7 @@ public class LTIServiceHandler implements Constants, Runnable{
 			}
 			status = true;
 		} catch (Exception e) {
-			LOG.error(buildString("unable to Execute LTI API(",sessionToken,SEPERATOR,gooruOId,SEPERATOR,serviceId,SEPERATOR,score,")"),e);
+			LOG.error(buildString("unable to Execute LTI API(",sessionToken,Constants.SEPERATOR,gooruOId,Constants.SEPERATOR,serviceId,Constants.SEPERATOR,score,")"),e);
 		}
 		return status;
 	}

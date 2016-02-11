@@ -15,7 +15,7 @@ import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
 
-public class MastryGenerator implements Runnable, Constants {
+public class MastryGenerator implements Runnable {
 
 	private BaseCassandraRepoImpl baseCassandraDao;
 	
@@ -41,17 +41,17 @@ public class MastryGenerator implements Runnable, Constants {
 				if (taxRows != null && taxRows.size() > 0) {
 					for (Row<String, String> taxRow : taxRows) {
 						ColumnList<String> taxColumns = taxRow.getColumns();
-						contentTaxonomyActivityInstance.setSubjectId(taxColumns.getStringValue(SUBJECT, NA));
-						contentTaxonomyActivityInstance.setCourseId(taxColumns.getStringValue(COURSE, NA));
-						contentTaxonomyActivityInstance.setDomainId(taxColumns.getStringValue(DOMAIN, NA));
-						contentTaxonomyActivityInstance.setStandardsId(taxColumns.getStringValue(STANDARDS, NA));
-						contentTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getStringValue(LEARNING_TARGETS, NA));
+						contentTaxonomyActivityInstance.setSubjectId(taxColumns.getStringValue(Constants.SUBJECT, Constants.NA));
+						contentTaxonomyActivityInstance.setCourseId(taxColumns.getStringValue(Constants.COURSE, Constants.NA));
+						contentTaxonomyActivityInstance.setDomainId(taxColumns.getStringValue(Constants.DOMAIN, Constants.NA));
+						contentTaxonomyActivityInstance.setStandardsId(taxColumns.getStringValue(Constants.STANDARDS, Constants.NA));
+						contentTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getStringValue(Constants.LEARNING_TARGETS, Constants.NA));
 						Rows<String, String> taxActivityRows = baseCassandraDao.getContentTaxonomyActivity(contentTaxonomyActivityInstance);
 						if (taxActivityRows != null && taxActivityRows.size() > 0) {
 							for (Row<String, String> taxActivityRow : taxActivityRows) {
 								ColumnList<String> taxActivityColumns = taxActivityRow.getColumns();
-								contentTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + taxActivityColumns.getLongValue(VIEWS, 0L));
-								contentTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxActivityColumns.getLongValue(_TIME_SPENT, 0L));
+								contentTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + taxActivityColumns.getLongValue(Constants.VIEWS, 0L));
+								contentTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxActivityColumns.getLongValue(Constants._TIME_SPENT, 0L));
 								contentTaxonomyActivityInstance.setScore(contentTaxonomyActivity.getScore());
 								baseCassandraDao.saveContentTaxonomyActivity(contentTaxonomyActivityInstance);
 							}
@@ -60,17 +60,17 @@ public class MastryGenerator implements Runnable, Constants {
 						/**
 						 * content_class_taxonomy_activity store
 						 */
-						contentClassTaxonomyActivityInstance.setSubjectId(taxColumns.getStringValue(SUBJECT, NA));
-						contentClassTaxonomyActivityInstance.setCourseId(taxColumns.getStringValue(COURSE, NA));
-						contentClassTaxonomyActivityInstance.setDomainId(taxColumns.getStringValue(DOMAIN, NA));
-						contentClassTaxonomyActivityInstance.setStandardsId(taxColumns.getStringValue(STANDARDS, NA));
-						contentClassTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getStringValue(LEARNING_TARGETS, NA));
+						contentClassTaxonomyActivityInstance.setSubjectId(taxColumns.getStringValue(Constants.SUBJECT, Constants.NA));
+						contentClassTaxonomyActivityInstance.setCourseId(taxColumns.getStringValue(Constants.COURSE, Constants.NA));
+						contentClassTaxonomyActivityInstance.setDomainId(taxColumns.getStringValue(Constants.DOMAIN, Constants.NA));
+						contentClassTaxonomyActivityInstance.setStandardsId(taxColumns.getStringValue(Constants.STANDARDS, Constants.NA));
+						contentClassTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getStringValue(Constants.LEARNING_TARGETS, Constants.NA));
 						Rows<String, String> classTaxActivityRows = baseCassandraDao.getContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
 						if (classTaxActivityRows != null && classTaxActivityRows.size() > 0) {
 							for (Row<String, String> classTaxActivityRow : classTaxActivityRows) {
 								ColumnList<String> classTaxActivityColumns = classTaxActivityRow.getColumns();
-								contentClassTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + classTaxActivityColumns.getLongValue(VIEWS, 0L));
-								contentClassTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + classTaxActivityColumns.getLongValue(_TIME_SPENT, 0L));
+								contentClassTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + classTaxActivityColumns.getLongValue(Constants.VIEWS, 0L));
+								contentClassTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + classTaxActivityColumns.getLongValue(Constants._TIME_SPENT, 0L));
 								contentClassTaxonomyActivityInstance.setScore(contentTaxonomyActivity.getScore());
 								baseCassandraDao.saveContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
 							}
@@ -117,14 +117,14 @@ public class MastryGenerator implements Runnable, Constants {
 				ColumnList<String> taxActivityDataCubeColumn = taxActivityDataCubeRow.getColumns();
 				taxonomyActivityDataCube.setRowKey(taxonomyActivityDataCube.getRowKey());
 				taxonomyActivityDataCube.setLeafNode(taxonomyActivityDataCube.getLeafNode());
-				if (contentTaxonomyActivity.getResourceType().equalsIgnoreCase(RESOURCE)) {
-					taxonomyActivityDataCube.setViews(contentTaxonomyActivity.getViews() + taxActivityDataCubeColumn.getLongValue(VIEWS, 0L));
-					taxonomyActivityDataCube.setAttempts(0L + taxActivityDataCubeColumn.getLongValue(ATTEMPTS, 0L));
+				if (contentTaxonomyActivity.getResourceType().equalsIgnoreCase(Constants.RESOURCE)) {
+					taxonomyActivityDataCube.setViews(contentTaxonomyActivity.getViews() + taxActivityDataCubeColumn.getLongValue(Constants.VIEWS, 0L));
+					taxonomyActivityDataCube.setAttempts(0L + taxActivityDataCubeColumn.getLongValue(Constants.ATTEMPTS, 0L));
 					taxonomyActivityDataCube.setResourceTimespent(contentTaxonomyActivity.getTimeSpent() + taxActivityDataCubeColumn.getLongValue("resource_timespent", 0L));
 					taxonomyActivityDataCube.setQuestionTimespent(0L+taxActivityDataCubeColumn.getLongValue("question_timespent", 0L));
 				} else {
-					taxonomyActivityDataCube.setViews(0L + taxActivityDataCubeColumn.getLongValue(VIEWS, 0L));
-					taxonomyActivityDataCube.setAttempts(contentTaxonomyActivity.getViews() + taxActivityDataCubeColumn.getLongValue(ATTEMPTS, 0L));
+					taxonomyActivityDataCube.setViews(0L + taxActivityDataCubeColumn.getLongValue(Constants.VIEWS, 0L));
+					taxonomyActivityDataCube.setAttempts(contentTaxonomyActivity.getViews() + taxActivityDataCubeColumn.getLongValue(Constants.ATTEMPTS, 0L));
 					taxonomyActivityDataCube.setResourceTimespent(0L+taxActivityDataCubeColumn.getLongValue("resource_timespent", 0L));
 					taxonomyActivityDataCube.setQuestionTimespent(contentTaxonomyActivity.getTimeSpent()+taxActivityDataCubeColumn.getLongValue("question_timespent", 0L));
 				}
@@ -151,7 +151,7 @@ public class MastryGenerator implements Runnable, Constants {
 		StringBuilder columnKey = new StringBuilder();
 		for (String column : columns) {
 			if (StringUtils.isNotBlank(column)) {
-				columnKey.append(columnKey.length() > 0 ? SEPERATOR : EMPTY);
+				columnKey.append(columnKey.length() > 0 ? Constants.SEPERATOR : Constants.EMPTY);
 				columnKey.append(column);
 			}
 		}

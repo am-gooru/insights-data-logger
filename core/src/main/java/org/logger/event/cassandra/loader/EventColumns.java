@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventColumns implements Constants{
+public class EventColumns {
 
 	public static final Map<String, Object> COLLECTION_PLAY_COLUMNS;
 	public static final Map<String, Object> COLLECTION_RESOURCE_PLAY_COLUMNS;
@@ -14,28 +14,28 @@ public class EventColumns implements Constants{
 	
 	static { 
 		Map<String, Object> cpColumns = new HashMap<String, Object>();
-		cpColumns.put(VIEWS, VIEWS_COUNT);
-		cpColumns.put(TIME_SPENT, TOTALTIMEINMS);
-		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
-		cpColumns.put(EVIDENCE, EVIDENCE);
+		cpColumns.put(Constants.VIEWS, Constants.VIEWS_COUNT);
+		cpColumns.put(Constants.TIME_SPENT, Constants.TOTALTIMEINMS);
+		cpColumns.put(Constants._COLLECTION_TYPE, Constants.COLLECTION_TYPE);
+		cpColumns.put(Constants.EVIDENCE, Constants.EVIDENCE);
 		SCORE_AGGREGATE_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
 		Map<String, Object> cpColumns = new HashMap<String, Object>();
-		cpColumns.put(VIEWS, VIEWS_COUNT);
-		cpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
-		cpColumns.put(_COLLECTION_TYPE, COLLECTION_TYPE);
-		cpColumns.put(EVIDENCE, EVIDENCE);
-		cpColumns.put(STATUS, TYPE);
+		cpColumns.put(Constants.VIEWS, Constants.VIEWS_COUNT);
+		cpColumns.put(Constants.ATTEMPTS, Constants.ATTEMPT_COUNT);
+		cpColumns.put(Constants._COLLECTION_TYPE, Constants.COLLECTION_TYPE);
+		cpColumns.put(Constants.EVIDENCE, Constants.EVIDENCE);
+		cpColumns.put(Constants.STATUS, Constants.TYPE);
 		COLLECTION_PLAY_COLUMNS = Collections.unmodifiableMap(cpColumns);
 	}
 	static {
 		Map<String, Object> crpColumns = new HashMap<String, Object>();
-		crpColumns.put(VIEWS, VIEWS_COUNT);
-		crpColumns.put(ATTEMPTS, ATTEMPT_COUNT);
-		crpColumns.put(TIME_SPENT, TOTALTIMEINMS);
-		crpColumns.put(TYPE, QUESTION_TYPE);
-		crpColumns.put(STATUS, TYPE);
+		crpColumns.put(Constants.VIEWS, Constants.VIEWS_COUNT);
+		crpColumns.put(Constants.ATTEMPTS, Constants.ATTEMPT_COUNT);
+		crpColumns.put(Constants.TIME_SPENT, Constants.TOTALTIMEINMS);
+		crpColumns.put(Constants.TYPE, Constants.QUESTION_TYPE);
+		crpColumns.put(Constants.STATUS, Constants.TYPE);
 		COLLECTION_RESOURCE_PLAY_COLUMNS = Collections.unmodifiableMap(crpColumns);
 	}
 	
@@ -49,10 +49,10 @@ public class EventColumns implements Constants{
 	
 	static {
 		Map<String, Object> ufColumns = new HashMap<String, Object>();
-		ufColumns.put(_FEEDBACK, TEXT);
-		ufColumns.put(ACTIVE, ACTIVE);
-		ufColumns.put(_FEED_BACK_TIMESTAMP, START_TIME);
-		ufColumns.put(_FEED_BACK_PROVIDER, PROVIDER);
+		ufColumns.put(Constants._FEEDBACK, Constants.TEXT);
+		ufColumns.put(Constants.ACTIVE, Constants.ACTIVE);
+		ufColumns.put(Constants._FEED_BACK_TIMESTAMP, Constants.START_TIME);
+		ufColumns.put(Constants._FEED_BACK_PROVIDER, Constants.PROVIDER);
 		USER_FEEDBACK_COLUMNS = Collections.unmodifiableMap(ufColumns);
 	}
 }

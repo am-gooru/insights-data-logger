@@ -50,7 +50,7 @@ import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
-public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Constants {
+public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
@@ -1022,16 +1022,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
 		m.withRow(this.accessColumnFamily(cfName), key)
-				.putColumnIfNotNull(_START_TIME, event.getStartTime(), null)
-				.putColumnIfNotNull(_END_TIME, event.getEndTime(), null)
-				.putColumnIfNotNull(FIELDS, event.getFields(), null)
-				.putColumnIfNotNull(_CONTENT_GOORU_OID, event.getContentGooruId(), null)
-				.putColumnIfNotNull(_EVENT_NAME, event.getEventName(), null)
-				.putColumnIfNotNull(SESSION, event.getSession().toString(), null)
-				.putColumnIfNotNull(METRICS, event.getMetrics().toString(), null)
-				.putColumnIfNotNull(_PAYLOAD_OBJECT, event.getPayLoadObject().toString(), null)
-				.putColumnIfNotNull(USER, event.getUser().toString(), null)
-				.putColumnIfNotNull(CONTEXT, event.getContext().toString(), null)
+				.putColumnIfNotNull(Constants._START_TIME, event.getStartTime(), null)
+				.putColumnIfNotNull(Constants._END_TIME, event.getEndTime(), null)
+				.putColumnIfNotNull(Constants.FIELDS, event.getFields(), null)
+				.putColumnIfNotNull(Constants._CONTENT_GOORU_OID, event.getContentGooruId(), null)
+				.putColumnIfNotNull(Constants._EVENT_NAME, event.getEventName(), null)
+				.putColumnIfNotNull(Constants.SESSION, event.getSession().toString(), null)
+				.putColumnIfNotNull(Constants.METRICS, event.getMetrics().toString(), null)
+				.putColumnIfNotNull(Constants._PAYLOAD_OBJECT, event.getPayLoadObject().toString(), null)
+				.putColumnIfNotNull(Constants.USER, event.getUser().toString(), null)
+				.putColumnIfNotNull(Constants.CONTEXT, event.getContext().toString(), null)
 				;
 		try {
 			m.execute();
@@ -1058,9 +1058,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		eventTimeline.withRow(this.accessColumnFamily(cfName), rowKey).putColumn(CoulmnValue, CoulmnValue, null);
 
-		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey + SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
+		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey + Constants.SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
 
-		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8) + SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
+		eventTimeline.withRow(this.accessColumnFamily(cfName), (rowKey.substring(0, 8) + Constants.SEPERATOR + event.getEventName())).putColumn(CoulmnValue, CoulmnValue, null);
 
 		try {
 			eventTimeline.execute();
@@ -1105,7 +1105,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		String dateId = "0";
 		String columnName = null;
 		String eventName = null;
-		rowKey = activities.get(USER_UID) != null ? activities.get(USER_UID).toString() : null;
+		rowKey = activities.get(Constants.USER_UID) != null ? activities.get(Constants.USER_UID).toString() : null;
 		dateId = activities.get("dateId") != null ? activities.get("dateId").toString() : null;
 		eventName = activities.get("eventName") != null ? activities.get("eventName").toString() : null;
 		if (activities.get("existingColumnName") == null) {
@@ -1207,13 +1207,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		String parentId = null;
 		try {
 			collectionItem = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn(_RESOURCE_GOORU_OID).equals().value(key).execute().getResult();
+					.addExpression().whereColumn(Constants._RESOURCE_GOORU_OID).equals().value(key).execute().getResult();
 		} catch (Exception e) {			
 				LOG.error("Exception:",e);
 		}
 		if (collectionItem != null) {
 			for (Row<String, String> collectionItems : collectionItem) {
-				parentId = collectionItems.getColumns().getColumnByName(_COLLECTION_GOORU_OID).getStringValue();
+				parentId = collectionItems.getColumns().getColumnByName(Constants._COLLECTION_GOORU_OID).getStringValue();
 				if (parentId != null) {
 					classPages.add(parentId);
 				}
@@ -1231,13 +1231,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTION_ITEM_ID))
-				.putColumnIfNotNull(_CONTENT_ID, eventMap.get(CONTENT_ID))
-				.putColumnIfNotNull(_PARENT_CONTENT_ID, eventMap.get(PARENT_CONTENT_ID))
-				.putColumnIfNotNull(_RESOURCE_GOORU_OID, eventMap.get(_CONTENT_GOORU_OID))
-				.putColumnIfNotNull(_COLLECTION_GOORU_OID, eventMap.get(_PARENT_GOORU_OID))
-				.putColumnIfNotNull(_ITEM_SEQUENCE, eventMap.get(ITEM_SEQUENCE))
-				.putColumnIfNotNull(_ORGANIZATION_UID, eventMap.get(ORGANIZATION_UID));
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.COLLECTION_ITEM_ID))
+				.putColumnIfNotNull(Constants._CONTENT_ID, eventMap.get(Constants.CONTENT_ID))
+				.putColumnIfNotNull(Constants._PARENT_CONTENT_ID, eventMap.get(Constants.PARENT_CONTENT_ID))
+				.putColumnIfNotNull(Constants._RESOURCE_GOORU_OID, eventMap.get(Constants._CONTENT_GOORU_OID))
+				.putColumnIfNotNull(Constants._COLLECTION_GOORU_OID, eventMap.get(Constants._PARENT_GOORU_OID))
+				.putColumnIfNotNull(Constants._ITEM_SEQUENCE, eventMap.get(Constants.ITEM_SEQUENCE))
+				.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID));
 
 	}
 
@@ -1252,15 +1252,15 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 
 		int isGroupOwner = 0;
 		int deleted = 0;
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(CONTENT_GOORU_OID) + SEPERATOR + eventMap.get(GROUP_UID) + SEPERATOR + eventMap.get(GOORUID))
-				.putColumnIfNotNull(_USER_GROUP_UID, eventMap.get(GROUP_UID))
-				.putColumnIfNotNull(_CLASSPAGE_GOORU_OID, eventMap.get(CONTENT_GOORU_OID))
-				.putColumnIfNotNull(_IS_GROUP_OWNER, isGroupOwner)
-				.putColumnIfNotNull(DELETED, deleted)
-				.putColumnIfNotNull(_GOORU_UID, eventMap.get(GOORUID))
-				.putColumnIfNotNull(_CLASSPAGE_CODE, eventMap.get(CLASS_CODE))
-				.putColumnIfNotNull(_USER_GROUP_CODE, eventMap.get(_CONTENT_GOORU_OID))
-				.putColumnIfNotNull(_ORGANIZATION_UID, eventMap.get(ORGANIZATION_UID))
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.CONTENT_GOORU_OID) + Constants.SEPERATOR + eventMap.get(Constants.GROUP_UID) + Constants.SEPERATOR + eventMap.get(Constants.GOORUID))
+				.putColumnIfNotNull(Constants._USER_GROUP_UID, eventMap.get(Constants.GROUP_UID))
+				.putColumnIfNotNull(Constants._CLASSPAGE_GOORU_OID, eventMap.get(Constants.CONTENT_GOORU_OID))
+				.putColumnIfNotNull(Constants._IS_GROUP_OWNER, isGroupOwner)
+				.putColumnIfNotNull(Constants.DELETED, deleted)
+				.putColumnIfNotNull(Constants._GOORU_UID, eventMap.get(Constants.GOORUID))
+				.putColumnIfNotNull(Constants._CLASSPAGE_CODE, eventMap.get(Constants.CLASS_CODE))
+				.putColumnIfNotNull(Constants._USER_GROUP_CODE, eventMap.get(Constants._CONTENT_GOORU_OID))
+				.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID))
 
 		;
 
@@ -1352,8 +1352,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTION_GOORU_OID) + SEPERATOR + eventMap.get("questionGooruOid") + SEPERATOR + eventMap.get("sequence"))
-				.putColumnIfNotNull(_COLLECTION_GOORU_OID, eventMap.get(COLLECTION_GOORU_OID).toString())
+		m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.COLLECTION_GOORU_OID) + Constants.SEPERATOR + eventMap.get("questionGooruOid") + Constants.SEPERATOR + eventMap.get("sequence"))
+				.putColumnIfNotNull(Constants._COLLECTION_GOORU_OID, eventMap.get(Constants.COLLECTION_GOORU_OID).toString())
 				.putColumnIfNotNull("question_id", ((eventMap.containsKey("questionId") && eventMap.get("questionId") != null) ? Long.valueOf(eventMap.get("questionId").toString()) : null))
 				.putColumnIfNotNull("answer_id", ((eventMap.containsKey("answerId") && eventMap.get("answerId") != null) ? Long.valueOf(eventMap.get("answerId").toString()) : null))
 				.putColumnIfNotNull("answer_text", ((eventMap.containsKey("answerText") && eventMap.get("answerText") != null) ? eventMap.get("answerText").toString() : null))
@@ -1363,7 +1363,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				.putColumnIfNotNull("answer_explanation",
 						((eventMap.containsKey("answerExplanation") && eventMap.get("answerExplanation") != null) ? eventMap.get("answerExplanation").toString() : null))
 				.putColumnIfNotNull("question_gooru_oid", ((eventMap.containsKey("questionGooruOid") && eventMap.get("questionGooruOid") != null) ? eventMap.get("questionGooruOid").toString() : null))
-				.putColumnIfNotNull(_QUESTION_TYPE, ((eventMap.containsKey(QUESTION_TYPE) && eventMap.get(QUESTION_TYPE) != null) ? eventMap.get(QUESTION_TYPE).toString() : null))
+				.putColumnIfNotNull(Constants._QUESTION_TYPE, ((eventMap.containsKey(Constants.QUESTION_TYPE) && eventMap.get(Constants.QUESTION_TYPE) != null) ? eventMap.get(Constants.QUESTION_TYPE).toString() : null))
 				.putColumnIfNotNull("sequence", ((eventMap.containsKey("sequence") && eventMap.get("sequence") != null) ? Integer.valueOf(eventMap.get("sequence").toString()) : null));
 		try {
 			m.execute();
@@ -1395,7 +1395,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 					.putColumnIfNotNull("mail_notification", (eventMap.get("mailNotification") != null && Boolean.valueOf(eventMap.get("mailNotification").toString())) ? true : false)
 					.putColumnIfNotNull("build_type_id", eventMap.get("buildTypeId") != null ? eventMap.get("buildTypeId").toString() : null)
 					.putColumnIfNotNull("narration_link", eventMap.get("narrationLink") != null ? eventMap.get("narrationLink").toString() : null)
-					.putColumnIfNotNull(_ESTIMATED_TIME, eventMap.get(ESTIMATED_TIME) != null ? eventMap.get(ESTIMATED_TIME).toString() : null);
+					.putColumnIfNotNull(Constants._ESTIMATED_TIME, eventMap.get(Constants.ESTIMATED_TIME) != null ? eventMap.get(Constants.ESTIMATED_TIME).toString() : null);
 			try {
 				m.execute();
 			} catch (Exception e) {
@@ -1410,28 +1410,28 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param eventMap
 	 */
 	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.containsKey(COLLECTION_ITEM_ID) && eventMap.get(COLLECTION_ITEM_ID) != null) {
+		if (eventMap.containsKey(Constants.COLLECTION_ITEM_ID) && eventMap.get(Constants.COLLECTION_ITEM_ID) != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get(COLLECTION_ITEM_ID).toString())
-					.putColumnIfNotNull(DELETED, eventMap.get(DELETED) != null ? Integer.valueOf(eventMap.get(DELETED).toString()) : null)
-					.putColumnIfNotNull(_ITEM_TYPE, (eventMap.get(COLLECTION_ITEM_TYPE) != null ? eventMap.get(ITEM_TYPE).toString() : null))
-					.putColumnIfNotNull(_RESOURCE_CONTENT_ID, eventMap.get(RESOURCE_CONTENT_ID) != null ? Long.valueOf(eventMap.get(RESOURCE_CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(_COLLECTION_GOORU_OID, eventMap.get(COLLECTION_GOORU_OID) != null ? eventMap.get(COLLECTION_GOORU_OID).toString() : null)
-					.putColumnIfNotNull(_RESOURCE_GOORU_OID, eventMap.get(RESOURCE_GOORU_OID) != null ? eventMap.get(RESOURCE_GOORU_OID).toString() : null)
-					.putColumnIfNotNull(_ITEM_SEQUENCE, eventMap.get(COLLECTION_ITEM_SEQUENCE) != null ? Integer.valueOf(eventMap.get(ITEM_SEQUENCE).toString()) : null)
-					.putColumnIfNotNull(_COLLECTION_ITEM_ID, eventMap.get(COLLECTION_ITEM_ID) != null ? eventMap.get(COLLECTION_ITEM_ID).toString() : null)
-					.putColumnIfNotNull(_COLLECTION_CONTENT_ID, eventMap.get(COLLECTION_CONTENT_ID) != null ? Long.valueOf(eventMap.get(COLLECTION_CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(_QUESTION_TYPE, eventMap.get(COLLECTION_ITEM_QUESTION_TYPE) != null ? eventMap.get(QUESTION_TYPE).toString() : null)
-					.putColumnIfNotNull(_MINIMUM_SCORE, eventMap.get(COLLECTION_ITEM_MINIMUM_SCORE) != null ? eventMap.get(MINIMUM_SCORE).toString() : null)
-					.putColumnIfNotNull(NARRATION, eventMap.get(COLLECTION_ITEM_NARRATION) != null ? eventMap.get(NARRATION).toString() : null)
-					.putColumnIfNotNull(_ESTIMATED_TIME, eventMap.get(COLLECTION_ITEM_ESTIMATED_TIME) != null ? eventMap.get(ESTIMATED_TIME).toString() : null)
-					.putColumnIfNotNull(START, eventMap.get(COLLECTION_ITEM_START) != null ? eventMap.get(START).toString() : null)
-					.putColumnIfNotNull(STOP, eventMap.get(COLLECTION_ITEM_STOP) != null ? eventMap.get(STOP).toString() : null)
-					.putColumnIfNotNull(_NARRATION_TYPE, eventMap.get(COLLECTION_NARRATION_TYPE) != null ? eventMap.get(NARRATION_TYPE).toString() : null)
-					.putColumnIfNotNull(_PLANNED_END_DATE, eventMap.get(COLLECTION_ITEM_PLANNED_END_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(PLANNED_END_DATE).toString())) : null)
-					.putColumnIfNotNull(_ASSOCIATION_DATE, eventMap.get(COLLECTION_ITEM_ASSOCIATION_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(ASSOCIATION_DATE).toString())) : null)
-					.putColumnIfNotNull(_ASSOCIATED_BY_UID, eventMap.get(COLLECTION_ITEM_ASSOCIATE_BY_UID) != null ? eventMap.get(ASSOCIATED_BY_UID).toString() : null)
-					.putColumnIfNotNull(_IS_REQUIRED, eventMap.get(COLLECTION_ITEM_IS_REQUIRED) != null ? Integer.valueOf(eventMap.get(IS_REQUIRED).toString()) : null);
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.COLLECTION_ITEM_ID).toString())
+					.putColumnIfNotNull(Constants.DELETED, eventMap.get(Constants.DELETED) != null ? Integer.valueOf(eventMap.get(Constants.DELETED).toString()) : null)
+					.putColumnIfNotNull(Constants._ITEM_TYPE, (eventMap.get(Constants.COLLECTION_ITEM_TYPE) != null ? eventMap.get(Constants.ITEM_TYPE).toString() : null))
+					.putColumnIfNotNull(Constants._RESOURCE_CONTENT_ID, eventMap.get(Constants.RESOURCE_CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.RESOURCE_CONTENT_ID).toString()) : null)
+					.putColumnIfNotNull(Constants._COLLECTION_GOORU_OID, eventMap.get(Constants.COLLECTION_GOORU_OID) != null ? eventMap.get(Constants.COLLECTION_GOORU_OID).toString() : null)
+					.putColumnIfNotNull(Constants._RESOURCE_GOORU_OID, eventMap.get(Constants.RESOURCE_GOORU_OID) != null ? eventMap.get(Constants.RESOURCE_GOORU_OID).toString() : null)
+					.putColumnIfNotNull(Constants._ITEM_SEQUENCE, eventMap.get(Constants.COLLECTION_ITEM_SEQUENCE) != null ? Integer.valueOf(eventMap.get(Constants.ITEM_SEQUENCE).toString()) : null)
+					.putColumnIfNotNull(Constants._COLLECTION_ITEM_ID, eventMap.get(Constants.COLLECTION_ITEM_ID) != null ? eventMap.get(Constants.COLLECTION_ITEM_ID).toString() : null)
+					.putColumnIfNotNull(Constants._COLLECTION_CONTENT_ID, eventMap.get(Constants.COLLECTION_CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.COLLECTION_CONTENT_ID).toString()) : null)
+					.putColumnIfNotNull(Constants._QUESTION_TYPE, eventMap.get(Constants.COLLECTION_ITEM_QUESTION_TYPE) != null ? eventMap.get(Constants.QUESTION_TYPE).toString() : null)
+					.putColumnIfNotNull(Constants._MINIMUM_SCORE, eventMap.get(Constants.COLLECTION_ITEM_MINIMUM_SCORE) != null ? eventMap.get(Constants.MINIMUM_SCORE).toString() : null)
+					.putColumnIfNotNull(Constants.NARRATION, eventMap.get(Constants.COLLECTION_ITEM_NARRATION) != null ? eventMap.get(Constants.NARRATION).toString() : null)
+					.putColumnIfNotNull(Constants._ESTIMATED_TIME, eventMap.get(Constants.COLLECTION_ITEM_ESTIMATED_TIME) != null ? eventMap.get(Constants.ESTIMATED_TIME).toString() : null)
+					.putColumnIfNotNull(Constants.START, eventMap.get(Constants.COLLECTION_ITEM_START) != null ? eventMap.get(Constants.START).toString() : null)
+					.putColumnIfNotNull(Constants.STOP, eventMap.get(Constants.COLLECTION_ITEM_STOP) != null ? eventMap.get(Constants.STOP).toString() : null)
+					.putColumnIfNotNull(Constants._NARRATION_TYPE, eventMap.get(Constants.COLLECTION_NARRATION_TYPE) != null ? eventMap.get(Constants.NARRATION_TYPE).toString() : null)
+					.putColumnIfNotNull(Constants._PLANNED_END_DATE, eventMap.get(Constants.COLLECTION_ITEM_PLANNED_END_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(Constants.PLANNED_END_DATE).toString())) : null)
+					.putColumnIfNotNull(Constants._ASSOCIATION_DATE, eventMap.get(Constants.COLLECTION_ITEM_ASSOCIATION_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(Constants.ASSOCIATION_DATE).toString())) : null)
+					.putColumnIfNotNull(Constants._ASSOCIATED_BY_UID, eventMap.get(Constants.COLLECTION_ITEM_ASSOCIATE_BY_UID) != null ? eventMap.get(Constants.ASSOCIATED_BY_UID).toString() : null)
+					.putColumnIfNotNull(Constants._IS_REQUIRED, eventMap.get(Constants.COLLECTION_ITEM_IS_REQUIRED) != null ? Integer.valueOf(eventMap.get(Constants.IS_REQUIRED).toString()) : null);
 			try {
 				m.execute();
 			} catch (Exception e) {
@@ -1446,21 +1446,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	 * @param eventMap
 	 */
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.get(CLASS_ID) != null && eventMap.get(GROUP_UID) != null && eventMap.get(USER_UID) != null) {
+		if (eventMap.get(Constants.CLASS_ID) != null && eventMap.get(Constants.GROUP_UID) != null && eventMap.get(Constants.USER_UID) != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get(CLASS_ID).toString() + SEPERATOR + eventMap.get(GROUP_UID).toString() + SEPERATOR + eventMap.get(USER_UID).toString())
-					.putColumnIfNotNull(DELETED, eventMap.get(DELETED) != null ? Integer.valueOf(eventMap.get(DELETED).toString()) : 0)
-					.putColumnIfNotNull(_CLASSPAGE_CONTENT_ID, eventMap.get(CONTENT_ID) != null ? Long.valueOf(eventMap.get(CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(_CLASSPAGE_GOORU_OID, eventMap.get(CLASS_ID) != null ? eventMap.get(CLASS_ID).toString() : null)
-					.putColumnIfNotNull(USERNAME, eventMap.get(USERNAME) != null ? eventMap.get(USERNAME).toString() : null)
-					.putColumnIfNotNull(_USER_GROUP_UID, eventMap.get(GROUP_UID) != null ? eventMap.get(GROUP_UID).toString() : null)
-					.putColumnIfNotNull(_ORGANIZATION_UID, eventMap.get(ORGANIZATION_UID) != null ? eventMap.get(ORGANIZATION_UID).toString() : null)
-					.putColumnIfNotNull(_USER_GROUP_TYPE, eventMap.get(USER_GROUP_TYPE) != null ? eventMap.get(USER_GROUP_TYPE).toString() : null)
-					.putColumnIfNotNull(_ACTIVE_FLAG, eventMap.get(ACTIVE_FLAG) != null ? Integer.valueOf(eventMap.get(ACTIVE_FLAG).toString()) : null)
-					.putColumnIfNotNull(_USER_GROUP_CODE, eventMap.get(CLASS_CODE) != null ? eventMap.get(CLASS_CODE).toString() : null)
-					.putColumnIfNotNull(_CLASSPAGE_CODE, eventMap.get(CLASS_CODE) != null ? eventMap.get(CLASS_CODE).toString() : null)
-					.putColumnIfNotNull(_GOORU_UID, eventMap.get(USER_UID) != null ? eventMap.get(USER_UID).toString() : null)
-					.putColumnIfNotNull(_IS_GROUP_OWNER, eventMap.get(IS_GROUP_OWNER) != null ? Integer.valueOf(eventMap.get(IS_GROUP_OWNER).toString()) : null);
+			m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.CLASS_ID).toString() + Constants.SEPERATOR + eventMap.get(Constants.GROUP_UID).toString() + Constants.SEPERATOR + eventMap.get(Constants.USER_UID).toString())
+					.putColumnIfNotNull(Constants.DELETED, eventMap.get(Constants.DELETED) != null ? Integer.valueOf(eventMap.get(Constants.DELETED).toString()) : 0)
+					.putColumnIfNotNull(Constants._CLASSPAGE_CONTENT_ID, eventMap.get(Constants.CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.CONTENT_ID).toString()) : null)
+					.putColumnIfNotNull(Constants._CLASSPAGE_GOORU_OID, eventMap.get(Constants.CLASS_ID) != null ? eventMap.get(Constants.CLASS_ID).toString() : null)
+					.putColumnIfNotNull(Constants.USERNAME, eventMap.get(Constants.USERNAME) != null ? eventMap.get(Constants.USERNAME).toString() : null)
+					.putColumnIfNotNull(Constants._USER_GROUP_UID, eventMap.get(Constants.GROUP_UID) != null ? eventMap.get(Constants.GROUP_UID).toString() : null)
+					.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID) != null ? eventMap.get(Constants.ORGANIZATION_UID).toString() : null)
+					.putColumnIfNotNull(Constants._USER_GROUP_TYPE, eventMap.get(Constants.USER_GROUP_TYPE) != null ? eventMap.get(Constants.USER_GROUP_TYPE).toString() : null)
+					.putColumnIfNotNull(Constants._ACTIVE_FLAG, eventMap.get(Constants.ACTIVE_FLAG) != null ? Integer.valueOf(eventMap.get(Constants.ACTIVE_FLAG).toString()) : null)
+					.putColumnIfNotNull(Constants._USER_GROUP_CODE, eventMap.get(Constants.CLASS_CODE) != null ? eventMap.get(Constants.CLASS_CODE).toString() : null)
+					.putColumnIfNotNull(Constants._CLASSPAGE_CODE, eventMap.get(Constants.CLASS_CODE) != null ? eventMap.get(Constants.CLASS_CODE).toString() : null)
+					.putColumnIfNotNull(Constants._GOORU_UID, eventMap.get(Constants.USER_UID) != null ? eventMap.get(Constants.USER_UID).toString() : null)
+					.putColumnIfNotNull(Constants._IS_GROUP_OWNER, eventMap.get(Constants.IS_GROUP_OWNER) != null ? Integer.valueOf(eventMap.get(Constants.IS_GROUP_OWNER).toString()) : null);
 			try {
 				m.execute();
 			} catch (Exception e) {
@@ -1484,19 +1484,19 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		Set<String> parentIds = new HashSet<String>();
 		try {
 			collectionItemParents = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5))
-					.searchWithIndex().addExpression().whereColumn(_RESOURCE_GOORU_OID).equals().value(childOid.trim()).execute().getResult();
+					.searchWithIndex().addExpression().whereColumn(Constants._RESOURCE_GOORU_OID).equals().value(childOid.trim()).execute().getResult();
 
 			if (collectionItemParents != null) {
 				for (Row<String, String> collectionItemParent : collectionItemParents) {
-					String parentId = collectionItemParent.getColumns().getColumnByName(_COLLECTION_GOORU_OID).getStringValue().trim();
+					String parentId = collectionItemParent.getColumns().getColumnByName(Constants._COLLECTION_GOORU_OID).getStringValue().trim();
 
 					if (parentId != null && !parentId.equalsIgnoreCase(childOid)) {
 						// We have a valid parent other than self.
 						parentId = parentId.trim();
 						parentIds.add(parentId);
-						if (depth > RECURSION_MAX_DEPTH) {
+						if (depth > Constants.RECURSION_MAX_DEPTH) {
 							// This is safeguard and not supposed to happen in a normal nested folder condition. Identify / Fix if error is found.
-							LOG.error("Max recursion depth {} exceeded", RECURSION_MAX_DEPTH);
+							LOG.error("Max recursion depth {} exceeded", Constants.RECURSION_MAX_DEPTH);
 							return parentIds;
 						}
 						Set<String> grandParents = getAllLevelParents(cfName, parentId, depth + 1);
@@ -1562,7 +1562,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String collectionType, String eventType,long eventTime) {
 		try {
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
-			.withCql(INSERT_USER_SESSION)
+			.withCql(Constants.INSERT_USER_SESSION)
 			.asPreparedStatement()
 			.withStringValue(userUid)
 			.withStringValue(collectionUid)
@@ -1601,7 +1601,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(INSERT_USER_SESSION_ACTIVITY)
+			.withCql(Constants.INSERT_USER_SESSION_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
 			.withStringValue(userSessionActivity.getGooruOid())
@@ -1643,7 +1643,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
-			.withCql(INSERT_STUDENTS_CLASS_ACTIVITY)
+			.withCql(Constants.INSERT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
 			.withStringValue(studentsClassActivity.getCourseUid())
@@ -1669,7 +1669,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily()))
-			.withCql(INSERT_CONTENT_TAXONOMY_ACTIVITY)
+			.withCql(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(contentTaxonomyActivity.getUserUid())
 			.withStringValue(contentTaxonomyActivity.getSubjectId())
@@ -1696,7 +1696,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily()))
-			.withCql(INSERT_CONTENT_TAXONOMY_ACTIVITY)
+			.withCql(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(contentTaxonomyActivity.getUserUid())
 			.withStringValue(contentTaxonomyActivity.getClassUid())
@@ -1736,7 +1736,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveStudentLocation(StudentLocation studentLocation) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDNT_LOCATION.getColumnFamily()))
-			.withCql(INSERT_USER_LOCATION)
+			.withCql(Constants.INSERT_USER_LOCATION)
 			.asPreparedStatement()
 			.withStringValue(studentLocation.getUserUid())
 			.withStringValue(studentLocation.getClassUid())
@@ -1760,7 +1760,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public UserSessionActivity compareAndMergeUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.withCql(Constants.SELECT_USER_SESSION_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
 			.withStringValue(userSessionActivity.getGooruOid())
@@ -1770,9 +1770,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setAttempts((userSessionActivity.getAttempts()) + columns.getLongValue(ATTEMPTS, 0L));
-					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue(_TIME_SPENT, 0L)));
-					userSessionActivity.setViews((userSessionActivity.getViews() + columns.getLongValue(VIEWS, 0L)));
+					userSessionActivity.setAttempts((userSessionActivity.getAttempts()) + columns.getLongValue(Constants.ATTEMPTS, 0L));
+					userSessionActivity.setTimeSpent((userSessionActivity.getTimeSpent() + columns.getLongValue(Constants._TIME_SPENT, 0L)));
+					userSessionActivity.setViews((userSessionActivity.getViews() + columns.getLongValue(Constants.VIEWS, 0L)));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1785,7 +1785,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		UserSessionActivity userSessionActivity = new UserSessionActivity();
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_USER_SESSION_ACTIVITY)
+			.withCql(Constants.SELECT_USER_SESSION_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(sessionId)
 			.withStringValue(gooruOid)
@@ -1795,20 +1795,20 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					userSessionActivity.setSessionId(columns.getStringValue(_SESSION_ID, null));
-					userSessionActivity.setGooruOid(columns.getStringValue(_GOORU_OID, null));
-					userSessionActivity.setCollectionItemId(columns.getStringValue(_COLLECTION_ITEM_ID, null));
-					userSessionActivity.setAnswerObject(columns.getStringValue(_ANSWER_OBECT, null));
-					userSessionActivity.setAnswerStatus(columns.getStringValue(_ANSWER_STATUS, null));
-					userSessionActivity.setResourceType(columns.getStringValue(_RESOURCE_TYPE, null));
-					userSessionActivity.setCollectionType(columns.getStringValue(_COLLECTION_TYPE, null));
-					userSessionActivity.setQuestionType(columns.getStringValue(_QUESTION_TYPE, null));
-					userSessionActivity.setAttempts(columns.getLongValue(ATTEMPTS, 0L));
-					userSessionActivity.setEventType(columns.getStringValue(_EVENT_TYPE, NA));
-					userSessionActivity.setReaction(columns.getLongValue(REACTION, 0L));
-					userSessionActivity.setScore(columns.getLongValue(SCORE, 0L));
-					userSessionActivity.setTimeSpent(columns.getLongValue(_TIME_SPENT, 0L));
-					userSessionActivity.setViews(columns.getLongValue(VIEWS, 0L));
+					userSessionActivity.setSessionId(columns.getStringValue(Constants._SESSION_ID, null));
+					userSessionActivity.setGooruOid(columns.getStringValue(Constants._GOORU_OID, null));
+					userSessionActivity.setCollectionItemId(columns.getStringValue(Constants._COLLECTION_ITEM_ID, null));
+					userSessionActivity.setAnswerObject(columns.getStringValue(Constants._ANSWER_OBECT, null));
+					userSessionActivity.setAnswerStatus(columns.getStringValue(Constants._ANSWER_STATUS, null));
+					userSessionActivity.setResourceType(columns.getStringValue(Constants._RESOURCE_TYPE, null));
+					userSessionActivity.setCollectionType(columns.getStringValue(Constants._COLLECTION_TYPE, null));
+					userSessionActivity.setQuestionType(columns.getStringValue(Constants._QUESTION_TYPE, null));
+					userSessionActivity.setAttempts(columns.getLongValue(Constants.ATTEMPTS, 0L));
+					userSessionActivity.setEventType(columns.getStringValue(Constants._EVENT_TYPE, Constants.NA));
+					userSessionActivity.setReaction(columns.getLongValue(Constants.REACTION, 0L));
+					userSessionActivity.setScore(columns.getLongValue(Constants.SCORE, 0L));
+					userSessionActivity.setTimeSpent(columns.getLongValue(Constants._TIME_SPENT, 0L));
+					userSessionActivity.setViews(columns.getLongValue(Constants.VIEWS, 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1819,7 +1819,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
+			.withCql(Constants.SELECT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
 			.withStringValue(studentsClassActivity.getUserUid())
@@ -1833,8 +1833,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue(_TIME_SPENT, 0L)));
-					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue(VIEWS, 0L));
+					studentsClassActivity.setTimeSpent((studentsClassActivity.getTimeSpent() + columns.getLongValue(Constants._TIME_SPENT, 0L)));
+					studentsClassActivity.setViews((studentsClassActivity.getViews())+columns.getLongValue(Constants.VIEWS, 0L));
 				}
 			}
 		} catch (ConnectionException e) {
@@ -1845,7 +1845,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean updateReaction(UserSessionActivity userSessionActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(UPDATE_REACTION)
+			.withCql(Constants.UPDATE_REACTION)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
 			.withStringValue(userSessionActivity.getGooruOid())
@@ -1863,7 +1863,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		boolean hasActivity = false;
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_STUDENTS_CLASS_ACTIVITY)
+			.withCql(Constants.SELECT_STUDENTS_CLASS_ACTIVITY)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getClassUid())
 			.withStringValue(studentsClassActivity.getCourseUid())
@@ -1896,7 +1896,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				gooruOid = userSessionActivity.getParentGooruOid();
 			}			
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID)
+			.withCql(Constants.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID)
 			.asPreparedStatement()
 			.withStringValue(userSessionActivity.getSessionId())
 			.execute().getResult().getRows();
@@ -1904,13 +1904,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 			if (result.size() > 0) {
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-						if(!gooruOid.equalsIgnoreCase(columns.getStringValue(_GOORU_OID, null)) && QUESTION.equalsIgnoreCase(columns.getStringValue("resource_type", null))){
+						if(!gooruOid.equalsIgnoreCase(columns.getStringValue(Constants._GOORU_OID, null)) && Constants.QUESTION.equalsIgnoreCase(columns.getStringValue("resource_type", null))){
 							questionCount++;
-							score += columns.getLongValue(SCORE, 0L);
+							score += columns.getLongValue(Constants.SCORE, 0L);
 						}
-						if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && columns.getLongValue(REACTION, 0L) > 0){
+						if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && columns.getLongValue(Constants.REACTION, 0L) > 0){
 							reactionCount++;
-							totalReaction += columns.getLongValue(REACTION, 0L);
+							totalReaction += columns.getLongValue(Constants.REACTION, 0L);
 						}
 				}
 				userSessionActivity.setScore(questionCount > 0 ? (score/questionCount) : 0);
@@ -1925,7 +1925,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily()))
-			.withCql(INSERT_CLASS_ACTIVITY_DATACUBE)
+			.withCql(Constants.INSERT_CLASS_ACTIVITY_DATACUBE)
 			.asPreparedStatement()
 			.withStringValue(studentsClassActivity.getRowKey())
 			.withStringValue(studentsClassActivity.getLeafNode())
@@ -1949,7 +1949,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		ClassActivityDatacube classActivityDatacube = new ClassActivityDatacube();
 		long itemCount = 0L;
 		try {
-			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_ALL_CLASS_ACTIVITY_DATACUBE)
+			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily())).withCql(Constants.SELECT_ALL_CLASS_ACTIVITY_DATACUBE)
 					.asPreparedStatement().withStringValue(rowKey).withStringValue(collectionType).withStringValue(userUid).execute().getResult().getRows();
 			;
 			if (result.size() > 0) {
@@ -1958,12 +1958,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				long timeSpent = 0L;
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
-					if(columns.getStringValue(_ATTEMPT_STATUS, COMPLETED).equals(COMPLETED)){
+					if(columns.getStringValue(Constants._ATTEMPT_STATUS, Constants.COMPLETED).equals(Constants.COMPLETED)){
 						itemCount++;
-						score += columns.getLongValue(SCORE, 0L);
+						score += columns.getLongValue(Constants.SCORE, 0L);
 					}
-					timeSpent += columns.getLongValue(_TIME_SPENT, 0L);
-					views += columns.getLongValue(VIEWS, 0L);
+					timeSpent += columns.getLongValue(Constants._TIME_SPENT, 0L);
+					views += columns.getLongValue(Constants.VIEWS, 0L);
 				}
 				classActivityDatacube.setCollectionType(collectionType);
 				classActivityDatacube.setUserUid(userUid);
@@ -1981,7 +1981,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getTaxonomy(String rowKey){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_PARENT_NODE.getColumnFamily())).withCql(SELECT_TAXONOMY_PARENT_NODE)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_PARENT_NODE.getColumnFamily())).withCql(Constants.SELECT_TAXONOMY_PARENT_NODE)
 					.asPreparedStatement().withStringValue(rowKey).execute().getResult().getRows();
 			;
 		} catch (Exception e) {
@@ -1993,7 +1993,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY)
 					.asPreparedStatement()
 					.withStringValue(contentTaxonomyActivity.getUserUid())
 					.withStringValue(contentTaxonomyActivity.getResourceType())
@@ -2013,7 +2013,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily())).withCql(Constants.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY)
 					.asPreparedStatement()
 					.withStringValue(contentTaxonomyActivity.getClassUid())
 					.withStringValue(contentTaxonomyActivity.getUserUid())
@@ -2035,7 +2035,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getContentTaxonomyActivityDataCube(String rowKey, String columnKey){
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_TAXONOMY_ACTIVITY_DATACUBE)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE)
 					.asPreparedStatement()
 					.withStringValue(rowKey)
 					.withStringValue(columnKey)
@@ -2051,7 +2051,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		long questionCount = 0L;
 		long score = 0L;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(SELECT_TAXONOMY_ACTIVITY_DATACUBE)
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily())).withCql(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE)
 					.asPreparedStatement()
 					.withStringValue(rowKey)
 					.execute().getResult().getRows();
@@ -2060,7 +2060,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 				for (Row<String, String> row : result) {
 					ColumnList<String> columns = row.getColumns();
 							questionCount++;
-							score += columns.getLongValue(SCORE, 0L);
+							score += columns.getLongValue(Constants.SCORE, 0L);
 				}
 				score = questionCount > 0 ? (score/questionCount) : 0;
 			}
@@ -2073,7 +2073,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveTaxonomyActivityDataCube(TaxonomyActivityDataCube taxonomyActivityDataCube) {
 		try {						
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily()))
-			.withCql(INSERT_TAXONOMY_ACTIVITY_DATACUBE)
+			.withCql(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE)
 			.asPreparedStatement()
 			.withStringValue(taxonomyActivityDataCube.getRowKey())
 			.withStringValue(taxonomyActivityDataCube.getLeafNode())
@@ -2094,7 +2094,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily()))
-			.withCql(INSERT_USER_QUESTION_GRADE)
+			.withCql(Constants.INSERT_USER_QUESTION_GRADE)
 			.asPreparedStatement()
 			.withStringValue(teacherId)
 			.withStringValue(userId)
@@ -2113,7 +2113,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId) {
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).execute().getResult().getRows();
 		} catch (Exception e) {
 			LOG.error("Exception while read questions grade by session", e);
@@ -2124,7 +2124,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId) {
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).withStringValue(questionId).execute().getResult().getRows();
 		} catch (Exception e) {
 			LOG.error("Exception while read questions grade by session", e);
@@ -2135,7 +2135,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
-			.withCql(UPDATE_SESSION_SCORE)
+			.withCql(Constants.UPDATE_SESSION_SCORE)
 			.asPreparedStatement()
 			.withStringValue(sessionId)
 			.withStringValue(questionId)

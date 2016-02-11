@@ -60,7 +60,7 @@ import com.netflix.astyanax.model.Rows;
 @Controller
 @RequestMapping(value = "/event")
 @EnableAsync
-public class EventController implements Constants,AsyncConfigurer {
+public class EventController implements AsyncConfigurer {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventController.class);
 
@@ -81,7 +81,7 @@ public class EventController implements Constants,AsyncConfigurer {
 	 * @throws Exception
 	 */
 	@RequestMapping(method = RequestMethod.POST, headers = "Content-Type=application/json")
-	public void trackEvent(@RequestBody String fields, @RequestParam(value = API_KEY, required = true) String apiKey, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void trackEvent(@RequestBody String fields, @RequestParam(value = Constants.API_KEY, required = true) String apiKey, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -138,7 +138,7 @@ public class EventController implements Constants,AsyncConfigurer {
 	 * @param response
 	 */
 	@RequestMapping(value = "/tail", method = RequestMethod.GET)
-	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = EVENT_ID, required = true) String eventId,
+	public void readEventDetails(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = Constants.EVENT_ID, required = true) String eventId,
 			HttpServletResponse response) {
 
 		// add cross domain support
@@ -160,7 +160,7 @@ public class EventController implements Constants,AsyncConfigurer {
 					resultMap.put("eventJSON", eventDetail.getStringValue("fields", null));
 					resultMap.put("startTime", eventDetail.getLongValue("start_time", null));
 					resultMap.put("endTime", eventDetail.getLongValue("end_time", null));
-					resultMap.put(EVENT_NAME, eventDetail.getStringValue("event_name", null));
+					resultMap.put(Constants.EVENT_NAME, eventDetail.getStringValue("event_name", null));
 					resultMap.put("apiKey", eventDetail.getStringValue("api_key", null));
 					JSONObject resultJson = new JSONObject(resultMap);
 
@@ -248,7 +248,7 @@ public class EventController implements Constants,AsyncConfigurer {
 						resultMap.put("eventJSON", row.getColumns().getStringValue("fields", null));
 						resultMap.put("startTime", row.getColumns().getLongValue("start_time", null));
 						resultMap.put("endTime", row.getColumns().getLongValue("end_time", null));
-						resultMap.put(EVENT_NAME, row.getColumns().getStringValue("event_name", null));
+						resultMap.put(Constants.EVENT_NAME, row.getColumns().getStringValue("event_name", null));
 						resultMap.put("apiKey", row.getColumns().getStringValue("api_key", null));
 						eventJSONList.add(resultMap);
 					}
@@ -311,7 +311,7 @@ public class EventController implements Constants,AsyncConfigurer {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/latest/activity", method = RequestMethod.GET)
-	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = EVENT_NAME, required = false) String eventName,
+	public void getUserActivity(@RequestParam String userUid, @RequestParam(value = "apiKey", required = false) String apiKey, @RequestParam(value = Constants.EVENT_NAME, required = false) String eventName,
 			@RequestParam(value = "minutesToRead", required = false, defaultValue = "30") Integer minutesToRead,
 			@RequestParam(value = "eventsToRead", required = false, defaultValue = "30") Integer eventsToRead, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
@@ -343,7 +343,7 @@ public class EventController implements Constants,AsyncConfigurer {
 	 * @throws IOException
 	 */
 	@RequestMapping(method = RequestMethod.PUT)
-	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = EVENT_NAME, required = true) String eventName,
+	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = Constants.EVENT_NAME, required = true) String eventName,
 			HttpServletResponse response) throws IOException {
 
 		// add cross domain support
@@ -364,7 +364,7 @@ public class EventController implements Constants,AsyncConfigurer {
 		}
 		Map<String, String> status = new HashMap<String, String>();
 		if (eventService.createEvent(eventName, apiKey)) {
-			status.put(EVENT_NAME, eventName);
+			status.put(Constants.EVENT_NAME, eventName);
 			status.put("status", "Created");
 			response.getWriter().write(new JSONObject(status).toString());
 		} else {

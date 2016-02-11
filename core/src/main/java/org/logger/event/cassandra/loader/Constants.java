@@ -1,6 +1,6 @@
 package org.logger.event.cassandra.loader;
 
-public interface Constants {
+public class Constants {
 	
 	public static final String FIRST_SESSION = "FS~";
     
@@ -720,77 +720,77 @@ public interface Constants {
 	
 	public static final String LOGGED_BY = "loggedBy";
 	
-	String PREVIOUS_SHARING = "previousSharing";
+	public static final String PREVIOUS_SHARING = "previousSharing";
     
-    String CONTENT_SHARING = "contentSharing";
+	public static final String CONTENT_SHARING = "contentSharing";
     
-    String COLLECTION_ITEM_IDS = "collectionItemIds";
+	public static final String COLLECTION_ITEM_IDS = "collectionItemIds";
     
-    String ALL_TILT = "all~";
+	public static final String ALL_TILT = "all~";
     
-    String PARENTSHARING = "parentSharing";
+	public static final String PARENTSHARING = "parentSharing";
 
-    String ALL = "all";
+	public static final String ALL = "all";
 
-    String RESOURCE_USED_USER_VALIDATION = "C:count~C:user~E:parentSharing~E:mode|C:count~C:user~E:mode";
+	public static final String RESOURCE_USED_USER_VALIDATION = "C:count~C:user~E:parentSharing~E:mode|C:count~C:user~E:mode";
     
-    String LTI_OUTCOME = "lti.outcome";
+	public static final String LTI_OUTCOME = "lti.outcome";
     
-    String LTI_SERVICE_ID = "ltiServiceId";
+	public static final String LTI_SERVICE_ID = "ltiServiceId";
     
-    String NA = "NA";
+	public static final String NA = "NA";
     
 	/**
 	 * CQL QUERIES
 	 */
-    String INSERT_USER_SESSION = "INSERT INTO user_sessions(user_uid,collection_uid,collection_type,class_uid,course_uid,unit_uid,lesson_uid,event_time,event_type,session_id)VALUES(?,?,?,?,?,?,?,?,?,?);";
+	public static final String INSERT_USER_SESSION = "INSERT INTO user_sessions(user_uid,collection_uid,collection_type,class_uid,course_uid,unit_uid,lesson_uid,event_time,event_type,session_id)VALUES(?,?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,event_type,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+	public static final String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,event_type,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
-	String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
+	public static final String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+	public static final String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
 	
-	String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+	public static final String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,sub_domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 	
-	String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
+	public static final String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
 	
-	String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ? AND leaf_gooru_oid = ? AND collection_type = ? ;";
+	public static final String UPDATE_PEER_COUNT = "UPDATE class_activity_peer_counts SET left_peer_count=left_peer_count+? , active_peer_count=active_peer_count+? WHERE row_key = ? AND leaf_gooru_oid = ? AND collection_type = ? ;";
 	
-	String UPDATE_PEER_DETAILS_ON_START = "UPDATE class_activity_peer_detail SET active_peers = active_peers + {'"+GOORUID+"'} , left_peers = left_peers - {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
+	public static final String UPDATE_PEER_DETAILS_ON_START = "UPDATE class_activity_peer_detail SET active_peers = active_peers + {'"+GOORUID+"'} , left_peers = left_peers - {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
 	
-	String UPDATE_PEER_DETAILS_ON_STOP = "UPDATE class_activity_peer_detail SET active_peers = active_peers - {'"+GOORUID+"'} , left_peers = left_peers + {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
+	public static final String UPDATE_PEER_DETAILS_ON_STOP = "UPDATE class_activity_peer_detail SET active_peers = active_peers - {'"+GOORUID+"'} , left_peers = left_peers + {'"+GOORUID+"'} WHERE row_key = ? AND leaf_gooru_oid = ? and collection_type = ?;";
 	
-	String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
+	public static final String SELECT_USER_SESSION_ACTIVITY = "SELECT * FROM user_session_activity WHERE session_id = ? AND gooru_oid = ? AND collection_item_id = ?;";
 	
-	String SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = "SELECT * FROM user_session_activity WHERE session_id = ?;";
+	public static final String SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = "SELECT * FROM user_session_activity WHERE session_id = ?;";
 	
-	String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
+	public static final String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
 	
-	String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
+	public static final String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
 	
-	String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,score)VALUES(?,?,?,?);";
+	public static final String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,score)VALUES(?,?,?,?);";
 	
-	String SELECT_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
+	public static final String SELECT_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
 	
-	String SELECT_ALL_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
+	public static final String SELECT_ALL_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ?;";
 	
-	String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views,reaction,completed_count)VALUES(?,?,?,?,?,?,?,?,?);";
+	public static final String INSERT_CLASS_ACTIVITY_DATACUBE = "INSERT INTO class_activity_datacube(row_key,leaf_node,collection_type,user_uid,score,time_spent,views,reaction,completed_count)VALUES(?,?,?,?,?,?,?,?,?);";
 	
-	String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
+	public static final String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
 	
-	String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+	public static final String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
 	
-	String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE class_uid = ? AND user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+	public static final String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE class_uid = ? AND user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
 	
-	String SELECT_TAXONOMY_ACTIVITY_DATACUBE = "SELECT * FROM taxonomy_activity_datacube WHERE row_key = ? leaf_node = ?;";
+	public static final String SELECT_TAXONOMY_ACTIVITY_DATACUBE = "SELECT * FROM taxonomy_activity_datacube WHERE row_key = ? leaf_node = ?;";
 	
-	String INSERT_USER_QUESTION_GRADE = "INSERT INTO user_question_grade(teacher_id,user_id,session_id,question_id,score)VALUES(?,?,?,?,?);";
+	public static final String INSERT_USER_QUESTION_GRADE = "INSERT INTO user_question_grade(teacher_id,user_id,session_id,question_id,score)VALUES(?,?,?,?,?);";
 	
-	String SELECT_USER_QUESTION_GRADE_BY_SESSION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ?;";
+	public static final String SELECT_USER_QUESTION_GRADE_BY_SESSION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ?;";
 	
-	String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ? AND question_id = ?;";
+	public static final String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ? AND question_id = ?;";
 	
-	String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, views, attempts, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
+	public static final String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, views, attempts, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
 	
 }
