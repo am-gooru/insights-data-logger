@@ -7,7 +7,7 @@ import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClassActivityDataCubeGenerator implements Runnable, Constants {
+public class ClassActivityDataCubeGenerator implements Runnable {
 
 	private BaseCassandraRepoImpl baseCassandraDao;
 	
@@ -60,7 +60,7 @@ public class ClassActivityDataCubeGenerator implements Runnable, Constants {
 		StringBuilder columnKey = new StringBuilder();
 		for (String column : columns) {
 			if (StringUtils.isNotBlank(column)) {
-				columnKey.append(columnKey.length() > 0 ? SEPERATOR : EMPTY);
+				columnKey.append(columnKey.length() > 0 ? Constants.SEPERATOR : Constants.EMPTY);
 				columnKey.append(column);
 			}
 		}

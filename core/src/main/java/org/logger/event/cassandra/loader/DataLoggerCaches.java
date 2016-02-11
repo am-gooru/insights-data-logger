@@ -14,7 +14,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 
-public class DataLoggerCaches implements Constants {
+public class DataLoggerCaches {
 
 	private BaseCassandraRepoImpl baseDao;
 
@@ -105,8 +105,8 @@ public class DataLoggerCaches implements Constants {
 			if (kafkaConfigurationCache == null && kafkaConfigurationCache.size() < 0) {
 
 				kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
-				String[] kafkaMessager = new String[] { V2_KAFKA_CONSUMER, V2_KAFKA_LOG_WRITER_PRODUCER, V2_KAFKA_LOG_WRITER_CONSUMER, V2_KAFKA_MICRO_PRODUCER, V2_KAFKA_MICRO_CONSUMER };
-				Rows<String, String> result = baseDao.readCommaKeyList(CONFIG_SETTINGS, kafkaMessager);
+				String[] kafkaMessager = new String[] { Constants.V2_KAFKA_CONSUMER, Constants.V2_KAFKA_LOG_WRITER_PRODUCER, Constants.V2_KAFKA_LOG_WRITER_CONSUMER, Constants.V2_KAFKA_MICRO_PRODUCER, Constants.V2_KAFKA_MICRO_CONSUMER };
+				Rows<String, String> result = baseDao.readCommaKeyList(Constants.CONFIG_SETTINGS, kafkaMessager);
 				for (Row<String, String> row : result) {
 					Map<String, String> properties = new HashMap<String, String>();
 					for (Column<String> column : row.getColumns()) {
@@ -156,7 +156,7 @@ public class DataLoggerCaches implements Constants {
 			for (Row<String, String> row : instructionalRows) {
 				instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
 			}
-			repoPath = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULT_COLUMN).getStringValue();
+			repoPath = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", Constants.DEFAULT_COLUMN).getStringValue();
 		} catch (Exception e) {
 			LOG.error("Exception : " + e);
 		}

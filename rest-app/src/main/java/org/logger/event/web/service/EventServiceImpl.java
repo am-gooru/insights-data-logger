@@ -63,7 +63,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Rows;
 
 @Service
-public class EventServiceImpl implements EventService, Constants {
+public class EventServiceImpl implements EventService {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
@@ -118,11 +118,11 @@ public class EventServiceImpl implements EventService, Constants {
 	private Errors validateInsertEventData(EventData eventData) {
 		final Errors errors = new BindException(eventData, "EventData");
 		if (eventData == null) {
-			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", FIELDS+EMPTY_EXCEPTION);
+			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", Constants.FIELDS+Constants.EMPTY_EXCEPTION);
 			return errors;
 		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), EVENT_NAME, "LA001", EVENT_NAME+EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), EVENT_ID, "LA002", EVENT_ID+EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), Constants.EVENT_NAME, "LA001", Constants.EVENT_NAME+Constants.EMPTY_EXCEPTION);
+		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), Constants.EVENT_ID, "LA002", Constants.EVENT_ID+Constants.EMPTY_EXCEPTION);
 
 		return errors;
 	}
@@ -136,19 +136,19 @@ public class EventServiceImpl implements EventService, Constants {
 	private Boolean validateInsertEvent(Event event) {
 		Boolean isValidEvent = true;
 		if (event == null) {
-			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", RAW_EVENT_NULL_EXCEPTION);
+			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", Constants.RAW_EVENT_NULL_EXCEPTION);
 		}
 		String eventJson = event.getFields();
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), EVENT_NAME, "LA001", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventId(), EVENT_ID, "LA002", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getVersion(), VERSION, "LA003", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getUser(), USER, "LA004", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getSession(), SESSION, "LA005", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getMetrics(), METRICS, "LA006", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getContext(), CONTEXT, "LA007", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject().toString(), PAY_LOAD, "LA008", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getStartTime(), START_TIME, "LA009", eventJson, RAW_EVENT_NULL_EXCEPTION);
-		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), END_TIME, "LA010", eventJson, RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), Constants.EVENT_NAME, "LA001", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventId(), Constants.EVENT_ID, "LA002", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getVersion(), Constants.VERSION, "LA003", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getUser(), Constants.USER, "LA004", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getSession(), Constants.SESSION, "LA005", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getMetrics(), Constants.METRICS, "LA006", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getContext(), Constants.CONTEXT, "LA007", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getPayLoadObject().toString(), Constants.PAY_LOAD, "LA008", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getStartTime(), Constants.START_TIME, "LA009", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
+		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), Constants.END_TIME, "LA010", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.deepEventCheck(isValidEvent, event, eventJson);
 		return isValidEvent;
 	}
@@ -177,8 +177,8 @@ public class EventServiceImpl implements EventService, Constants {
 		ColumnList<String> activityJsons;
 
 		if (eventName != null) {
-			startColumnPrefix = startTime + SEPERATOR + eventName;
-			endColumnPrefix = endTime + SEPERATOR + eventName;
+			startColumnPrefix = startTime + Constants.SEPERATOR + eventName;
+			endColumnPrefix = endTime + Constants.SEPERATOR + eventName;
 		} else {
 			startColumnPrefix = endTime;
 			endColumnPrefix = endTime;
@@ -197,37 +197,37 @@ public class EventServiceImpl implements EventService, Constants {
 					jsonElement = new JsonParser().parse(activity);
 					JsonObject eventObj = jsonElement.getAsJsonObject();
 
-					if (eventObj.get(_CONTENT_GOORU_OID) != null) {
-						valueMap.put(RESOURCE_ID, eventObj.get(_CONTENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._CONTENT_GOORU_OID) != null) {
+						valueMap.put(Constants.RESOURCE_ID, eventObj.get(Constants._CONTENT_GOORU_OID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_PARENT_GOORU_OID) != null) {
-						valueMap.put(PARENT_ID, eventObj.get(_PARENT_GOORU_OID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._PARENT_GOORU_OID) != null) {
+						valueMap.put(Constants.PARENT_ID, eventObj.get(Constants._PARENT_GOORU_OID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_EVENT_NAME) != null) {
-						valueMap.put(EVENT_NAME, eventObj.get(_EVENT_NAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._EVENT_NAME) != null) {
+						valueMap.put(Constants.EVENT_NAME, eventObj.get(Constants._EVENT_NAME).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_USER_UID) != null) {
-						valueMap.put(USER_UID, eventObj.get(_USER_UID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._USER_UID) != null) {
+						valueMap.put(Constants.USER_UID, eventObj.get(Constants._USER_UID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(USERNAME) != null) {
-						valueMap.put(USERNAME, eventObj.get(USERNAME).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants.USERNAME) != null) {
+						valueMap.put(Constants.USERNAME, eventObj.get(Constants.USERNAME).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(SCORE) != null) {
-						valueMap.put(SCORE, eventObj.get(SCORE).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants.SCORE) != null) {
+						valueMap.put(Constants.SCORE, eventObj.get(Constants.SCORE).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_SESSION_ID) != null) {
-						valueMap.put(SESSION_ID, eventObj.get(_SESSION_ID).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._SESSION_ID) != null) {
+						valueMap.put(Constants.SESSION_ID, eventObj.get(Constants._SESSION_ID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_FIRST_ATTEMPT_STATUS) != null) {
-						valueMap.put(FIRST_ATTEMPT_STATUS, eventObj.get(_FIRST_ATTEMPT_STATUS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._FIRST_ATTEMPT_STATUS) != null) {
+						valueMap.put(Constants.FIRST_ATTEMPT_STATUS, eventObj.get(Constants._FIRST_ATTEMPT_STATUS).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
-					if (eventObj.get(_ANSWER_STATUS) != null) {
-						valueMap.put(ANSWERSTATUS, eventObj.get(_ANSWER_STATUS).toString().replaceAll(FORWARD_SLASH, EMPTY_STRING));
+					if (eventObj.get(Constants._ANSWER_STATUS) != null) {
+						valueMap.put(Constants.ANSWERSTATUS, eventObj.get(Constants._ANSWER_STATUS).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
 					}
 
 				} catch (JsonParseException e) {
 					// Invalid.
-					logger.error(INVALID_JSON, e);
+					logger.error(Constants.INVALID_JSON, e);
 				}
 			}
 			valueList.add(valueMap);
@@ -284,7 +284,7 @@ public class EventServiceImpl implements EventService, Constants {
 	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey) {
 		boolean isValid = ensureValidRequest(request, response);
 		if (!isValid) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, INVALID_API_KEY);
+			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, Constants.INVALID_API_KEY);
 			return;
 		}
 		JsonElement jsonElement = null;
@@ -297,13 +297,13 @@ public class EventServiceImpl implements EventService, Constants {
 				eventJsonArr = jsonElement.getAsJsonArray();
 			} catch (JsonParseException e) {
 				// Invalid.
-				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, INVALID_JSON);
-				logger.error(INVALID_JSON, e);
+				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, Constants.INVALID_JSON);
+				logger.error(Constants.INVALID_JSON, e);
 				return;
 			}
 
 		} else {
-			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, BAD_REQUEST);
+			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, Constants.BAD_REQUEST);
 			return;
 		}
 
@@ -321,12 +321,12 @@ public class EventServiceImpl implements EventService, Constants {
 				Event event = new Event(eventString);
 					if (event.getUser() != null && event.getUser().length() > 0) {
 						JSONObject user = event.getUser();
-						user.put(USER_IP, userIp);
-						user.put(USER_AGENT, userAgent);
-						event.put(USER, user);
+						user.put(Constants.USER_IP, userIp);
+						user.put(Constants.USER_AGENT, userAgent);
+						event.put(Constants.USER, user);
 						
 					}
-					event.setFields((new JSONObject(eventString).put(USER, event.getUser())).toString());
+					event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
 					event.setApiKey(apiKey);
 					processMessage(event);
 			}
@@ -360,13 +360,13 @@ public class EventServiceImpl implements EventService, Constants {
 	}
 
 	public void indexActivity() {
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_LAST_UPDATED, DEFAULT_COLUMN).getStringValue();
+		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_LAST_UPDATED, Constants.DEFAULT_COLUMN).getStringValue();
 		String currentTime = minuteDateFormatter.format(new Date());
 		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
 		Date lastDate = null;
 		Date currDate = null;
-		String status = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN).getStringValue();
-		if (status.equalsIgnoreCase(COMPLETED)) {
+		String status = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_STATUS, Constants.DEFAULT_COLUMN).getStringValue();
+		if (status.equalsIgnoreCase(Constants.COMPLETED)) {
 			// All past indexing complete. Start new.
 			try {
 				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
@@ -383,14 +383,14 @@ public class EventServiceImpl implements EventService, Constants {
 		} else if (status.equalsIgnoreCase("stop")) {
 			logger.debug("Event indexing stopped...");
 		} else {
-			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN).getStringValue();
-			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_MAX_COUNT, DEFAULT_COLUMN).getStringValue();
+			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN).getStringValue();
+			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_MAX_COUNT, Constants.DEFAULT_COLUMN).getStringValue();
 
 			if (Integer.parseInt(lastCheckedCount) < Integer.parseInt(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));
+				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN, Constants.EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));
 			} else {
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_STATUS, DEFAULT_COLUMN, COMPLETED);
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ACTIVITY_INDEX_CHECKED_COUNT, DEFAULT_COLUMN, "" + 0);
+				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_STATUS, Constants.DEFAULT_COLUMN, Constants.COMPLETED);
+				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN, "" + 0);
 			}
 		}
 	}

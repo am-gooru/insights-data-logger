@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.Errors;
 
-public class ServerValidationUtils implements Constants {
+public class ServerValidationUtils {
 	
 	protected final static Logger logger = LoggerFactory.getLogger(ServerValidationUtils.class);
 
@@ -134,66 +134,66 @@ public class ServerValidationUtils implements Constants {
 	public static void deepEventCheck(Boolean isValidEvent, Event event,
 			String field) {
 		if (isValidEvent
-				&& event.getEventName().matches(SESSION_ACTIVITY_EVENTS)) {
+				&& event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			try {
 				JSONObject session = event.getSession();
-				if (!session.has(SESSION_ID)
-						|| (session.has(SESSION_ID) && (session
-								.isNull(SESSION_ID) || (session.get(SESSION_ID) != null && session
-								.getString(SESSION_ID).equalsIgnoreCase("null"))))) {
+				if (!session.has(Constants.SESSION_ID)
+						|| (session.has(Constants.SESSION_ID) && (session
+								.isNull(Constants.SESSION_ID) || (session.get(Constants.SESSION_ID) != null && session
+								.getString(Constants.SESSION_ID).equalsIgnoreCase("null"))))) {
 					isValidEvent = false;
-					logger.error(RAW_EVENT_NULL_EXCEPTION + SESSION_ID + " : "
+					logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.SESSION_ID + " : "
 							+ field);
 				}
 
 			} catch (JSONException e) {
 				isValidEvent = false;
-				logger.error(RAW_EVENT_JSON_EXCEPTION + SESSION + " : " + field);
+				logger.error(Constants.RAW_EVENT_JSON_EXCEPTION + Constants.SESSION + " : " + field);
 			}
 			try {
 				JSONObject context = event.getContext();
-				if (!context.has(CONTENT_GOORU_OID)
-						|| (context.has(CONTENT_GOORU_OID) && (context
-								.isNull(CONTENT_GOORU_OID) || (context
-								.get(CONTENT_GOORU_OID) != null && context
-								.getString(CONTENT_GOORU_OID).equalsIgnoreCase(
+				if (!context.has(Constants.CONTENT_GOORU_OID)
+						|| (context.has(Constants.CONTENT_GOORU_OID) && (context
+								.isNull(Constants.CONTENT_GOORU_OID) || (context
+								.get(Constants.CONTENT_GOORU_OID) != null && context
+								.getString(Constants.CONTENT_GOORU_OID).equalsIgnoreCase(
 										"null"))))) {
 					isValidEvent = false;
-					logger.error(RAW_EVENT_NULL_EXCEPTION + CONTENT_GOORU_OID
+					logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.CONTENT_GOORU_OID
 							+ " : " + field);
 				}
-				if ((context.has(CLASS_GOORU_OID) && (context
-						.isNull(CLASS_GOORU_OID) || (context
-						.get(CLASS_GOORU_OID) != null && !context.getString(
-						CLASS_GOORU_OID).equalsIgnoreCase("null"))))) {
+				if ((context.has(Constants.CLASS_GOORU_OID) && (context
+						.isNull(Constants.CLASS_GOORU_OID) || (context
+						.get(Constants.CLASS_GOORU_OID) != null && !context.getString(
+						Constants.CLASS_GOORU_OID).equalsIgnoreCase("null"))))) {
 					// Log If class Id is available and any one of the CUL
 					// ids are missing
-					if ((!context.has(COURSE_GOORU_OID) || (context
-							.has(COURSE_GOORU_OID) && (context
-							.isNull(COURSE_GOORU_OID) || (context
-							.get(COURSE_GOORU_OID) != null && context
-							.getString(COURSE_GOORU_OID).equalsIgnoreCase(
+					if ((!context.has(Constants.COURSE_GOORU_OID) || (context
+							.has(Constants.COURSE_GOORU_OID) && (context
+							.isNull(Constants.COURSE_GOORU_OID) || (context
+							.get(Constants.COURSE_GOORU_OID) != null && context
+							.getString(Constants.COURSE_GOORU_OID).equalsIgnoreCase(
 									"null")))))
-							|| (!context.has(UNIT_GOORU_OID) || (context
-									.has(UNIT_GOORU_OID) && (context
-									.isNull(UNIT_GOORU_OID) || (context
-									.get(UNIT_GOORU_OID) != null && context
-									.getString(UNIT_GOORU_OID)
+							|| (!context.has(Constants.UNIT_GOORU_OID) || (context
+									.has(Constants.UNIT_GOORU_OID) && (context
+									.isNull(Constants.UNIT_GOORU_OID) || (context
+									.get(Constants.UNIT_GOORU_OID) != null && context
+									.getString(Constants.UNIT_GOORU_OID)
 									.equalsIgnoreCase("null")))))
-							|| (!context.has(LESSON_GOORU_OID) || (context
-									.has(LESSON_GOORU_OID) && (context
-									.isNull(LESSON_GOORU_OID) || (context
-									.get(LESSON_GOORU_OID) != null && context
-									.getString(LESSON_GOORU_OID)
+							|| (!context.has(Constants.LESSON_GOORU_OID) || (context
+									.has(Constants.LESSON_GOORU_OID) && (context
+									.isNull(Constants.LESSON_GOORU_OID) || (context
+									.get(Constants.LESSON_GOORU_OID) != null && context
+									.getString(Constants.LESSON_GOORU_OID)
 									.equalsIgnoreCase("null")))))) {
 						isValidEvent = false;
-						logger.error(RAW_EVENT_NULL_EXCEPTION + CUL_IDS_MISSING
+						logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.CUL_IDS_MISSING
 								+ " : " + field);
 					}
 				}
 			} catch (JSONException e) {
 				isValidEvent = false;
-				logger.error(RAW_EVENT_JSON_EXCEPTION + CONTEXT + " : " + field);
+				logger.error(Constants.RAW_EVENT_JSON_EXCEPTION + Constants.CONTEXT + " : " + field);
 			}
 		}
 	}
