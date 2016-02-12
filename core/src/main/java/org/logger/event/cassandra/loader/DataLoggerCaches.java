@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ import com.netflix.astyanax.model.Rows;
 
 public class DataLoggerCaches {
 
-	private BaseCassandraRepoImpl baseDao;
+	private BaseCassandraRepo baseDao;
 
 	public static Map<String, String> cache;
 
@@ -59,8 +59,6 @@ public class DataLoggerCaches {
 	}
 
 	private void init() {
-
-		baseDao = new BaseCassandraRepoImpl();
 		try {
 			/**
 			 * Disabled in release-3.0 Rows<String, String> operators = baseDao.readAllRows(ColumnFamily.REALTIMECONFIG.getColumnFamily(), 0); cache = new LinkedHashMap<String, String>(); for

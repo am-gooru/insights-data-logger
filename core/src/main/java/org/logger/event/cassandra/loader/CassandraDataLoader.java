@@ -40,11 +40,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.ELSIndexerImpl;
 import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
 import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
-import org.logger.event.cassandra.loader.dao.MicroAggregatorDAOImpl;
+import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,13 +76,13 @@ public class CassandraDataLoader {
 	
 	private MicroAggregatorProducer microAggregator;
 	
-	private MicroAggregatorDAOImpl liveAggregator;
+	private MicroAggregatorDAO liveAggregator;
 
 	private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
 	private ELSIndexerImpl indexer;
 
-	private BaseCassandraRepoImpl baseDao;
+	private BaseCassandraRepo baseDao;
 	
 	private LTIServiceHandler ltiServiceHandler;
 
@@ -139,9 +139,7 @@ public class CassandraDataLoader {
 	 */
 	private void init(Map<String, String> configOptionsMap) {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-		this.liveAggregator = new MicroAggregatorDAOImpl();
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
-		baseDao = new BaseCassandraRepoImpl();
 		indexer = new ELSIndexerImpl();
 		ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	

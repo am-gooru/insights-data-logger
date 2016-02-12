@@ -43,7 +43,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ELSIndexerImpl.class);
 
-	private BaseCassandraRepoImpl baseDao;
+	private BaseCassandraRepo baseDao;
 	
 	private GeoLocation geoLocation;
 	
@@ -66,7 +66,6 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl {
 	public static Map<String, String> cache;
 	
 	public ELSIndexerImpl() {
-		this.baseDao = new BaseCassandraRepoImpl();
 		this.geoLocation = GeoLocation.getInstance();
 		
         Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily());

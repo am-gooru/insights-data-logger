@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
 
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,13 +41,12 @@ import com.netflix.astyanax.model.Rows;
 public class EventValidator  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(EventValidator.class);
-	private  static BaseCassandraRepoImpl baseDao;
+	private  static BaseCassandraRepo baseDao;
 	private static Map<String,String> acceptedFileds;
 	public EventValidator() {
 	this(null);
 	}
 	public EventValidator(Map<String ,String> object) {
-		baseDao = new BaseCassandraRepoImpl();
 		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){

@@ -43,7 +43,7 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
-import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -68,14 +68,13 @@ public class EventServiceImpl implements EventService {
 	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
 	protected CassandraDataLoader dataLoaderService;
-	private BaseCassandraRepoImpl baseDao;
+	private BaseCassandraRepo baseDao;
 	private SimpleDateFormat minuteDateFormatter;
 	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
 		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
-		baseDao = new BaseCassandraRepoImpl();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
