@@ -100,7 +100,6 @@ public class DataLoggerCaches {
 			} else {
 				canRunIndexing = true;
 			}*/
-			if (kafkaConfigurationCache == null && kafkaConfigurationCache.size() < 0) {
 
 				kafkaConfigurationCache = new HashMap<String, Map<String, String>>();
 				String[] kafkaMessager = new String[] { Constants.V2_KAFKA_CONSUMER, Constants.V2_KAFKA_LOG_WRITER_PRODUCER, Constants.V2_KAFKA_LOG_WRITER_CONSUMER, Constants.V2_KAFKA_MICRO_PRODUCER, Constants.V2_KAFKA_MICRO_CONSUMER };
@@ -112,7 +111,7 @@ public class DataLoggerCaches {
 					}
 					kafkaConfigurationCache.put(row.getKey(), properties);
 				}
-			}
+			
 			beFieldName = new LinkedHashMap<String, String>();
 			fieldDataTypes = new LinkedHashMap<String, String>();
 			Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
