@@ -73,6 +73,7 @@ public class EventServiceImpl implements EventService {
 	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
+		baseDao = BaseCassandraRepo.instance();
 		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");

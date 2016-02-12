@@ -32,6 +32,7 @@ public class MailHandler implements Constants {
 	private static Logger logger = LoggerFactory.getLogger(MailHandler.class);
 
 	public MailHandler() {
+		baseCassandraRepo = BaseCassandraRepo.instance();
 		setKafkaConfiguration();
 	}
 

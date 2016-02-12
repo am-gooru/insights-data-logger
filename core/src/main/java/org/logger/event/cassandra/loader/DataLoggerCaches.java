@@ -55,6 +55,7 @@ public class DataLoggerCaches {
 	 */
 	public DataLoggerCaches() {
 		// TODO Auto-generated constructor stub
+		baseDao = BaseCassandraRepo.instance();
 		init();
 	}
 

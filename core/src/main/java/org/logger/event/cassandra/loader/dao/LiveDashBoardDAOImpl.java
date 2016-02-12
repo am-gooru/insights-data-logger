@@ -44,6 +44,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl {
 	private GeoLocation geoLocation;
 	
 	public LiveDashBoardDAOImpl() {
+		baseDao = BaseCassandraRepo.instance();
 		this.geoLocation = GeoLocation.getInstance();
 	}
 

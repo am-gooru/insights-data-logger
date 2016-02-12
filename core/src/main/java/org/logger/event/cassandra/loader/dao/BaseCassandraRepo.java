@@ -26,6 +26,11 @@ import com.netflix.astyanax.model.Rows;
 
 public interface BaseCassandraRepo {
 
+	static BaseCassandraRepo instance() {
+		return new BaseCassandraRepoImpl();
+
+	}
+
 	Column<String> readWithKeyColumn(String cfName, String key, String columnName);
 
 	boolean checkColumnExist(String cfName, String key, String columnName);
@@ -194,5 +199,5 @@ public interface BaseCassandraRepo {
 	Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId);
 
 	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score);
-	
+
 }

@@ -47,6 +47,7 @@ public class EventValidator  {
 	this(null);
 	}
 	public EventValidator(Map<String ,String> object) {
+		baseDao = BaseCassandraRepo.instance();
 		acceptedFileds = new HashMap<String, String>();
         Rows<String, String> rows = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
         for(Row<String, String> row : rows){

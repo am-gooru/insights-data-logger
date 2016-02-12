@@ -56,6 +56,9 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	
 	private final ExecutorService service = Executors.newFixedThreadPool(10);
 	
+	public MicroAggregatorDAOImpl(){
+		baseCassandraDao = BaseCassandraRepo.instance();
+	}
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {
 			String eventName = setNAIfNull(eventMap, Constants.EVENT_NAME);

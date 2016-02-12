@@ -22,7 +22,7 @@ public class CloseOpenSessions implements Runnable {
 	
 	private String sessionId;
 	
-	private BaseCassandraRepoImpl baseCassandraDao;
+	private BaseCassandraRepo baseCassandraDao;
 
 	private Gson gson = new Gson();
 
@@ -34,7 +34,7 @@ public class CloseOpenSessions implements Runnable {
 	
 	private static Logger logger = LoggerFactory.getLogger(CloseOpenSessions.class);
 
-	public CloseOpenSessions(String gooruUId, String sessionId, BaseCassandraRepoImpl baseCassandraDao) {
+	public CloseOpenSessions(String gooruUId, String sessionId, BaseCassandraRepo baseCassandraDao) {
 		this.gooruUId = gooruUId;
 		this.sessionId = sessionId;
 		this.baseCassandraDao = baseCassandraDao;

@@ -142,6 +142,7 @@ public class CassandraDataLoader {
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
 		indexer = new ELSIndexerImpl();
 		ltiServiceHandler = new LTIServiceHandler(baseDao);
+		baseDao = BaseCassandraRepo.instance();
 	}	
 	/**
 	 * 
