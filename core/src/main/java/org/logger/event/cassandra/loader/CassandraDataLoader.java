@@ -143,6 +143,7 @@ public class CassandraDataLoader {
 		indexer = new ELSIndexerImpl();
 		baseDao = BaseCassandraRepo.instance();
 		ltiServiceHandler = new LTIServiceHandler(baseDao);
+		liveAggregator = MicroAggregatorDAO.instance();
 	}	
 	/**
 	 * 
