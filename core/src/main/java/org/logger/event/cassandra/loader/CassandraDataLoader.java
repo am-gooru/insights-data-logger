@@ -141,8 +141,8 @@ public class CassandraDataLoader {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
 		indexer = new ELSIndexerImpl();
-		ltiServiceHandler = new LTIServiceHandler(baseDao);
 		baseDao = BaseCassandraRepo.instance();
+		ltiServiceHandler = new LTIServiceHandler(baseDao);
 	}	
 	/**
 	 * 
