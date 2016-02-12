@@ -35,7 +35,7 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl {
 
 	private SimpleDateFormat customDateFormatter;
 
-	private BaseCassandraRepoImpl baseDao;	
+	private BaseCassandraRepo baseDao;	
 
 	Collection<String> esEventFields = null;
 	
@@ -44,7 +44,6 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl {
 	private GeoLocation geoLocation;
 	
 	public LiveDashBoardDAOImpl() {
-		this.baseDao = new BaseCassandraRepoImpl();	
 		this.geoLocation = GeoLocation.getInstance();
 	}
 

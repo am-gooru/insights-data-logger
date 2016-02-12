@@ -9,15 +9,15 @@ import org.slf4j.LoggerFactory;
 
 public class ClassActivityDataCubeGenerator implements Runnable {
 
-	private BaseCassandraRepoImpl baseCassandraDao;
+	private BaseCassandraRepo baseCassandraRepo;
 	
 	private StudentsClassActivity studentsClassActivity;
 	
 	private static Logger logger = LoggerFactory.getLogger(ClassActivityDataCubeGenerator.class);
 
-	public ClassActivityDataCubeGenerator(StudentsClassActivity studentsClassActivity, BaseCassandraRepoImpl baseCassandraDao) {
+	public ClassActivityDataCubeGenerator(StudentsClassActivity studentsClassActivity, BaseCassandraRepo baseCassandraDao) {
 		this. studentsClassActivity =  studentsClassActivity;
-		this.baseCassandraDao = baseCassandraDao;
+		this.baseCassandraRepo = baseCassandraDao;
 	}
 
 	public void run() {
@@ -26,26 +26,26 @@ public class ClassActivityDataCubeGenerator implements Runnable {
 			/**
 			 * Lesson wise
 			 */
-			ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedLessonActivity = baseCassandraRepo.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedLessonActivity.setRowKey(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
 			aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
-			baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
+			baseCassandraRepo.saveClassActivityDataCube(aggregatedLessonActivity);
 			
 			/**
 			 * Unit wise
 			 */
-			ClassActivityDatacube aggregatedUnitActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedUnitActivity = baseCassandraRepo.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedUnitActivity.setRowKey(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
 			aggregatedUnitActivity.setLeafNode(studentsClassActivity.getUnitUid());
-			baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivity);
+			baseCassandraRepo.saveClassActivityDataCube(aggregatedUnitActivity);
 			
 			/**
 			 * Course wise
 			 */
-			ClassActivityDatacube aggregatedCourseActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
+			ClassActivityDatacube aggregatedCourseActivity = baseCassandraRepo.getStudentsClassActivityDatacube(appendTilda(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType());			
 			aggregatedCourseActivity.setRowKey(studentsClassActivity.getClassUid());
 			aggregatedCourseActivity.setLeafNode(studentsClassActivity.getCourseUid());
-			baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivity);
+			baseCassandraRepo.saveClassActivityDataCube(aggregatedCourseActivity);
 			
 			
 			

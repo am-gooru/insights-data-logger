@@ -14,6 +14,7 @@ import javax.mail.internet.MimeMessage;
 
 import org.kafka.event.microaggregator.core.Constants;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
+import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +25,13 @@ public class MailHandler implements Constants {
 
 	private static Session mailSession;
 
-	private static BaseCassandraRepoImpl baseCassandraRepoImpl;
+	private static BaseCassandraRepo baseCassandraRepo;
 
 	private static Map<String, String> kafkaNotificationConfig;
 
 	private static Logger logger = LoggerFactory.getLogger(MailHandler.class);
 
 	public MailHandler() {
-		baseCassandraRepoImpl = new BaseCassandraRepoImpl();
 		setKafkaConfiguration();
 	}
 
@@ -52,7 +52,7 @@ public class MailHandler implements Constants {
 
 	private void setKafkaConfiguration() {
 		kafkaNotificationConfig = new HashMap<String, String>();
-		ColumnList<String> columnList = baseCassandraRepoImpl.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER);
+		ColumnList<String> columnList = baseCassandraRepo.readWithKey(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), KAFKA_MAIL_HANDLER);
 		kafkaNotificationConfig.put("userName", columnList.getStringValue("user_name", null));
 		kafkaNotificationConfig.put("password", columnList.getStringValue("password", null));
 		kafkaNotificationConfig.put("toAdress", columnList.getStringValue("to_address", null));

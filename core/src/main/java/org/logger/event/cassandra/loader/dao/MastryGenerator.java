@@ -17,13 +17,13 @@ import com.netflix.astyanax.model.Rows;
 
 public class MastryGenerator implements Runnable {
 
-	private BaseCassandraRepoImpl baseCassandraDao;
+	private BaseCassandraRepo baseCassandraDao;
 	
 	private ContentTaxonomyActivity contentTaxonomyActivity;
 	
 	private static Logger logger = LoggerFactory.getLogger(ClassActivityDataCubeGenerator.class);
 	
-	public MastryGenerator(ContentTaxonomyActivity contentTaxonomyActivity, BaseCassandraRepoImpl baseCassandraDao) {
+	public MastryGenerator(ContentTaxonomyActivity contentTaxonomyActivity, BaseCassandraRepo baseCassandraDao) {
 		this.contentTaxonomyActivity =  contentTaxonomyActivity;
 		this.baseCassandraDao = baseCassandraDao;
 	}

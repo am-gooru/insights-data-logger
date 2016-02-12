@@ -24,7 +24,7 @@ public class LTIServiceHandler implements Runnable{
 	
 	private static final String VALID_FIELDS = Constants.LTI_SERVICE_ID+Constants.COMMA+Constants.GOORUID+Constants.COMMA+Constants.CONTENT_GOORU_OID;
 	
-	private static BaseCassandraRepoImpl baseDao;
+	private static BaseCassandraRepo baseDao;
 	
 	private String gooruOId;
 	
@@ -44,7 +44,7 @@ public class LTIServiceHandler implements Runnable{
 	
 	public LTIServiceHandler() {}
 	
-	public LTIServiceHandler(BaseCassandraRepoImpl baseDao) {
+	public LTIServiceHandler(BaseCassandraRepo baseDao) {
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
 		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, Constants.DEFAULT_COLUMN).getStringValue();

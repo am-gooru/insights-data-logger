@@ -51,15 +51,11 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 
 	private static final Logger LOG = LoggerFactory.getLogger(MicroAggregatorDAOImpl.class);
 	
-	private final BaseCassandraRepoImpl baseCassandraDao;
+	private  BaseCassandraRepo baseCassandraDao;
 
 	
 	private final ExecutorService service = Executors.newFixedThreadPool(10);
-
-	public MicroAggregatorDAOImpl() {
-		this.baseCassandraDao = new BaseCassandraRepoImpl();
-	}
-
+	
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {
 			String eventName = setNAIfNull(eventMap, Constants.EVENT_NAME);

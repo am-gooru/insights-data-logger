@@ -41,7 +41,6 @@ import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.CqlResult;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
@@ -50,7 +49,7 @@ import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
 import com.netflix.astyanax.util.TimeUUIDUtils;
 
-public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
+public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseCassandraRepo {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
@@ -66,6 +65,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Column<String> readWithKeyColumn(String cfName, String key, String columnName) {
 
 		Column<String> result = null;
@@ -83,6 +83,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return result;
 	}
 	
+	@Override
 	public boolean checkColumnExist(String cfName, String key, String columnName) {
 		boolean result = false;
 		ColumnList<String> columnList = null;
@@ -108,6 +109,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public ColumnList<String> readWithKeyColumnList(String cfName, String key, Collection<String> columnList) {
 
 		ColumnList<String> result = null;
@@ -131,6 +133,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readWithKeyListColumnList(String cfName, Collection<String> keys, Collection<String> columnList) {
 
 		Rows<String, String> result = null;
@@ -153,6 +156,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public ColumnList<String> readWithKey(String cfName, String key) {
 
 		ColumnList<String> result = null;
@@ -175,6 +179,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readWithKeyList(String cfName, Collection<String> key) {
 
 		Rows<String, String> result = null;
@@ -197,6 +202,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readCommaKeyList(String cfName, String... key) {
 
 		Rows<String, String> result = null;
@@ -217,6 +223,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param keys
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readIterableKeyList(String cfName, Iterable<String> keys) {
 
 		Rows<String, String> result = null;
@@ -240,6 +247,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readIndexedColumn(String cfName, String columnName, String value) {
 
 		Rows<String, String> result = null;
@@ -262,6 +270,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readIndexedColumn(String cfName, String columnName, long value) {
 
 		Rows<String, String> result = null;
@@ -285,6 +294,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readIndexedColumnLastNrows(String cfName, String columnName, String value, Integer rowsToRead) {
 
 		Rows<String, String> result = null;
@@ -306,7 +316,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnsToRead
 	 * @param retryCount
 	 * @return
-	 */
+	 */@Override
 	public ColumnList<String> readKeyLastNColumns(String cfName, String key, Integer columnsToRead) {
 
 		ColumnList<String> result = null;
@@ -327,6 +337,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @return
 	 */
+	 @Override
 	public long getCount(String cfName, String key) {
 
 		Integer columns = null;
@@ -350,6 +361,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override 
 	public Rows<String, String> readIndexedColumnList(String cfName, Map<String, String> columnList) {
 
 		Rows<String, String> result = null;
@@ -378,6 +390,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public boolean isRowKeyExists(String cfName, String key) {
 
 		try {
@@ -396,6 +409,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columns
 	 * @return
 	 */
+	@Override
 	public boolean isValueExists(String cfName, Map<String, Object> columns) {
 
 		try {
@@ -419,6 +433,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columns
 	 * @return
 	 */
+	@Override
 	public Collection<String> getKey(String cfName, Map<String, Object> columns) {
 
 		try {
@@ -447,6 +462,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param rowsToRead
 	 * @return
 	 */
+	@Override
 	public ColumnList<String> readColumnsWithPrefix(String cfName, String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead) {
 		ColumnList<String> result = null;
 		String startColumnPrefix = null;
@@ -471,6 +487,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public Rows<String, String> readAllRows(String cfName) {
 
 		Rows<String, String> result = null;
@@ -500,6 +517,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @param columnValueList
 	 */
+	@Override
 	public void saveBulkStringList(String cfName, String key, Map<String, String> columnValueList) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -523,6 +541,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @param columnValueList
 	 */
+	@Override
 	public void saveBulkLongList(String cfName, String key, Map<String, Long> columnValueList) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -546,6 +565,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @param columnValueList
 	 */
+	@Override
 	public void saveBulkList(String cfName, String key, Map<String, Object> columnValueList) {
 
 		MutationBatch mutation = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -584,6 +604,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnName
 	 * @param value
 	 */
+	@Override
 	public void saveStringValue(String cfName, String key, String columnName, String value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -606,6 +627,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param expireTime
 	 */
+	@Override
 	public void saveStringValue(String cfName, String key, String columnName, String value, int expireTime) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -628,6 +650,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param expireTime
 	 */
+	@Override
 	public void saveLongValue(String cfName, String key, String columnName, long value, int expireTime) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -648,6 +671,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnName
 	 * @param value
 	 */
+	@Override
 	public void saveLongValue(String cfName, String key, String columnName, long value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -669,6 +693,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnName
 	 * @param value
 	 */
+	@Override
 	public void saveValue(String cfName, String key, String columnName, Object value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -699,6 +724,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnName
 	 * @param value
 	 */
+	@Override
 	public void increamentCounter(String cfName, String key, String columnName, long value) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -721,6 +747,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).incrementCounterColumn(columnName, value);
 	}
@@ -732,6 +759,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateNonCounter(String columnName, Object value, ColumnListMutation<String> m) {
 		if (value != null) {
 			if (value.getClass().getSimpleName().equalsIgnoreCase("String")) {
@@ -768,6 +796,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateNonCounter(String cfName, String key, String columnName, String value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
@@ -781,6 +810,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateNonCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
@@ -794,6 +824,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateNonCounter(String cfName, String key, String columnName, Integer value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
@@ -807,6 +838,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param value
 	 * @param m
 	 */
+	@Override
 	public void generateNonCounter(String cfName, String key, String columnName, Boolean value, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
 	}
@@ -821,6 +853,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param expireTime
 	 * @param m
 	 */
+	@Override
 	public void generateTTLColumns(String cfName, String key, String columnName, long value, int expireTime, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
 	}
@@ -835,6 +868,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param expireTime
 	 * @param m
 	 */
+	@Override
 	public void generateTTLColumns(String cfName, String key, String columnName, String value, int expireTime, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumn(columnName, value, expireTime);
 	}
@@ -844,6 +878,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * 
 	 * @param cfName
 	 */
+	@Override
 	public void deleteAll(String cfName) {
 		try {
 			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
@@ -858,6 +893,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param key
 	 */
+	@Override
 	public void deleteRowKey(String cfName, String key) {
 		MutationBatch m = getKeyspace().prepareMutationBatch();
 		try {
@@ -877,6 +913,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param key
 	 * @param columnName
 	 */
+	@Override
 	public void deleteColumn(String cfName, String key, String columnName) {
 		MutationBatch m = getKeyspace().prepareMutationBatch();
 		try {
@@ -895,6 +932,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param columnFamilyName
 	 * @return
 	 */
+	@Override
 	public ColumnFamily<String, String> accessColumnFamily(String columnFamilyName) {
 
 		ColumnFamily<String, String> aggregateColumnFamily;
@@ -915,6 +953,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param eventData
 	 * @return
 	 */
+	@Override
 	public String saveEvent(String cfName, EventData eventData) {
 		String key = null;
 		if (eventData.getEventId() == null) {
@@ -1010,6 +1049,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param event
 	 * @return
 	 */
+	@Override
 	public String saveEvent(String cfName, String key, Event event) {
 
 		if (event.getEventId() == null) {
@@ -1050,6 +1090,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param CoulmnValue
 	 * @param event
 	 */
+	@Override
 	public void updateTimelineObject(final String cfName, final String rowKey, final String CoulmnValue, final Event event) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -1075,6 +1116,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param eventData
 	 * @param rowKey
 	 */
+	@Override
 	public void updateTimeline(String cfName, EventData eventData, String rowKey) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -1100,6 +1142,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param activities
 	 */
+	@Override
 	public void saveActivity(String cfName, HashMap<String, Object> activities) {
 		String rowKey = null;
 		String dateId = "0";
@@ -1133,6 +1176,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param eventId
 	 * @return
 	 */
+	@Override
 	public Map<String, Object> isEventIdExists(String cfName, String userUid, String eventId) {
 		OperationResult<ColumnList<String>> eventColumns = null;
 		Map<String, Object> resultMap = new HashMap<String, Object>();
@@ -1200,6 +1244,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public List<String> getParentIds(final String cfName, final String key) {
 
 		Rows<String, String> collectionItem = null;
@@ -1227,6 +1272,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateCollectionItem(String cfName, Map<String, String> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1246,6 +1292,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateClasspage(String cfName, Map<String, String> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1279,6 +1326,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public boolean getClassPageOwnerInfo(String cfName, String key, String classPageGooruOid) {
 
 		Rows<String, String> result = null;
@@ -1303,6 +1351,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param retryCount
 	 * @return
 	 */
+	@Override
 	public boolean isUserPartOfClass(String cfName, String key, String classPageGooruOid) {
 
 		Rows<String, String> result = null;
@@ -1324,6 +1373,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * 
 	 * @param resourceco
 	 */
+	@Override
 	public void updateResourceEntity(ResourceCo resourceco) {
 		try {
 			getResourceEntityPersister().put(resourceco);
@@ -1336,6 +1386,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * 
 	 * @param userCo
 	 */
+	@Override
 	public void updateUserEntity(UserCo userCo) {
 		try {
 			getUserEntityPersister().put(userCo);
@@ -1349,6 +1400,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
 
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1377,6 +1429,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateCollection(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey("gooruOid") && eventMap.get("gooruOid") != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1409,6 +1462,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.containsKey(Constants.COLLECTION_ITEM_ID) && eventMap.get(Constants.COLLECTION_ITEM_ID) != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1445,6 +1499,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param cfName
 	 * @param eventMap
 	 */
+	@Override
 	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
 		if (eventMap.get(Constants.CLASS_ID) != null && eventMap.get(Constants.GROUP_UID) != null && eventMap.get(Constants.USER_UID) != null) {
 			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
@@ -1479,6 +1534,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @return
 	 * 
 	 */
+	@Override
 	public Set<String> getAllLevelParents(String cfName, String childOid, final int depth) {
 		Rows<String, String> collectionItemParents = null;
 		Set<String> parentIds = new HashSet<String>();
@@ -1512,23 +1568,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return parentIds;
 	}
 
+	@Override
 	public void saveSession(String sessionActivityId,long eventTime,String status){
 		final String INSERT_STATEMENT = "INSERT INTO session(session_activity_id, event_time, status) VALUES (?, ?, ?);";
-		OperationResult<CqlResult<String, String>> result;
 		try {
-			result = getKeyspace()
-			        .prepareQuery(accessColumnFamily("session"))
-			        .withCql(INSERT_STATEMENT)
-			        .asPreparedStatement()
-			        .withStringValue(sessionActivityId)
-			        .withLongValue(eventTime)
-			        .withStringValue(status)
-			        .execute();
+			getKeyspace().prepareQuery(accessColumnFamily("session")).withCql(INSERT_STATEMENT).asPreparedStatement().withStringValue(sessionActivityId).withLongValue(eventTime)
+					.withStringValue(status).execute();
 		} catch (ConnectionException e) {
 			LOG.error("Error:",e);
 		}
 	}
 	
+	@Override
 	public String getParentId(final String cfName, final String key) {
 		Rows<String, String> collectionItem = null;
 		String parentId = null;
@@ -1559,6 +1610,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param eventTime
 	 * @return true/false -- meaning operation success/fail
 	 */
+	@Override
 	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String collectionType, String eventType,long eventTime) {
 		try {
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSIONS.getColumnFamily()))
@@ -1598,6 +1650,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param views
 	 * @return true/false -- meaning - operation success/fail
 	 */
+	@Override
 	public boolean saveUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
@@ -1640,6 +1693,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param views
 	 * @return true/false -- meaning operation success/fail
 	 */
+	@Override
 	public boolean saveStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
@@ -1666,6 +1720,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 	
+	@Override
 	public boolean saveContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_TAXONOMY_ACTIVITY.getColumnFamily()))
@@ -1693,6 +1748,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 	
+	@Override
 	public boolean saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CONTENT_CLASS_TAXONOMY_ACTIVITY.getColumnFamily()))
@@ -1733,6 +1789,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 	 * @param sessionTime
 	 * @return true/false -- meaning operation success/fail
 	 */
+	@Override
 	public boolean saveStudentLocation(StudentLocation studentLocation) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDNT_LOCATION.getColumnFamily()))
@@ -1756,7 +1813,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 	
-	
+	@Override
 	public UserSessionActivity compareAndMergeUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
@@ -1781,6 +1838,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return userSessionActivity;
 	}
 	
+	@Override
 	public UserSessionActivity getUserSessionActivity(String sessionId, String gooruOid, String collectionItemId) {
 		UserSessionActivity userSessionActivity = new UserSessionActivity();
 		try {
@@ -1816,6 +1874,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return userSessionActivity;
 	}
+	@Override
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
 			Rows<String, String> result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.STUDENTS_CLASS_ACTIVITY.getColumnFamily()))
@@ -1842,6 +1901,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return studentsClassActivity;
 	}
+	
+	@Override
 	public boolean updateReaction(UserSessionActivity userSessionActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
@@ -1859,6 +1920,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return true;
 	}
+	
+	@Override
 	public boolean  hasClassActivity(StudentsClassActivity studentsClassActivity) {
 		boolean hasActivity = false;
 		try {
@@ -1883,6 +1946,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return hasActivity;
 	}
 
+	@Override
 	public UserSessionActivity getSessionScore(UserSessionActivity userSessionActivity, String eventName) {
 		long score = 0L;
 		try {
@@ -1922,6 +1986,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return userSessionActivity;
 	}
 
+	@Override
 	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.CLASS_ACTIVITY_DATACUBE.getColumnFamily()))
@@ -1945,6 +2010,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 	
+	@Override
 	public ClassActivityDatacube getStudentsClassActivityDatacube(String rowKey, String userUid, String collectionType) {
 		ClassActivityDatacube classActivityDatacube = new ClassActivityDatacube();
 		long itemCount = 0L;
@@ -1978,6 +2044,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return classActivityDatacube;
 	}
 	
+	@Override
 	public Rows<String, String> getTaxonomy(String rowKey){
 		Rows<String, String> result = null;
 		try {
@@ -1990,6 +2057,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return result;
 	}
 	
+	@Override
 	public Rows<String, String> getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
@@ -2010,6 +2078,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return result;
 	}
+	
+	@Override
 	public Rows<String, String> getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		Rows<String, String> result = null;
 		try {
@@ -2032,6 +2102,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return result;
 	}
 	
+	@Override
 	public Rows<String, String> getContentTaxonomyActivityDataCube(String rowKey, String columnKey){
 		Rows<String, String> result = null;
 		try {
@@ -2046,6 +2117,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return result;
 	}
+	@Override
 	public long getContentTaxonomyActivityScore(String rowKey){
 		Rows<String, String> result = null;
 		long questionCount = 0L;
@@ -2070,6 +2142,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return score;
 	}
 	
+	@Override
 	public boolean saveTaxonomyActivityDataCube(TaxonomyActivityDataCube taxonomyActivityDataCube) {
 		try {						
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.TAXONOMY_ACTIVITY_DATACUBE.getColumnFamily()))
@@ -2091,6 +2164,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 	
+	@Override
 	public boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily()))
@@ -2110,6 +2184,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return true;
 	}
 
+	@Override
 	public Rows<String, String> getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId) {
 		Rows<String, String> result = null;
 		try {
@@ -2121,6 +2196,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		return result;
 	}
 	
+	@Override
 	public Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId) {
 		Rows<String, String> result = null;
 		try {
@@ -2131,7 +2207,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl {
 		}
 		return result;
 	}
-	
+	@Override
 	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
