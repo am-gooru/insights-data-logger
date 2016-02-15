@@ -28,10 +28,13 @@
 package org.logger.event.cassandra.loader.dao;
 
 import java.io.IOException;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
 import org.elasticsearch.client.Client;
+import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.datasource.infra.CassandraClient;
 import org.logger.event.datasource.infra.ELSClient;
 import org.slf4j.Logger;
@@ -81,5 +84,41 @@ public abstract class BaseDAOCassandraImpl {
 			LOG.error("Exception : ",e);
 		}
 		return null;
+	}
+	
+	public String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
+			return (String) eventMap.get(fieldName);
+		}
+		return Constants.NA;
+	}
+	public String setNullIfEmpty(Map<String, Object> eventMap,String fieldName) {
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
+			return (String) eventMap.get(fieldName);
+		}
+		return null;
+	}
+	public long setLongZeroIfNull(Map<String, Object> eventMap,String fieldName) {
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
+			return ((Number) eventMap.get(fieldName)).longValue();
+		}
+		return 0L;
+	}
+	public int setIntegerZeroIfNull(Map<String, Object> eventMap,String fieldName) {
+		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
+			return ((Number) eventMap.get(fieldName)).intValue();
+		}
+		return 0;
+	}
+	public String appendTildaSeperator(String... columns) {
+		StringBuilder columnKey = new StringBuilder();
+		for (String column : columns) {
+			if (StringUtils.isNotBlank(column)) {
+				columnKey.append(columnKey.length() > 0 ? Constants.SEPERATOR : Constants.EMPTY);
+				columnKey.append(column);
+			}
+		}
+		return columnKey.toString();
+
 	}
 }

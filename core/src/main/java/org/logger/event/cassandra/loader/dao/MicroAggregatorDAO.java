@@ -8,4 +8,6 @@ public interface MicroAggregatorDAO {
 		return new MicroAggregatorDAOImpl();
 	}
 	void eventProcessor(Map<String, Object> eventMap);
+	
+	void eventProcess(Map<String, Object> eventMap);
 }
