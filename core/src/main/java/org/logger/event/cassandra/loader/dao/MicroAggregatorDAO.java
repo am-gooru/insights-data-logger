@@ -7,7 +7,5 @@ public interface MicroAggregatorDAO {
 	static MicroAggregatorDAO instance(){
 		return new MicroAggregatorDAOImpl();
 	}
-	void eventProcessor(Map<String, Object> eventMap);
-	
-	void eventProcess(Map<String, Object> eventMap);
+	void eventProcessor(Map<String, Object> eventMap);	
 }
