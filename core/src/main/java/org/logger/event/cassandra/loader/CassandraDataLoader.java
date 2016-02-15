@@ -341,7 +341,7 @@ public class CassandraDataLoader {
 		baseDao.updateTimelineObject(ColumnFamilySet.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
 		if (eventName.matches(Constants.SESSION_ACTIVITY_EVENTS)) {
-			liveAggregator.eventProcessor(eventMap);
+			liveAggregator.eventProcess(eventMap);
 		} else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
 			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
 		}

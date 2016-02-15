@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
+import org.ednovo.data.model.ObjectBuilder;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TypeConverter;
@@ -59,6 +60,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	public MicroAggregatorDAOImpl(){
 		baseCassandraDao = BaseCassandraRepo.instance();
 	}
+	@Override
 	public void eventProcessor(Map<String, Object> eventMap) {
 		try {
 			String eventName = setNAIfNull(eventMap, Constants.EVENT_NAME);
@@ -187,22 +189,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		baseCassandraDao.saveClassActivityDataCube(classActivityDatacube);
 		service.submit(new ClassActivityDataCubeGenerator(studentsClassActivity,baseCassandraDao));	
 	}
-	/**
-	 * Append string with ~ seperator
-	 * @param columns
-	 * @return
-	 */
-	private String appendTildaSeperator(String... columns) {
-		StringBuilder columnKey = new StringBuilder();
-		for (String column : columns) {
-			if (StringUtils.isNotBlank(column)) {
-				columnKey.append(columnKey.length() > 0 ? Constants.SEPERATOR : Constants.EMPTY);
-				columnKey.append(column);
-			}
-		}
-		return columnKey.toString();
 
-	}
 
 	/**
 	 * Find if user already answered correct or in-correct
@@ -220,8 +207,104 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 		return status;
 	}
-	
 
+	public void eventProcess(Map<String, Object> eventMap) {
+
+		try {
+			String eventName = setNullIfEmpty(eventMap, Constants.EVENT_NAME);
+			ObjectBuilder objectBuilderHandler = new ObjectBuilder(eventMap);
+			UserSessionActivity userSessionActivity = objectBuilderHandler.getUserSessionActivity();
+			UserSessionActivity userAllSessionActivity = objectBuilderHandler.getUserAllSessionActivity();
+			StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
+			ClassActivityDatacube classActivityDatacube = objectBuilderHandler.getClassActivityDatacube();
+			StudentLocation studentLocation = objectBuilderHandler.getStudentLocation();
+			ContentTaxonomyActivity contentTaxonomyActivity = objectBuilderHandler.getContentTaxonomyActivity();
+
+			if (userSessionActivity != null) {
+				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
+				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
+			}
+			if (userAllSessionActivity != null) {
+				baseCassandraDao.compareAndMergeUserSessionActivity(userAllSessionActivity);
+				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
+			}
+
+			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
+
+			saveCollectionDataFromResourcePlay(eventName, userSessionActivity, userAllSessionActivity, studentsClassActivity);
+
+			if (studentLocation != null) {
+				baseCassandraDao.saveStudentLocation(studentLocation);
+			}
+
+			if (classActivityDatacube != null && studentsClassActivity != null) {
+				callClassActitivityDataCubeGenerator(studentsClassActivity, classActivityDatacube);
+			}
+
+			if (contentTaxonomyActivity != null) {
+				service.submit(new MastryGenerator(contentTaxonomyActivity, baseCassandraDao));
+			}
+			saveQuestionGrade(eventName, eventMap);
+
+		} catch (Exception e) {
+			LOG.error("Exception:", e);
+		}
+
+	}
+	
+	private void saveQuestionGrade(String eventName, Map<String, Object> eventMap) {
+		if (eventName.equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())) {
+			if (eventMap.get("gradeStatus").equals("save")) {
+				baseCassandraDao.saveQuestionGrade((String) eventMap.get("teacherId"), (String) eventMap.get(Constants.GOORUID), (String) eventMap.get(Constants.SESSION_ID),
+						(String) eventMap.get(Constants.CONTENT_GOORU_OID), ((Number) eventMap.get(Constants.SCORE)).longValue());
+			} else if (eventMap.get("gradeStatus").equals("submit")) {
+				Rows<String, String> questionScores = baseCassandraDao.getQuestionsGradeBySessionId((String) eventMap.get("teacherId"), (String) eventMap.get(Constants.GOORUID),
+						(String) eventMap.get(Constants.SESSION_ID));
+				if (questionScores != null && questionScores.size() > 0) {
+					for (Row<String, String> questionScore : questionScores) {
+						ColumnList<String> score = questionScore.getColumns();
+						baseCassandraDao.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.CONTENT_GOORU_OID), Constants.NA,
+								score.getLongValue(Constants.SCORE, 0L));
+					}
+				}
+				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID),
+						Constants.NA);
+				baseCassandraDao.getSessionScore(userCollectionData, LoaderConstants.CPV1.getName());
+				baseCassandraDao
+						.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID), Constants.NA, userCollectionData.getScore());
+			}
+		}
+	}
+	private void saveUserSessions(String eventName, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, StudentLocation studentLocation ){
+		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
+			LOG.info("saving sessions...");
+			baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+					studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getCollectionType(),
+					userSessionActivity.getEventType(), studentLocation.getSessionTime());
+		}
+	}
+	private void saveCollectionDataFromResourcePlay(String eventName, UserSessionActivity userSessionActivity, UserSessionActivity userAllSessionActivity, StudentsClassActivity studentsClassActivity){
+		if (Constants.COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType()) && LoaderConstants.CRPV1.getName().equalsIgnoreCase(eventName)
+				&& userSessionActivity.getEventType().equalsIgnoreCase(Constants.STOP)) {
+			UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(userSessionActivity.getSessionId(), userSessionActivity.getParentGooruOid(), Constants.NA);
+			UserSessionActivity userAllSessionCollectionActivity = baseCassandraDao.getUserSessionActivity(userAllSessionActivity.getSessionId(), userAllSessionActivity.getParentGooruOid(),
+					Constants.NA);
+			baseCassandraDao.getSessionScore(userSessionActivity, eventName);
+			if (userCollectionData != null) {
+				userCollectionData.setTimeSpent(userCollectionData.getTimeSpent() + userSessionActivity.getTimeSpent());
+				userCollectionData.setScore(userSessionActivity.getScore());
+				userCollectionData.setReaction(userSessionActivity.getReaction());
+			}
+			userAllSessionCollectionActivity.setTimeSpent(userAllSessionCollectionActivity.getTimeSpent() + userSessionActivity.getTimeSpent());
+			userAllSessionCollectionActivity.setScore(userSessionActivity.getScore());
+			userAllSessionCollectionActivity.setReaction(userSessionActivity.getScore());
+			baseCassandraDao.saveUserSessionActivity(userCollectionData);
+			baseCassandraDao.saveUserSessionActivity(userAllSessionCollectionActivity);
+			studentsClassActivity.setTimeSpent(userCollectionData.getTimeSpent());
+			studentsClassActivity.setScore(userCollectionData.getScore());
+			studentsClassActivity.setReaction(userCollectionData.getReaction());
+		}
+	}
 	private void generateDAOs(Map<String, Object> eventMap, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, ClassActivityDatacube classActivityDataCube,
 			StudentLocation studentLocation) {
 
@@ -350,29 +433,5 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		studentLocation.setCollectionType(collectionType);
 		studentLocation.setResourceUid(contentGooruId);
 		studentLocation.setSessionTime(eventTime);
-	}
-	private String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
-			return (String) eventMap.get(fieldName);
-		}
-		return Constants.NA;
-	}
-	private String setNullIfEmpty(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
-			return (String) eventMap.get(fieldName);
-		}
-		return null;
-	}
-	private long setLongZeroIfNull(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
-			return ((Number) eventMap.get(fieldName)).longValue();
-		}
-		return 0L;
-	}
-	private int setIntegerZeroIfNull(Map<String, Object> eventMap,String fieldName) {
-		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null){
-			return ((Number) eventMap.get(fieldName)).intValue();
-		}
-		return 0;
 	}
 }
