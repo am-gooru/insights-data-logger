@@ -87,7 +87,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
 
 			saveCollectionDataFromResourcePlay(eventName, userSessionActivity, userAllSessionActivity, studentsClassActivity);
-
+			
 			if (studentLocation != null) {
 				baseCassandraDao.saveStudentLocation(studentLocation);
 				LOG.info("store students completed : {} ", userSessionActivity.getSessionId());
@@ -148,14 +148,14 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 					for (Row<String, String> questionScore : questionScores) {
 						ColumnList<String> score = questionScore.getColumns();
 						baseCassandraDao.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.CONTENT_GOORU_OID), Constants.NA,
-								score.getLongValue(Constants.SCORE, 0L));
+								Constants.COMPLETED,score.getLongValue(Constants.SCORE, 0L));
 					}
 				}
 				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID),
 						Constants.NA);
 				baseCassandraDao.getSessionScore(userCollectionData, LoaderConstants.CPV1.getName());
 				baseCassandraDao
-						.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID), Constants.NA, userCollectionData.getScore());
+						.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID), Constants.NA, Constants.COMPLETED,userCollectionData.getScore());
 			}
 			LOG.info("store question grade completed : {} ", eventMap.get(Constants.SESSION_ID));
 		}

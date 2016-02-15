@@ -198,6 +198,6 @@ public interface BaseCassandraRepo {
 
 	Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId);
 
-	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score);
+	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score);
 
 }

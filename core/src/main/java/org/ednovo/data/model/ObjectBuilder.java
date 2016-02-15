@@ -192,7 +192,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			studentsClassActivity.setUnitUid(unitGooruId);
 			studentsClassActivity.setLessonUid(lessonGooruId);
 			studentsClassActivity.setCollectionType(collectionType);
-			if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName())) {
+			if (eventName.equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || eventName.equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 				studentsClassActivity.setCollectionUid(parentGooruId);
 				studentsClassActivity.setViews(0);
 			} else if(eventName.equalsIgnoreCase(LoaderConstants.CPV1.getName())){

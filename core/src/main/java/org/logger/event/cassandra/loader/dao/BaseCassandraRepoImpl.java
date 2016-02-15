@@ -2188,7 +2188,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public Rows<String, String> getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId) {
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_USER_QUESTION_GRADE_BY_SESSION).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).execute().getResult().getRows();
 		} catch (Exception e) {
 			LOG.error("Exception while read questions grade by session", e);
@@ -2200,7 +2200,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId) {
 		Rows<String, String> result = null;
 		try {
-			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY).asPreparedStatement()
+			result = getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_QUESTION_GRADE.getColumnFamily())).withCql(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION).asPreparedStatement()
 					.withStringValue(teacherId).withStringValue(userId).withStringValue(sessionId).withStringValue(questionId).execute().getResult().getRows();
 		} catch (Exception e) {
 			LOG.error("Exception while read questions grade by session", e);
@@ -2208,7 +2208,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return result;
 	}
 	@Override
-	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, long score) {
+	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score) {
 		try {			
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_SESSION_ACTIVITY.getColumnFamily()))
 			.withCql(Constants.UPDATE_SESSION_SCORE)
@@ -2216,6 +2216,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			.withStringValue(sessionId)
 			.withStringValue(questionId)
 			.withStringValue(collectionItemId)
+			.withStringValue(status)
 			.withLongValue(score)
 			.execute()
 			;

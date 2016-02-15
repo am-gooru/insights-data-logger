@@ -769,7 +769,7 @@ public class Constants {
 	
 	public static final String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
 	
-	public static final String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,score)VALUES(?,?,?,?);";
+	public static final String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,attempt_status,score)VALUES(?,?,?,?,?);";
 	
 	public static final String SELECT_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
 	
@@ -787,9 +787,9 @@ public class Constants {
 	
 	public static final String INSERT_USER_QUESTION_GRADE = "INSERT INTO user_question_grade(teacher_id,user_id,session_id,question_id,score)VALUES(?,?,?,?,?);";
 	
-	public static final String SELECT_USER_QUESTION_GRADE_BY_SESSION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ?;";
+	public static final String SELECT_USER_QUESTION_GRADE_BY_SESSION = "SELECT * FROM user_question_grade WHERE teacher_id = ? AND user_id = ? AND session_id = ?;";
 	
-	public static final String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id ? AND user_id = ? AND session_id = ? AND question_id = ?;";
+	public static final String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id = ? AND user_id = ? AND session_id = ? AND question_id = ?;";
 	
 	public static final String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, views, attempts, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
 	
