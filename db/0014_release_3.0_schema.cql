@@ -314,7 +314,7 @@ CREATE TABLE user_question_grade (
     AND speculative_retry = '99.0PERCENTILE';
     
     
- CREATE TABLE taxonomy_nodes (
+ CREATE TABLE taxonomy_parent_node (
     row_key text PRIMARY KEY,
     course_id text,
     domain_id text,

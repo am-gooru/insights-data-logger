@@ -2,6 +2,8 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
+import org.json.JSONObject;
+
 public class UserSessionActivity implements Serializable, Cloneable {
 
 	/**
@@ -37,7 +39,7 @@ public class UserSessionActivity implements Serializable, Cloneable {
 	
 	private long reaction;
 	
-	private String answerObject;
+	private JSONObject answerObject;
 
 	public Object clone()throws CloneNotSupportedException{  
 		return super.clone();  	
@@ -123,11 +125,11 @@ public class UserSessionActivity implements Serializable, Cloneable {
 		this.reaction = reaction;
 	}
 
-	public String getAnswerObject() {
+	public JSONObject getAnswerObject() {
 		return answerObject;
 	}
 
-	public void setAnswerObject(String answerObject) {
+	public void setAnswerObject(JSONObject answerObject) {
 		this.answerObject = answerObject;
 	}
 

@@ -27,6 +27,8 @@ import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -1659,7 +1661,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			.withStringValue(userSessionActivity.getSessionId())
 			.withStringValue(userSessionActivity.getGooruOid())
 			.withStringValue(userSessionActivity.getCollectionItemId())
-			.withStringValue(userSessionActivity.getAnswerObject())
+			.withStringValue(userSessionActivity.getAnswerObject().toString())
 			.withLongValue(userSessionActivity.getAttempts())
 			.withStringValue(userSessionActivity.getCollectionType())
 			.withStringValue(userSessionActivity.getResourceType())
@@ -1856,7 +1858,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 					userSessionActivity.setSessionId(columns.getStringValue(Constants._SESSION_ID, null));
 					userSessionActivity.setGooruOid(columns.getStringValue(Constants._GOORU_OID, null));
 					userSessionActivity.setCollectionItemId(columns.getStringValue(Constants._COLLECTION_ITEM_ID, null));
-					userSessionActivity.setAnswerObject(columns.getStringValue(Constants._ANSWER_OBECT, null));
+					userSessionActivity.setAnswerObject(new JSONObject(columns.getStringValue(Constants._ANSWER_OBECT, null)));
 					userSessionActivity.setAnswerStatus(columns.getStringValue(Constants._ANSWER_STATUS, null));
 					userSessionActivity.setResourceType(columns.getStringValue(Constants._RESOURCE_TYPE, null));
 					userSessionActivity.setCollectionType(columns.getStringValue(Constants._COLLECTION_TYPE, null));
@@ -1869,7 +1871,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 					userSessionActivity.setViews(columns.getLongValue(Constants.VIEWS, 0L));
 				}
 			}
-		} catch (ConnectionException e) {
+		} catch (Exception e) {
 			LOG.error("Error while retreving user sessions activity" ,e);
 		}
 		return userSessionActivity;

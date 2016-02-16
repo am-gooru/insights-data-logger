@@ -22,7 +22,6 @@ public final class CassandraClient implements Register {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraClient.class);
 	private static Keyspace cassandraKeyspace;
-	private static CassandraClient cassandraClient = null;
 	private static EntityManager<ResourceCo, String> resourceEntityPersister;
 	private static EntityManager<UserCo, String> userEntityPersister;
   
@@ -77,16 +76,15 @@ public final class CassandraClient implements Register {
 		}
 
 	}
-
-	public static CassandraClient instance() {
-		if (cassandraClient == null) {
-			synchronized (CassandraClient.class) {
-				cassandraClient = new CassandraClient();
-			}
-		}
-		return cassandraClient;
+	
+	private static class CassandraClientHolder {
+		public static final CassandraClient INSTANCE = new CassandraClient();
 	}
 
+	public static CassandraClient instance() {
+		return CassandraClientHolder.INSTANCE;
+	}
+    
 	public static Keyspace getKeyspace() throws IOException {
 		if (cassandraKeyspace == null) {
 			throw new IOException("Keyspace not initialized.");

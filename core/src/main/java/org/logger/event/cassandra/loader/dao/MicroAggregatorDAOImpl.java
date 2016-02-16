@@ -100,7 +100,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 
 			if (contentTaxonomyActivity != null) {
 				service.submit(new MastryGenerator(contentTaxonomyActivity, baseCassandraDao));
-				LOG.info("calling smastery generator : {} ", userSessionActivity.getSessionId());
+				LOG.info("calling mastery generator : {} ", userSessionActivity.getSessionId());
 			}
 			saveQuestionGrade(eventName, eventMap);
 
