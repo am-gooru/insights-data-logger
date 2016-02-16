@@ -1,5 +1,7 @@
 package org.ednovo.data.model;
 
+import java.util.List;
+
 public class ContentTaxonomyActivity {
 
 	private String userUid;
@@ -22,7 +24,7 @@ public class ContentTaxonomyActivity {
 
 	private String questionType;
 	
-	private String[] taxonomyIds;
+	private List<String> taxonomyIds;
 	
 	private long views;
 
@@ -114,11 +116,11 @@ public class ContentTaxonomyActivity {
 		this.questionType = questionType;
 	}
 
-	public String[] getTaxonomyIds() {
+	public List<String> getTaxonomyIds() {
 		return taxonomyIds;
 	}
 
-	public void setTaxonomyIds(String[] taxonomyIds) {
+	public void setTaxonomyIds(List<String> taxonomyIds) {
 		this.taxonomyIds = taxonomyIds;
 	}
 

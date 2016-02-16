@@ -1,7 +1,9 @@
 package org.ednovo.data.model;
 
+import java.util.List;
 import java.util.Map;
 
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -52,13 +54,13 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 	
 	private String resourceType;
 	
-	private String answerObject;
+	private JSONObject answerObject;
 	
 	private String answerStatus;
 	
 	private String gradeType;
 	
-	private String[] taxonomyIds;
+	private List<String> taxonomyIds;
 	
 	private long eventTime;
 	
@@ -88,10 +90,10 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		collectionType = eventMap.get(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
 		questionType = setNAIfNull(eventMap, Constants.QUESTION_TYPE);
 		resourceType = setNAIfNull(eventMap, Constants.RESOURCE_TYPE);
-		answerObject = setNAIfNull(eventMap, Constants.ANSWER_OBECT);
+		answerObject = eventMap.containsKey(Constants.ANSWER_OBECT) ? (JSONObject) eventMap.get(Constants.ANSWER_OBECT) : null;
 		answerStatus = Constants.NA;
-		gradeType = eventMap.containsValue(Constants.GRADE_TYPE) ? (String)eventMap.get(Constants.GRADE_TYPE) : Constants.SYSTEM;
-		taxonomyIds = (String[]) (eventMap.containsKey("taxonomyIds") ? TypeConverter.stringToIntArray((String) eventMap.get("taxonomyIds")) : null);
+		gradeType = eventMap.containsKey(Constants.GRADE_TYPE) ? (String)eventMap.get(Constants.GRADE_TYPE) : Constants.SYSTEM;
+		taxonomyIds = (eventMap.containsKey("taxonomyIds") ? (List<String>) eventMap.get("taxonomyIds") : null);
 		eventTime = ((Number) eventMap.get(Constants.END_TIME)).longValue();
 		score = 0;
 		timespent = 0;
@@ -108,6 +110,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		classActivityObjectCreator();
 		classDataCubeObjectCreator();
 		allSessionActivityCreator();
+		contentTaxonomyActivityObjectCreator();
 	}
 	
 	private void objectCreator(){
@@ -134,7 +137,9 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity.setGooruOid(contentGooruId);
 			userSessionActivity.setParentGooruOid(parentGooruId);
 			userSessionActivity.setCollectionItemId(collectionItemId);
-			userSessionActivity.setAnswerObject(answerObject);
+			if(answerObject != null){				
+				userSessionActivity.setAnswerObject(answerObject);
+			}
 			userSessionActivity.setAttempts(attempts);
 			userSessionActivity.setCollectionType(collectionType);
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)){
@@ -227,6 +232,18 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			classActivityDatacube.setViews(studentsClassActivity.getViews());
 			classActivityDatacube.setTimeSpent(studentsClassActivity.getTimeSpent());
 			classActivityDatacube.setScore(studentsClassActivity.getScore());
+		}
+	}
+	
+	private void contentTaxonomyActivityObjectCreator() {
+		if (contentTaxonomyActivity != null) {
+			contentTaxonomyActivity.setClassUid(classGooruId);
+			contentTaxonomyActivity.setGooruOid(contentGooruId);
+			contentTaxonomyActivity.setTaxonomyIds(taxonomyIds);
+			contentTaxonomyActivity.setUserUid(gooruUUID);
+			contentTaxonomyActivity.setTimeSpent(timespent);
+			contentTaxonomyActivity.setViews(views);
+			contentTaxonomyActivity.setScore(score);
 		}
 	}
 	
