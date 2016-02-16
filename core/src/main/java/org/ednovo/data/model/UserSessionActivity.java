@@ -39,7 +39,7 @@ public class UserSessionActivity implements Serializable, Cloneable {
 	
 	private long reaction;
 	
-	private JSONObject answerObject;
+	private Object answerObject;
 
 	public Object clone()throws CloneNotSupportedException{  
 		return super.clone();  	
@@ -125,11 +125,11 @@ public class UserSessionActivity implements Serializable, Cloneable {
 		this.reaction = reaction;
 	}
 
-	public JSONObject getAnswerObject() {
+	public Object getAnswerObject() {
 		return answerObject;
 	}
 
-	public void setAnswerObject(JSONObject answerObject) {
+	public void setAnswerObject(Object answerObject) {
 		this.answerObject = answerObject;
 	}
 

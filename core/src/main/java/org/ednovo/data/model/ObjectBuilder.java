@@ -54,7 +54,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 	
 	private String resourceType;
 	
-	private JSONObject answerObject;
+	private Object answerObject;
 	
 	private String answerStatus;
 	
@@ -90,7 +90,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		collectionType = eventMap.get(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
 		questionType = setNAIfNull(eventMap, Constants.QUESTION_TYPE);
 		resourceType = setNAIfNull(eventMap, Constants.RESOURCE_TYPE);
-		answerObject = eventMap.containsKey(Constants.ANSWER_OBECT) ? (JSONObject) eventMap.get(Constants.ANSWER_OBECT) : null;
+		answerObject = eventMap.containsKey(Constants.ANSWER_OBECT) ? (Object) eventMap.get(Constants.ANSWER_OBECT) : null;
 		answerStatus = Constants.NA;
 		gradeType = eventMap.containsKey(Constants.GRADE_TYPE) ? (String)eventMap.get(Constants.GRADE_TYPE) : Constants.SYSTEM;
 		taxonomyIds = (eventMap.containsKey("taxonomyIds") ? (List<String>) eventMap.get("taxonomyIds") : null);

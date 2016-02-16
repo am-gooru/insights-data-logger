@@ -64,12 +64,12 @@ public class CassandraProcessor extends BaseDataProcessor implements
 		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
 		eventJson.put("session", new JSONObject(eventJson.getString("session")));
 		eventJson.put("version", new JSONObject(eventJson.getString("version")));
-			
-		eventJson.getJSONObject("payLoadObject").getString("answerObject");
+
+		LOG.info("eventJSON : " +eventJson);
         if (row != null && (row instanceof Event)) {
        	
-       	 Event event = (Event) row;
-        	
+       	Event event = new Event(eventJson.toString());
+       	event.setFields(eventJson.toString());
        	 if(event.getVersion() == null){
             	return;
             }
