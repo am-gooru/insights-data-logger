@@ -838,11 +838,4 @@ public class CassandraDataLoader {
 	public Map<String, String> getKafkaProperty(String propertyName) {
 		return DataLoggerCaches.getKafkaConfigurationCache().get(propertyName);
 	}
-	public static void main(String args[]) throws JSONException{
-		String event = "{\"eventId\":\"61a51b4c-ad3a-47da-9945-3ae81b6edf75\", \"eventName\":\"collection.resource.play\", \"session\":{\"apiKey\":\"ASERTYUIOMNHBGFDXSDWERT123RTGHYT\", \"sessionId\":\"1fdd79d3-d6fe-49d3-b42a-e7a0a793c31a\"}, \"startTime\":1455612141525, \"endTime\":1455612141595, \"user\":{\"gooruUId\":\"6f337b1c-0b0d-49b3-8314-e279181aeddf\"}, \"context\":{\"contentGooruId\":\"3a4c7cd2-a8e4-40f7-858c-3d34669bea1b\", \"parentGooruId\":\"4a63b373-0941-4dc2-a4b1-bc10bbba7bc6\", \"classGooruId\":\"ed7c8831-5203-4ec6-872f-59ab079233a0\", \"parentEventId\":\"B6F57AE5-595A-4E6D-861F-393D92E48574\", \"type\":\"start\", \"resourceType\":\"resource\",\"courseGooruId\":\"659703ac-38ef-46f1-89ea-00a80af0d92d\", \"unitGooruId\":\"ddc0269c-36b0-41ea-bbaf-cb6b6c2c14e4\", \"lessonGooruId\":\"b479f7cd-52af-4b41-a8e5-fbd4b899b099\", \"collectionType\":\"collection\"}, \"version\":{\"logApi\":\"3.0\"}, \"metrics\":{}, \"payLoadObject\":{\"questionType\":\"RES\",\"attemptStatus\":\"\", \"answerObject\":\"{}\",\"isStudent\": true,\"taxonomyIds\":[\"learningTarget6\",\"learningTarget5\",\"learningTarget4\",\"course1\"]}}";    
-		  Event eventObj = new Event(event);
-		  Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(eventObj);
-		  List<String> taxonomyIds = (List<String>) eventMap.get("taxonomyIds");
-		   System.out.println("After Replacing = " + taxonomyIds);	
-	}
 }
