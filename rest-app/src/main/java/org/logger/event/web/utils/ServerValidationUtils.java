@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
@@ -131,7 +131,7 @@ public class ServerValidationUtils {
 		}
 	}
 
-	public static void deepEventCheck(Boolean isValidEvent, Event event,
+	public static void deepEventCheck(Boolean isValidEvent, EventBuilder event,
 			String field) {
 		if (isValidEvent
 				&& event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {

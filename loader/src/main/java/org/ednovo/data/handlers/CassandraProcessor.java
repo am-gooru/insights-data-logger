@@ -28,7 +28,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventValidator;
 import org.json.JSONException;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
@@ -89,9 +89,9 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
             
             handleRowByNextHandler(eventData);
         }
-         if (row != null && (row instanceof Event)) {
+         if (row != null && (row instanceof EventBuilder)) {
         	
-        	 Event event = (Event) row;
+        	 EventBuilder event = (EventBuilder) row;
          	
         	 if(event.getVersion() == null){
              	return;

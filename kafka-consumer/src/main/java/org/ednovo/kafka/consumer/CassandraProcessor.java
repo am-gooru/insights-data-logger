@@ -25,7 +25,7 @@ package org.ednovo.kafka.consumer;
 
 import java.util.Properties;
 
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
@@ -66,9 +66,9 @@ public class CassandraProcessor extends BaseDataProcessor implements
 		eventJson.put("version", new JSONObject(eventJson.getString("version")));
 
 		LOG.info("eventJSON : " +eventJson);
-        if (row != null && (row instanceof Event)) {
+        if (row != null && (row instanceof EventBuilder)) {
        	
-       	Event event = new Event(eventJson.toString());
+       	EventBuilder event = new EventBuilder(eventJson.toString());
        	event.setFields(eventJson.toString());
        	 if(event.getVersion() == null){
             	return;

@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
@@ -113,9 +113,9 @@ public interface BaseCassandraRepo {
 
 	String saveEvent(String cfName, EventData eventData);
 
-	String saveEvent(String cfName, String key, Event event);
+	String saveEvent(String cfName, String key, EventBuilder event);
 
-	void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, Event event);
+	void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, EventBuilder event);
 
 	void updateTimeline(String cfName, EventData eventData, String rowKey);
 

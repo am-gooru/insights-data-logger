@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
@@ -1052,7 +1052,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	 * @return
 	 */
 	@Override
-	public String saveEvent(String cfName, String key, Event event) {
+	public String saveEvent(String cfName, String key, EventBuilder event) {
 
 		if (event.getEventId() == null) {
 			UUID eventKeyUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
@@ -1093,7 +1093,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	 * @param event
 	 */
 	@Override
-	public void updateTimelineObject(final String cfName, final String rowKey, final String CoulmnValue, final Event event) {
+	public void updateTimelineObject(final String cfName, final String rowKey, final String CoulmnValue, final EventBuilder event) {
 
 		// UUID eventColumnTimeUUID = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
 

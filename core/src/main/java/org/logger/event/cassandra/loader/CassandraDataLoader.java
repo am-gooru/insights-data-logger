@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.JSONDeserializer;
 import org.json.JSONException;
@@ -300,21 +300,14 @@ public class CassandraDataLoader {
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
-	public void processMessage(Event event) {
-		Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(event);
+	public void processMessage(EventBuilder event) {
+		//Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
 			kafkaLogWriter.sendEventLog(event.getFields());
-
+			LOG.info("Field : {}" ,event.getFields());
 		}
 		String eventName = event.getEventName();
-		/**
-		 * Calculate timespent in server side if more than two hours
-		 */
-		if (eventName.matches(Constants.PLAY_EVENTS)) {
-			calculateTimespentAndViews(eventMap, event);
-		}
 
-		LOG.info("Field : {}" ,event.getFields());
 		// TODO : This should be reject at validation stage.
 		String apiKey = event.getApiKey() != null ? event.getApiKey() : Constants.DEFAULT_API_KEY;
 		Map<String, Object> records = new HashMap<String, Object>();
@@ -341,10 +334,11 @@ public class CassandraDataLoader {
 		baseDao.updateTimelineObject(ColumnFamilySet.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
 
 		if (eventName.matches(Constants.SESSION_ACTIVITY_EVENTS)) {
-			liveAggregator.eventProcessor(eventMap);
-		} else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
+			liveAggregator.eventProcessor(event);
+		} 
+		/*else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
 			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
-		}
+		}*/
 		
 		/*liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
 
@@ -375,43 +369,6 @@ public class CassandraDataLoader {
 		 */
 
 	}
-
-	/**
-	 * 
-	 * @param eventData
-	 *            Update the event is completion status
-	 * @throws ConnectionException
-	 *             If the host is unavailable
-	 */
-	private void calculateTimespentAndViews(Map<String, Object> eventMap, Event event) {
-		try {
-			long views = 1L;
-			long timeSpent = (event.getEndTime() - event.getStartTime());
-			String collectionType = eventMap.containsKey(Constants.COLLECTION_TYPE) ? (String)eventMap.get(Constants.COLLECTION_TYPE) : null;
-			String eventType = eventMap.containsKey(Constants.TYPE) ? (String)eventMap.get(Constants.TYPE) : null;
-			if((Constants.START.equals(eventType) && Constants.ASSESSMENT.equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))){
-				views = 0L;
-			}
-			
-			if(timeSpent > 7200000 || timeSpent < 0){
-				timeSpent = 7200000;
-			}
-			JSONObject eventMetrics = new JSONObject(event.getMetrics());
-			eventMetrics.put(Constants.TOTALTIMEINMS, timeSpent);
-			eventMetrics.put(Constants.VIEWS_COUNT, views);
-			event.setMetrics(eventMetrics);
-			
-			JSONObject eventFields = new JSONObject(event.getFields());
-			eventFields.put(Constants.METRICS, eventMetrics.toString());
-			event.setFields(eventFields.toString());
-			
-			eventMap.put(Constants.VIEWS_COUNT, views);
-			eventMap.put(Constants.TOTALTIMEINMS, timeSpent);
-		} catch (Exception e) {
-			LOG.error("Exeption while calculting timespent & views:", e);
-		}
-	}
-	
 
 	public void updateActivityCompletion(String userUid, ColumnList<String> activityRow, String eventId, Map<String, Object> timeMap) {
 		Long startTime = activityRow.getLongValue(Constants._START_TIME, 0L), endTime = activityRow.getLongValue(Constants._END_TIME, 0L);

@@ -4,7 +4,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
@@ -57,7 +57,7 @@ public class CloseOpenSessions implements Runnable {
 							baseCassandraDao.saveStringValue(ColumnFamilySet.SESSIONS.getColumnFamily(), (gooruUId + Constants.SEPERATOR + Constants.SESSIONS), session.getName(), Constants.STOP, 1);
 							String eventField = eventDetail.getStringValue(Constants.FIELDS, null);
 							JSONObject eventJson = new JSONObject(eventField);
-							Event event = gson.fromJson(eventField, Event.class);
+							EventBuilder event = gson.fromJson(eventField, EventBuilder.class);
 							event.setEndTime(endTime);
 							JSONObject metrics = new JSONObject(event.getMetrics());
 							metrics.put(Constants.TOTALTIMEINMS, totalTimeSpent);

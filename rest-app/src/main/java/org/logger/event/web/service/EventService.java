@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;

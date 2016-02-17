@@ -662,6 +662,12 @@ public class Constants {
 	
 	public static final String GRADE_TYPE = "gradeType";
 	
+	public static final String GRADE_STATUS = "gradeStatus";
+	
+	public static final String TEACHER_ID = "teacherId";
+	
+	public static final String TAXONOMYIDS = "taxonomyIds";
+	
 	public static final String GRADE_FIELD = "grade1";
 	
 	public static final String SUBJECT_CODE_ID = "subject_code_id";

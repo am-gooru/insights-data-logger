@@ -25,7 +25,7 @@ package org.logger.event.cassandra.loader;
 
 import java.util.Map;
 
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.json.JSONException;
 
@@ -44,7 +44,7 @@ public class EventParser  {
     	
     }
 
-	public void parseObject(EventData eventData , Event eventObject) throws JSONException {
+	public void parseObject(EventData eventData , EventBuilder eventObject) throws JSONException {
 
 	
 	}

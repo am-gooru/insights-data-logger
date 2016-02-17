@@ -48,7 +48,7 @@ public class JSONDeserializer {
 		return null;
 	}
 		
-	public static <T> T deserializeEvent(Event event) {
+	public static <T> T deserializeEvent(EventBuilder event) {
         TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String,Object>>(){};
         TypeReference<Map<String, Number>> numberMapType = new TypeReference<Map<String,Number>>(){};
         Map<String,Object> map = new HashMap<String,Object>();
