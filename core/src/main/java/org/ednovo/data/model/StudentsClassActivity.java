@@ -7,7 +7,7 @@ public class StudentsClassActivity implements Serializable,Cloneable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -5523508378329473185L;
 
 	private String classUid;
 

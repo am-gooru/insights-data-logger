@@ -2,15 +2,13 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-import org.json.JSONObject;
-
 public class UserSessionActivity implements Serializable, Cloneable {
-
+	
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 265127409043957305L;
+
 	private String sessionId;
 	
 	private String gooruOid;

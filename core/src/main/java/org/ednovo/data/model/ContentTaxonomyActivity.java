@@ -1,10 +1,15 @@
 package org.ednovo.data.model;
 
-import java.util.List;
+import java.io.Serializable;
 
 import org.json.JSONArray;
 
-public class ContentTaxonomyActivity {
+public class ContentTaxonomyActivity implements Serializable, Cloneable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3962232378273647276L;
 
 	private String userUid;
 	

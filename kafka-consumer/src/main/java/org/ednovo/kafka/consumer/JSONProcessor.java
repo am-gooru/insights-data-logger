@@ -50,7 +50,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		// Override and set fields to be the original log message / JSON. 
 	        EventBuilder event = null;
 	        try {
-	        	JSONObject eventJson = new JSONObject(row);
+	        	JSONObject eventJson = new JSONObject(jsonRowObject);
 	    		eventJson.put("context", new JSONObject(eventJson.getString("context")));
 	    		eventJson.put("user", new JSONObject(eventJson.getString("user")));
 	    		JSONObject payLoadObject = new JSONObject(eventJson.getString("payLoadObject"));

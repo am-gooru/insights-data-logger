@@ -29,7 +29,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
-import org.omg.CORBA.CODESET_INCOMPATIBLE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -443,7 +442,7 @@ public class EventBuilder {
 			this.courseGooruId = context.isNull(Constants.COURSE_GOORU_OID) ? Constants.NA : context.getString(Constants.COURSE_GOORU_OID);
 			this.classGooruId = context.isNull(Constants.CLASS_GOORU_OID) ? Constants.NA : context.getString(Constants.CLASS_GOORU_OID);
 			this.parentGooruId = context.isNull(Constants.PARENT_GOORU_OID) ? Constants.NA : context.getString(Constants.PARENT_GOORU_OID);
-			if(context.isNull(Constants.COLLECTION_TYPE)){
+			if(!context.isNull(Constants.COLLECTION_TYPE)){
 				this.collectionType = context.getString(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
 			}
 			this.resourceType = context.isNull(Constants.RESOURCE_TYPE) ? Constants.NA : context.getString(Constants.RESOURCE_TYPE);

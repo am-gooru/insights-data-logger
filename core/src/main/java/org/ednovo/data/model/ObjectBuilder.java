@@ -71,6 +71,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity.setQuestionType(event.getQuestionType());
 			userSessionActivity.setEventType(event.getEventType());
 			userSessionActivity.setAnswerStatus(event.getAnswerStatus());
+			userSessionActivity.setAnswerObject(event.getAnswerObject());
 			userSessionActivity.setReaction(event.getReaction());
 			userSessionActivity.setTimeSpent(event.getTimespent());
 			userSessionActivity.setViews(event.getViews());
