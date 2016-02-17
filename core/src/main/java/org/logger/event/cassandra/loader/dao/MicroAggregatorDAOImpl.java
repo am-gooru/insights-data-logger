@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.ObjectBuilder;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
@@ -60,11 +61,11 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	 * @param eventMap
 	 */
 	@Override
-	public void eventProcessor(Map<String, Object> eventMap) {
+	public void eventProcessor(EventBuilder event) {
 
 		try {
-			String eventName = setNullIfEmpty(eventMap, Constants.EVENT_NAME);
-			ObjectBuilder objectBuilderHandler = new ObjectBuilder(eventMap);
+			String eventName = event.getEventName();
+			ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
 			UserSessionActivity userSessionActivity = objectBuilderHandler.getUserSessionActivity();
 			UserSessionActivity userAllSessionActivity = objectBuilderHandler.getUserAllSessionActivity();
 			StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
@@ -102,7 +103,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 				service.submit(new MastryGenerator(contentTaxonomyActivity, baseCassandraDao));
 				LOG.info("calling mastery generator : {} ", userSessionActivity.getSessionId());
 			}
-			saveQuestionGrade(eventName, eventMap);
+			saveQuestionGrade(event);
 
 		} catch (Exception e) {
 			LOG.error("Exception:", e);
@@ -136,28 +137,28 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	 * @param eventName
 	 * @param eventMap
 	 */
-	private void saveQuestionGrade(String eventName, Map<String, Object> eventMap) {
-		if (eventName.equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())) {
-			if (eventMap.get("gradeStatus").equals("save")) {
-				baseCassandraDao.saveQuestionGrade((String) eventMap.get("teacherId"), (String) eventMap.get(Constants.GOORUID), (String) eventMap.get(Constants.SESSION_ID),
-						(String) eventMap.get(Constants.CONTENT_GOORU_OID), ((Number) eventMap.get(Constants.SCORE)).longValue());
-			} else if (eventMap.get("gradeStatus").equals("submit")) {
-				Rows<String, String> questionScores = baseCassandraDao.getQuestionsGradeBySessionId((String) eventMap.get("teacherId"), (String) eventMap.get(Constants.GOORUID),
-						(String) eventMap.get(Constants.SESSION_ID));
+	private void saveQuestionGrade(EventBuilder event) {
+		if (event.getEventName().equalsIgnoreCase(LoaderConstants.QUESTION_GRADE.getName())) {
+			if (event.getGradeType().equals("save")) {
+				baseCassandraDao.saveQuestionGrade(event.getTeacherId(), event.getGooruUUID(), event.getSessionId(),
+						event.getContentGooruId(), event.getScore());
+			} else if (event.getGradeStatus().equals("submit")) {
+				Rows<String, String> questionScores = baseCassandraDao.getQuestionsGradeBySessionId(event.getTeacherId(), event.getGooruUUID(),
+						event.getSessionId());
 				if (questionScores != null && questionScores.size() > 0) {
 					for (Row<String, String> questionScore : questionScores) {
 						ColumnList<String> score = questionScore.getColumns();
-						baseCassandraDao.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.CONTENT_GOORU_OID), Constants.NA,
+						baseCassandraDao.saveQuestionGradeInSession(event.getSessionId(), event.getContentGooruId(), Constants.NA,
 								Constants.COMPLETED,score.getLongValue(Constants.SCORE, 0L));
 					}
 				}
-				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID),
+				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) event.getSessionId(), event.getParentGooruId(),
 						Constants.NA);
 				baseCassandraDao.getSessionScore(userCollectionData, LoaderConstants.CPV1.getName());
 				baseCassandraDao
-						.saveQuestionGradeInSession((String) eventMap.get(Constants.SESSION_ID), (String) eventMap.get(Constants.PARENT_GOORU_OID), Constants.NA, Constants.COMPLETED,userCollectionData.getScore());
+						.saveQuestionGradeInSession((String) event.getSessionId(), event.getParentGooruId(), Constants.NA, Constants.COMPLETED,userCollectionData.getScore());
 			}
-			LOG.info("store question grade completed : {} ", eventMap.get(Constants.SESSION_ID));
+			LOG.info("store question grade completed : {} ", event.getSessionId());
 		}
 	}
 

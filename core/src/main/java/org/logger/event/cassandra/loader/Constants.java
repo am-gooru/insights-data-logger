@@ -88,8 +88,6 @@ public class Constants {
 	
 	public static final  String _PARENT_EVENT_ID = "parent_event_id";
 	
-	//public static final  String CLASSPAGEGOORUOID= "classPageGooruId";
-	
 	public static final  String CLASSPAGEGOORUOID= "classpageGooruId";
 	
 	public static final  String VERSION = "version";
@@ -662,6 +660,12 @@ public class Constants {
 	
 	public static final String GRADE_TYPE = "gradeType";
 	
+	public static final String GRADE_STATUS = "gradeStatus";
+	
+	public static final String TEACHER_ID = "teacherId";
+	
+	public static final String TAXONOMYIDS = "taxonomyIds";
+	
 	public static final String GRADE_FIELD = "grade1";
 	
 	public static final String SUBJECT_CODE_ID = "subject_code_id";
@@ -739,6 +743,13 @@ public class Constants {
 	public static final String LTI_SERVICE_ID = "ltiServiceId";
     
 	public static final String NA = "NA";
+	
+	public static final String CORRECT = "correct";
+    
+	public static final String INCORRECT = "in-correct";    
+
+	public static final String SKIPPED = "skipped";
+ 
     
 	/**
 	 * CQL QUERIES

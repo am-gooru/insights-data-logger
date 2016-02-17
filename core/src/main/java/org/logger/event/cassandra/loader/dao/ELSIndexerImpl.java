@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.geo.location.GeoLocation;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.JSONDeserializer;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
@@ -111,7 +111,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl {
 				}
 			}
 			if (jsonField.has(Constants.VERSION)) {
-				Event events = new Gson().fromJson(fields, Event.class);
+				EventBuilder events = new Gson().fromJson(fields, EventBuilder.class);
 				Map<String, Object> eventMap = new HashMap<String, Object>();
 
 				eventMap = JSONDeserializer.deserializeEvent(events);

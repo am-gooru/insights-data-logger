@@ -36,8 +36,8 @@ public class MastryGenerator implements Runnable {
 				TaxonomyActivityDataCube taxonomyActivityDataCube = new TaxonomyActivityDataCube();
 				Map<String, String> contentTaxKeyColumnPair = new HashMap<String, String>();
 				
-				for (String taxId : contentTaxonomyActivity.getTaxonomyIds()) {
-				Rows<String, String> taxRows = baseCassandraDao.getTaxonomy(taxId);
+				for (int index = 0 ;  index < (contentTaxonomyActivity.getTaxonomyIds()).length(); index++) {
+				Rows<String, String> taxRows = baseCassandraDao.getTaxonomy(contentTaxonomyActivity.getTaxonomyIds().getString(index));
 				if (taxRows != null && taxRows.size() > 0) {
 					for (Row<String, String> taxRow : taxRows) {
 						ColumnList<String> taxColumns = taxRow.getColumns();

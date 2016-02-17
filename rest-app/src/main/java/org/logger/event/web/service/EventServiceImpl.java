@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
@@ -133,7 +133,7 @@ public class EventServiceImpl implements EventService {
 	 * @return
 	 */
 	@Async
-	private Boolean validateInsertEvent(Event event) {
+	private Boolean validateInsertEvent(EventBuilder event) {
 		Boolean isValidEvent = true;
 		if (event == null) {
 			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", Constants.RAW_EVENT_NULL_EXCEPTION);
@@ -318,12 +318,12 @@ public class EventServiceImpl implements EventService {
 			for (JsonElement eventJson : eventJsonArr) {
 				JsonObject eventObj = eventJson.getAsJsonObject();
 				String eventString = eventObj.toString();				
-				Event event = new Event(eventString);
+				EventBuilder event = new EventBuilder(eventString);
 					if (event.getUser() != null && event.getUser().length() > 0) {
 						JSONObject user = event.getUser();
 						user.put(Constants.USER_IP, userIp);
 						user.put(Constants.USER_AGENT, userAgent);
-						event.put(Constants.USER, user);
+						event.setUser(user);
 						
 					}
 					event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
@@ -336,7 +336,7 @@ public class EventServiceImpl implements EventService {
 
 	}
 	@Async
-	private void processMessage(Event event){
+	private void processMessage(EventBuilder event){
 		Boolean isValidEvent = validateInsertEvent(event);
 		if (isValidEvent) {
 			dataLoaderService.processMessage(event);

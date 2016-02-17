@@ -24,7 +24,7 @@
 package org.ednovo.kafka.consumer;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.Event;
+import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 
 public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
@@ -48,7 +48,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 		}
 		
 		// Override and set fields to be the original log message / JSON. 
-	        Event event = null;
+	        EventBuilder event = null;
 	        try {
 	        	/**
 	        	 * This is revertable change
@@ -61,7 +61,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 	    		eventJson.put("session", new JSONObject(eventJson.getString("session")));
 	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));
 	    		
-	            event = new Event(eventJson.toString());
+	            event = new EventBuilder(eventJson.toString());
 	            event.setFields(eventJson.toString());        
 	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {
