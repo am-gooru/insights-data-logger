@@ -74,12 +74,13 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity.setReaction(event.getReaction());
 			userSessionActivity.setTimeSpent(event.getTimespent());
 			userSessionActivity.setViews(event.getViews());
+			userSessionActivity.setScore(event.getScore());
 			if ((LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) && Constants.STOP.equals(event.getEventType())) {
 				if(event.getGradeType().equalsIgnoreCase(Constants.SYSTEM)){
 					baseCassandraDao.getSessionScore(userSessionActivity,event.getEventName());
+					userSessionActivity.setScore(userSessionActivity.getScore());
 				}
 			}
-			userSessionActivity.setScore(userSessionActivity.getScore());
 			
 		}
 	}

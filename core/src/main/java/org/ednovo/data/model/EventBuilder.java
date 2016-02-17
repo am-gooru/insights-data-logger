@@ -23,11 +23,13 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataUtils;
+import org.omg.CORBA.CODESET_INCOMPATIBLE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -446,21 +448,21 @@ public class EventBuilder {
 			this.eventType = context.getString(Constants.TYPE);
 			this.sessionId = session.getString(Constants.SESSION_ID);
 			this.questionType = payLoadObject.isNull(Constants.QUESTION_TYPE) ? Constants.NA : payLoadObject.getString(Constants.QUESTION_TYPE);
-			this.answerObject = payLoadObject.isNull(Constants.ANSWER_OBECT) ? Constants.NA : payLoadObject.get(Constants.ANSWER_OBECT);			
+			this.answerObject = payLoadObject.isNull(Constants.ANSWER_OBECT) ? Constants.NA : payLoadObject.get(Constants.ANSWER_OBECT);
 			this.answerStatus = Constants.NA;
 			this.gradeType = payLoadObject.isNull(Constants.GRADE_TYPE) ? Constants.SYSTEM : payLoadObject.getString(Constants.GRADE_TYPE);
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
 			if (payLoadObject.isNull(Constants.TAXONOMYIDS)) {
 				this.taxonomyIds = new JSONArray();
-			}else{
+			} else {
 				this.taxonomyIds = (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
 			}
 			this.eventTime = endTime;
 			this.collectionItemId = Constants.NA;
-			this.score = 0;			
+			this.score = 0;
 			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : DataUtils.formatReactionString(context.getString(Constants.REACTION_TYPE));
-			
+
 			if (eventName.matches("collection.play|collection.resource.play|resource.play")) {
 				this.views = 1L;
 				this.timespent = (endTime - startTime);
@@ -475,16 +477,43 @@ public class EventBuilder {
 				metrics.put("viewsCount", views);
 				metrics.put("totalTimeSpentInMs", timespent);
 			}
+
+			if (Constants.QUESTION.equals(resourceType) && (Constants.STOP.equals(eventType))) {
+				int attemptSeq = 0;
+				if (payLoadObject.getString(Constants.ATTMPT_TRY_SEQ) == null) {
+					answerStatus = payLoadObject.getString(Constants.ATTEMPT_STATUS);
+				} else {
+					int[] attempStatus = TypeConverter.stringToIntArray(payLoadObject.getString(Constants.ATTEMPT_STATUS));
+
+					if (attempts != 0) {
+						attemptSeq = attempts - 1;
+					}
+					if (attempStatus.length == 0) {
+						answerStatus = Constants.SKIPPED;
+					} else if (attempStatus[attemptSeq] == 0) {
+						answerStatus = Constants.INCORRECT;
+						score = 0;
+					} else if (attempStatus[attemptSeq] == 1) {
+						answerStatus = Constants.CORRECT;
+						score = 100;
+					}
+				}
+				if (Constants.OE.equals(questionType)) {
+					try {
+						if (StringUtils.isNotBlank(payLoadObject.getString(Constants.TEXT))) {
+							answerStatus = Constants.ATTEMPTED;
+						}
+					} catch (Exception e) {
+						LOG.error("Exception", e);
+					}
+				}
+				LOG.info("answerStatus : " + answerStatus);
+
+			}
 		} catch (JSONException e) {
-			LOG.error("Exception:",e);
+			LOG.error("Exception:", e);
 		}
 		return this;
-	}
-
-	public static void main(String args[]) throws JSONException {
-		String event = "{\"eventId\":\"61a51b4c-ad3a-47da-9945-3ae81b6edf75\", \"eventName\":\"collection.resource.play\", \"session\":{\"apiKey\":\"ASERTYUIOMNHBGFDXSDWERT123RTGHYT\", \"sessionId\":\"1fdd79d3-d6fe-49d3-b42a-e7a0a793c31a\"}, \"startTime\":1455612141525, \"endTime\":1455612141595, \"user\":{\"gooruUId\":\"6f337b1c-0b0d-49b3-8314-e279181aeddf\"}, \"context\":{\"contentGooruId\":\"3a4c7cd2-a8e4-40f7-858c-3d34669bea1b\", \"parentGooruId\":\"4a63b373-0941-4dc2-a4b1-bc10bbba7bc6\", \"classGooruId\":\"ed7c8831-5203-4ec6-872f-59ab079233a0\", \"parentEventId\":\"B6F57AE5-595A-4E6D-861F-393D92E48574\", \"type\":\"start\", \"resourceType\":\"resource\",\"courseGooruId\":\"659703ac-38ef-46f1-89ea-00a80af0d92d\", \"unitGooruId\":\"ddc0269c-36b0-41ea-bbaf-cb6b6c2c14e4\", \"lessonGooruId\":\"b479f7cd-52af-4b41-a8e5-fbd4b899b099\", \"collectionType\":\"collection\"}, \"version\":{\"logApi\":\"3.0\"}, \"metrics\":{}, \"payLoadObject\":{\"questionType\":\"RES\",\"attemptStatus\":\"\", \"answerObject\":{\"attempt1\":[ { \"answerId\":10464382, \"timeStamp\":1455623397975, \"skip\":false, \"text\":\"dsdsds\", \"status\":\"0\", \"order\":\"1\" } ]},\"isStudent\": true,\"taxonomyIds\":[\"learningTarget6\",\"learningTarget5\",\"learningTarget4\",\"course1\"]}}";
-		EventBuilder eventObj = new EventBuilder(event);
-		System.out.print("id : "+ eventObj.getTaxonomyIds());
 	}
 
 }

@@ -88,8 +88,6 @@ public class Constants {
 	
 	public static final  String _PARENT_EVENT_ID = "parent_event_id";
 	
-	//public static final  String CLASSPAGEGOORUOID= "classPageGooruId";
-	
 	public static final  String CLASSPAGEGOORUOID= "classpageGooruId";
 	
 	public static final  String VERSION = "version";
@@ -745,6 +743,13 @@ public class Constants {
 	public static final String LTI_SERVICE_ID = "ltiServiceId";
     
 	public static final String NA = "NA";
+	
+	public static final String CORRECT = "correct";
+    
+	public static final String INCORRECT = "in-correct";    
+
+	public static final String SKIPPED = "skipped";
+ 
     
 	/**
 	 * CQL QUERIES
