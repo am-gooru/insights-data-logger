@@ -435,7 +435,7 @@ public class EventBuilder {
 			this.endTime = this.event.getLong("endTime");
 			this.eventId = this.event.getString("eventId");
 			this.eventName = this.event.getString("eventName");
-			this.apiKey = session.getString("apiKey");
+			this.apiKey = session.isNull(Constants.API_KEY) ? Constants.NA : session.getString(Constants.API_KEY);
 			this.contentGooruId = context.getString("contentGooruId");
 			this.gooruUUID = user.getString(Constants.GOORUID);
 			this.lessonGooruId = context.isNull(Constants.LESSON_GOORU_OID) ? Constants.NA : context.getString(Constants.LESSON_GOORU_OID);
@@ -443,9 +443,11 @@ public class EventBuilder {
 			this.courseGooruId = context.isNull(Constants.COURSE_GOORU_OID) ? Constants.NA : context.getString(Constants.COURSE_GOORU_OID);
 			this.classGooruId = context.isNull(Constants.CLASS_GOORU_OID) ? Constants.NA : context.getString(Constants.CLASS_GOORU_OID);
 			this.parentGooruId = context.isNull(Constants.PARENT_GOORU_OID) ? Constants.NA : context.getString(Constants.PARENT_GOORU_OID);
-			this.collectionType = context.getString(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
+			if(context.isNull(Constants.COLLECTION_TYPE)){
+				this.collectionType = context.getString(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
+			}
 			this.resourceType = context.isNull(Constants.RESOURCE_TYPE) ? Constants.NA : context.getString(Constants.RESOURCE_TYPE);
-			this.eventType = context.getString(Constants.TYPE);
+			this.eventType =  context.isNull(Constants.TYPE) ? Constants.NA: context.getString(Constants.TYPE);
 			this.sessionId = session.getString(Constants.SESSION_ID);
 			this.questionType = payLoadObject.isNull(Constants.QUESTION_TYPE) ? Constants.NA : payLoadObject.getString(Constants.QUESTION_TYPE);
 			this.answerObject = payLoadObject.isNull(Constants.ANSWER_OBECT) ? Constants.NA : payLoadObject.get(Constants.ANSWER_OBECT);
@@ -463,12 +465,11 @@ public class EventBuilder {
 			this.score = 0;
 			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : DataUtils.formatReactionString(context.getString(Constants.REACTION_TYPE));
 
-			if (eventName.matches("collection.play|collection.resource.play|resource.play")) {
+			if (eventName.matches(Constants.PLAY_EVENTS)) {
 				this.views = 1L;
 				this.timespent = (endTime - startTime);
-				String collectionType = context.getString("collectionType");
-				String eventType = context.getString("type");
-				if (("start".equals(eventType) && "assessment".equalsIgnoreCase(collectionType)) || ("stop".equals(eventType) && "collection".equalsIgnoreCase(collectionType))) {
+				String collectionType = context.getString(Constants.COLLECTION_TYPE);
+				if ((Constants.START.equals(eventType) && "assessment".equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))) {
 					views = 0L;
 				}
 				if (timespent > 7200000 || timespent < 0) {
