@@ -51,39 +51,11 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	@Override
 	public void handleRow(Object row) throws Exception {
 
-		/**
-		 * This changes to be revertable
-		 */
-		JSONObject eventJson = new JSONObject(row);
-		eventJson.put("context", new JSONObject(eventJson.getString("context")));
-		eventJson.put("user", new JSONObject(eventJson.getString("user")));
-		JSONObject payLoadObject = new JSONObject(eventJson.getString("payLoadObject"));
-		if(!payLoadObject.isNull("answerObject")){
-			JSONObject answerObject =  new JSONObject(payLoadObject.getString("answerObject"));
-			payLoadObject.put("answerObject", answerObject);
+
+		LOG.info("eventJSON : " +row);
+		if (row != null && (row instanceof EventBuilder)) {
+			dataLoader.processMessage((EventBuilder) row);
 		}
-		eventJson.put("payLoadObject", payLoadObject);
-		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
-		eventJson.put("session", new JSONObject(eventJson.getString("session")));
-		eventJson.put("version", new JSONObject(eventJson.getString("version")));
-
-		LOG.info("eventJSON : " +eventJson);
-        if (row != null && (row instanceof EventBuilder)) {
-       	
-       	EventBuilder event = new EventBuilder(eventJson.toString());
-       	event.setFields(eventJson.toString());
-       	 if(event.getVersion() == null){
-            	return;
-            }
-       	 
-       	if (event.getEventName() == null || event.getEventName().isEmpty() || event.getContext() == null) {
-       		logger.warn("EventName or Context is empty. This is an error in EventObject");
-       		return;
-        	}
-
-//       	eventObjectValidator.validateEventObject(eventObject);
-        	dataLoader.processMessage(event);
-        }
 	}
          
         public DataLoggerCaches getLoggerCache() {
