@@ -158,6 +158,8 @@ public class Constants {
 	
 	public static final  String REACTION = "reaction";
 	
+	public static final  String REACTION_CREATE = "reaction.create";
+	
 	public static final  String TOTAL_REACTION = "total_reaction";
 	
 	public static final  String REACTED_COUNT = "reacted_count";
@@ -710,7 +712,7 @@ public class Constants {
 	
 	public static final  String RECOMPUTE_SUCCESS_MESSAGE =  "Re-Computation is completed for: ";
 	
-	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|reaction.create";
+	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|reaction.create|resource.play";
 	
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 	

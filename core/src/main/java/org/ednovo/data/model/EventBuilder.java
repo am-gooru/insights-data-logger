@@ -27,7 +27,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
-import org.logger.event.cassandra.loader.DataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -461,13 +460,13 @@ public class EventBuilder {
 			this.eventTime = endTime;
 			this.collectionItemId = Constants.NA;
 			this.score = 0;
-			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : DataUtils.formatReactionString(context.getString(Constants.REACTION_TYPE));
+			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : context.getLong(Constants.REACTION_TYPE);
 
 			if (eventName.matches(Constants.PLAY_EVENTS)) {
 				this.views = 1L;
 				this.timespent = (endTime - startTime);
 				String collectionType = context.getString(Constants.COLLECTION_TYPE);
-				if ((Constants.START.equals(eventType) && Constants.ASSESSMENT.equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))) {
+				if ((eventName.equalsIgnoreCase(Constants.REACTION_CREATE)) || (Constants.START.equals(eventType) && Constants.ASSESSMENT.equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))) {
 					views = 0L;
 				}
 				if (timespent > 7200000 || timespent < 0) {
