@@ -51,7 +51,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 	        EventBuilder event = null;
 	        try {
 	        	JSONObject eventJson = new JSONObject(jsonRowObject);
-	    		eventJson.put("context", new JSONObject(eventJson.getString("context")));
+	    		/*eventJson.put("context", new JSONObject(eventJson.getString("context")));
 	    		eventJson.put("user", new JSONObject(eventJson.getString("user")));
 	    		JSONObject payLoadObject = new JSONObject(eventJson.getString("payLoadObject"));
 	    		if(!payLoadObject.isNull("answerObject")){
@@ -61,7 +61,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 	    		eventJson.put("payLoadObject", payLoadObject);
 	    		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
 	    		eventJson.put("session", new JSONObject(eventJson.getString("session")));
-	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));
+	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));*/
 	    		
 	            event = new EventBuilder(eventJson.toString());
 	            event.setFields(eventJson.toString());        
