@@ -424,18 +424,18 @@ public class EventBuilder {
 
 	public EventBuilder build() {
 		try {
-			this.context = this.event.getJSONObject("context");
-			this.user = this.event.getJSONObject("user");
-			this.payLoadObject = this.event.getJSONObject("payLoadObject");
-			this.metrics = this.event.getJSONObject("metrics");
-			this.session = this.event.getJSONObject("session");
-			this.version = this.event.getJSONObject("version");
-			this.startTime = this.event.getLong("startTime");
-			this.endTime = this.event.getLong("endTime");
-			this.eventId = this.event.getString("eventId");
-			this.eventName = this.event.getString("eventName");
+			this.context = this.event.getJSONObject(Constants.CONTEXT);
+			this.user = this.event.getJSONObject(Constants.USER);
+			this.payLoadObject = this.event.getJSONObject(Constants.PAY_LOAD);
+			this.metrics = this.event.getJSONObject(Constants.METRICS);
+			this.session = this.event.getJSONObject(Constants.SESSION);
+			this.version = this.event.getJSONObject(Constants.VERSION);
+			this.startTime = this.event.getLong(Constants.START_TIME);
+			this.endTime = this.event.getLong(Constants.END_TIME);
+			this.eventId = this.event.getString(Constants.EVENT_ID);
+			this.eventName = this.event.getString(Constants.EVENT_NAME);
 			this.apiKey = session.isNull(Constants.API_KEY) ? Constants.NA : session.getString(Constants.API_KEY);
-			this.contentGooruId = context.getString("contentGooruId");
+			this.contentGooruId = context.isNull(Constants.CONTENT_GOORU_OID) ? Constants.NA : context.getString(Constants.CONTENT_GOORU_OID);
 			this.gooruUUID = user.getString(Constants.GOORUID);
 			this.lessonGooruId = context.isNull(Constants.LESSON_GOORU_OID) ? Constants.NA : context.getString(Constants.LESSON_GOORU_OID);
 			this.unitGooruId = context.isNull(Constants.UNIT_GOORU_OID) ? Constants.NA : context.getString(Constants.UNIT_GOORU_OID);
@@ -447,7 +447,7 @@ public class EventBuilder {
 			}
 			this.resourceType = context.isNull(Constants.RESOURCE_TYPE) ? Constants.NA : context.getString(Constants.RESOURCE_TYPE);
 			this.eventType =  context.isNull(Constants.TYPE) ? Constants.NA: context.getString(Constants.TYPE);
-			this.sessionId = session.getString(Constants.SESSION_ID);
+			this.sessionId = session.isNull(Constants.SESSION_ID) ? Constants.NA : session.getString(Constants.SESSION_ID);
 			this.questionType = payLoadObject.isNull(Constants.QUESTION_TYPE) ? Constants.NA : payLoadObject.getString(Constants.QUESTION_TYPE);
 			this.answerObject = payLoadObject.isNull(Constants.ANSWER_OBECT) ? Constants.NA : payLoadObject.get(Constants.ANSWER_OBECT);
 			this.answerStatus = Constants.NA;
@@ -468,14 +468,14 @@ public class EventBuilder {
 				this.views = 1L;
 				this.timespent = (endTime - startTime);
 				String collectionType = context.getString(Constants.COLLECTION_TYPE);
-				if ((Constants.START.equals(eventType) && "assessment".equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))) {
+				if ((Constants.START.equals(eventType) && Constants.ASSESSMENT.equalsIgnoreCase(collectionType)) || (Constants.STOP.equals(eventType) && Constants.COLLECTION.equalsIgnoreCase(collectionType))) {
 					views = 0L;
 				}
 				if (timespent > 7200000 || timespent < 0) {
 					timespent = 7200000;
 				}
-				metrics.put("viewsCount", views);
-				metrics.put("totalTimeSpentInMs", timespent);
+				metrics.put(Constants.VIEWS_COUNT, views);
+				metrics.put(Constants.TOTALTIMEINMS, timespent);
 			}
 
 			if (Constants.QUESTION.equals(resourceType) && (Constants.STOP.equals(eventType))) {
@@ -499,18 +499,14 @@ public class EventBuilder {
 					}
 				}
 				if (Constants.OE.equals(questionType)) {
-					try {
 						if (StringUtils.isNotBlank(payLoadObject.getString(Constants.TEXT))) {
 							answerStatus = Constants.ATTEMPTED;
 						}
-					} catch (Exception e) {
-						LOG.error("Exception", e);
-					}
 				}
 				LOG.info("answerStatus : " + answerStatus);
 
 			}
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			LOG.error("Exception:", e);
 		}
 		return this;
