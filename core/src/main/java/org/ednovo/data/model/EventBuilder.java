@@ -23,7 +23,6 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
-import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -479,29 +478,12 @@ public class EventBuilder {
 			}
 
 			if (Constants.QUESTION.equals(resourceType) && (Constants.STOP.equals(eventType))) {
-				int attemptSeq = 0;
-				if (payLoadObject.getString(Constants.ATTMPT_TRY_SEQ) == null) {
-					answerStatus = payLoadObject.getString(Constants.ATTEMPT_STATUS);
-				} else {
-					int[] attempStatus = TypeConverter.stringToIntArray(payLoadObject.getString(Constants.ATTEMPT_STATUS));
+				answerStatus = payLoadObject.isNull(Constants.ATTEMPT_STATUS) ? Constants.ATTEMPTED : payLoadObject.getString(Constants.ATTEMPT_STATUS);
 
-					if (attempts != 0) {
-						attemptSeq = attempts - 1;
-					}
-					if (attempStatus.length == 0) {
-						answerStatus = Constants.SKIPPED;
-					} else if (attempStatus[attemptSeq] == 0) {
-						answerStatus = Constants.INCORRECT;
-						score = 0;
-					} else if (attempStatus[attemptSeq] == 1) {
-						answerStatus = Constants.CORRECT;
-						score = 100;
-					}
-				}
-				if (Constants.OE.equals(questionType)) {
-						if (StringUtils.isNotBlank(payLoadObject.getString(Constants.TEXT))) {
-							answerStatus = Constants.ATTEMPTED;
-						}
+				if (answerStatus.equalsIgnoreCase(Constants.INCORRECT)) {
+					score = 0;
+				} else if (answerStatus.equalsIgnoreCase(Constants.CORRECT)) {
+					score = 100;
 				}
 				LOG.info("answerStatus : " + answerStatus);
 
