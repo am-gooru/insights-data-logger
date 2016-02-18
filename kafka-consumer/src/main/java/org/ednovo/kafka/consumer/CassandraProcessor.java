@@ -50,9 +50,6 @@ public class CassandraProcessor extends BaseDataProcessor implements
 
 	@Override
 	public void handleRow(Object row) throws Exception {
-
-
-		LOG.info("eventJSON : " +row);
 		if (row != null && (row instanceof EventBuilder)) {
 			dataLoader.processMessage((EventBuilder) row);
 		}
