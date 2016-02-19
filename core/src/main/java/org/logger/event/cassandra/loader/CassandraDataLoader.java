@@ -336,16 +336,19 @@ public class CassandraDataLoader {
 		if (eventName.matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
 		} 
+		
+		liveDashBoardDAOImpl.realTimeMetricsCounter(event);
+		
 		/*else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
 			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
 		}*/
 		
-		/*liveDashBoardDAOImpl.realTimeMetricsCounter(eventMap);
-
+		/*
 		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventName)) {
 			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
 		}
-*/
+		*/
+
 		if (DataLoggerCaches.getCanRunIndexing()) {
 			//indexer.indexEvents(event.getFields());
 		}
