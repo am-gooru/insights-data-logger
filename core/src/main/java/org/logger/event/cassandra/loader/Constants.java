@@ -714,6 +714,8 @@ public class Constants {
 	
 	public static final  String PLAY_EVENTS = "collection.play|collection.resource.play|reaction.create|resource.play";
 	
+	public static final  String VIEW_CALC_EVENTS = "collection.play|collection.resource.play|resource.play";
+	
 	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
 	
 	public static final String CUL_IDS_MISSING = "CUL ids missing : ";

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.ednovo.data.geo.location.GeoLocation;
+import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.GeoData;
 import org.ednovo.data.model.TypeConverter;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
@@ -52,6 +53,17 @@ public class LiveDashBoardDAOImpl extends BaseDAOCassandraImpl {
 	 * 
 	 * @param eventMap
 	 */
+	public <T> void realTimeMetricsCounter(EventBuilder eventMap) {
+		try {
+			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL);
+			if (eventMap.getEventName().matches(Constants.VIEW_CALC_EVENTS)) {
+				baseDao.generateCounter(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), (Constants.ALL_TILT + eventMap.getContentGooruId()), "count~views", eventMap.getViews(), m);
+			}
+			m.execute();
+		} catch (Exception e) {
+			LOG.error("Exception", e);
+		}
+	}
 	public <T> void realTimeMetricsCounter(Map<String, Object> eventMap) {
 		if ((eventMap.containsKey(Constants.EVENT_NAME))) {
 			try {

@@ -23,6 +23,7 @@
  ******************************************************************************/
 package org.ednovo.data.model;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -478,8 +479,11 @@ public class EventBuilder {
 
 			if (Constants.QUESTION.equals(resourceType) && (Constants.STOP.equals(eventType))) {
 				answerStatus = payLoadObject.isNull(Constants.ATTEMPT_STATUS) ? Constants.ATTEMPTED : payLoadObject.getString(Constants.ATTEMPT_STATUS);
-
-				if (answerStatus.equalsIgnoreCase(Constants.INCORRECT)) {
+				
+				if(StringUtils.isBlank(answerStatus)){
+					answerStatus = Constants.ATTEMPTED;
+					score = 0;
+				} else if (answerStatus.equalsIgnoreCase(Constants.INCORRECT)) {
 					score = 0;
 				} else if (answerStatus.equalsIgnoreCase(Constants.CORRECT)) {
 					score = 100;
