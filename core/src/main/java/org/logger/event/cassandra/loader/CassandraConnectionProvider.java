@@ -28,9 +28,9 @@
 package org.logger.event.cassandra.loader;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.Properties;
-import java.net.InetAddress;
 
 import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.UserCo;
@@ -40,8 +40,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
-import org.logger.event.cassandra.loader.ESIndexices;
-import org.logger.event.cassandra.loader.EsMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -120,6 +118,8 @@ public class CassandraConnectionProvider {
                     .forCluster(CASSANDRA_CLUSTER)
                     .forKeyspace(keyspace)
                     .withAstyanaxConfiguration(new AstyanaxConfigurationImpl()
+                    .setTargetCassandraVersion("2.1.4")
+                    .setCqlVersion("3.0.0")
                     .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                     .setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN))
                     .withConnectionPoolConfiguration(poolConfig)
