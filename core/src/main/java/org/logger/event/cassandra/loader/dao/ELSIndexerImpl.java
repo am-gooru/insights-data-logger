@@ -75,31 +75,46 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
 		this.geoLocation = GeoLocation.getInstance();
 		
-       /* Rows<String, String> licenseRows = null;
-        baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),licenseRows);
-        licenseCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : licenseRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> resourceTypesRows = null;
-        baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(),resourceTypesRows);
-        resourceTypesCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : resourceTypesRows) {
-        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> categoryRows = null;
-        baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(),categoryRows);
-        categoryCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : categoryRows) {
-        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> instructionalRows = null;
-        baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(),instructionalRows);
+        baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),new CallbackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				licenseCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
         
-        instructionalCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : instructionalRows) {
-        	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}*/
+        Rows<String, String> resourceTypesRows = null;
+        baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(),new CallbackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				resourceTypesCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
+        baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(),new CallbackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {
+				categoryCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+				
+			}
+		});
+        baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(),new CallbackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				instructionalCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
+        
         cache = new LinkedHashMap<String, String>();
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
         REPOPATH = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();

@@ -2,7 +2,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import com.netflix.astyanax.model.Rows;
 
-public class AllRowsImpl implements AllRows {
+public class CallbackRowsImpl implements CallbackRows {
 
 	private Rows<String, String> rows;
 	

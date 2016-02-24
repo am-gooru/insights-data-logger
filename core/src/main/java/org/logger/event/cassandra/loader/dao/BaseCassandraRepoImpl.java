@@ -546,7 +546,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 
-	public Rows<String, String> readAllRows(final String cfName, final AllRows allRows ) {
+	public Rows<String, String> readAllRows(final String cfName, final CallbackRows allRows ) {
 		try {
 			boolean result = new AllRowsReader.Builder<String, String>(getKeyspace(), this.accessColumnFamily(cfName)).withPageSize(100) // Read 100 rows at a time
 					.withConcurrencyLevel(10) // Split entire token range into 10. Default is by number of nodes.
