@@ -23,7 +23,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraConnectionProvider;
-import org.logger.event.cassandra.loader.ColumnFamily;
+import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.DataUtils;
@@ -75,30 +75,49 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
 		this.geoLocation = GeoLocation.getInstance();
 		
-        Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamily.LICENSE.getColumnFamily(),0);
-        licenseCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : licenseRows) {
-        	licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamily.RESOURCETYPES.getColumnFamily(),0);
-        resourceTypesCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : resourceTypesRows) {
-        	resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamily.CATEGORY.getColumnFamily(),0);
-        categoryCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : categoryRows) {
-        	categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
-        Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamily.INSTRUCTIONAL.getColumnFamily(),0);
+        baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),new CallBackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				licenseCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
         
-        instructionalCache = new LinkedHashMap<String, Object>();
-        for (Row<String, String> row : instructionalRows) {
-        	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
+        Rows<String, String> resourceTypesRows = null;
+        baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(),new CallBackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				resourceTypesCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
+        baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(),new CallBackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {
+				categoryCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+				
+			}
+		});
+        baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(),new CallBackRows() {
+			@Override
+			public void getRows(Rows<String, String> rows) {				
+				instructionalCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : rows) {
+					instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+		});
+        
         cache = new LinkedHashMap<String, String>();
-        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
-        REPOPATH = baseDao.readWithKeyColumn(ColumnFamily.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
+        cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
+        REPOPATH = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();
 	}
 
 	/**
@@ -131,7 +150,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				eventMap = this.getTaxonomyInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
 				eventMap = this.getContentInfo(eventMap, ((String)eventMap.get(CONTENT_GOORU_OID)));
 
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
 				if (questionList != null && questionList.size() > 0) {
 					eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
 					eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
@@ -254,7 +273,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 
 				if (eventMap.get(EVENT_NAME).equals(LoaderConstants.CPV1.getName()) && eventMap.containsKey(CONTENT_GOORU_OID) && StringUtils.isNotBlank(eventMap.get(CONTENT_GOORU_OID).toString())) {
-					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
+					ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), ((String)eventMap.get(CONTENT_GOORU_OID)), 0);
 					if (questionList != null && questionList.size() > 0) {
 						eventMap.put(QUESTION_COUNT, questionList.getColumnByName(QUESTION_COUNT) != null ? questionList.getColumnByName(QUESTION_COUNT).getLongValue() : 0L);
 						eventMap.put(RESOURCE_COUNT, questionList.getColumnByName(RESOURCE_COUNT) != null ? questionList.getColumnByName(RESOURCE_COUNT).getLongValue() : 0L);
@@ -297,12 +316,12 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	public void indexResource(String ids) throws Exception {
 		for (String id : ids.split(COMMA)) {
 			logger.info("Indexing resources : {}", id);
-			ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), id, 0);
+			ColumnList<String> resource = baseDao.readWithKey(ColumnFamilySet.RESOURCE.getColumnFamily(), id, 0);
 			if (resource != null && resource.size() > 0) {
 				this.getResourceAndIndex(resource, id);
 			} else {
 				logger.info("Indexing resources from dim_resource : {}", id);
-				ColumnList<String> dimResource = baseDao.readWithKey(ColumnFamily.DIMRESOURCE.getColumnFamily(), "GLP~".concat(id), 0);
+				ColumnList<String> dimResource = baseDao.readWithKey(ColumnFamilySet.DIMRESOURCE.getColumnFamily(), "GLP~".concat(id), 0);
 				if (dimResource != null && dimResource.size() > 0) {
 					this.getDimResourceAndIndex(dimResource, id);
 				} else {
@@ -323,7 +342,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		Collection<String> user = new ArrayList<String>();
 		user.add(gooruUId);
 		try {
-			ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), gooruUId, 0);
+			ColumnList<String> eventDetailsNew = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDUSER.getColumnFamily(), gooruUId, 0);
 			if (eventDetailsNew != null && eventDetailsNew.size() > 0) {
 				for (int i = 0; i < eventDetailsNew.size(); i++) {
 					String columnName = eventDetailsNew.getColumnByIndex(i).getName();
@@ -348,11 +367,11 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 */
 	public Map<String, Object> getContentInfo(Map<String, Object> eventMap, String gooruOId) {
 
-		Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
+		Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamilySet.COLLECTIONITEM.getColumnFamily(), gooruOId, 0);
 		if (contentItems != null && !contentItems.isEmpty()) {
 			eventMap.put("contentItems", contentItems);
 		}
-		ColumnList<String> resource = baseDao.readWithKey(ColumnFamily.RESOURCE.getColumnFamily(), gooruOId, 0);
+		ColumnList<String> resource = baseDao.readWithKey(ColumnFamilySet.RESOURCE.getColumnFamily(), gooruOId, 0);
 		if (resource != null) {
 			if(resource.getColumnByName("title") != null){
 				eventMap.put("title", resource.getColumnByName("title").getStringValue());
@@ -402,7 +421,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				eventMap.put("instructionalId", DataLoggerCaches.getInstructionalCache().get(resource.getColumnByName("instructional").getStringValue()));
 			}
 
-			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOId, 0);
+			ColumnList<String> questionCount = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), gooruOId, 0);
 			if (questionCount != null && !questionCount.isEmpty()) {
 				long questionCounts = questionCount.getLongValue(QUESTION_COUNT, 0L);
 				eventMap.put(QUESTION_COUNT, questionCounts);
@@ -426,7 +445,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		user.add(gooruOid);
 		Map<String, String> whereColumn = new HashMap<String, String>();
 		whereColumn.put("gooru_oid", gooruOid);
-		Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamily.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn, 0);
+		Rows<String, String> eventDetailsNew = baseDao.readIndexedColumnList(ColumnFamilySet.DIMCONTENTCLASSIFICATION.getColumnFamily(), whereColumn, 0);
 		Set<Long> subjectCode = new HashSet<Long>();
 		Set<Long> courseCode = new HashSet<Long>();
 		Set<Long> unitCode = new HashSet<Long>();
@@ -444,7 +463,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				if (value != 0L && depth == 1L) {
 					subjectCode.add(value);
 				} else if (depth == 2L) {
-					ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
+					ColumnList<String> columns = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
 					long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 					if (subject != 0L)
 						subjectCode.add(subject);
@@ -453,7 +472,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 
 				else if (depth == 3L) {
-					ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
+					ColumnList<String> columns = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
 					long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 					long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 					if (subject != 0L)
@@ -463,7 +482,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					if (value != 0L)
 						unitCode.add(value);
 				} else if (depth == 4L) {
-					ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
+					ColumnList<String> columns = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
 					long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 					long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 					long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -476,7 +495,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					if (value != 0L)
 						topicCode.add(value);
 				} else if (depth == 5L) {
-					ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
+					ColumnList<String> columns = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
 					long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 					long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 					long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -492,7 +511,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 					if (value != 0L)
 						lessonCode.add(value);
 				} else if (depth == 6L) {
-					ColumnList<String> columns = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
+					ColumnList<String> columns = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), String.valueOf(value), 0);
 					long subject = columns.getColumnByName("subject_code_id") != null ? columns.getColumnByName("subject_code_id").getLongValue() : 0L;
 					long course = columns.getColumnByName("course_code_id") != null ? columns.getColumnByName("course_code_id").getLongValue() : 0L;
 					long unit = columns.getColumnByName("unit_code_id") != null ? columns.getColumnByName("unit_code_id").getLongValue() : 0L;
@@ -623,13 +642,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				resourceMap = this.getUserInfo(resourceMap, columns.getColumnByName("owner.userUid").getStringValue());
 			}
 			if (StringUtils.isNotBlank(gooruOid)) {
-				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOid, 0);
+				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamilySet.COLLECTIONITEM.getColumnFamily(), gooruOid, 0);
 				if (!contentItems.isEmpty()) {
 					resourceMap.put("contentItems", contentItems);
 				}
 				resourceMap.put("gooruOid", gooruOid);
 
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOid, 0);
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), gooruOid, 0);
 
 				this.getLiveCounterData("all~" + gooruOid, resourceMap);
 
@@ -731,13 +750,13 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				resourceMap.put("instructionalId", instructionalCache.get(columns.getColumnByName("instructional").getStringValue()));
 			}
 			if (gooruOid != null) {
-				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamily.COLLECTIONITEM.getColumnFamily(), gooruOid, 0);
+				Set<String> contentItems = baseDao.getAllLevelParents(ColumnFamilySet.COLLECTIONITEM.getColumnFamily(), gooruOid, 0);
 				if (!contentItems.isEmpty()) {
 					resourceMap.put("contentItems", contentItems);
 				}
 				resourceMap.put("gooruOid", gooruOid);
 
-				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamily.QUESTIONCOUNT.getColumnFamily(), gooruOid, 0);
+				ColumnList<String> questionList = baseDao.readWithKey(ColumnFamilySet.QUESTIONCOUNT.getColumnFamily(), gooruOid, 0);
 
 				this.getLiveCounterData("all~" + gooruOid, resourceMap);
 
@@ -772,7 +791,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 */
 	private Map<String, Object> getLiveCounterData(String key, Map<String, Object> resourceMap) {
 
-		ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamily.LIVEDASHBOARD.getColumnFamily(), key, 0);
+		ColumnList<String> vluesList = baseDao.readWithKey(ColumnFamilySet.LIVEDASHBOARD.getColumnFamily(), key, 0);
 
 		if (vluesList != null && vluesList.size() > 0) {
 
@@ -883,7 +902,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 	 */
 	public void getUserAndIndex(String userId) throws Exception {
 		
-ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFamily(), userId,0);
+ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamilySet.USER.getColumnFamily(), userId,0);
 		
 		if(userInfos != null & userInfos.size() > 0){
 			logger.info("INdexing user : "+ userId);			
@@ -1008,7 +1027,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 				contentBuilder.field("user_profile_image",userInfos.getColumnByName("userProfileImage").getStringValue());
 			}
 	    	
-	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamily.EXTRACTEDUSER.getColumnFamily(), userId, 0);
+	    	ColumnList<String> extractedUserData = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDUSER.getColumnFamily(), userId, 0);
 	    	if(extractedUserData != null) {
 				for (Column<String> column : extractedUserData) {
 					if (StringUtils.isNotBlank(column.getStringValue())) {
@@ -1022,7 +1041,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 								if (column.getName().equalsIgnoreCase(GRADE)) {
 									grades.add(field);
 								} else {
-									ColumnList<String> extractedCodeData = baseDao.readWithKey(ColumnFamily.EXTRACTEDCODE.getColumnFamily(), field, 0);
+									ColumnList<String> extractedCodeData = baseDao.readWithKey(ColumnFamilySet.EXTRACTEDCODE.getColumnFamily(), field, 0);
 									if (extractedCodeData != null && extractedCodeData.getColumnNames().contains(SUBJECT_CODE_ID)) {
 										long subject = extractedCodeData.getLongValue(SUBJECT_CODE_ID, 0L);
 										if(subject != 0L) {
@@ -1046,7 +1065,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 					}
 				}
 	    	}
-	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamily.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
+	    	ColumnList<String> aliasUserData = baseDao.readWithKey(ColumnFamilySet.ANONYMIZEDUSERDATA.getColumnFamily(), userId, 0);
 	    	
 	    	if(aliasUserData.getColumnNames().contains("firstname_alias")){
 	    		contentBuilder.field("firstname_alias", aliasUserData.getColumnByName("firstname_alias").getStringValue());
@@ -1078,7 +1097,7 @@ ColumnList<String> userInfos = baseDao.readWithKey(ColumnFamily.USER.getColumnFa
 	public void indexTaxonomy(String key) throws Exception {
 
 		for (String id : key.split(",")) {
-			ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamily.TAXONOMYCODE.getColumnFamily(), id, 0);
+			ColumnList<String> sourceValues = baseDao.readWithKey(ColumnFamilySet.TAXONOMYCODE.getColumnFamily(), id, 0);
 			if (sourceValues != null && sourceValues.size() > 0) {
 				XContentBuilder contentBuilder = jsonBuilder().startObject();
 				for (int i = 0; i < sourceValues.size(); i++) {

@@ -17,6 +17,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 import org.ednovo.data.model.Event;
 import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.ResourceCo;
@@ -26,6 +28,7 @@ import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
@@ -38,6 +41,7 @@ import com.netflix.astyanax.model.CqlResult;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
+import com.netflix.astyanax.recipes.reader.AllRowsReader;
 import com.netflix.astyanax.retry.ConstantBackoff;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
@@ -522,7 +526,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		Rows<String, String> result = null;
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getAllRows()
-					.withColumnRange(new RangeBuilder().setMaxSize(10).build()).setExceptionCallback(new ExceptionCallback() {
+					.withColumnRange(new RangeBuilder().build()).setRepeatLastToken(true).setExceptionCallback(new ExceptionCallback() {
 						@Override
 						public boolean onException(ConnectionException e) {
 							try {
@@ -542,6 +546,28 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 
+	public Rows<String, String> readAllRows(final String cfName, final CallBackRows allRows ) {
+		try {
+			boolean result = new AllRowsReader.Builder<String, String>(getKeyspace(), this.accessColumnFamily(cfName)).withPageSize(100) // Read 100 rows at a time
+					.withConcurrencyLevel(10) // Split entire token range into 10. Default is by number of nodes.
+					.withPartitioner(null) // this will use keyspace's partitioner
+					.forEachPage(new Function<Rows<String, String>, Boolean>() {
+						@Override
+						public Boolean apply(@Nullable Rows<String, String> rows) {	
+							allRows.getRows(rows);
+							return true;
+						}
+					}).build().call();
+
+		} catch (Exception e) {
+			logger.error("Exception",e);
+		}
+		return null;
+	}	
+	
+	private void assignRowValues(Rows<String, String> rows, Rows<String, String> rowValues){
+		rowValues = rows;
+	}
 	/**
 	 * Saving multiple String columns & values for single Key.
 	 * 
