@@ -75,7 +75,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
 		this.geoLocation = GeoLocation.getInstance();
 		
-        baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),new CallbackRows() {
+        baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),new CallBackRows() {
 			@Override
 			public void getRows(Rows<String, String> rows) {				
 				licenseCache = new LinkedHashMap<String, Object>();
@@ -86,7 +86,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		});
         
         Rows<String, String> resourceTypesRows = null;
-        baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(),new CallbackRows() {
+        baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(),new CallBackRows() {
 			@Override
 			public void getRows(Rows<String, String> rows) {				
 				resourceTypesCache = new LinkedHashMap<String, Object>();
@@ -95,7 +95,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				}
 			}
 		});
-        baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(),new CallbackRows() {
+        baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(),new CallBackRows() {
 			@Override
 			public void getRows(Rows<String, String> rows) {
 				categoryCache = new LinkedHashMap<String, Object>();
@@ -105,7 +105,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 				
 			}
 		});
-        baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(),new CallbackRows() {
+        baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(),new CallBackRows() {
 			@Override
 			public void getRows(Rows<String, String> rows) {				
 				instructionalCache = new LinkedHashMap<String, Object>();

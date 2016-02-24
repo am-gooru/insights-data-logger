@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.logger.event.cassandra.loader.dao.CallbackRows;
+import org.logger.event.cassandra.loader.dao.CallBackRows;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +70,7 @@ public class DataLoggerCaches implements Constants {
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		try {
 			cache = new LinkedHashMap<String, String>();
-			baseDao.readAllRows(ColumnFamilySet.REALTIMECONFIG.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.REALTIMECONFIG.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					for (Row<String, String> row : rows) {
@@ -129,7 +129,7 @@ public class DataLoggerCaches implements Constants {
 			beFieldName = new LinkedHashMap<String, String>();
 			fieldDataTypes = new LinkedHashMap<String, String>();
 
-			baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					for (Row<String, String> row : rows) {
@@ -140,7 +140,7 @@ public class DataLoggerCaches implements Constants {
 				}
 			});
 
-			baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					licenseCache = new LinkedHashMap<String, Object>();
@@ -151,7 +151,7 @@ public class DataLoggerCaches implements Constants {
 				}
 			});
 			
-			baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(), new CallBackRows() {
 				
 				@Override
 				public void getRows(Rows<String, String> rows) {
@@ -163,7 +163,7 @@ public class DataLoggerCaches implements Constants {
 				}
 			});
 			
-			baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					categoryCache = new LinkedHashMap<String, Object>();
@@ -179,7 +179,7 @@ public class DataLoggerCaches implements Constants {
 			for (int i = 0; i < taxonomyCodeTypeList.size(); i++) {
 				taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
 			}
-			baseDao.readAllRows(ColumnFamilySet.RESOURCEFORMAT.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.RESOURCEFORMAT.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					resourceFormatCache = new LinkedHashMap<String, Object>();
@@ -189,7 +189,7 @@ public class DataLoggerCaches implements Constants {
 					
 				}
 			});
-			baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), new CallbackRows() {
+			baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), new CallBackRows() {
 				@Override
 				public void getRows(Rows<String, String> rows) {
 					instructionalCache = new LinkedHashMap<String, Object>();
