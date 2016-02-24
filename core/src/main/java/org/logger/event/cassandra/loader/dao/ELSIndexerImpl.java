@@ -75,7 +75,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
 		this.baseDao = new BaseCassandraRepoImpl(this.connectionProvider);
 		this.geoLocation = GeoLocation.getInstance();
 		
-        Rows<String, String> licenseRows = null;
+       /* Rows<String, String> licenseRows = null;
         baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(),licenseRows);
         licenseCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : licenseRows) {
@@ -99,7 +99,7 @@ public class ELSIndexerImpl extends BaseDAOCassandraImpl implements ELSIndexer, 
         instructionalCache = new LinkedHashMap<String, Object>();
         for (Row<String, String> row : instructionalRows) {
         	instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-		}
+		}*/
         cache = new LinkedHashMap<String, String>();
         cache.put(INDEXINGVERSION, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), INDEXINGVERSION, DEFAULTCOLUMN,0).getStringValue());
         REPOPATH = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULTCOLUMN,0).getStringValue();

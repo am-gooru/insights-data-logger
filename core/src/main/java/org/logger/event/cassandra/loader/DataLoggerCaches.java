@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.logger.event.cassandra.loader.dao.AllRows;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +69,14 @@ public class DataLoggerCaches implements Constants {
 
 		baseDao = new BaseCassandraRepoImpl(getConnectionProvider());
 		try {
-			Rows<String, String> operators = null;
+		/*	Rows<String, String> operators = null;
 			baseDao.readAllRows(ColumnFamilySet.REALTIMECONFIG.getColumnFamily(), operators);
+			if (operators != null) {
+				cache = new LinkedHashMap<String, String>();
+				for (Row<String, String> row : operators) {
+					cache.put(row.getKey(), row.getColumns().getStringValue(AGG_JSON, null));
+				}
+			}*/
 			cache.put(VIEW_EVENTS, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), _VIEW_EVENTS, DEFAULT_COLUMN, 0).getStringValue());
 			cache.put(ATMOSPHERE_END_POINT, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), ATM_END_POINT, DEFAULT_COLUMN, 0).getStringValue());
 			cache.put(VIEW_UPDATE_END_POINT, baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LoaderConstants.VIEW_COUNT_REST_API_END_POINT.getName(), DEFAULT_COLUMN, 0)
@@ -119,14 +126,43 @@ public class DataLoggerCaches implements Constants {
 			}
 			beFieldName = new LinkedHashMap<String, String>();
 			fieldDataTypes = new LinkedHashMap<String, String>();
-			Rows<String, String> fieldDescrption = null;
+			/*Rows<String, String> fieldDescrption = null;
 			baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(), fieldDescrption);
+			if (fieldDescrption != null) {
+				for (Row<String, String> row : fieldDescrption) {
+					fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", null));
+					beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", null));
+				}
+			}
+
 			Rows<String, String> licenseRows = null;
 			baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(), licenseRows);
+			if (licenseRows != null) {
+				licenseCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : licenseRows) {
+					licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
 			Rows<String, String> resourceTypesRows = null;
 			baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(), resourceTypesRows);
-			Rows<String, String> categoryRows = null;
-			baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), categoryRows);
+			if (resourceTypesRows != null) {
+				resourceTypesCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : resourceTypesRows) {
+					resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
+			*/
+			baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), new AllRows() {
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					categoryCache = new LinkedHashMap<String, Object>();
+					for (Row<String, String> row : rows) {
+						logger.info("key : " +row.getKey());
+						categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+					}
+				}
+			});
+			
 			taxonomyCodeType = new LinkedHashMap<String, String>();
 
 			ColumnList<String> taxonomyCodeTypeList = baseDao.readWithKey(ColumnFamilySet.TABLEDATATYPES.getColumnFamily(), "taxonomy_code", 0);
@@ -134,9 +170,15 @@ public class DataLoggerCaches implements Constants {
 				taxonomyCodeType.put(taxonomyCodeTypeList.getColumnByIndex(i).getName(), taxonomyCodeTypeList.getColumnByIndex(i).getStringValue());
 			}
 			Rows<String, String> resourceFormatRows = null;
-			baseDao.readAllRows(ColumnFamilySet.RESOURCEFORMAT.getColumnFamily(), resourceFormatRows);
+			//baseDao.readAllRows(ColumnFamilySet.RESOURCEFORMAT.getColumnFamily(), resourceFormatRows);
 			Rows<String, String> instructionalRows = null;
-			baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), instructionalRows);
+			//baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), instructionalRows);
+			if (instructionalRows != null) {
+				instructionalCache = new LinkedHashMap<String, Object>();
+				for (Row<String, String> row : instructionalRows) {
+					instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+				}
+			}
 			REPOPATH = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", DEFAULT_COLUMN, 0).getStringValue();
 		} catch (Exception e) {
 			logger.error("Exception : " + e);

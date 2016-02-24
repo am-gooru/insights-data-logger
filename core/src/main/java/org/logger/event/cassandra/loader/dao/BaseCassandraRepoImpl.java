@@ -546,15 +546,15 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements Const
 		return result;
 	}
 
-	public Rows<String, String> readAllRows(final String cfName, final Rows<String, String> rowValues) {
+	public Rows<String, String> readAllRows(final String cfName, final AllRows allRows ) {
 		try {
 			boolean result = new AllRowsReader.Builder<String, String>(getKeyspace(), this.accessColumnFamily(cfName)).withPageSize(100) // Read 100 rows at a time
 					.withConcurrencyLevel(10) // Split entire token range into 10. Default is by number of nodes.
 					.withPartitioner(null) // this will use keyspace's partitioner
 					.forEachPage(new Function<Rows<String, String>, Boolean>() {
 						@Override
-						public Boolean apply(@Nullable Rows<String, String> rows) {
-							assignRowValues(rows,rowValues);
+						public Boolean apply(@Nullable Rows<String, String> rows) {	
+							allRows.getRows(rows);
 							return true;
 						}
 					}).build().call();
