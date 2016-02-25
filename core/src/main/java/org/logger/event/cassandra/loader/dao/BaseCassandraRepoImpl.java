@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.avro.reflect.Nullable;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
 import org.ednovo.data.model.EventBuilder;
@@ -27,7 +28,6 @@ import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
@@ -35,6 +35,7 @@ import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.ExceptionCallback;
 import com.netflix.astyanax.MutationBatch;
@@ -46,6 +47,7 @@ import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
+import com.netflix.astyanax.recipes.reader.AllRowsReader;
 import com.netflix.astyanax.retry.ConstantBackoff;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.util.RangeBuilder;
@@ -511,6 +513,26 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 		return result;
 	}
+
+	@Override
+	public Rows<String, String> readAllRows(final String cfName, final CallBackRows allRows ) {
+        try {
+                boolean result = new AllRowsReader.Builder<String, String>(getKeyspace(), this.accessColumnFamily(cfName)).withPageSize(100) // Read 100 rows at a time
+                                .withConcurrencyLevel(10) // Split entire token range into 10. Default is by number of nodes.
+                                .withPartitioner(null) // this will use keyspace's partitioner
+                                .forEachPage(new Function<Rows<String, String>, Boolean>() {
+                                        @Override
+                                        public Boolean apply(@Nullable Rows<String, String> rows) {
+                                                allRows.getRows(rows);
+                                                return true;
+                                        }
+                                }).build().call();
+
+        } catch (Exception e) {
+                LOG.error("Exception",e);
+        }
+        return null;
+}
 
 	/**
 	 * Saving multiple String columns & values for single Key.
