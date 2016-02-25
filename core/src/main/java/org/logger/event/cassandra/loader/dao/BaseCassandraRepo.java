@@ -200,4 +200,6 @@ public interface BaseCassandraRepo {
 
 	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score);
 
+	Rows<String, String> readAllRows(String cfName, CallBackRows allRows);
+
 }

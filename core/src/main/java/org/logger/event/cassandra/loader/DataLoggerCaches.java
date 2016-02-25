@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
+import org.logger.event.cassandra.loader.dao.CallBackRows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,27 +116,48 @@ public class DataLoggerCaches {
 			
 			beFieldName = new LinkedHashMap<String, String>();
 			fieldDataTypes = new LinkedHashMap<String, String>();
-			Rows<String, String> fieldDescrption = baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily());
-			for (Row<String, String> row : fieldDescrption) {
-				fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", ""));
-				beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", ""));
-			}
+			baseDao.readAllRows(ColumnFamilySet.EVENTFIELDS.getColumnFamily(), new CallBackRows() {
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					for (Row<String, String> row : rows) {
+						fieldDataTypes.put(row.getKey(), row.getColumns().getStringValue("description", ""));
+						beFieldName.put(row.getKey(), row.getColumns().getStringValue("be_column", ""));
+					}					
+				}
+			});
+			
 
-			Rows<String, String> licenseRows = baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily());
 			licenseCache = new LinkedHashMap<String, Object>();
-			for (Row<String, String> row : licenseRows) {
-				licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
-			}
-			Rows<String, String> resourceTypesRows = baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily());
+			baseDao.readAllRows(ColumnFamilySet.LICENSE.getColumnFamily(), new CallBackRows() {
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					for (Row<String, String> row : rows) {
+						licenseCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
+					}					
+				}
+			});
+
 			resourceTypesCache = new LinkedHashMap<String, Object>();
-			for (Row<String, String> row : resourceTypesRows) {
-				resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
-			}
-			Rows<String, String> categoryRows = baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily());
+			baseDao.readAllRows(ColumnFamilySet.RESOURCETYPES.getColumnFamily(), new CallBackRows() {
+				
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					for (Row<String, String> row : rows) {
+						resourceTypesCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
+					}					
+				}
+			});
+			
 			categoryCache = new LinkedHashMap<String, Object>();
-			for (Row<String, String> row : categoryRows) {
-				categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
-			}
+			baseDao.readAllRows(ColumnFamilySet.CATEGORY.getColumnFamily(), new CallBackRows() {
+				
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					for (Row<String, String> row : rows) {
+						categoryCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
+					}					
+				}
+			});
 
 			taxonomyCodeType = new LinkedHashMap<String, String>();
 
@@ -148,12 +170,17 @@ public class DataLoggerCaches {
 			for (Row<String, String> row : resourceFormatRows) {
 				resourceFormatCache.put(row.getKey(), row.getColumns().getLongValue("id", 0L));
 			}
-			Rows<String, String> instructionalRows = baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily());
-
 			instructionalCache = new LinkedHashMap<String, Object>();
-			for (Row<String, String> row : instructionalRows) {
-				instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
-			}
+			baseDao.readAllRows(ColumnFamilySet.INSTRUCTIONAL.getColumnFamily(), new CallBackRows() {
+				
+				@Override
+				public void getRows(Rows<String, String> rows) {
+					for (Row<String, String> row : rows) {
+						instructionalCache.put(row.getKey(), row.getColumns().getLongValue("id", null));
+					}					
+				}
+			});
+			
 			repoPath = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), "repo.path", Constants.DEFAULT_COLUMN).getStringValue();
 		} catch (Exception e) {
 			LOG.error("Exception : " + e);
