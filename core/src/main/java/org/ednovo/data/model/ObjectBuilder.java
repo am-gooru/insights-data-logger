@@ -179,7 +179,11 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			} catch (CloneNotSupportedException e) {
 				e.printStackTrace();
 			}
-			userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS, userSessionActivity.getParentGooruOid(), event.getGooruUUID()));
+			if(event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){				
+				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS, userSessionActivity.getGooruOid(), event.getGooruUUID()));
+			}else{
+				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS, userSessionActivity.getParentGooruOid(), event.getGooruUUID()));
+			}
 		}		
 	}
 	
