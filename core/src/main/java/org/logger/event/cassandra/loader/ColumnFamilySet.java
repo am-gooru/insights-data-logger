@@ -100,6 +100,8 @@ public enum ColumnFamilySet {
 	
 	USER_SESSIONS("user_sessions"),
 	
+	USER_CLASS_COLLECTION_LAST_SESSIONS("user_class_collection_last_sessions"),
+	
 	USER_SESSION_ACTIVITY("user_session_activity"),
 	
 	STUDENTS_CLASS_ACTIVITY("students_class_activity"),

@@ -86,6 +86,8 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 
 			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
 
+			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
+			
 			saveCollectionDataFromResourcePlay(eventName, userSessionActivity, userAllSessionActivity, studentsClassActivity);
 			
 			if (studentLocation != null) {
@@ -177,6 +179,18 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
+	private void saveLastSessions(String eventName, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity,UserSessionActivity userAllSessionActivity) {
+		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
+			if (Constants.START.equals(userSessionActivity.getEventType()) && Constants.COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
+				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userAllSessionActivity.getSessionId());
+			} else if (Constants.STOP.equals(userSessionActivity.getEventType()) && Constants.ASSESSMENT.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
+				LOG.info("saving latest sessions...");
+				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getSessionId());
+			}
+		}
+	}
 	/**
 	 * Aggregate resource.play event to collection level.
 	 * @param eventName

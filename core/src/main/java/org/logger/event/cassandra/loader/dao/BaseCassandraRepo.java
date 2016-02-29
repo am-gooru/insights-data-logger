@@ -202,4 +202,6 @@ public interface BaseCassandraRepo {
 
 	Rows<String, String> readAllRows(String cfName, CallBackRows allRows);
 
+	boolean saveLastSession(String classUid, String courseUid, String unitUid, String lessonUid, String collectionUid, String userUid, String sessionId);
+
 }
