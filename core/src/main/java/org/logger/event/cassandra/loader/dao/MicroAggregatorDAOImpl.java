@@ -27,6 +27,7 @@ package org.logger.event.cassandra.loader.dao;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
 import org.ednovo.data.model.EventBuilder;
@@ -86,6 +87,8 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 
 			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
 
+			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
+			
 			saveCollectionDataFromResourcePlay(eventName, userSessionActivity, userAllSessionActivity, studentsClassActivity);
 			
 			if (studentLocation != null) {
@@ -177,6 +180,18 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
+	private void saveLastSessions(String eventName, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity,UserSessionActivity userAllSessionActivity) {
+		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && StringUtils.isNotBlank(studentsClassActivity.getClassUid()) && !studentsClassActivity.getClassUid().equals(Constants.NA)) {
+			LOG.info("saving latest sessions...");
+			if (Constants.START.equals(userSessionActivity.getEventType()) && Constants.COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
+				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userAllSessionActivity.getSessionId());
+			} else if (Constants.STOP.equals(userSessionActivity.getEventType()) && Constants.ASSESSMENT.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
+				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getSessionId());
+			}
+		}
+	}
 	/**
 	 * Aggregate resource.play event to collection level.
 	 * @param eventName

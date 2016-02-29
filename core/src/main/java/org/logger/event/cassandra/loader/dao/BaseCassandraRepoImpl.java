@@ -1659,6 +1659,27 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return true;
 	}
 	
+	@Override
+	public boolean saveLastSession(String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String sessionId) {
+		try {
+			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_CLASS_COLLECTION_LAST_SESSIONS.getColumnFamily()))
+			.withCql(Constants.INSERT_USER_LAST_SESSION)
+			.asPreparedStatement()
+			.withStringValue(classUid)
+			.withStringValue(courseUid)
+			.withStringValue(unitUid)
+			.withStringValue(lessonUid)
+			.withStringValue(collectionUid)
+			.withStringValue(userUid)
+			.withStringValue(sessionId)
+			.execute()
+			;
+		} catch (ConnectionException e) {
+			LOG.error("Error while storing user last sessions" ,e);
+			return false;
+		}
+		return true;
+	}
 	/**
 	 * Usage metrics will be store here by session wise 
 	 * @param sessionId
