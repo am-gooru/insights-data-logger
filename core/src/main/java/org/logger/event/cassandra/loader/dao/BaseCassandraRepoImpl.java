@@ -1663,7 +1663,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean saveLastSession(String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String sessionId) {
 		try {
 			getKeyspace().prepareQuery(accessColumnFamily(ColumnFamilySet.USER_CLASS_COLLECTION_LAST_SESSIONS.getColumnFamily()))
-			.withCql(Constants.INSERT_USER_SESSION)
+			.withCql(Constants.INSERT_USER_LAST_SESSION)
 			.asPreparedStatement()
 			.withStringValue(classUid)
 			.withStringValue(courseUid)
