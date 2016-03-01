@@ -57,6 +57,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		 */
 		if(userSessionActivity != null){
 			userSessionActivity.setSessionId(event.getSessionId());
+			userSessionActivity.setParentEventId(event.getParentEventId());
 			userSessionActivity.setGooruOid(event.getContentGooruId());
 			userSessionActivity.setParentGooruOid(event.getParentGooruId());
 			userSessionActivity.setCollectionItemId(event.getCollectionItemId());

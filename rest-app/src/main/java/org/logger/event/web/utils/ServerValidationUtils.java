@@ -162,6 +162,11 @@ public class ServerValidationUtils {
 					logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.CONTENT_GOORU_OID
 							+ " : " + field);
 				}
+				if(event.getGooruUUID().equalsIgnoreCase(Constants.ANONYMOUS)){
+					isValidEvent = false;
+					logger.error(Constants.ANONYMOUS + " is not valid user event"
+							+ " : " + field);
+				}
 				if ((context.has(Constants.CLASS_GOORU_OID) && (context
 						.isNull(Constants.CLASS_GOORU_OID) || (context
 						.get(Constants.CLASS_GOORU_OID) != null && !context.getString(
