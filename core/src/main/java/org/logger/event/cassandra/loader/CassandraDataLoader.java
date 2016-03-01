@@ -71,13 +71,13 @@ public class CassandraDataLoader {
 	private SimpleDateFormat minuteDateFormatter;
 
 	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
-
+/*
 	private KafkaLogProducer kafkaLogWriter;
 	
-	private MicroAggregatorProducer microAggregator;
-	
+	private MicroAggregatorProducer microAggregator;	
+ */
 	private MicroAggregatorDAO liveAggregator;
-
+	
 	private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
 
 	private ELSIndexerImpl indexer;
@@ -103,8 +103,8 @@ public class CassandraDataLoader {
 		final String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PORT);
 		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		//kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
+		//microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
 	}
 
 	/**
@@ -125,8 +125,8 @@ public class CassandraDataLoader {
 		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
 		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
 
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);	
+		//microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		//kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);	
 		} 
 
 	public static long getTimeFromUUID(UUID uuid) {
@@ -269,11 +269,11 @@ public class CassandraDataLoader {
 			 * write the JSON to Log file using kafka log writer module in aysnc mode. This will store/write all data to activity log file in log/event_api_logs/activity.log
 			 */
 			if (eventData.getFields() != null) {
-				baseDao.saveEvent(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventData);
-				kafkaLogWriter.sendEventLog(eventData.getFields());
+				//kafkaLogWriter.sendEventLog(eventData.getFields());
 				LOG.info("CORE: Writing to activity log - :" + eventData.getFields().toString());
 			}
 
+			baseDao.saveEvent(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventData);
 			// Insert into event_timeline column family
 			Date eventDateTime = new Date(eventData.getStartTime());
 			String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
@@ -303,7 +303,7 @@ public class CassandraDataLoader {
 	public void processMessage(EventBuilder event) {
 		//Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
-			kafkaLogWriter.sendEventLog(event.getFields());
+			//kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}" ,event.getFields());
 		}
 		String eventName = event.getEventName();
@@ -431,7 +431,7 @@ public class CassandraDataLoader {
 		} catch (JSONException e) {
 			LOG.error("Exception:" + e);
 		}
-		microAggregator.sendEventForStaticAggregation(jsonObject.toString());
+		//microAggregator.sendEventForStaticAggregation(jsonObject.toString());
 	}
 
 	/**
