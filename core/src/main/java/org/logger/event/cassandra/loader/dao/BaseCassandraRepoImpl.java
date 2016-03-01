@@ -1711,6 +1711,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			.withStringValue(userSessionActivity.getQuestionType())
 			.withStringValue(userSessionActivity.getAnswerStatus())
 			.withStringValue(userSessionActivity.getEventType())
+			.withStringValue(userSessionActivity.getParentEventId())
 			.withLongValue(userSessionActivity.getReaction())
 			.withLongValue(userSessionActivity.getScore())
 			.withLongValue(userSessionActivity.getTimeSpent())

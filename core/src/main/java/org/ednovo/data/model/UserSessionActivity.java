@@ -11,6 +11,8 @@ public class UserSessionActivity implements Serializable, Cloneable {
 
 	private String sessionId;
 	
+	private String parentEventId;
+	
 	private String gooruOid;
 	
 	private String parentGooruOid;
@@ -161,6 +163,14 @@ public class UserSessionActivity implements Serializable, Cloneable {
 
 	public void setParentGooruOid(String parentGooruOid) {
 		this.parentGooruOid = parentGooruOid;
+	}
+
+	public String getParentEventId() {
+		return parentEventId;
+	}
+
+	public void setParentEventId(String parentEventId) {
+		this.parentEventId = parentEventId;
 	}
 
 }

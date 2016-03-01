@@ -71,6 +71,8 @@ public class EventBuilder {
 
 	private String fields;
 
+	private String parentEventId;
+	
 	private String gooruUUID;
 		
 	private String lessonGooruId;
@@ -118,6 +120,7 @@ public class EventBuilder {
 	private int attempts;
 	
 	private long reaction;
+	
 	public String getEventId() {
 		return eventId;
 	}
@@ -441,6 +444,7 @@ public class EventBuilder {
 			this.courseGooruId = context.isNull(Constants.COURSE_GOORU_OID) ? Constants.NA : context.getString(Constants.COURSE_GOORU_OID);
 			this.classGooruId = context.isNull(Constants.CLASS_GOORU_OID) ? Constants.NA : context.getString(Constants.CLASS_GOORU_OID);
 			this.parentGooruId = context.isNull(Constants.PARENT_GOORU_OID) ? Constants.NA : context.getString(Constants.PARENT_GOORU_OID);
+			this.parentEventId = context.isNull(Constants.PARENT_EVENT_ID) ? Constants.NA : context.getString(Constants.PARENT_EVENT_ID);
 			if(!context.isNull(Constants.COLLECTION_TYPE)){
 				this.collectionType = context.getString(Constants.COLLECTION_TYPE).equals(Constants.COLLECTION) ? Constants.COLLECTION : Constants.ASSESSMENT;
 			}
@@ -495,6 +499,14 @@ public class EventBuilder {
 			LOG.error("Exception:", e);
 		}
 		return this;
+	}
+
+	public String getParentEventId() {
+		return parentEventId;
+	}
+
+	public void setParentEventId(String parentEventId) {
+		this.parentEventId = parentEventId;
 	}
 
 }
