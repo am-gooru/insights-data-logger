@@ -73,18 +73,21 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 			StudentLocation studentLocation = objectBuilderHandler.getStudentLocation();
 			ContentTaxonomyActivity contentTaxonomyActivity = objectBuilderHandler.getContentTaxonomyActivity();
 
-			if (userSessionActivity != null) {
+			if (userSessionActivity != null && !LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
 				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
 				baseCassandraDao.saveUserSessionActivity(userSessionActivity);
 				LOG.info("store session activity completed : {} ", userSessionActivity.getSessionId());
 			}
 			
-			if (userAllSessionActivity != null) {
+			if (userAllSessionActivity != null && !LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
 				baseCassandraDao.compareAndMergeUserSessionActivity(userAllSessionActivity);
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				LOG.info("store all session activity completed : {} ", userSessionActivity.getSessionId());
 			}
-
+			if(LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)){
+				baseCassandraDao.updateReaction(userSessionActivity);
+			}
+			
 			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
 
 			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
