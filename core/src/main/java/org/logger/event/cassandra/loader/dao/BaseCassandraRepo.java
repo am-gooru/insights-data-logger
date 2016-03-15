@@ -17,6 +17,7 @@ import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
 
+import com.datastax.driver.core.ResultSet;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.MutationBatch;
 import com.netflix.astyanax.model.Column;
@@ -180,13 +181,13 @@ public interface BaseCassandraRepo {
 
 	ClassActivityDatacube getStudentsClassActivityDatacube(String rowKey, String userUid, String collectionType);
 
-	Rows<String, String> getTaxonomy(String rowKey);
+	ResultSet getTaxonomy(String rowKey);
 
-	Rows<String, String> getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity);
+	ResultSet getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity);
 
-	Rows<String, String> getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity);
+	ResultSet getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity);
 
-	Rows<String, String> getContentTaxonomyActivityDataCube(String rowKey, String columnKey);
+	ResultSet getContentTaxonomyActivityDataCube(String rowKey, String columnKey);
 
 	long getContentTaxonomyActivityScore(String rowKey);
 
@@ -194,9 +195,9 @@ public interface BaseCassandraRepo {
 
 	boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score);
 
-	Rows<String, String> getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId);
+	ResultSet getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId);
 
-	Rows<String, String> getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId);
+	ResultSet getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId);
 
 	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score);
 

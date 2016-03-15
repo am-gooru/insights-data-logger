@@ -40,6 +40,7 @@ import org.logger.event.datasource.infra.ELSClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.Session;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.entitystore.EntityManager;
 import com.netflix.astyanax.model.ConsistencyLevel;
@@ -85,6 +86,18 @@ public abstract class BaseDAOCassandraImpl {
 		}
 		return null;
 	}
+	
+	public static String getLogKeyspaceName() {
+		return CassandraClient.getLogKeyspaceName();
+	}
+	public Session getCassSession(){
+		try {
+			return CassandraClient.getCassSession();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	} 
 	
 	public String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
 		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){

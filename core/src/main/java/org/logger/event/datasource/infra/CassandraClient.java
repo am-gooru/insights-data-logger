@@ -7,6 +7,11 @@ import org.ednovo.data.model.UserCo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 import com.netflix.astyanax.AstyanaxContext;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
@@ -24,7 +29,10 @@ public final class CassandraClient implements Register {
 	private static Keyspace cassandraKeyspace;
 	private static EntityManager<ResourceCo, String> resourceEntityPersister;
 	private static EntityManager<UserCo, String> userEntityPersister;
-  
+	private static Cluster cluster;
+    private static Session session;
+    private static String logKeyspaceName;
+    
 	@Override
 	public void init() {
 
@@ -74,9 +82,33 @@ public final class CassandraClient implements Register {
 		} catch (Exception e) {
 			LOG.error("Cassandra Exception fails", e);
 		}
+			try {
+				cluster = Cluster
+						.builder()
+						.withClusterName(cassCluster)
+						.addContactPoint(cassandraIp)
+						.withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+						/*.withReconnectionPolicy(
+								new ExponentialReconnectionPolicy(1000, 30000))*/
+						.withLoadBalancingPolicy(
+								new TokenAwarePolicy(new DCAwareRoundRobinPolicy(dataCenter)))
+						.build();
+				session = cluster.connect(logKeyspaceName);
 
+			} catch (Exception e) {
+				LOG.error("Error while initializing cassandra : {}", e);
+			
+		}
 	}
-	
+	public static String getLogKeyspaceName() {
+		return logKeyspaceName;
+	}
+	public static Session getCassSession() throws IOException {
+		if(session == null) {
+			throw new IOException("Session is not initialized.");
+		}
+		return session;
+	}  
 	private static class CassandraClientHolder {
 		public static final CassandraClient INSTANCE = new CassandraClient();
 	}
