@@ -33,7 +33,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		classDataCubeObjectCreator();
 		allSessionActivityCreator();
 		//It will be enable post 3.0 release
-		//contentTaxonomyActivityObjectCreator();
+		contentTaxonomyActivityObjectCreator();
 	}
 	private void objectCreator(){
 		if(event.getEventName().matches(Constants.PLAY_EVENTS)){
@@ -45,9 +45,9 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 				classActivityDatacube = new ClassActivityDatacube();
 			}
 			//It will be enable post 3.0 release
-			/*if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP)){
+			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP)){
 				contentTaxonomyActivity = new ContentTaxonomyActivity();
-			}*/
+			}
 		}
 	}
 
