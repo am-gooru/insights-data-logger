@@ -141,11 +141,11 @@ public abstract class BaseDAOCassandraImpl {
 		return null;
 	}
 	
-	public static String getLogKeyspaceName() {
+	public String getLogKeyspaceName() {
 		return CassandraClient.getLogKeyspaceName();
 	}
 
-	public static Session getCassSession() {
+	public Session getCassSession() {
 		return CassandraClient.getCassSession();
 	} 
 	
