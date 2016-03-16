@@ -31,11 +31,11 @@ import org.ednovo.data.model.UserSessionActivity;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
-import org.logger.event.cassandra.loader.PreparedStatementQueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.netflix.astyanax.ColumnListMutation;
@@ -60,6 +60,58 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+	
+	public static final PreparedStatement INSERT_USER_SESSION = getCassSession().prepare(Constants.INSERT_USER_SESSION);
+	
+	public static final PreparedStatement INSERT_USER_LAST_SESSION = getCassSession().prepare(Constants.INSERT_USER_LAST_SESSION);
+	
+	public static final PreparedStatement INSERT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.INSERT_USER_SESSION_ACTIVITY);	
+	
+	public static final PreparedStatement INSERT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.INSERT_STUDENTS_CLASS_ACTIVITY);
+	
+	public static final PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY);	
+	
+	public static final PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+	
+	public static final PreparedStatement INSERT_USER_LOCATION = getCassSession().prepare(Constants.INSERT_USER_LOCATION);
+	
+	public static final PreparedStatement UPDATE_PEER_COUNT = getCassSession().prepare(Constants.UPDATE_PEER_COUNT);
+	
+	public static final PreparedStatement UPDATE_PEER_DETAILS_ON_START = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_START);
+	
+	public static final PreparedStatement UPDATE_PEER_DETAILS_ON_STOP = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_STOP);
+	
+	public static final PreparedStatement SELECT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY);
+	
+	public static final PreparedStatement SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
+	
+	public static final PreparedStatement SELECT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.SELECT_STUDENTS_CLASS_ACTIVITY);
+	
+	public static final PreparedStatement UPDATE_REACTION = getCassSession().prepare(Constants.UPDATE_REACTION);
+	
+	public static final PreparedStatement UPDATE_SESSION_SCORE = getCassSession().prepare(Constants.UPDATE_SESSION_SCORE);
+	
+	public static final PreparedStatement SELECT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_CLASS_ACTIVITY_DATACUBE);
+	
+	public static final PreparedStatement SELECT_ALL_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
+	
+	public static final PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
+	
+	public static final PreparedStatement SELECT_TAXONOMY_PARENT_NODE = getCassSession().prepare(Constants.SELECT_TAXONOMY_PARENT_NODE);
+	
+	public static final PreparedStatement SELECT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY);
+	
+	public static final PreparedStatement SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+	
+	public static final PreparedStatement SELECT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
+	
+	public static final PreparedStatement INSERT_USER_QUESTION_GRADE = getCassSession().prepare(Constants.INSERT_USER_QUESTION_GRADE);
+	
+	public static final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_SESSION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_SESSION);
+	
+	public static final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
+	
+	public static final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
 
 	
 	/**
@@ -1639,7 +1691,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveUserSession(String sessionId,String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String collectionType, String eventType,long eventTime) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_USER_SESSION);
+			BoundStatement boundStatement = new BoundStatement(INSERT_USER_SESSION);
 			boundStatement.bind(userUid,collectionUid,collectionType,classUid,courseUid,unitUid,lessonUid,eventTime,eventType,sessionId);
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1652,7 +1704,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveLastSession(String classUid,String courseUid,String unitUid,String lessonUid,String collectionUid,String userUid,String sessionId) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_USER_LAST_SESSION);
+			BoundStatement boundStatement = new BoundStatement(INSERT_USER_LAST_SESSION);
 			boundStatement.bind(classUid,courseUid,unitUid,lessonUid,collectionUid,userUid,sessionId);
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1680,7 +1732,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean saveUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
 			
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_USER_SESSION_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(INSERT_USER_SESSION_ACTIVITY);
 			boundStatement.bind(userSessionActivity.getSessionId() ,userSessionActivity.getGooruOid() ,userSessionActivity.getCollectionItemId() ,userSessionActivity.getAnswerObject().toString() ,userSessionActivity.getAttempts() ,userSessionActivity.getCollectionType() ,userSessionActivity.getResourceType() ,userSessionActivity.getQuestionType() ,userSessionActivity.getAnswerStatus() ,userSessionActivity.getEventType() ,userSessionActivity.getParentEventId() ,userSessionActivity.getReaction() ,userSessionActivity.getScore() ,userSessionActivity.getTimeSpent() ,userSessionActivity.getViews());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1707,7 +1759,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_STUDENTS_CLASS_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(INSERT_STUDENTS_CLASS_ACTIVITY);
 			boundStatement.bind(studentsClassActivity.getClassUid() ,studentsClassActivity.getCourseUid() ,studentsClassActivity.getUnitUid() ,studentsClassActivity.getLessonUid() ,studentsClassActivity.getCollectionUid() ,studentsClassActivity.getUserUid() ,studentsClassActivity.getCollectionType() ,studentsClassActivity.getAttemptStatus() ,studentsClassActivity.getScore() ,studentsClassActivity.getTimeSpent() ,studentsClassActivity.getViews() ,studentsClassActivity.getReaction());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1720,7 +1772,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_CONTENT_TAXONOMY_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(INSERT_CONTENT_TAXONOMY_ACTIVITY);
 			boundStatement.bind(contentTaxonomyActivity.getUserUid() ,contentTaxonomyActivity.getSubjectId() ,contentTaxonomyActivity.getCourseId() ,contentTaxonomyActivity.getDomainId() ,contentTaxonomyActivity.getStandardsId() ,contentTaxonomyActivity.getLearningTargetsId() ,contentTaxonomyActivity.getGooruOid() ,contentTaxonomyActivity.getClassUid() ,contentTaxonomyActivity.getResourceType() ,contentTaxonomyActivity.getQuestionType() ,contentTaxonomyActivity.getScore() ,contentTaxonomyActivity.getTimeSpent() ,contentTaxonomyActivity.getViews());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1733,7 +1785,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 			boundStatement.bind(contentTaxonomyActivity.getUserUid() ,contentTaxonomyActivity.getClassUid() ,contentTaxonomyActivity.getSubjectId() ,contentTaxonomyActivity.getCourseId() ,contentTaxonomyActivity.getDomainId() ,contentTaxonomyActivity.getStandardsId() ,contentTaxonomyActivity.getLearningTargetsId() ,contentTaxonomyActivity.getGooruOid() ,contentTaxonomyActivity.getClassUid() ,contentTaxonomyActivity.getResourceType() ,contentTaxonomyActivity.getQuestionType() ,contentTaxonomyActivity.getScore() ,contentTaxonomyActivity.getTimeSpent() ,contentTaxonomyActivity.getViews());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1758,7 +1810,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveStudentLocation(StudentLocation studentLocation) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_USER_LOCATION);
+			BoundStatement boundStatement = new BoundStatement(INSERT_USER_LOCATION);
 			boundStatement.bind(studentLocation.getUserUid() ,studentLocation.getClassUid() ,studentLocation.getCourseUid() ,studentLocation.getUnitUid() ,studentLocation.getLessonUid() ,studentLocation.getCollectionUid() ,studentLocation.getCollectionType() ,studentLocation.getResourceUid() ,studentLocation.getSessionTime());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1771,7 +1823,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public UserSessionActivity compareAndMergeUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_USER_SESSION_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_USER_SESSION_ACTIVITY);
 			boundStatement.bind(userSessionActivity.getSessionId(),userSessionActivity.getGooruOid(),userSessionActivity.getCollectionItemId());
 			ResultSet result = getCassSession().execute(boundStatement);
 			if (result != null) {
@@ -1791,7 +1843,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public UserSessionActivity getUserSessionActivity(String sessionId, String gooruOid, String collectionItemId) {
 		UserSessionActivity userSessionActivity = new UserSessionActivity();
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_USER_SESSION_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_USER_SESSION_ACTIVITY);
 			boundStatement.bind(sessionId,gooruOid,collectionItemId);
 			ResultSet result = getCassSession().execute(boundStatement);
 			if (result != null) {
@@ -1820,7 +1872,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_STUDENTS_CLASS_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_STUDENTS_CLASS_ACTIVITY);
 			boundStatement.bind(studentsClassActivity.getClassUid() ,studentsClassActivity.getUserUid() ,studentsClassActivity.getCollectionType() ,studentsClassActivity.getCourseUid() ,studentsClassActivity.getUnitUid() ,studentsClassActivity.getLessonUid() ,studentsClassActivity.getCollectionUid());
 			ResultSet result = getCassSession().execute(boundStatement);
 			if (result != null) {
@@ -1838,7 +1890,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean updateReaction(UserSessionActivity userSessionActivity) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.UPDATE_REACTION);
+			BoundStatement boundStatement = new BoundStatement(UPDATE_REACTION);
 			boundStatement.bind(userSessionActivity.getSessionId(),userSessionActivity.getGooruOid(),userSessionActivity.getCollectionItemId(),userSessionActivity.getReaction());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1852,7 +1904,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean  hasClassActivity(StudentsClassActivity studentsClassActivity) {
 		boolean hasActivity = false;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_STUDENTS_CLASS_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_STUDENTS_CLASS_ACTIVITY);
 			boundStatement.bind(studentsClassActivity.getClassUid() ,studentsClassActivity.getCourseUid() ,studentsClassActivity.getUnitUid() ,studentsClassActivity.getLessonUid() ,studentsClassActivity.getCollectionUid() ,studentsClassActivity.getCollectionType() ,studentsClassActivity.getUserUid());
 			ResultSet result = getCassSession().execute(boundStatement);
 			if(result != null){
@@ -1878,7 +1930,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 				gooruOid = userSessionActivity.getParentGooruOid();
 			}
 			
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
+			BoundStatement boundStatement = new BoundStatement(SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
 			boundStatement.bind(userSessionActivity.getSessionId());
 			ResultSet result = getCassSession().execute(boundStatement);
 			
@@ -1905,7 +1957,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveClassActivityDataCube(ClassActivityDatacube studentsClassActivity) {
 		try {			
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_CLASS_ACTIVITY_DATACUBE);
+			BoundStatement boundStatement = new BoundStatement(INSERT_CLASS_ACTIVITY_DATACUBE);
 			boundStatement.bind(studentsClassActivity.getRowKey() ,studentsClassActivity.getLeafNode() ,studentsClassActivity.getCollectionType() ,studentsClassActivity.getUserUid() ,studentsClassActivity.getScore() ,studentsClassActivity.getTimeSpent() ,studentsClassActivity.getViews() ,studentsClassActivity.getReaction() ,studentsClassActivity.getCompletedCount());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -1921,7 +1973,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		long itemCount = 0L;
 		
 		try {			
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
+			BoundStatement boundStatement = new BoundStatement(SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
 			boundStatement.bind(rowKey,collectionType,userUid);
 			ResultSet result = getCassSession().execute(boundStatement);
 				
@@ -1956,7 +2008,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getTaxonomy(String rowKey){
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_TAXONOMY_PARENT_NODE);
+			BoundStatement boundStatement = new BoundStatement(SELECT_TAXONOMY_PARENT_NODE);
 			boundStatement.bind(rowKey);
 			result = getCassSession().execute(boundStatement);
 			
@@ -1970,7 +2022,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_CONTENT_TAXONOMY_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_CONTENT_TAXONOMY_ACTIVITY);
 			boundStatement.bind(contentTaxonomyActivity.getUserUid() ,contentTaxonomyActivity.getResourceType() ,contentTaxonomyActivity.getSubjectId() ,contentTaxonomyActivity.getCourseId() ,contentTaxonomyActivity.getDomainId() ,contentTaxonomyActivity.getStandardsId() ,contentTaxonomyActivity.getLearningTargetsId() ,contentTaxonomyActivity.getGooruOid());
 			result = getCassSession().execute(boundStatement);
 			
@@ -1984,7 +2036,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity){
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+			BoundStatement boundStatement = new BoundStatement(SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 			boundStatement.bind(contentTaxonomyActivity.getClassUid() ,contentTaxonomyActivity.getUserUid() ,contentTaxonomyActivity.getResourceType() ,contentTaxonomyActivity.getSubjectId() ,contentTaxonomyActivity.getCourseId() ,contentTaxonomyActivity.getDomainId() ,contentTaxonomyActivity.getStandardsId() ,contentTaxonomyActivity.getLearningTargetsId() ,contentTaxonomyActivity.getGooruOid());
 			result = getCassSession().execute(boundStatement);
 			
@@ -1998,7 +2050,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getContentTaxonomyActivityDataCube(String rowKey, String columnKey){
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
+			BoundStatement boundStatement = new BoundStatement(SELECT_TAXONOMY_ACTIVITY_DATACUBE);
 			boundStatement.bind(rowKey,columnKey);
 			result = getCassSession().execute(boundStatement);
 			
@@ -2013,7 +2065,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		long questionCount = 0L;
 		long score = 0L;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
+			BoundStatement boundStatement = new BoundStatement(SELECT_TAXONOMY_ACTIVITY_DATACUBE);
 			boundStatement.bind(rowKey);
 			result = getCassSession().execute(boundStatement);
 			
@@ -2033,7 +2085,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveTaxonomyActivityDataCube(TaxonomyActivityDataCube taxonomyActivityDataCube) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
+			BoundStatement boundStatement = new BoundStatement(INSERT_TAXONOMY_ACTIVITY_DATACUBE);
 			boundStatement.bind(taxonomyActivityDataCube.getRowKey(),taxonomyActivityDataCube.getLeafNode(),taxonomyActivityDataCube.getViews(),taxonomyActivityDataCube.getAttempts(),taxonomyActivityDataCube.getResourceTimespent(),taxonomyActivityDataCube.getQuestionTimespent(),taxonomyActivityDataCube.getScore());
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -2046,7 +2098,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveQuestionGrade(String teacherId, String userId, String sessionId, String questionId, long score) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.INSERT_USER_QUESTION_GRADE);
+			BoundStatement boundStatement = new BoundStatement(INSERT_USER_QUESTION_GRADE);
 			boundStatement.bind(teacherId,userId,sessionId,questionId,score);
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
@@ -2060,7 +2112,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getQuestionsGradeBySessionId(String teacherId, String userId, String sessionId) {
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_USER_QUESTION_GRADE_BY_SESSION);
+			BoundStatement boundStatement = new BoundStatement(SELECT_USER_QUESTION_GRADE_BY_SESSION);
 			boundStatement.bind(teacherId,userId,sessionId);
 			result = getCassSession().execute(boundStatement);
 			
@@ -2074,7 +2126,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public ResultSet getQuestionsGradeByQuestionId(String teacherId, String userId, String sessionId, String questionId) {
 		ResultSet result = null;
 		try {
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
+			BoundStatement boundStatement = new BoundStatement(SELECT_USER_QUESTION_GRADE_BY_QUESTION);
 			boundStatement.bind(teacherId,userId,sessionId,questionId);
 			result = getCassSession().execute(boundStatement);
 			
@@ -2086,7 +2138,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score) {
 		try {			
-			BoundStatement boundStatement = new BoundStatement(PreparedStatementQueries.UPDATE_SESSION_SCORE);
+			BoundStatement boundStatement = new BoundStatement(UPDATE_SESSION_SCORE);
 			boundStatement.bind(sessionId,questionId,collectionItemId,status,score);
 			getCassSession().execute(boundStatement);
 		} catch (Exception e) {
