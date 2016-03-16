@@ -61,59 +61,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 	
-	public static final PreparedStatement INSERT_USER_SESSION = getCassSession().prepare(Constants.INSERT_USER_SESSION);
-	
-	public static final PreparedStatement INSERT_USER_LAST_SESSION = getCassSession().prepare(Constants.INSERT_USER_LAST_SESSION);
-	
-	public static final PreparedStatement INSERT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.INSERT_USER_SESSION_ACTIVITY);	
-	
-	public static final PreparedStatement INSERT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.INSERT_STUDENTS_CLASS_ACTIVITY);
-	
-	public static final PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY);	
-	
-	public static final PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
-	
-	public static final PreparedStatement INSERT_USER_LOCATION = getCassSession().prepare(Constants.INSERT_USER_LOCATION);
-	
-	public static final PreparedStatement UPDATE_PEER_COUNT = getCassSession().prepare(Constants.UPDATE_PEER_COUNT);
-	
-	public static final PreparedStatement UPDATE_PEER_DETAILS_ON_START = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_START);
-	
-	public static final PreparedStatement UPDATE_PEER_DETAILS_ON_STOP = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_STOP);
-	
-	public static final PreparedStatement SELECT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY);
-	
-	public static final PreparedStatement SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
-	
-	public static final PreparedStatement SELECT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.SELECT_STUDENTS_CLASS_ACTIVITY);
-	
-	public static final PreparedStatement UPDATE_REACTION = getCassSession().prepare(Constants.UPDATE_REACTION);
-	
-	public static final PreparedStatement UPDATE_SESSION_SCORE = getCassSession().prepare(Constants.UPDATE_SESSION_SCORE);
-	
-	public static final PreparedStatement SELECT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_CLASS_ACTIVITY_DATACUBE);
-	
-	public static final PreparedStatement SELECT_ALL_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
-	
-	public static final PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
-	
-	public static final PreparedStatement SELECT_TAXONOMY_PARENT_NODE = getCassSession().prepare(Constants.SELECT_TAXONOMY_PARENT_NODE);
-	
-	public static final PreparedStatement SELECT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY);
-	
-	public static final PreparedStatement SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
-	
-	public static final PreparedStatement SELECT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
-	
-	public static final PreparedStatement INSERT_USER_QUESTION_GRADE = getCassSession().prepare(Constants.INSERT_USER_QUESTION_GRADE);
-	
-	public static final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_SESSION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_SESSION);
-	
-	public static final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
-	
-	public static final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
-
-	
 	/**
 	 * This method using to read data with single Key&Indexed column.
 	 * 
