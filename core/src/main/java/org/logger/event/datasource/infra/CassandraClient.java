@@ -103,9 +103,13 @@ public final class CassandraClient implements Register {
 	public static String getLogKeyspaceName() {
 		return logKeyspaceName;
 	}
-	public static Session getCassSession() throws IOException {
+	public static Session getCassSession() {
 		if(session == null) {
-			throw new IOException("Session is not initialized.");
+			try {
+				throw new IOException("Session is not initialized.");
+			} catch (IOException e) {
+				LOG.error("Session is not initialized.");
+			}
 		}
 		return session;
 	}  

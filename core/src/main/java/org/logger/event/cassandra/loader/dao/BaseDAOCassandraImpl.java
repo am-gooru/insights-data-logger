@@ -90,13 +90,9 @@ public abstract class BaseDAOCassandraImpl {
 	public static String getLogKeyspaceName() {
 		return CassandraClient.getLogKeyspaceName();
 	}
-	public static Session getCassSession(){
-		try {
-			return CassandraClient.getCassSession();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
+
+	public static Session getCassSession() {
+		return CassandraClient.getCassSession();
 	} 
 	
 	public String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
