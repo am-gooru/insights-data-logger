@@ -1,9 +1,5 @@
 package org.logger.event.cassandra.loader.dao;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,11 +18,9 @@ import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
 import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.EventData;
-import org.ednovo.data.model.ResourceCo;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
-import org.ednovo.data.model.UserCo;
 import org.ednovo.data.model.UserSessionActivity;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
@@ -36,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.netflix.astyanax.ColumnListMutation;
@@ -108,54 +101,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return result;
 	}
 
-	/**
-	 * This method using to read data with single Key and multiple Indexed columns.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnList
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public ColumnList<String> readWithKeyColumnList(String cfName, String key, Collection<String> columnList) {
-
-		ColumnList<String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key)
-					.withColumnSlice(columnList).execute().getResult();
-
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-
-		return result;
-	}
-
-	/**
-	 * This method using to read data with multiple Keys and multiple Indexed columns.
-	 * 
-	 * @param cfName
-	 * @param keys
-	 * @param columnList
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public Rows<String, String> readWithKeyListColumnList(String cfName, Collection<String> keys, Collection<String> columnList) {
-
-		Rows<String, String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(keys)
-					.withColumnSlice(columnList).execute().getResult();
-
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-
-		return result;
-	}
-
+	
 	/**
 	 * This method using to read data with single Key.
 	 * 
@@ -171,29 +117,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute()
 					.getResult();
-
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-
-		return result;
-	}
-
-	/**
-	 * This method using to read data with multiple Keys.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public Rows<String, String> readWithKeyList(String cfName, Collection<String> key) {
-
-		Rows<String, String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKeySlice(key)
-					.execute().getResult();
 
 		} catch (Exception e) {
 			LOG.error("Exception:",e);
@@ -270,29 +193,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	/**
-	 * This method is using to get data with single Long data type Indexed column.
-	 * 
-	 * @param cfName
-	 * @param columnName
-	 * @param value
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public Rows<String, String> readIndexedColumn(String cfName, String columnName, long value) {
-
-		Rows<String, String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn(columnName).equals().value(value).execute().getResult();
-
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-		return result;
-	}
-
-	/**
 	 * This method is using to read rows from bottom.
 	 * 
 	 * @param cfName
@@ -337,30 +237,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 		return result;
 	}
-
-	/**
-	 * This method is using to get row count.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @return
-	 */
-	 @Override
-	public long getCount(String cfName, String key) {
-
-		Integer columns = null;
-
-		try {
-			columns = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).getCount()
-					.execute().getResult();
-		} catch (Exception e) {
-			LOG.info("Error while getting column count for - {}",key);
-			LOG.error("Exception:",e);
-		}
-
-		return columns.longValue();
-	}
-
+	 
 	/**
 	 * This method is using to get data with more number of indexed columns.
 	 * 
@@ -388,26 +265,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 
 		return result;
-	}
-
-	/**
-	 * Just to check if row is available or not for given key.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public boolean isRowKeyExists(String cfName, String key) {
-
-		try {
-			return getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).getKey(key).execute()
-					.getResult().isEmpty();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-		return false;
 	}
 
 	/**
@@ -539,54 +396,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 }
 
 	/**
-	 * Saving multiple String columns & values for single Key.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnValueList
-	 */
-	@Override
-	public void saveBulkStringList(String cfName, String key, Map<String, String> columnValueList) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-
-		for (Map.Entry<String, String> entry : columnValueList.entrySet()) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
-			;
-		}
-
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * Saving multiple Long columns & values for single Key.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnValueList
-	 */
-	@Override
-	public void saveBulkLongList(String cfName, String key, Map<String, Long> columnValueList) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-
-		for (Map.Entry<String, Long> entry : columnValueList.entrySet()) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(entry.getKey(), entry.getValue(), null);
-			;
-		}
-
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
 	 * Saving multiple (String,Integer,Long,Boolean) columns & values for single Key.
 	 * 
 	 * @param cfName
@@ -670,29 +479,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	/**
-	 * Saving Long single column,value for a key with expired time so that data will be removed while given time get expire.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param expireTime
-	 */
-	@Override
-	public void saveLongValue(String cfName, String key, String columnName, long value, int expireTime) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
-
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
 	 * 
 	 * @param cfName
 	 * @param key
@@ -705,37 +491,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
 
 		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, null);
-
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * Save any type of value.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 */
-	@Override
-	public void saveValue(String cfName, String key, String columnName, Object value) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-		if (value.getClass().getSimpleName().equalsIgnoreCase("String")) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
-		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Integer")) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Integer.valueOf("" + value), null);
-		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Long")) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Long.valueOf("" + value), null);
-		}else if (value.getClass().getSimpleName().equalsIgnoreCase("Boolean")) {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, Boolean.valueOf("" + value), null);
-		} else {
-			m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, String.valueOf(value), null);
-		}
 
 		try {
 			m.execute();
@@ -816,77 +571,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	/**
-	 * Generate Mutation batch with String value.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param m
-	 */
-	@Override
-	public void generateNonCounter(String cfName, String key, String columnName, String value, MutationBatch m) {
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
-	}
-
-	/**
-	 * Generate Mutation batch with Long value.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param m
-	 */
-	@Override
-	public void generateNonCounter(String cfName, String key, String columnName, long value, MutationBatch m) {
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
-	}
-
-	/**
-	 * Generate Mutation batch with Integer value.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param m
-	 */
-	@Override
-	public void generateNonCounter(String cfName, String key, String columnName, Integer value, MutationBatch m) {
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
-	}
-
-	/**
-	 * Generate Mutation batch with Boolean value.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param m
-	 */
-	@Override
-	public void generateNonCounter(String cfName, String key, String columnName, Boolean value, MutationBatch m) {
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value);
-	}
-
-	/**
-	 * Generate Mutation batch with Long value with expire time.
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param columnName
-	 * @param value
-	 * @param expireTime
-	 * @param m
-	 */
-	@Override
-	public void generateTTLColumns(String cfName, String key, String columnName, long value, int expireTime, MutationBatch m) {
-		m.withRow(this.accessColumnFamily(cfName), key).putColumnIfNotNull(columnName, value, expireTime);
-	}
-
-	/**
 	 * Generate Mutation batch with String value with expire time.
 	 * 
 	 * @param cfName
@@ -899,39 +583,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public void generateTTLColumns(String cfName, String key, String columnName, String value, int expireTime, MutationBatch m) {
 		m.withRow(this.accessColumnFamily(cfName), key).putColumn(columnName, value, expireTime);
-	}
-
-	/**
-	 * Delete all the data from ColumnFamily
-	 * 
-	 * @param cfName
-	 */
-	@Override
-	public void deleteAll(String cfName) {
-		try {
-			getKeyspace().truncateColumnFamily(this.accessColumnFamily(cfName));
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * Delete single row key
-	 * 
-	 * @param cfName
-	 * @param key
-	 */
-	@Override
-	public void deleteRowKey(String cfName, String key) {
-		MutationBatch m = getKeyspace().prepareMutationBatch();
-		try {
-			m.withRow(this.accessColumnFamily(cfName), key).delete();
-			m.execute();
-			LOG.info("Deleted row key - {}",key);
-		} catch (Exception e) {
-			LOG.info("Failed to delete row key : {}",key);
-			LOG.error("Exception:",e);
-		}
 	}
 
 	/**
@@ -1239,32 +890,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	/**
-	 * 
-	 * @param is
-	 * @return
-	 */
-	protected static String convertStreamToString(InputStream is) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		StringBuilder sb = new StringBuilder();
-
-		String line = null;
-		try {
-			while ((line = reader.readLine()) != null) {
-				sb.append(line + "\n");
-			}
-		} catch (IOException e) {
-			LOG.error("Exception:",e);
-		} finally {
-			try {
-				is.close();
-			} catch (Exception e) {
-				LOG.error("Exception:",e);
-			}
-		}
-		return sb.toString();
-	}
-
-	/**
 	 * Get first level parents.
 	 * 
 	 * @param cfName
@@ -1314,244 +939,6 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 				.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID));
 
 	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param eventMap
-	 */
-	@Override
-	public void updateClasspage(String cfName, Map<String, String> eventMap) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-
-		int isGroupOwner = 0;
-		int deleted = 0;
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.CONTENT_GOORU_OID) + Constants.SEPERATOR + eventMap.get(Constants.GROUP_UID) + Constants.SEPERATOR + eventMap.get(Constants.GOORUID))
-				.putColumnIfNotNull(Constants._USER_GROUP_UID, eventMap.get(Constants.GROUP_UID))
-				.putColumnIfNotNull(Constants._CLASSPAGE_GOORU_OID, eventMap.get(Constants.CONTENT_GOORU_OID))
-				.putColumnIfNotNull(Constants._IS_GROUP_OWNER, isGroupOwner)
-				.putColumnIfNotNull(Constants.DELETED, deleted)
-				.putColumnIfNotNull(Constants._GOORU_UID, eventMap.get(Constants.GOORUID))
-				.putColumnIfNotNull(Constants._CLASSPAGE_CODE, eventMap.get(Constants.CLASS_CODE))
-				.putColumnIfNotNull(Constants._USER_GROUP_CODE, eventMap.get(Constants._CONTENT_GOORU_OID))
-				.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID))
-
-		;
-
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param classPageGooruOid
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public boolean getClassPageOwnerInfo(String cfName, String key, String classPageGooruOid) {
-
-		Rows<String, String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn("gooru_uid").equals().value(key).addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression()
-					.whereColumn("is_group_owner").equals().value(1).execute().getResult();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-		if (result != null && !result.isEmpty()) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param key
-	 * @param classPageGooruOid
-	 * @param retryCount
-	 * @return
-	 */
-	@Override
-	public boolean isUserPartOfClass(String cfName, String key, String classPageGooruOid) {
-
-		Rows<String, String> result = null;
-		try {
-			result = getKeyspace().prepareQuery(this.accessColumnFamily(cfName)).setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5)).searchWithIndex()
-					.addExpression().whereColumn("classpage_gooru_oid").equals().value(classPageGooruOid).addExpression().whereColumn("gooru_uid").equals().value(key).execute().getResult();
-		} catch (ConnectionException e) {
-			LOG.error("Exception:",e);
-		}
-
-		if (result != null && !result.isEmpty()) {
-			return true;
-		}
-		return false;
-
-	}
-
-	/**
-	 * 
-	 * @param resourceco
-	 */
-	@Override
-	public void updateResourceEntity(ResourceCo resourceco) {
-		try {
-			getResourceEntityPersister().put(resourceco);
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param userCo
-	 */
-	@Override
-	public void updateUserEntity(UserCo userCo) {
-		try {
-			getUserEntityPersister().put(userCo);
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param eventMap
-	 */
-	@Override
-	public void updateAssessmentAnswer(String cfName, Map<String, Object> eventMap) {
-
-		MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-		m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.COLLECTION_GOORU_OID) + Constants.SEPERATOR + eventMap.get("questionGooruOid") + Constants.SEPERATOR + eventMap.get("sequence"))
-				.putColumnIfNotNull(Constants._COLLECTION_GOORU_OID, eventMap.get(Constants.COLLECTION_GOORU_OID).toString())
-				.putColumnIfNotNull("question_id", ((eventMap.containsKey("questionId") && eventMap.get("questionId") != null) ? Long.valueOf(eventMap.get("questionId").toString()) : null))
-				.putColumnIfNotNull("answer_id", ((eventMap.containsKey("answerId") && eventMap.get("answerId") != null) ? Long.valueOf(eventMap.get("answerId").toString()) : null))
-				.putColumnIfNotNull("answer_text", ((eventMap.containsKey("answerText") && eventMap.get("answerText") != null) ? eventMap.get("answerText").toString() : null))
-				.putColumnIfNotNull("is_correct", ((eventMap.containsKey("isCorrect") && eventMap.get("isCorrect") != null) ? Integer.valueOf(eventMap.get("isCorrect").toString()) : null))
-				.putColumnIfNotNull("type_name", ((eventMap.containsKey("typeName") && eventMap.get("typeName") != null) ? eventMap.get("typeName").toString() : null))
-				.putColumnIfNotNull("answer_hint", ((eventMap.containsKey("answerHint") && eventMap.get("answerHint") != null) ? eventMap.get("answerHint").toString() : null))
-				.putColumnIfNotNull("answer_explanation",
-						((eventMap.containsKey("answerExplanation") && eventMap.get("answerExplanation") != null) ? eventMap.get("answerExplanation").toString() : null))
-				.putColumnIfNotNull("question_gooru_oid", ((eventMap.containsKey("questionGooruOid") && eventMap.get("questionGooruOid") != null) ? eventMap.get("questionGooruOid").toString() : null))
-				.putColumnIfNotNull(Constants._QUESTION_TYPE, ((eventMap.containsKey(Constants.QUESTION_TYPE) && eventMap.get(Constants.QUESTION_TYPE) != null) ? eventMap.get(Constants.QUESTION_TYPE).toString() : null))
-				.putColumnIfNotNull("sequence", ((eventMap.containsKey("sequence") && eventMap.get("sequence") != null) ? Integer.valueOf(eventMap.get("sequence").toString()) : null));
-		try {
-			m.execute();
-		} catch (Exception e) {
-			LOG.error("Exception:",e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param eventMap
-	 */
-	@Override
-	public void updateCollection(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.containsKey("gooruOid") && eventMap.get("gooruOid") != null) {
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get("gooruOid").toString()).putColumnIfNotNull("gooru_oid", eventMap.get("gooruOid").toString())
-					.putColumnIfNotNull("content_id", (eventMap.get("contentId") != null ? Long.valueOf(eventMap.get("contentId").toString()) : null))
-					.putColumnIfNotNull("collection_type", (eventMap.get("collectionType") != null ? eventMap.get("collectionType").toString() : null))
-					.putColumnIfNotNull("grade", (eventMap.get("grade") != null ? eventMap.get("grade").toString() : null))
-					.putColumnIfNotNull("goals", eventMap.get("goals") != null ? eventMap.get("goals").toString() : null)
-					.putColumnIfNotNull("ideas", eventMap.get("ideas") != null ? eventMap.get("ideas").toString() : null)
-					.putColumnIfNotNull("performance_tasks", eventMap.get("performanceTasks") != null ? eventMap.get("performanceTasks").toString() : null)
-					.putColumnIfNotNull("language", eventMap.get("language") != null ? eventMap.get("language").toString() : null)
-					.putColumnIfNotNull("key_points", eventMap.get("keyPoints") != null ? eventMap.get("keyPoints").toString() : null)
-					.putColumnIfNotNull("notes", eventMap.get("notes") != null ? eventMap.get("notes").toString() : null)
-					.putColumnIfNotNull("language_objective", eventMap.get("languageObjective") != null ? eventMap.get("languageObjective").toString() : null)
-					.putColumnIfNotNull("network", eventMap.get("network") != null ? eventMap.get("network").toString() : null)
-					.putColumnIfNotNull("mail_notification", (eventMap.get("mailNotification") != null && Boolean.valueOf(eventMap.get("mailNotification").toString())) ? true : false)
-					.putColumnIfNotNull("build_type_id", eventMap.get("buildTypeId") != null ? eventMap.get("buildTypeId").toString() : null)
-					.putColumnIfNotNull("narration_link", eventMap.get("narrationLink") != null ? eventMap.get("narrationLink").toString() : null)
-					.putColumnIfNotNull(Constants._ESTIMATED_TIME, eventMap.get(Constants.ESTIMATED_TIME) != null ? eventMap.get(Constants.ESTIMATED_TIME).toString() : null);
-			try {
-				m.execute();
-			} catch (Exception e) {
-				LOG.error("Exception:",e);
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param eventMap
-	 */
-	@Override
-	public void updateCollectionItemCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.containsKey(Constants.COLLECTION_ITEM_ID) && eventMap.get(Constants.COLLECTION_ITEM_ID) != null) {
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.COLLECTION_ITEM_ID).toString())
-					.putColumnIfNotNull(Constants.DELETED, eventMap.get(Constants.DELETED) != null ? Integer.valueOf(eventMap.get(Constants.DELETED).toString()) : null)
-					.putColumnIfNotNull(Constants._ITEM_TYPE, (eventMap.get(Constants.COLLECTION_ITEM_TYPE) != null ? eventMap.get(Constants.ITEM_TYPE).toString() : null))
-					.putColumnIfNotNull(Constants._RESOURCE_CONTENT_ID, eventMap.get(Constants.RESOURCE_CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.RESOURCE_CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(Constants._COLLECTION_GOORU_OID, eventMap.get(Constants.COLLECTION_GOORU_OID) != null ? eventMap.get(Constants.COLLECTION_GOORU_OID).toString() : null)
-					.putColumnIfNotNull(Constants._RESOURCE_GOORU_OID, eventMap.get(Constants.RESOURCE_GOORU_OID) != null ? eventMap.get(Constants.RESOURCE_GOORU_OID).toString() : null)
-					.putColumnIfNotNull(Constants._ITEM_SEQUENCE, eventMap.get(Constants.COLLECTION_ITEM_SEQUENCE) != null ? Integer.valueOf(eventMap.get(Constants.ITEM_SEQUENCE).toString()) : null)
-					.putColumnIfNotNull(Constants._COLLECTION_ITEM_ID, eventMap.get(Constants.COLLECTION_ITEM_ID) != null ? eventMap.get(Constants.COLLECTION_ITEM_ID).toString() : null)
-					.putColumnIfNotNull(Constants._COLLECTION_CONTENT_ID, eventMap.get(Constants.COLLECTION_CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.COLLECTION_CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(Constants._QUESTION_TYPE, eventMap.get(Constants.COLLECTION_ITEM_QUESTION_TYPE) != null ? eventMap.get(Constants.QUESTION_TYPE).toString() : null)
-					.putColumnIfNotNull(Constants._MINIMUM_SCORE, eventMap.get(Constants.COLLECTION_ITEM_MINIMUM_SCORE) != null ? eventMap.get(Constants.MINIMUM_SCORE).toString() : null)
-					.putColumnIfNotNull(Constants.NARRATION, eventMap.get(Constants.COLLECTION_ITEM_NARRATION) != null ? eventMap.get(Constants.NARRATION).toString() : null)
-					.putColumnIfNotNull(Constants._ESTIMATED_TIME, eventMap.get(Constants.COLLECTION_ITEM_ESTIMATED_TIME) != null ? eventMap.get(Constants.ESTIMATED_TIME).toString() : null)
-					.putColumnIfNotNull(Constants.START, eventMap.get(Constants.COLLECTION_ITEM_START) != null ? eventMap.get(Constants.START).toString() : null)
-					.putColumnIfNotNull(Constants.STOP, eventMap.get(Constants.COLLECTION_ITEM_STOP) != null ? eventMap.get(Constants.STOP).toString() : null)
-					.putColumnIfNotNull(Constants._NARRATION_TYPE, eventMap.get(Constants.COLLECTION_NARRATION_TYPE) != null ? eventMap.get(Constants.NARRATION_TYPE).toString() : null)
-					.putColumnIfNotNull(Constants._PLANNED_END_DATE, eventMap.get(Constants.COLLECTION_ITEM_PLANNED_END_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(Constants.PLANNED_END_DATE).toString())) : null)
-					.putColumnIfNotNull(Constants._ASSOCIATION_DATE, eventMap.get(Constants.COLLECTION_ITEM_ASSOCIATION_DATE) != null ? new Timestamp(Long.valueOf(eventMap.get(Constants.ASSOCIATION_DATE).toString())) : null)
-					.putColumnIfNotNull(Constants._ASSOCIATED_BY_UID, eventMap.get(Constants.COLLECTION_ITEM_ASSOCIATE_BY_UID) != null ? eventMap.get(Constants.ASSOCIATED_BY_UID).toString() : null)
-					.putColumnIfNotNull(Constants._IS_REQUIRED, eventMap.get(Constants.COLLECTION_ITEM_IS_REQUIRED) != null ? Integer.valueOf(eventMap.get(Constants.IS_REQUIRED).toString()) : null);
-			try {
-				m.execute();
-			} catch (Exception e) {
-				LOG.error("Exception:",e);
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * @param cfName
-	 * @param eventMap
-	 */
-	@Override
-	public void updateClasspageCF(String cfName, Map<String, Object> eventMap) {
-		if (eventMap.get(Constants.CLASS_ID) != null && eventMap.get(Constants.GROUP_UID) != null && eventMap.get(Constants.USER_UID) != null) {
-			MutationBatch m = getKeyspace().prepareMutationBatch().setConsistencyLevel(DEFAULT_CONSISTENCY_LEVEL).withRetryPolicy(new ConstantBackoff(2000, 5));
-			m.withRow(this.accessColumnFamily(cfName), eventMap.get(Constants.CLASS_ID).toString() + Constants.SEPERATOR + eventMap.get(Constants.GROUP_UID).toString() + Constants.SEPERATOR + eventMap.get(Constants.USER_UID).toString())
-					.putColumnIfNotNull(Constants.DELETED, eventMap.get(Constants.DELETED) != null ? Integer.valueOf(eventMap.get(Constants.DELETED).toString()) : 0)
-					.putColumnIfNotNull(Constants._CLASSPAGE_CONTENT_ID, eventMap.get(Constants.CONTENT_ID) != null ? Long.valueOf(eventMap.get(Constants.CONTENT_ID).toString()) : null)
-					.putColumnIfNotNull(Constants._CLASSPAGE_GOORU_OID, eventMap.get(Constants.CLASS_ID) != null ? eventMap.get(Constants.CLASS_ID).toString() : null)
-					.putColumnIfNotNull(Constants.USERNAME, eventMap.get(Constants.USERNAME) != null ? eventMap.get(Constants.USERNAME).toString() : null)
-					.putColumnIfNotNull(Constants._USER_GROUP_UID, eventMap.get(Constants.GROUP_UID) != null ? eventMap.get(Constants.GROUP_UID).toString() : null)
-					.putColumnIfNotNull(Constants._ORGANIZATION_UID, eventMap.get(Constants.ORGANIZATION_UID) != null ? eventMap.get(Constants.ORGANIZATION_UID).toString() : null)
-					.putColumnIfNotNull(Constants._USER_GROUP_TYPE, eventMap.get(Constants.USER_GROUP_TYPE) != null ? eventMap.get(Constants.USER_GROUP_TYPE).toString() : null)
-					.putColumnIfNotNull(Constants._ACTIVE_FLAG, eventMap.get(Constants.ACTIVE_FLAG) != null ? Integer.valueOf(eventMap.get(Constants.ACTIVE_FLAG).toString()) : null)
-					.putColumnIfNotNull(Constants._USER_GROUP_CODE, eventMap.get(Constants.CLASS_CODE) != null ? eventMap.get(Constants.CLASS_CODE).toString() : null)
-					.putColumnIfNotNull(Constants._CLASSPAGE_CODE, eventMap.get(Constants.CLASS_CODE) != null ? eventMap.get(Constants.CLASS_CODE).toString() : null)
-					.putColumnIfNotNull(Constants._GOORU_UID, eventMap.get(Constants.USER_UID) != null ? eventMap.get(Constants.USER_UID).toString() : null)
-					.putColumnIfNotNull(Constants._IS_GROUP_OWNER, eventMap.get(Constants.IS_GROUP_OWNER) != null ? Integer.valueOf(eventMap.get(Constants.IS_GROUP_OWNER).toString()) : null);
-			try {
-				m.execute();
-			} catch (Exception e) {
-				LOG.error("Exception:",e);
-			}
-		}
-	}
-
 	/**
 	 * Given a child content id gets all it's parent / grand parents. This is primarily to cover cases where collections are in folder / library.
 	 * 
@@ -2097,5 +1484,4 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-	
 }
