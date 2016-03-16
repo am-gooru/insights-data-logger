@@ -4,7 +4,7 @@ import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 
 import com.datastax.driver.core.PreparedStatement;
 
-public class PreparedQueries extends BaseDAOCassandraImpl {
+public final class PreparedQueries extends BaseDAOCassandraImpl {
 
 	private static class PreparedQueriesHolder {
 		public static final PreparedQueries INSTANCE = new PreparedQueries();
@@ -24,7 +24,7 @@ public class PreparedQueries extends BaseDAOCassandraImpl {
 
 	private PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = null;
 
-	private PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = null;
+	private final  PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 
 	private PreparedStatement INSERT_USER_LOCATION = null;
 
@@ -48,7 +48,7 @@ public class PreparedQueries extends BaseDAOCassandraImpl {
 
 	private PreparedStatement SELECT_ALL_CLASS_ACTIVITY_DATACUBE = null;
 
-	private PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = null;
+	private final PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
 
 	private PreparedStatement SELECT_TAXONOMY_PARENT_NODE = null;
 
@@ -109,9 +109,9 @@ public class PreparedQueries extends BaseDAOCassandraImpl {
 	}
 
 	public PreparedStatement insertContentClassTaxonomyActivty() {
-		if (INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY == null) {
-			INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
-		}
+		//if (INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY == null) {
+			//INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+		//}
 		return INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY;
 	}
 
@@ -172,9 +172,6 @@ public class PreparedQueries extends BaseDAOCassandraImpl {
 	}
 
 	public PreparedStatement insertClassActivityDataCube() {
-		if (INSERT_CLASS_ACTIVITY_DATACUBE == null) {
-			return getCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
-		}
 		return INSERT_CLASS_ACTIVITY_DATACUBE;
 	}
 
