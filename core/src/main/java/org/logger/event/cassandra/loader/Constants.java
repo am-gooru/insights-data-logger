@@ -767,7 +767,7 @@ public class Constants {
  	
  	public static final String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
  	
- 	public static final String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,class_uid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+ 	public static final String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";
  	
  	public static final String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
  	
@@ -785,7 +785,7 @@ public class Constants {
  	
  	public static final String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
  	
- 	public static final String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,attempt_status,score)VALUES(?,?,?,?,?);";
+ 	public static final String UPDATE_SESSION_SCORE = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_status,score)VALUES(?,?,?,?,?);";
  	
  	public static final String SELECT_CLASS_ACTIVITY_DATACUBE = "SELECT * FROM class_activity_datacube WHERE row_key = ? AND leaf_node = ? AND collection_type = ? AND user_uid = ?;";
  	
@@ -795,11 +795,11 @@ public class Constants {
  	
  	public static final String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
  	
- 	public static final String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+ 	public static final String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
  	
  	public static final String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE class_uid = ? AND user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
  	
- 	public static final String SELECT_TAXONOMY_ACTIVITY_DATACUBE = "SELECT * FROM taxonomy_activity_datacube WHERE row_key = ? leaf_node = ?;";
+ 	public static final String SELECT_TAXONOMY_ACTIVITY_DATACUBE = "SELECT * FROM taxonomy_activity_datacube WHERE row_key = ? AND leaf_node = ?;";
  	
  	public static final String INSERT_USER_QUESTION_GRADE = "INSERT INTO user_question_grade(teacher_id,user_id,session_id,question_id,score)VALUES(?,?,?,?,?);";
  	
@@ -807,5 +807,5 @@ public class Constants {
  	
  	public static final String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id = ? AND user_id = ? AND session_id = ? AND question_id = ?;";
  	
- 	public static final String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, views, attempts, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
+ 	public static final String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, resource_views, question_views, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
 }
