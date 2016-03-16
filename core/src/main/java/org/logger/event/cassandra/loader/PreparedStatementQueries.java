@@ -4,7 +4,7 @@ import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 
 import com.datastax.driver.core.PreparedStatement;
 
-public class PreparedStatmentQueries extends BaseDAOCassandraImpl{
+public class PreparedStatementQueries extends BaseDAOCassandraImpl{
 	
 	public static final PreparedStatement INSERT_USER_SESSION = getCassSession().prepare("INSERT INTO user_sessions(user_uid,collection_uid,collection_type,class_uid,course_uid,unit_uid,lesson_uid,event_time,event_type,session_id)VALUES(?,?,?,?,?,?,?,?,?,?);");
 	
