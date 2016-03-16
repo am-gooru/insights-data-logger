@@ -90,7 +90,7 @@ public abstract class BaseDAOCassandraImpl {
 	public static String getLogKeyspaceName() {
 		return CassandraClient.getLogKeyspaceName();
 	}
-	public Session getCassSession(){
+	public static Session getCassSession(){
 		try {
 			return CassandraClient.getCassSession();
 		} catch (IOException e) {
