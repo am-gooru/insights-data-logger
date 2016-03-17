@@ -75,18 +75,18 @@ public class MastryGenerator implements Runnable {
 						}
 						taxonomyActivityDataCube.setRowKey(appendTilda(contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()));
 						taxonomyActivityDataCube.setLeafNode(contentTaxonomyActivity.getGooruOid());
-						generateDataCubeObj(taxonomyActivityDataCube);
-						baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
+						//generateDataCubeObj(taxonomyActivityDataCube);
+						//baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
 						
 						taxonomyActivityDataCube.setRowKey(appendTilda(contentTaxonomyActivity.getClassUid(),contentTaxonomyActivity.getUserUid(),contentTaxonomyActivity.getSubjectId(),contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(),contentTaxonomyActivity.getLearningTargetsId()));
-						generateDataCubeObj(taxonomyActivityDataCube);
-						baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
+						//generateDataCubeObj(taxonomyActivityDataCube);
+						//baseCassandraDao.saveTaxonomyActivityDataCube(taxonomyActivityDataCube);
 						
 						keyPairGenerator(contentTaxKeyColumnPair, contentTaxonomyActivityInstance);
 					}
 				}
 			}
-				generatedDataCube(contentTaxKeyColumnPair);
+				//generatedDataCube(contentTaxKeyColumnPair);
 			}
 		} catch (Exception e) {
 			logger.error("Exception while generate Mastery data", e);
