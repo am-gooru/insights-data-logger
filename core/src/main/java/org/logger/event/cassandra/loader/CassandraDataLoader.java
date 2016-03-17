@@ -303,34 +303,15 @@ public class CassandraDataLoader {
 			//kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}" ,event.getFields());
 		}
-		String eventName = event.getEventName();
-
-		// TODO : This should be reject at validation stage.
-		String apiKey = event.getApiKey() != null ? event.getApiKey() : Constants.DEFAULT_API_KEY;
-		Map<String, Object> records = new HashMap<String, Object>();
-		records.put(Constants._EVENT_NAME, eventName);
-		records.put(Constants._API_KEY, apiKey);
-		Collection<String> eventId = baseDao.getKey(ColumnFamilySet.DIMEVENTS.getColumnFamily(), records);
-
-		if (eventId == null || eventId.isEmpty()) {
-			UUID uuid = TimeUUIDUtils.getUniqueTimeUUIDinMillis();
-			records.put(Constants._EVENT_ID, uuid.toString());
-			String key = apiKey + Constants.SEPERATOR + uuid.toString();
-			baseDao.saveBulkList(ColumnFamilySet.DIMEVENTS.getColumnFamily(), key, records);
-		}
-
-		String eventKeyUUID = baseDao.saveEvent(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), null, event);
-
-		if (eventKeyUUID == null) {
-			return;
-		}
-
+				
+		baseDao.insertEvents(event.getEventId(), event.getFields());
+		
 		Date eventDateTime = new Date(event.getEndTime());
 		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 
-		baseDao.updateTimelineObject(ColumnFamilySet.EVENTTIMELINE.getColumnFamily(), eventRowKey, eventKeyUUID.toString(), event);
+		baseDao.insertEventsTimeline(eventRowKey, event.getEventId());
 
-		if (eventName.matches(Constants.SESSION_ACTIVITY_EVENTS)) {
+		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
 		} 
 		

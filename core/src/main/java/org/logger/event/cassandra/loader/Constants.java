@@ -818,4 +818,9 @@ public class Constants {
  	public static final String SELECT_USER_QUESTION_GRADE_BY_QUESTION = "SELECT * FROM user_question_grade WHERE teacher_id = ? AND user_id = ? AND session_id = ? AND question_id = ?;";
  	
  	public static final String INSERT_TAXONOMY_ACTIVITY_DATACUBE = "INSERT INTO taxonomy_activity_datacube(row_key, leaf_node, resource_views, question_views, resource_timespent, question_timespent, score)VALUES(?,?,?,?,?,?,?);";
+ 	
+ 	public static final String INSERT_EVENTS_TIMELINE = "INSERT INTO events_timeline(event_time,event_id)VALUES(?,?)";
+ 	
+ 	public static final String INSERT_EVENTS = "INSERT INTO events(event_id,fields)VALUES(?,?)";
+ 	
 }

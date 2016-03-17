@@ -65,7 +65,19 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
 
 	private final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
-
+	
+	private final PreparedStatement INSERT_EVENTS_TIMELINE = getCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
+	
+	private final PreparedStatement INSERT_EVENTS = getCassSession().prepare(Constants.INSERT_EVENTS);
+	
+	public PreparedStatement insertEventsTimeline() {
+		return INSERT_EVENTS_TIMELINE;
+	}
+	
+	public PreparedStatement insertEvents() {
+		return INSERT_EVENTS;
+	}
+	
 	public PreparedStatement updateSessionScore() {
 		return UPDATE_SESSION_SCORE;
 	}

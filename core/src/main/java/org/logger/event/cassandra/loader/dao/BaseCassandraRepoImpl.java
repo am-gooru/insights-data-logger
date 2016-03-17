@@ -1484,4 +1484,29 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
+	
+	@Override
+	public boolean insertEventsTimeline(String eventTime, String eventId) {
+		try {			
+			BoundStatement boundStatement = new BoundStatement(queries.insertEventsTimeline());
+			boundStatement.bind(eventTime,eventId);
+			getCassSession().execute(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing events timeline" ,e);
+			return false;
+		}
+		return true;
+	}
+	@Override
+	public boolean insertEvents(String eventId, String event) {
+		try {			
+			BoundStatement boundStatement = new BoundStatement(queries.insertEvents());
+			boundStatement.bind(eventId,event);
+			getCassSession().execute(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing events" ,e);
+			return false;
+		}
+		return true;
+	}
 }
