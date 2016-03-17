@@ -51,10 +51,10 @@ public class MastryGenerator implements Runnable {
 							for (com.datastax.driver.core.Row taxActivityColumns : taxActivityRows) {
 								contentTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + taxActivityColumns.getLong(Constants.VIEWS));
 								contentTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxActivityColumns.getLong(Constants._TIME_SPENT));
-								contentTaxonomyActivityInstance.setScore(contentTaxonomyActivity.getScore());
-								baseCassandraDao.saveContentTaxonomyActivity(contentTaxonomyActivityInstance);
 							}
 						}
+						contentTaxonomyActivityInstance.setScore(contentTaxonomyActivity.getScore());
+						baseCassandraDao.saveContentTaxonomyActivity(contentTaxonomyActivityInstance);
 						
 						/**
 						 * content_class_taxonomy_activity store
