@@ -273,20 +273,14 @@ public class EventController implements AsyncConfigurer {
 	 * run micro aggregation for the given time range
 	 */
 	public void runMicroAggregation() {
-		if (!validateSchedular()) {
-			return;
-		}
-		eventService.runMicroAggregation(null, null);
+		
 	}
 
 	/**
 	 * run micro aggregation for the given time range
 	 */
 	public void runMicroAggregation(String startTime, String endTime) {
-		if (!validateSchedular()) {
-			return;
-		}
-		eventService.runMicroAggregation(startTime, endTime);
+		
 	}
 
 	/**
@@ -332,46 +326,6 @@ public class EventController implements AsyncConfigurer {
 			logger.error("OOPS! Something went wrong", e);
 		}
 		return;
-	}
-
-	/**
-	 * 
-	 * @param request
-	 * @param apiKey
-	 * @param eventName
-	 * @param response
-	 * @throws IOException
-	 */
-	@RequestMapping(method = RequestMethod.PUT)
-	public void createEvent(HttpServletRequest request, @RequestParam(value = "apiKey", required = true) String apiKey, @RequestParam(value = Constants.EVENT_NAME, required = true) String eventName,
-			HttpServletResponse response) throws IOException {
-
-		// add cross domain support
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
-		response.setHeader("Access-Control-Allow-Methods", "PUT");
-
-		boolean isValid = eventService.ensureValidRequest(request, response);
-		if (!isValid) {
-			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
-			return;
-		}
-
-		response.setContentType("application/json");
-		if (!eventName.contains(".") || eventName.startsWith(".")) {
-			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid Event Name it should be noun.verb ");
-			return;
-		}
-		Map<String, String> status = new HashMap<String, String>();
-		if (eventService.createEvent(eventName, apiKey)) {
-			status.put(Constants.EVENT_NAME, eventName);
-			status.put("status", "Created");
-			response.getWriter().write(new JSONObject(status).toString());
-		} else {
-			eventService.sendErrorResponse(request, response, HttpServletResponse.SC_CONFLICT, " Event Already Exists : " + eventName);
-			return;
-		}
-
 	}
 
 	/**

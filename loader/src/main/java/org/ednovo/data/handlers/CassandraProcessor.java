@@ -58,37 +58,6 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         @Override
         public void handleRow(Object row) throws Exception {
 
-         if (row != null && (row instanceof EventData)) {
-       
-            EventData eventData = (EventData) row;
-            /*
-             * Skip new version  events  
-             */
-            if(eventData.getVersion() != null){
-            	return;
-            }
-            logger.info("EventName : {}",eventData.getEventName());
-            cleanseData(eventData);
-
-            if (eventData.getEventName() == null || eventData.getEventName().isEmpty()) {
-            	return;
-            }
-            // Update into Cassandra through logger-core
-            String fields = eventData.getFields();
-            if (fields == null || fields.isEmpty()) {
-                logger.warn("fields is empty. This is an error");
-                return;
-            }
-            
-    		if ( "Add%20Segment%20Name".equalsIgnoreCase(eventData.getQuery()) ||  "*".equalsIgnoreCase(eventData.getQuery())){
-    			return;
-    		}  
-            eventData.setApiKey(GOORU_EVENT_LOGGER_API_KEY);
-            eventData.setEventSource(EVENT_SOURCE);
-            dataLoader.handleLogMessage(eventData);
-            
-            handleRowByNextHandler(eventData);
-        }
          if (row != null && (row instanceof EventBuilder)) {
         	
         	 EventBuilder event = (EventBuilder) row;
