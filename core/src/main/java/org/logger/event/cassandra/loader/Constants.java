@@ -754,6 +754,16 @@ public class Constants {
 
 	public static final String SKIPPED = "skipped";
 	
+	public static final String SUBJECT_ID = "subject_id";
+
+	public static final String COURSE_ID = "course_id";
+
+	public static final String DOMAIN_ID = "domain_id";
+	   
+	public static final String STANDARDS_ID = "standards_id";
+
+	public static final String LEARNING_TARGETS_ID = "learning_targets_id";
+	   
 	/**
 	 * CQL QUERIES
 	 */

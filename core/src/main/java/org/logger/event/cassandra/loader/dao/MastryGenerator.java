@@ -41,11 +41,11 @@ public class MastryGenerator implements Runnable {
 				ResultSet taxRows = baseCassandraDao.getTaxonomy(contentTaxonomyActivity.getTaxonomyIds().getString(index));
 				if (taxRows != null) {
 					for (com.datastax.driver.core.Row taxColumns : taxRows) {
-						contentTaxonomyActivityInstance.setSubjectId(taxColumns.getString(Constants.SUBJECT));
-						contentTaxonomyActivityInstance.setCourseId(taxColumns.getString(Constants.COURSE));
-						contentTaxonomyActivityInstance.setDomainId(taxColumns.getString(Constants.DOMAIN));
-						contentTaxonomyActivityInstance.setStandardsId(taxColumns.getString(Constants.STANDARDS));
-						contentTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS));
+						contentTaxonomyActivityInstance.setSubjectId(taxColumns.getString(Constants.SUBJECT_ID));
+						contentTaxonomyActivityInstance.setCourseId(taxColumns.getString(Constants.COURSE_ID));
+						contentTaxonomyActivityInstance.setDomainId(taxColumns.getString(Constants.DOMAIN_ID));
+						contentTaxonomyActivityInstance.setStandardsId(taxColumns.getString(Constants.STANDARDS_ID));
+						contentTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
 						ResultSet taxActivityRows = baseCassandraDao.getContentTaxonomyActivity(contentTaxonomyActivityInstance);
 						if (taxActivityRows != null) {
 							for (com.datastax.driver.core.Row taxActivityColumns : taxActivityRows) {
@@ -59,11 +59,11 @@ public class MastryGenerator implements Runnable {
 						/**
 						 * content_class_taxonomy_activity store
 						 */
-						contentClassTaxonomyActivityInstance.setSubjectId(taxColumns.getString(Constants.SUBJECT));
-						contentClassTaxonomyActivityInstance.setCourseId(taxColumns.getString(Constants.COURSE));
-						contentClassTaxonomyActivityInstance.setDomainId(taxColumns.getString(Constants.DOMAIN));
-						contentClassTaxonomyActivityInstance.setStandardsId(taxColumns.getString(Constants.STANDARDS));
-						contentClassTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS));
+						contentClassTaxonomyActivityInstance.setSubjectId(taxColumns.getString(Constants.SUBJECT_ID));
+						contentClassTaxonomyActivityInstance.setCourseId(taxColumns.getString(Constants.COURSE_ID));
+						contentClassTaxonomyActivityInstance.setDomainId(taxColumns.getString(Constants.DOMAIN_ID));
+						contentClassTaxonomyActivityInstance.setStandardsId(taxColumns.getString(Constants.STANDARDS_ID));
+						contentClassTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
 						ResultSet classTaxActivityRows = baseCassandraDao.getContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
 						if (classTaxActivityRows != null) {
 							for (com.datastax.driver.core.Row classTaxActivityColumns : classTaxActivityRows) {
