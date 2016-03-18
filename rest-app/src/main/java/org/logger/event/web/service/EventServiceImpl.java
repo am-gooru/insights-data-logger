@@ -83,21 +83,6 @@ public class EventServiceImpl implements EventService {
 	/**
 	 * 
 	 */
-	@Override
-	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData) {
-
-		Errors errors = validateInsertEventData(eventData);
-
-		if (!errors.hasErrors()) {
-			dataLoaderService.handleLogMessage(eventData);
-		}
-
-		return new ActionResponseDTO<EventData>(eventData, errors);
-	}
-
-	/**
-	 * 
-	 */
 
 	@Override
 	public AppDO verifyApiKey(String apiKey) {
@@ -108,23 +93,6 @@ public class EventServiceImpl implements EventService {
 		appDO.setEndPoint(apiKeyValues.getStringValue("endPoint", null));
 		appDO.setDataPushingIntervalInMillsecs(apiKeyValues.getStringValue("pushIntervalMs", null));
 		return appDO;
-	}
-
-	/**
-	 * 
-	 * @param eventData
-	 * @return
-	 */
-	private Errors validateInsertEventData(EventData eventData) {
-		final Errors errors = new BindException(eventData, "EventData");
-		if (eventData == null) {
-			ServerValidationUtils.rejectIfNull(errors, eventData, "eventData.all", Constants.FIELDS+Constants.EMPTY_EXCEPTION);
-			return errors;
-		}
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventName(), Constants.EVENT_NAME, "LA001", Constants.EVENT_NAME+Constants.EMPTY_EXCEPTION);
-		ServerValidationUtils.rejectIfNullOrEmpty(errors, eventData.getEventId(), Constants.EVENT_ID, "LA002", Constants.EVENT_ID+Constants.EMPTY_EXCEPTION);
-
-		return errors;
 	}
 
 	/**
@@ -341,13 +309,6 @@ public class EventServiceImpl implements EventService {
 		if (isValidEvent) {
 			dataLoaderService.processMessage(event);
 		}
-	}
-	public void runMicroAggregation(String startTime, String endTime) {
-		dataLoaderService.runMicroAggregation(startTime, endTime);
-	}
-
-	public boolean createEvent(String eventName, String apiKey) {
-		return dataLoaderService.createEvent(eventName, apiKey);
 	}
 
 	public boolean validateSchedular() {

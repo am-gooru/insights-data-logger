@@ -40,6 +40,7 @@ import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.ResultSet;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
@@ -148,13 +149,12 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 				baseCassandraDao.saveQuestionGrade(event.getTeacherId(), event.getGooruUUID(), event.getSessionId(),
 						event.getContentGooruId(), event.getScore());
 			} else if (event.getGradeStatus().equals("submit")) {
-				Rows<String, String> questionScores = baseCassandraDao.getQuestionsGradeBySessionId(event.getTeacherId(), event.getGooruUUID(),
+				ResultSet questionScores = baseCassandraDao.getQuestionsGradeBySessionId(event.getTeacherId(), event.getGooruUUID(),
 						event.getSessionId());
-				if (questionScores != null && questionScores.size() > 0) {
-					for (Row<String, String> questionScore : questionScores) {
-						ColumnList<String> score = questionScore.getColumns();
+				if (questionScores != null) {
+					for (com.datastax.driver.core.Row score : questionScores) {
 						baseCassandraDao.saveQuestionGradeInSession(event.getSessionId(), event.getContentGooruId(), Constants.NA,
-								Constants.COMPLETED,score.getLongValue(Constants.SCORE, 0L));
+								Constants.COMPLETED,score.getLong(Constants.SCORE));
 					}
 				}
 				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) event.getSessionId(), event.getParentGooruId(),

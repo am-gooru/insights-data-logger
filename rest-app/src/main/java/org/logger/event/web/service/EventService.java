@@ -30,9 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
-import org.ednovo.data.model.EventBuilder;
-import org.ednovo.data.model.EventData;
-import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.springframework.stereotype.Service;
 
 import com.netflix.astyanax.model.ColumnList;
@@ -40,8 +37,6 @@ import com.netflix.astyanax.model.Rows;
 
 @Service
 public interface EventService {
-
-	public ActionResponseDTO<EventData> handleLogMessage(EventData eventData);
 
 	public AppDO verifyApiKey(String apiKeyToken);
 
@@ -51,10 +46,6 @@ public interface EventService {
 
 	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
 
-	void runMicroAggregation(String startTime, String endTime);
-	
-	boolean createEvent(String eventName,String apiKey);
-	
 	boolean validateSchedular();
 	
 	public void clearCache();
