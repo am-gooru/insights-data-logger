@@ -95,31 +95,6 @@
 		<url-pattern>/nucleus-insights/v2/*</url-pattern>
 	</servlet-mapping> 
 	
-	
-	    <servlet>
-		<servlet-name>atmos-dispatcher</servlet-name>
-        <servlet-class>org.atmosphere.cpr.MeteorServlet</servlet-class>
-        <init-param>
-            <param-name>org.atmosphere.servlet</param-name>
-            <param-value>org.springframework.web.servlet.DispatcherServlet</param-value>
-        </init-param>
-        <init-param>
-            <param-name>contextConfigLocation</param-name>
-            <param-value>/WEB-INF/classes/dispatcher-servlet.xml</param-value>
-        </init-param>
-        <init-param>
-            <param-name>org.atmosphere.useNative</param-name>
-            <param-value>true</param-value>
-        </init-param>
-        <load-on-startup>1</load-on-startup>
-        <async-supported>true</async-supported>
-	</servlet>
-	
-	<servlet-mapping>
-		<servlet-name>atmos-dispatcher</servlet-name>
-		<url-pattern>/atmosphere/*</url-pattern>
-	</servlet-mapping>
-	
 	<filter>
 		<filter-name>CORSFilter</filter-name>
 		<filter-class>org.logger.event.web.utils.CORSFilter</filter-class>
