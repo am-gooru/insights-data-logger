@@ -467,42 +467,7 @@
 			<artifactId>commons-dbcp</artifactId>
 			<version>1.2.2</version>
 		</dependency>
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>4.0.1.Final</version>
-		</dependency>
 
-		<dependency>
-			<groupId>org.apache.pig</groupId>
-			<artifactId>pig</artifactId>
-			<version>0.10.0</version>
-		</dependency>
-
-		<!-- <dependency> <groupId>org.hibernate</groupId> <artifactId>hibernate-annotations</artifactId> 
-			<version>3.5.6-Final</version> <exclusions> <exclusion> <groupId>org.hibernate</groupId> 
-			<artifactId>ejb3-persistence</artifactId> </exclusion> <exclusion> <groupId>org.hibernate</groupId> 
-			<artifactId>hibernate-core</artifactId> </exclusion> </exclusions> </dependency> -->
-
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-entitymanager</artifactId>
-			<version>4.0.1.Final</version>
-			<exclusions>
-				<exclusion>
-					<groupId>javax.transaction</groupId>
-					<artifactId>jta</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>jboss</groupId>
-					<artifactId>javassist</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.hibernate</groupId>
-					<artifactId>hibernate-annotations</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>c3p0</groupId>
 			<artifactId>c3p0</artifactId>
@@ -514,14 +479,7 @@
 			<version>1.6.0</version>
 			<classifier>osgi</classifier>
 		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.6</version>
-		</dependency>
-		<!-- cassandra dependency -->
-		<!-- <dependency> <groupId>me.prettyprint</groupId> <artifactId>hector-core</artifactId> 
-			<version>1.0-5</version> </dependency> -->
+
 		<dependency>
                 <groupId>com.netflix.astyanax</groupId>
                 <artifactId>astyanax</artifactId>
@@ -589,13 +547,7 @@
 			<artifactId>jest</artifactId>
 			<version>2.0.0</version>
 		</dependency>		
-		<!-- Atmosphere -->
-		<dependency>
-            <groupId>org.atmosphere</groupId>
-            <artifactId>atmosphere-runtime</artifactId>
-            <version>2.0.7</version>
-        </dependency>
-        
+		
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>

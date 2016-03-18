@@ -25,10 +25,8 @@ package org.logger.event.web.service;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -37,30 +35,24 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventBuilder;
-import org.ednovo.data.model.EventData;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
-import org.logger.event.web.controller.dto.ActionResponseDTO;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Rows;
 
 @Service
 public class EventServiceImpl implements EventService {
@@ -119,89 +111,6 @@ public class EventServiceImpl implements EventService {
 		ServerValidationUtils.logErrorIfZeroLongValue(isValidEvent, event.getEndTime(), Constants.END_TIME, "LA010", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
 		ServerValidationUtils.deepEventCheck(isValidEvent, event, eventJson);
 		return isValidEvent;
-	}
-
-	@Override
-	public ColumnList<String> readEventDetail(String eventKey) {
-		ColumnList<String> eventColumnList = baseDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventKey);
-		return eventColumnList;
-	}
-
-	@Override
-	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead) {
-		Rows<String, String> eventRowList = baseDao.readIndexedColumnLastNrows(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), "api_key", apiKey, rowsToRead);
-		return eventRowList;
-	}
-
-	@Override
-	public List<Map<String, Object>> readUserLastNEventsResourceIds(String userUid, String startTime, String endTime, String eventName, Integer eventsToRead) {
-		String activity = null;
-		String startColumnPrefix = null;
-		String endColumnPrefix = null;
-
-		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
-		List<Map<String, Object>> valueList = new ArrayList<Map<String, Object>>();
-		JsonElement jsonElement = null;
-		ColumnList<String> activityJsons;
-
-		if (eventName != null) {
-			startColumnPrefix = startTime + Constants.SEPERATOR + eventName;
-			endColumnPrefix = endTime + Constants.SEPERATOR + eventName;
-		} else {
-			startColumnPrefix = endTime;
-			endColumnPrefix = endTime;
-		}
-
-		activityJsons = baseDao.readColumnsWithPrefix(ColumnFamilySet.ACTIVITYSTREAM.getColumnFamily(), userUid, startColumnPrefix, endColumnPrefix, eventsToRead);
-		if ((activityJsons == null || activityJsons.isEmpty() || activityJsons.size() == 0 || activityJsons.size() < 30) && eventName == null) {
-			activityJsons = baseDao.readKeyLastNColumns(ColumnFamilySet.ACTIVITYSTREAM.getColumnFamily(), userUid, eventsToRead);
-		}
-		for (Column<String> activityJson : activityJsons) {
-			Map<String, Object> valueMap = new HashMap<String, Object>();
-			activity = activityJson.getStringValue();
-			if (!activity.isEmpty()) {
-				try {
-					// validate JSON
-					jsonElement = new JsonParser().parse(activity);
-					JsonObject eventObj = jsonElement.getAsJsonObject();
-
-					if (eventObj.get(Constants._CONTENT_GOORU_OID) != null) {
-						valueMap.put(Constants.RESOURCE_ID, eventObj.get(Constants._CONTENT_GOORU_OID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._PARENT_GOORU_OID) != null) {
-						valueMap.put(Constants.PARENT_ID, eventObj.get(Constants._PARENT_GOORU_OID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._EVENT_NAME) != null) {
-						valueMap.put(Constants.EVENT_NAME, eventObj.get(Constants._EVENT_NAME).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._USER_UID) != null) {
-						valueMap.put(Constants.USER_UID, eventObj.get(Constants._USER_UID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants.USERNAME) != null) {
-						valueMap.put(Constants.USERNAME, eventObj.get(Constants.USERNAME).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants.SCORE) != null) {
-						valueMap.put(Constants.SCORE, eventObj.get(Constants.SCORE).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._SESSION_ID) != null) {
-						valueMap.put(Constants.SESSION_ID, eventObj.get(Constants._SESSION_ID).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._FIRST_ATTEMPT_STATUS) != null) {
-						valueMap.put(Constants.FIRST_ATTEMPT_STATUS, eventObj.get(Constants._FIRST_ATTEMPT_STATUS).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-					if (eventObj.get(Constants._ANSWER_STATUS) != null) {
-						valueMap.put(Constants.ANSWERSTATUS, eventObj.get(Constants._ANSWER_STATUS).toString().replaceAll(Constants.FORWARD_SLASH, Constants.EMPTY_STRING));
-					}
-
-				} catch (JsonParseException e) {
-					// Invalid.
-					logger.error(Constants.INVALID_JSON, e);
-				}
-			}
-			valueList.add(valueMap);
-		}
-		resultList.addAll(valueList);
-		return resultList;
 	}
 
 	/**
@@ -315,65 +224,6 @@ public class EventServiceImpl implements EventService {
 		return dataLoaderService.validateSchedular();
 	}
 
-	public void clearCache() {
-		setLoggerCache(new DataLoggerCaches());
-		logger.debug("after clearing cache:"+getLoggerCache().canRunScheduler);
-	}
-
-	public void indexActivity() {
-		String lastUpadatedTime = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_LAST_UPDATED, Constants.DEFAULT_COLUMN).getStringValue();
-		String currentTime = minuteDateFormatter.format(new Date());
-		logger.info("lastUpadatedTime: " + lastUpadatedTime + " - currentTime: " + currentTime);
-		Date lastDate = null;
-		Date currDate = null;
-		String status = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_STATUS, Constants.DEFAULT_COLUMN).getStringValue();
-		if (status.equalsIgnoreCase(Constants.COMPLETED)) {
-			// All past indexing complete. Start new.
-			try {
-				lastDate = minuteDateFormatter.parse(lastUpadatedTime);
-				currDate = minuteDateFormatter.parse(currentTime);
-
-				if (lastDate.getTime() < currDate.getTime()) {
-					dataLoaderService.updateStagingES(lastUpadatedTime, currentTime, null, true);
-				} else {
-					logger.debug("Waiting to time complete...");
-				}
-			} catch (Exception e) {
-				logger.error("Exception:" , e);
-			}
-		} else if (status.equalsIgnoreCase("stop")) {
-			logger.debug("Event indexing stopped...");
-		} else {
-			String lastCheckedCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN).getStringValue();
-			String lastMaxCount = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_MAX_COUNT, Constants.DEFAULT_COLUMN).getStringValue();
-
-			if (Integer.parseInt(lastCheckedCount) < Integer.parseInt(lastMaxCount)) {
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN, Constants.EMPTY_STRING + (Integer.parseInt(lastCheckedCount) + 1));
-			} else {
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_STATUS, Constants.DEFAULT_COLUMN, Constants.COMPLETED);
-				baseDao.saveStringValue(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), Constants.ACTIVITY_INDEX_CHECKED_COUNT, Constants.DEFAULT_COLUMN, "" + 0);
-			}
-		}
-	}
-	
-	@Override
-	public void index(String ids, String indexType) throws Exception {
-		if (indexType.equalsIgnoreCase("resource")) {
-			dataLoaderService.indexResource(ids);
-		}
-		if (indexType.equalsIgnoreCase("user")) {
-			dataLoaderService.indexUser(ids);
-		}
-		if (indexType.equalsIgnoreCase("event")) {
-			dataLoaderService.indexEvent(ids);
-		}
-		if (indexType.equalsIgnoreCase("code")) {
-			dataLoaderService.indexTaxonomy(ids);
-		}
-	}
-
-
-	
 	public DataLoggerCaches getLoggerCache() {
 		return loggerCache;
 	}

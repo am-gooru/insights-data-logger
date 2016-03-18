@@ -23,37 +23,19 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
-import java.util.List;
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
 import org.springframework.stereotype.Service;
 
-import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Rows;
-
 @Service
 public interface EventService {
 
 	public AppDO verifyApiKey(String apiKeyToken);
 
-	public ColumnList<String> readEventDetail(String eventKey);
-
-	public Rows<String, String> readLastNevents(String apiKey, Integer rowsToRead);
-
-	List<Map<String, Object>> readUserLastNEventsResourceIds(String apiKey, String userUid, String rowsToRead, String eventName, Integer eventsToRead);
-
 	boolean validateSchedular();
-	
-	public void clearCache();
-
-	public void indexActivity();
-	
-	public void index(String ids,String indexType) throws Exception;
-	
+		
 	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response);
 	
 	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey);
