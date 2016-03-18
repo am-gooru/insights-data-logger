@@ -72,7 +72,7 @@ public class MessageConsumer extends Thread implements Runnable {
 	private static String SERVER_NAME;
 	ExecutorService service = Executors.newFixedThreadPool(10);
 
-	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
+	private static Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
 
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
 
@@ -90,13 +90,18 @@ public class MessageConsumer extends Thread implements Runnable {
 	private void getKafkaConsumer() {
 		Map<String, String> kafkaProperty = new HashMap<String, String>();
 		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
-		ZK_IP = kafkaProperty.get("zookeeper_ip");
-		ZK_PORT = kafkaProperty.get("zookeeper_portno");
-		KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
-		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
-		logger.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
-		MessageConsumer.topic = KAFKA_TOPIC.split(",");
-		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
+		if (kafkaProperty != null && kafkaProperty.size() > 0) {
+			ZK_IP = kafkaProperty.get("zookeeper_ip");
+			ZK_PORT = kafkaProperty.get("zookeeper_portno");
+			KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
+			KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+			LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
+			MessageConsumer.topic = KAFKA_TOPIC.split(",");
+			consumer = kafka.consumer.Consumer
+					.createJavaConsumerConnector(createConsumerConfig());
+		}else{
+			LOG.error("Not able to start consumer, since consumer ip is null");
+		}
 	}
 
 	private static String buildEndPoint(String ip, String portNo) {
@@ -127,7 +132,7 @@ public class MessageConsumer extends Thread implements Runnable {
 		props.put("zookeeper.session.timeout.ms", "6000");
 		props.put("zookeeper.sync.time.ms", "200");
 		props.put("auto.commit.interval.ms", "1000");
-		logger.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		LOG.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 		return new ConsumerConfig(props);
 
 	}
@@ -143,12 +148,12 @@ public class MessageConsumer extends Thread implements Runnable {
 			}
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			for (final String consumerTopic : topic) {
-				logger.info("Consumer topic : " + consumerTopic);
+				LOG.info("Consumer topic : " + consumerTopic);
 				service.submit(new ConsumeMessages(consumerTopic, consumerMap, rowDataProcessor));
 			}
 
 		} catch (Exception e) {
-			logger.error("Message Consumer failed in a loop:", e);
+			LOG.error("Message Consumer failed in a loop:", e);
 			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 
@@ -161,7 +166,7 @@ public class MessageConsumer extends Thread implements Runnable {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
-			logger.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
+			LOG.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
 		}
 		consumer.shutdown();
 	}
