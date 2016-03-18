@@ -805,7 +805,7 @@ public class Constants {
  	
  	public static final String SELECT_TAXONOMY_PARENT_NODE = "SELECT * FROM taxonomy_parent_node where row_key = ?;";
  	
- 	public static final String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
+ 	public static final String SELECT_CONTENT_TAXONOMY_ACTIVITY = "SELECT * FROM content_taxonomy_activity WHERE user_uid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
  	
  	public static final String SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "SELECT * FROM content_class_taxonomy_activity WHERE class_uid = ? AND user_uid = ? AND resource_type = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ? AND gooru_oid = ?;";
  	
