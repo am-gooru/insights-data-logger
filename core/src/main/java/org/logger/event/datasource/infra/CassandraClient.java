@@ -37,7 +37,7 @@ public final class CassandraClient implements Register {
 	public void init() {
 
 		final String cassandraIp = System.getenv("INSIGHTS_CASSANDRA_IP");
-		final String cassKeyspace = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
+		logKeyspaceName = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
 		String cassCluster = System.getenv("CASSANDRA_CLUSTER");
 		final String dataCenter = System.getenv("DATACENTER");
 		if(cassCluster == null){
@@ -45,7 +45,7 @@ public final class CassandraClient implements Register {
 		}
 		try {
 			LOG.info("Loading cassandra properties");
-			LOG.info("CASSANDRA_KEYSPACE" + cassKeyspace);
+			LOG.info("CASSANDRA_KEYSPACE" + logKeyspaceName);
 			LOG.info("CASSANDRA_IP" + cassandraIp);
 			LOG.info("DATACENTER" + dataCenter);
 
@@ -61,7 +61,7 @@ public final class CassandraClient implements Register {
 
 				AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
 						.forCluster(cassCluster)
-						.forKeyspace(cassKeyspace)
+						.forKeyspace(logKeyspaceName)
 						.withAstyanaxConfiguration(
 								new AstyanaxConfigurationImpl().setCqlVersion("3.0.0").setTargetCassandraVersion("2.1.4").setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
 										.setConnectionPoolType(ConnectionPoolType.ROUND_ROBIN)).withConnectionPoolConfiguration(poolConfig)
