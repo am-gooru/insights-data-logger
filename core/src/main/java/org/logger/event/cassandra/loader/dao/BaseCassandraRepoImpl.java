@@ -13,7 +13,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.avro.reflect.Nullable;
+import javax.annotation.Nullable;
+
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
 import org.ednovo.data.model.EventBuilder;

@@ -35,16 +35,13 @@ import org.json.JSONException;
 import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
-import org.logger.event.cassandra.loader.dao.ELSIndexerImpl;
 import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
-import org.logger.event.cassandra.loader.dao.LiveDashBoardDAOImpl;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.ConsistencyLevel;
 
 public class CassandraDataLoader {
@@ -63,10 +60,6 @@ public class CassandraDataLoader {
  
 	private MicroAggregatorDAO liveAggregator;
 	
-	private LiveDashBoardDAOImpl liveDashBoardDAOImpl;
-
-	private ELSIndexerImpl indexer;
-
 	private BaseCassandraRepo baseDao;
 	
 	private LTIServiceHandler ltiServiceHandler;
@@ -76,20 +69,7 @@ public class CassandraDataLoader {
 	 */
 	public CassandraDataLoader() {
 		this(null);
-
-		// micro Aggregator producer IP
-		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_IP);
-		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PORT);
-		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_TOPIC);
-		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-
-		// Log Writter producer IP
-		final String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_IP);
-		final String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PORT);
-		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
-		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		initializeKafkaModules();
 	}
 
 	/**
@@ -98,21 +78,8 @@ public class CassandraDataLoader {
 	 */
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
-		// micro Aggregator producer IP
-		final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_IP);
-		final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PORT);
-		final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_TOPIC);
-		final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-
-		// Log Writter producer IP
-		final String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_IP);
-		final String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PORT);
-		final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
-		final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-
-		microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);	
-		} 
+		initializeKafkaModules();
+	} 
 
 	public static long getTimeFromUUID(UUID uuid) {
 		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
@@ -124,10 +91,8 @@ public class CassandraDataLoader {
 	 */
 	private void init(Map<String, String> configOptionsMap) {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
-		this.liveDashBoardDAOImpl = new LiveDashBoardDAOImpl();
-		indexer = new ELSIndexerImpl();
 		baseDao = BaseCassandraRepo.instance();
-		ltiServiceHandler = new LTIServiceHandler(baseDao);
+		//ltiServiceHandler = new LTIServiceHandler(baseDao);
 		liveAggregator = MicroAggregatorDAO.instance();
 	}	
 
@@ -141,7 +106,6 @@ public class CassandraDataLoader {
 	 * @throws GeoIp2Exception
 	 */
 	public void processMessage(EventBuilder event) {
-		//Map<String, Object> eventMap = JSONDeserializer.deserializeEvent(event);
 		if (event.getFields() != null) {
 			//kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}" ,event.getFields());
@@ -158,77 +122,46 @@ public class CassandraDataLoader {
 			liveAggregator.eventProcessor(event);
 		} 
 		
-		liveDashBoardDAOImpl.realTimeMetricsCounter(event);
-		
 		/*else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
 			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
-		}*/
+		}
 		
-		/*
-		if (DataLoggerCaches.getCache().get(VIEW_EVENTS).contains(eventName)) {
-			liveDashBoardDAOImpl.addContentForPostViews(eventMap);
-		}
-		*/
-
 		if (DataLoggerCaches.getCanRunIndexing()) {
-			//indexer.indexEvents(event.getFields());
-		}
+			indexer.indexEvents(event.getFields());
+		}*/
 
 
 	}
 	
-	public boolean validateSchedular() {
-		return DataLoggerCaches.getCanRunScheduler();
+	private void initializeKafkaModules(){
+		// micro Aggregator producer IP
+		if (getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER) != null && getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).size() > 0) {
+			final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_IP);
+			final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PORT);
+			final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_TOPIC);
+			final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
+			microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
+		}
+
+		// Log Writter producer IP
+		if (getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER) != null && getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).size() > 0) {
+			final String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_IP);
+			final String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PORT);
+			final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
+			final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
+			kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
+		}
 	}
-
-
-	/**
-	 * Indexing content
-	 * @param ids
-	 * @throws Exception 
-	 */
-    public void indexResource(String ids) throws Exception{
-    	indexer.indexResource(ids);
-    }
-    /**
-     * Indexing user using user uuid.
-     * @param ids
-     * @throws Exception
-     */
-    public void indexUser(String ids) throws Exception{
-    	for(String userId : ids.split(",")){
-    		indexer.getUserAndIndex(userId);
-    	}
-    }
-    /**
-     * Indexing activity using event id
-     * @param ids
-     * @throws Exception
-     */
-    public void indexEvent(String ids) throws Exception{
-    	for(String eventId : ids.split(",")){
-    		ColumnList<String> event =  baseDao.readWithKey(ColumnFamilySet.EVENTDETAIL.getColumnFamily(), eventId);
-    		if(event.size() > 0){
-    			indexer.indexEvents(event.getStringValue("fields", null));
-    		}else{
-    			LOG.error("Invalid event id:" + eventId);
-    		}
-    	}
-    }
-    /**
-     * Indexing taxonomy index
-     * @param key
-     * @throws Exception
-     */
-    public void indexTaxonomy(String key) throws Exception{
-    	indexer.indexTaxonomy(key);
-    }
-
-
+	
+	public boolean validateSchedular() {
+		return false;
+	}
+	
 	public Map<String, String> getKafkaProperty(String propertyName) {
 		return DataLoggerCaches.getKafkaConfigurationCache().get(propertyName);
 	}
-	 public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
 	 
-	 }
+	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
+	 
+	}
 }

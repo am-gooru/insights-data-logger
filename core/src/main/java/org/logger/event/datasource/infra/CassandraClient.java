@@ -36,10 +36,11 @@ public final class CassandraClient implements Register {
 	@Override
 	public void init() {
 
-		final String cassandraIp = System.getenv("INSIGHTS_CASSANDRA_IP");
-		final String cassKeyspace = System.getenv("INSIGHTS_CASSANDRA_KEYSPACE");
+		final String cassandraIp = "127.0.0.1";
+		final String cassKeyspace = "event_logger_insights";
+		logKeyspaceName = cassKeyspace;
 		String cassCluster = System.getenv("CASSANDRA_CLUSTER");
-		final String dataCenter = System.getenv("DATACENTER");
+		final String dataCenter = "datacenter1";
 		if(cassCluster == null){
 		   cassCluster = "gooru-cassandra";
 		}
