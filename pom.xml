@@ -479,51 +479,10 @@
 			<version>1.6.0</version>
 			<classifier>osgi</classifier>
 		</dependency>
-
 		<dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax-cassandra</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax-core</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax-cql</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax-thrift</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>com.netflix.astyanax</groupId>
-                <artifactId>astyanax-entity-mapper</artifactId>
-                <version>3.9.0</version>
-        </dependency>
-        <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-all</artifactId>
-                <version>3.2.1</version>
-        </dependency>
-		<dependency>
-        	<groupId>com.netflix.astyanax</groupId>
-	        <artifactId>astyanax-recipes</artifactId>
-        	<version>3.9.0</version>
-		</dependency>
-	<dependency>
-                        <groupId>com.datastax.cassandra</groupId>
-                        <artifactId>cassandra-driver-core</artifactId>
-                        <version>2.1.4</version>
+                    <groupId>com.datastax.cassandra</groupId>
+                     <artifactId>cassandra-driver-core</artifactId>
+                     <version>2.1.4</version>
          </dependency>
 
                 <dependency>
