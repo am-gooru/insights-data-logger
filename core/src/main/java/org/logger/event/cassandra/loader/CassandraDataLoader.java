@@ -41,14 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ConsistencyLevel;
 
 public class CassandraDataLoader {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraDataLoader.class);
-
-	private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
 	private SimpleDateFormat minuteDateFormatter;
 

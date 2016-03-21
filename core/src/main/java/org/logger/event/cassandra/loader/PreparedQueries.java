@@ -72,6 +72,12 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
 	
+	private final PreparedStatement SELECT_API_KEY = getCassSession().prepare(Constants.SELECT_API_KEY);
+	
+	public PreparedStatement selectApiKey() {
+		return SELECT_API_KEY;
+	}
+	
 	public PreparedStatement updateStatustucalCounterData() {
 		return UPDATE_STATISTICAL_COUNTER_DATA;
 	}

@@ -25,7 +25,6 @@ package org.logger.event.web.service;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -37,7 +36,6 @@ import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
@@ -52,7 +50,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.netflix.astyanax.model.ColumnList;
 
 @Service
 public class EventServiceImpl implements EventService {
@@ -77,14 +74,8 @@ public class EventServiceImpl implements EventService {
 	 */
 
 	@Override
-	public AppDO verifyApiKey(String apiKey) {
-		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamilySet.APIKEY.getColumnFamily(), apiKey);
-		AppDO appDO = new AppDO();
-		appDO.setApiKey(apiKey);
-		appDO.setAppName(apiKeyValues.getStringValue("appName", null));
-		appDO.setEndPoint(apiKeyValues.getStringValue("endPoint", null));
-		appDO.setDataPushingIntervalInMillsecs(apiKeyValues.getStringValue("pushIntervalMs", null));
-		return appDO;
+	public AppDO verifyApiKey(String apiKey) {		
+		return baseDao.getApiKeyDetails(apiKey);
 	}
 
 	/**

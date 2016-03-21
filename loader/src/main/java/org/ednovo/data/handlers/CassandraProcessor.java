@@ -27,10 +27,8 @@ import java.text.ParseException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventBuilder;
-import org.ednovo.data.model.EventValidator;
-import org.json.JSONException;
+import org.ednovo.data.model.EventData;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.slf4j.Logger;
@@ -45,14 +43,12 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 	private Gson gson;
 	private final String GOORU_EVENT_LOGGER_API_KEY = "b6b82f4d-0e6e-4ad5-96d9-30849cf17727";
 	private final String EVENT_SOURCE = "file-logged";
-	private EventValidator eventValidator;
 	private DataLoggerCaches loggerCache;
 	
 	public CassandraProcessor(Map<String,String> configOptionsMap){
 		gson = new Gson();
 		setLoggerCache(new DataLoggerCaches());
 		dataLoader = new CassandraDataLoader(configOptionsMap);
-		eventValidator = new EventValidator(configOptionsMap);
 	}
 
         @Override

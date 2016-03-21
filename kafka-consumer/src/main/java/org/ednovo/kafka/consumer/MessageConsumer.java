@@ -40,7 +40,6 @@ package org.ednovo.kafka.consumer;
  */
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,6 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.mail.handlers.MailHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +60,6 @@ public class MessageConsumer extends Thread implements Runnable {
 	private CassandraDataLoader cassandraDataLoader;
 	private static ConsumerConnector consumer;
 	private DataProcessor rowDataProcessor;
-	private MailHandler mailHandler;
 
 	private static String[] topic;
 	private static String ZK_IP;
@@ -77,7 +74,6 @@ public class MessageConsumer extends Thread implements Runnable {
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
 
 		cassandraDataLoader = new CassandraDataLoader();
-		mailHandler = new MailHandler();
 		this.rowDataProcessor = insertRowForLogDB;
 		getKafkaConsumer();
 		try {
@@ -154,7 +150,6 @@ public class MessageConsumer extends Thread implements Runnable {
 
 		} catch (Exception e) {
 			LOG.error("Message Consumer failed in a loop:", e);
-			mailHandler.sendKafkaNotification("Hi Team, \n \n Kafka consumer stopped at server " + SERVER_NAME + " on " + new Date());
 		}
 
 	}

@@ -41,9 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ResultSet;
-import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Row;
-import com.netflix.astyanax.model.Rows;
 
 public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements MicroAggregatorDAO {
 
@@ -227,7 +224,12 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
-	private void countStatisticalData(EventBuilder event){
-		baseCassandraDao.updateStatisticalCounterData("daniel", "daniel", 1L);
+	private void countStatisticalData(final EventBuilder event){
+		if(event.getViews() > 0){
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.VIEWS, event.getViews());			
+		}
+		if(event.getTimespent() > 0){
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());			
+		}
 	}
 }
