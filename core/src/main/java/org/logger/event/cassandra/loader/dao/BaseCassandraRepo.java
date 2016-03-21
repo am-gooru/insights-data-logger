@@ -163,4 +163,6 @@ public interface BaseCassandraRepo {
 	boolean insertEvents(String eventId, String event);
 
 	boolean insertEventsTimeline(String eventTime, String eventId);
+
+	boolean updateStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue);
 }

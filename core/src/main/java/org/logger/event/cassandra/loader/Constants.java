@@ -822,5 +822,6 @@ public class Constants {
  	public static final String INSERT_EVENTS_TIMELINE = "INSERT INTO events_timeline(event_time,event_id)VALUES(?,?)";
  	
  	public static final String INSERT_EVENTS = "INSERT INTO events(event_id,fields)VALUES(?,?)";
- 	
+
+ 	public static final String UPDATE_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
 }

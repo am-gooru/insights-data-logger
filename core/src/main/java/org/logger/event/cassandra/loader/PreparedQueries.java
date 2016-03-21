@@ -70,6 +70,12 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement INSERT_EVENTS = getCassSession().prepare(Constants.INSERT_EVENTS);
 	
+	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
+	
+	public PreparedStatement updateStatustucalCounterData() {
+		return UPDATE_STATISTICAL_COUNTER_DATA;
+	}
+	
 	public PreparedStatement insertEventsTimeline() {
 		return INSERT_EVENTS_TIMELINE;
 	}

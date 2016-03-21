@@ -65,6 +65,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	public void eventProcessor(EventBuilder event) {
 
 		try {
+			countStatisticalData(event);
 			String eventName = event.getEventName();
 			ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
 			UserSessionActivity userSessionActivity = objectBuilderHandler.getUserSessionActivity();
@@ -226,4 +227,7 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
+	private void countStatisticalData(EventBuilder event){
+		baseCassandraDao.updateStatisticalCounterData("daniel", "daniel", 1L);
+	}
 }
