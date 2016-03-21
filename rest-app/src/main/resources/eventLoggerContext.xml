@@ -44,7 +44,6 @@
 	 For example @Controller and @Service. Make sure to set the correct base-package-->
 	<context:component-scan base-package="org.logger.event.web" />
 	
-	
 	<bean id="eventController" class="org.logger.event.web.controller.EventController" />
 	
 <!-- 	<bean id="firstTaskJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
@@ -78,16 +77,16 @@
 
 <bean id="microAggregatorThread" class="org.kafka.event.microaggregator.consumer.DataLoader" destroy-method="shutdownMicroAggregatorConsumer"/>
 
-		<bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<!-- <bean id="watchSessionDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="indexActivity" />
-       </bean>
+       </bean> -->
 
-       <bean id="watchSessionTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+      <!--  <bean id="watchSessionTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
            <property name="jobDetail" ref="watchSessionDetails" />
            <property name="repeatInterval" value="60000" />
            <property name="startDelay" value="1000" />
-       </bean>
+       </bean> -->
        
        	<!-- <bean id="migrationJobDetails" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />

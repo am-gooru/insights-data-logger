@@ -1510,4 +1510,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
+	@Override
+	public boolean updateStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue) {
+		try {			
+			BoundStatement boundStatement = new BoundStatement(queries.updateStatustucalCounterData());
+			boundStatement.bind(metricsValue,clusteringKey,metricsName);
+			getCassSession().execute(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing events" ,e);
+			return false;
+		}
+		return true;
+	}
 }
