@@ -26,9 +26,7 @@ package org.ednovo.kafka.consumer;
 import java.util.Properties;
 
 import org.ednovo.data.model.EventBuilder;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +34,6 @@ public class CassandraProcessor extends BaseDataProcessor implements
 		DataProcessor {
 	protected Properties properties;
 	protected CassandraDataLoader dataLoader;
-	private DataLoggerCaches loggerCache;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
 	public CassandraProcessor() {
@@ -44,7 +41,6 @@ public class CassandraProcessor extends BaseDataProcessor implements
 	}
 
 	protected void init() {
-		setLoggerCache(new DataLoggerCaches());
 		dataLoader = new CassandraDataLoader();
 	}
 
@@ -54,13 +50,4 @@ public class CassandraProcessor extends BaseDataProcessor implements
 			dataLoader.processMessage((EventBuilder) row);
 		}
 	}
-         
-        public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
-	}
-
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
-	}
-
 }
