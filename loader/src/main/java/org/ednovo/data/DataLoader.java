@@ -81,8 +81,8 @@ public class DataLoader  {
     	options.addOption( "aggregators", "aggregators", true, "aggregators" );
     	options.addOption( "updateBy", "updateBy", true, "updateBy" );
     	options.addOption( "callAPIViewCount", "callAPIViewCount", true, "callAPIViewCount" );
-
     	try {
+    		
     	    // parse the command line arguments
     	    CommandLine line = parser.parse( options, args );
     	    Map<String, String> configOptionsMap = new HashMap<String, String>();
@@ -140,30 +140,6 @@ public class DataLoader  {
 				DataProcessor initialRowHandler = buildHandlerChain(handlers);
 				initialRowHandler.processRow(null);
     		    return;
-    	    }
-    	    
-    	    if (line.hasOption("postUpdate") && line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName")) {
-    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-    	    	cassandraProcessor.postAggregation(line.getOptionValue("startTime"), line.getOptionValue("endTime"),line.getOptionValue("eventName"));
-    	    	return;
-    	    }else if (line.hasOption("startTime") && line.hasOption("endTime") && line.hasOption("eventName") && line.hasOption("method")) {
-	    	    	String EventName = null;
-	    	    	if(line.getOptionValue("eventName") != null || line.getOptionValue("eventName") == ""){
-	    	    		EventName = line.getOptionValue("eventName");
-	    	    		//EventName = EventName.replaceAll("'", "");
-	    	    		if(EventName.equalsIgnoreCase("all")){
-	    	    			EventName = null;	
-	    	    		}
-	    	    	}
-	    	    	String apiKey =null;
-	    	    	if(line.hasOption("apiKey")){
-	    	    		apiKey = line.getOptionValue("apiKey");
-	    	    	}
-	    	    	LOG.info("processing staging data");
-	    	    	LOG.info("eventName : {} ",line.getOptionValue("eventName"));
-	    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);
-	    	    	cassandraProcessor.updateToStaging(line.getOptionValue("startTime"), line.getOptionValue("endTime"),EventName,apiKey,line.getOptionValue("method"));
-	    	    
     	    }
     	}
     	catch( ParseException exp ) {

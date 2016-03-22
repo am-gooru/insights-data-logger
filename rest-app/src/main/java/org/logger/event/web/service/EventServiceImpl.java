@@ -207,8 +207,4 @@ public class EventServiceImpl implements EventService {
 			dataLoaderService.processMessage(event);
 		}
 	}
-
-	public boolean validateSchedular() {
-		return dataLoaderService.validateSchedular();
-	}
 }

@@ -118,40 +118,7 @@ public class EventController implements AsyncConfigurer {
 		eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
 		return;
 	}
-
-	/**
-	 * run micro aggregation for the given time range
-	 */
-	public void runMicroAggregation() {
-		
-	}
-
-	/**
-	 * run micro aggregation for the given time range
-	 */
-	public void runMicroAggregation(String startTime, String endTime) {
-		
-	}
-
-	/**
-	 * Indexing events in ES
-	 */
-	public void indexActivity() {
 	
-	}
-
-
-
-	/**
-	 * Validating for scheduler can run in this server or not
-	 * @return
-	 */
-	public boolean validateSchedular() {
-		boolean value = eventService.validateSchedular();
-		logger.debug("Can run scheduler? : "+value);
-		return value;
-	}
-
      @Override
 	public Executor getAsyncExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

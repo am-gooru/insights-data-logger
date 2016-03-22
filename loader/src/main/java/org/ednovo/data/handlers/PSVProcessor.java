@@ -23,7 +23,7 @@
  ******************************************************************************/
 package org.ednovo.data.handlers;
 
-import org.ednovo.data.model.EventData;
+import org.ednovo.data.model.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,20 +37,7 @@ public class PSVProcessor extends BaseDataProcessor implements DataProcessor {
 		if (row instanceof String) {
 			psvMessage = (String) row;
 		}
-
-		EventData eventData = new EventData();
-		String columnName[] = psvMessage.split("~;");
-
-		eventData.setUserIp(columnName[0]);
-		eventData.setStartTime(Long.parseLong(columnName[1]));
-		eventData.setEndTime(Long.parseLong(columnName[2]));
-//		eventData.setEventName(columnName[3]);
-		eventData.setSessionToken(columnName[4]);
-		eventData.setContext(columnName[5]);
-		eventData.setUserId(columnName[6]);
-		
-		eventData.setOrganizationUid("4261b188-ccae-11e1-adfb-5404a609bd14");
-
+		EventBuilder eventData = new EventBuilder(psvMessage);
 		getNextRowHandler().processRow(eventData);
 	}
 }

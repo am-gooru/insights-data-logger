@@ -92,7 +92,7 @@
            <property name="repeatInterval" value="5000" />
            <property name="startDelay" value="1000" />
        </bean>
-        -->
+       
        <bean id="minuteRunner" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
            <property name="targetObject" ref="eventController" />
            <property name="targetMethod" value="runMicroAggregation" />
@@ -103,7 +103,7 @@
            <property name="repeatInterval" value="60000" />
            <property name="startDelay" value="1000" />
        </bean>
-       
+        -->
         <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
            <property name="jobDetails">
               <list>
@@ -122,17 +122,4 @@
               </list>
            </property>
        </bean>
-	
-	<bean id="tomcatUsername" class="java.lang.String">
-		<constructor-arg>
-			<value>${tomcat.username}</value>
-		</constructor-arg>
-	</bean>
-	
-	<bean id="tomcatPassword" class="java.lang.String">
-		<constructor-arg>
-			<value>${tomcat.password}</value>
-		</constructor-arg>
-	</bean>
-	
 </beans>
