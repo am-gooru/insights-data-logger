@@ -37,7 +37,6 @@ import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.logger.event.cassandra.loader.Constants;
-import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -59,11 +58,9 @@ public class EventServiceImpl implements EventService {
 	protected CassandraDataLoader dataLoaderService;
 	private BaseCassandraRepo baseDao;
 	private SimpleDateFormat minuteDateFormatter;
-	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
 		baseDao = BaseCassandraRepo.instance();
-		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -214,13 +211,4 @@ public class EventServiceImpl implements EventService {
 	public boolean validateSchedular() {
 		return dataLoaderService.validateSchedular();
 	}
-
-	public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
-	}
-
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
-	}
-
 }

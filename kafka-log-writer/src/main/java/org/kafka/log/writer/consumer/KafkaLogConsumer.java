@@ -35,13 +35,12 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
-import org.kafka.event.microaggregator.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
-public class KafkaLogConsumer extends Thread implements Runnable, Constants {
+public class KafkaLogConsumer extends Thread implements Runnable {
 
 	private static ConsumerConnector consumer;
 	private static String topic;

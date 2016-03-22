@@ -30,11 +30,7 @@ package org.logger.event.cassandra.loader.dao;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
-
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.ResourceCo;
-import org.ednovo.data.model.UserCo;
 import org.elasticsearch.client.Client;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.datasource.infra.CassandraClient;
@@ -42,7 +38,6 @@ import org.logger.event.datasource.infra.ELSClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Session;
 
 public abstract class BaseDAOCassandraImpl {

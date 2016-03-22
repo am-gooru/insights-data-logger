@@ -26,16 +26,6 @@
 	<name>Event API - Core Jar</name>
 	<dependencies>
 		<dependency>
-			<groupId>org.ednovo.data.eventapi</groupId>
-			<artifactId>geo-location</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.kafka.event.microaggregator</groupId>
-			<artifactId>micro-aggregator</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
 			<groupId>com.ecyrd.speed4j</groupId>
 			<artifactId>speed4j</artifactId>
 			<version>0.16</version>
