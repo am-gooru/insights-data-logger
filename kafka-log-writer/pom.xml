@@ -86,11 +86,6 @@
 			<version>2.4</version>
 		</dependency>
 		
-		<dependency>
-			<groupId>org.kafka.event.microaggregator</groupId>
-			<artifactId>micro-aggregator</artifactId>
-			<version>1.0</version>
-		</dependency>
 		
     <dependency>
       <groupId>org.slf4j</groupId>

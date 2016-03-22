@@ -1,21 +1,16 @@
 package org.logger.event.cassandra.loader.dao;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.netflix.astyanax.model.ColumnList;
 
 
 public class LTIServiceHandler implements Runnable{
@@ -47,7 +42,9 @@ public class LTIServiceHandler implements Runnable{
 	public LTIServiceHandler(BaseCassandraRepo baseDao) {
 		LTIServiceHandler.baseDao = baseDao;
 		httpClient = new DefaultHttpClient();
-		String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, Constants.DEFAULT_COLUMN).getStringValue();
+		//It will be reconstructed after 3.0 release
+		//String url = baseDao.readWithKeyColumn(ColumnFamilySet.CONFIGSETTINGS.getColumnFamily(), LTI_END_POINT, Constants.DEFAULT_COLUMN).getStringValue();
+		String url = null;
 		postRequest = new HttpPost();
 		try {
 			builder = new URIBuilder();
@@ -69,7 +66,8 @@ public class LTIServiceHandler implements Runnable{
 			LOG.error(buildString(VALID_FIELDS, " should not be null for ", eventName));
 			return;
 		}
-		baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), serviceId, Constants.INPROGRESS, 604800);
+		//It will be reconstructed after 3.0 release
+		//baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), serviceId, Constants.INPROGRESS, 604800);
 	}
 
 	public LTIServiceHandler(String sessionToken, String gooruOId, String gooruUId) {
@@ -79,17 +77,22 @@ public class LTIServiceHandler implements Runnable{
 	}
 	
 	@Override
-	public void run() {
-		ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId));
+	public void run() {/*
+//		/It will be reconstructed after 3.0 release
+		//ColumnList<String> ltiColumns = baseDao.readWithKey(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId));
+		ColumnList<String> ltiColumns = null;
 		if(ltiColumns == null) {
 			return;
 		}
-		ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(Constants.RS, Constants.SEPERATOR, gooruOId, Constants.SEPERATOR, gooruUId));
+		//It will be reconstructed after 3.0 release
+		//ColumnList<String> sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSIONS.getColumnFamily(), buildString(Constants.RS, Constants.SEPERATOR, gooruOId, Constants.SEPERATOR, gooruUId));
+		ColumnList<String> sessionColumn = null;
 		String sessionId = sessionColumn != null ? sessionColumn.getStringValue(Constants._SESSION_ID, null) : null;	
 		if(sessionId == null) {
 			return;
 		}
-		sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId);
+		//It will be reconstructed after 3.0 release
+		//sessionColumn = baseDao.readWithKey(ColumnFamilySet.SESSION_ACTIVITY.getColumnFamily(), sessionId);
 		long score = sessionColumn != null ? sessionColumn.getLongValue(buildString(gooruOId, Constants.SEPERATOR, Constants._SCORE_IN_PERCENTAGE), 0L) : 0;
 		Map<String, Long> serviceBasedScore = new HashMap<String, Long>();
 		for(int columnCount = ltiColumns.size()-1; columnCount >= 0; columnCount--) {
@@ -105,10 +108,11 @@ public class LTIServiceHandler implements Runnable{
 		}
 		for(Entry<String, Long> entry : serviceBasedScore.entrySet()) {
 			if(executeAPI(sessionToken, gooruOId, entry.getKey(), entry.getValue())) {
-				baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), entry.getKey(), Constants.COMPLETED);
+				//It will be reconstructed after 3.0 release
+				//baseDao.saveStringValue(ColumnFamilySet.LTI_ACTIVITY.getColumnFamily(), buildString(gooruOId, Constants.SEPERATOR, gooruUId), entry.getKey(), Constants.COMPLETED);
 			}
 		}
-	}
+	*/}
 	
 	private boolean executeAPI(String sessionToken, String gooruOId, String serviceId, Long score) {
 		builder.setParameter(Constants.SESSION_TOKEN, sessionToken);

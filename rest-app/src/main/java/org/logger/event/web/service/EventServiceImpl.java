@@ -25,7 +25,6 @@ package org.logger.event.web.service;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -37,9 +36,7 @@ import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventBuilder;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.CassandraDataLoader;
-import org.logger.event.cassandra.loader.ColumnFamilySet;
 import org.logger.event.cassandra.loader.Constants;
-import org.logger.event.cassandra.loader.DataLoggerCaches;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.web.utils.ServerValidationUtils;
 import org.slf4j.Logger;
@@ -52,7 +49,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.netflix.astyanax.model.ColumnList;
 
 @Service
 public class EventServiceImpl implements EventService {
@@ -62,11 +58,9 @@ public class EventServiceImpl implements EventService {
 	protected CassandraDataLoader dataLoaderService;
 	private BaseCassandraRepo baseDao;
 	private SimpleDateFormat minuteDateFormatter;
-	private DataLoggerCaches loggerCache;
 	
 	public EventServiceImpl() {
 		baseDao = BaseCassandraRepo.instance();
-		setLoggerCache(new DataLoggerCaches());
 		dataLoaderService = new CassandraDataLoader();
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -77,14 +71,8 @@ public class EventServiceImpl implements EventService {
 	 */
 
 	@Override
-	public AppDO verifyApiKey(String apiKey) {
-		ColumnList<String> apiKeyValues = baseDao.readWithKey(ColumnFamilySet.APIKEY.getColumnFamily(), apiKey);
-		AppDO appDO = new AppDO();
-		appDO.setApiKey(apiKey);
-		appDO.setAppName(apiKeyValues.getStringValue("appName", null));
-		appDO.setEndPoint(apiKeyValues.getStringValue("endPoint", null));
-		appDO.setDataPushingIntervalInMillsecs(apiKeyValues.getStringValue("pushIntervalMs", null));
-		return appDO;
+	public AppDO verifyApiKey(String apiKey) {		
+		return baseDao.getApiKeyDetails(apiKey);
 	}
 
 	/**
@@ -223,13 +211,4 @@ public class EventServiceImpl implements EventService {
 	public boolean validateSchedular() {
 		return dataLoaderService.validateSchedular();
 	}
-
-	public DataLoggerCaches getLoggerCache() {
-		return loggerCache;
-	}
-
-	public void setLoggerCache(DataLoggerCaches loggerCache) {
-		this.loggerCache = loggerCache;
-	}
-
 }

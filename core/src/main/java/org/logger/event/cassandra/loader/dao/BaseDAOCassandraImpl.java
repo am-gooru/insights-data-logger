@@ -31,8 +31,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.ResourceCo;
-import org.ednovo.data.model.UserCo;
 import org.elasticsearch.client.Client;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.datasource.infra.CassandraClient;
@@ -41,46 +39,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Session;
-import com.netflix.astyanax.Keyspace;
-import com.netflix.astyanax.entitystore.EntityManager;
-import com.netflix.astyanax.model.ConsistencyLevel;
 
 public abstract class BaseDAOCassandraImpl {
 	
 	private final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
 	
-	protected final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 	
-	public Keyspace getKeyspace() {
-		try {
-			return CassandraClient.getKeyspace();
-		} catch (IOException e) {
-			LOG.error("Exception : ",e);
-		}
-		return null;
-	}
-
 	public Client getESClient() {
 		try {
 			return ELSClient.getESClient();
-		} catch (IOException e) {
-			LOG.error("Exception : ",e);
-		}
-		return null;
-	}
-
-	public EntityManager<ResourceCo, String> getResourceEntityPersister() {
-		try {
-			return CassandraClient.getResourceEntityPersister();
-		} catch (IOException e) {
-			LOG.error("Exception : ",e);
-		}
-		return null;
-	}
-
-	public EntityManager<UserCo, String> getUserEntityPersister() {
-		try {
-			return CassandraClient.getUserEntityPersister();
 		} catch (IOException e) {
 			LOG.error("Exception : ",e);
 		}

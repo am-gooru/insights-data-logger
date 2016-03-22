@@ -27,12 +27,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventBuilder;
 import org.json.JSONException;
-import org.kafka.event.microaggregator.producer.MicroAggregatorProducer;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
@@ -40,24 +40,16 @@ import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.maxmind.geoip2.exception.GeoIp2Exception;
-import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
-import com.netflix.astyanax.model.ConsistencyLevel;
-
 public class CassandraDataLoader {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraDataLoader.class);
-
-	private static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.CL_QUORUM;
 
 	private SimpleDateFormat minuteDateFormatter;
 
 	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
 	private KafkaLogProducer kafkaLogWriter;
-	
-	private MicroAggregatorProducer microAggregator;	
- 
+	 
 	private MicroAggregatorDAO liveAggregator;
 	
 	private BaseCassandraRepo baseDao;
@@ -101,7 +93,6 @@ public class CassandraDataLoader {
 	 * 
 	 * @param event
 	 * @throws JSONException
-	 * @throws ConnectionException
 	 * @throws IOException
 	 * @throws GeoIp2Exception
 	 */
@@ -134,15 +125,6 @@ public class CassandraDataLoader {
 	}
 	
 	private void initializeKafkaModules(){
-		// micro Aggregator producer IP
-		if (getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER) != null && getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).size() > 0) {
-			final String KAFKA_AGGREGATOR_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_IP);
-			final String KAFKA_AGGREGATOR_PORT = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PORT);
-			final String KAFKA_AGGREGATOR_TOPIC = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_TOPIC);
-			final String KAFKA_AGGREGATOR_TYPE = getKafkaProperty(Constants.V2_KAFKA_MICRO_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-			microAggregator = new MicroAggregatorProducer(KAFKA_AGGREGATOR_PRODUCER_IP, KAFKA_AGGREGATOR_PORT, KAFKA_AGGREGATOR_TOPIC, KAFKA_AGGREGATOR_TYPE);
-		}
-
 		// Log Writter producer IP
 		if (getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER) != null && getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).size() > 0) {
 			final String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_IP);
@@ -158,7 +140,7 @@ public class CassandraDataLoader {
 	}
 	
 	public Map<String, String> getKafkaProperty(String propertyName) {
-		return DataLoggerCaches.getKafkaConfigurationCache().get(propertyName);
+		return new HashMap<String, String>();
 	}
 	 
 	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {

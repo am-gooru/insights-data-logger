@@ -1,27 +1,14 @@
 package org.logger.event.cassandra.loader.dao;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
-import org.ednovo.data.model.EventBuilder;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserSessionActivity;
 
 import com.datastax.driver.core.ResultSet;
-import com.netflix.astyanax.ColumnListMutation;
-import com.netflix.astyanax.MutationBatch;
-import com.netflix.astyanax.model.Column;
-import com.netflix.astyanax.model.ColumnFamily;
-import com.netflix.astyanax.model.ColumnList;
-import com.netflix.astyanax.model.Rows;
 
 public interface BaseCassandraRepo {
 
@@ -29,84 +16,7 @@ public interface BaseCassandraRepo {
 		return new BaseCassandraRepoImpl();
 
 	}
-
-	Column<String> readWithKeyColumn(String cfName, String key, String columnName);
-
-	boolean checkColumnExist(String cfName, String key, String columnName);
-
-
-	ColumnList<String> readWithKey(String cfName, String key);
-
-
-	Rows<String, String> readCommaKeyList(String cfName, String[] key);
-
-	Rows<String, String> readIterableKeyList(String cfName, Iterable<String> keys);
-
-	Rows<String, String> readIndexedColumn(String cfName, String columnName, String value);
-
-
-	Rows<String, String> readIndexedColumnLastNrows(String cfName, String columnName, String value, Integer rowsToRead);
-
-	ColumnList<String> readKeyLastNColumns(String cfName, String key, Integer columnsToRead);
-
-
-	Rows<String, String> readIndexedColumnList(String cfName, Map<String, String> columnList);
-
-
-	boolean isValueExists(String cfName, Map<String, Object> columns);
-
-	Collection<String> getKey(String cfName, Map<String, Object> columns);
-
-	ColumnList<String> readColumnsWithPrefix(String cfName, String rowKey, String startColumnNamePrefix, String endColumnNamePrefix, Integer rowsToRead);
-
-	Rows<String, String> readAllRows(String cfName);
-
-
-
-	void saveBulkList(String cfName, String key, Map<String, Object> columnValueList);
-
-	void saveStringValue(String cfName, String key, String columnName, String value);
-
-	void saveStringValue(String cfName, String key, String columnName, String value, int expireTime);
-
-
-	void saveLongValue(String cfName, String key, String columnName, long value);
-
-
-	void increamentCounter(String cfName, String key, String columnName, long value);
-
-	void generateCounter(String cfName, String key, String columnName, long value, MutationBatch m);
-
-	void generateNonCounter(String columnName, Object value, ColumnListMutation<String> m);
-
-	void generateTTLColumns(String cfName, String key, String columnName, String value, int expireTime, MutationBatch m);
-
-	void deleteColumn(String cfName, String key, String columnName);
-
-	ColumnFamily<String, String> accessColumnFamily(String columnFamilyName);
-
-	String saveEvent(String cfName, EventData eventData);
-
-	String saveEvent(String cfName, String key, EventBuilder event);
-
-	void updateTimelineObject(String cfName, String rowKey, String CoulmnValue, EventBuilder event);
-
-	void updateTimeline(String cfName, EventData eventData, String rowKey);
-
-	void saveActivity(String cfName, HashMap<String, Object> activities);
-
-	Map<String, Object> isEventIdExists(String cfName, String userUid, String eventId);
-
-	List<String> getParentIds(String cfName, String key);
-
-	void updateCollectionItem(String cfName, Map<String, String> eventMap);
-
-	Set<String> getAllLevelParents(String cfName, String childOid, int depth);
-
-	void saveSession(String sessionActivityId, long eventTime, String status);
-
-	String getParentId(String cfName, String key);
-
+	
 	boolean saveUserSession(String sessionId, String classUid, String courseUid, String unitUid, String lessonUid, String collectionUid, String userUid, String collectionType, String eventType,
 			long eventTime);
 
@@ -156,8 +66,6 @@ public interface BaseCassandraRepo {
 
 	boolean saveQuestionGradeInSession(String sessionId, String questionId, String collectionItemId, String status, long score);
 
-	Rows<String, String> readAllRows(String cfName, CallBackRows allRows);
-
 	boolean saveLastSession(String classUid, String courseUid, String unitUid, String lessonUid, String collectionUid, String userUid, String sessionId);
 
 	boolean insertEvents(String eventId, String event);
@@ -165,4 +73,7 @@ public interface BaseCassandraRepo {
 	boolean insertEventsTimeline(String eventTime, String eventId);
 
 	boolean updateStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue);
+
+	AppDO getApiKeyDetails(String apiKey);
+
 }
