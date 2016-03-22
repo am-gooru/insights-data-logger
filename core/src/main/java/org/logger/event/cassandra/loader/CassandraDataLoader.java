@@ -23,7 +23,6 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,15 +31,15 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.ednovo.data.model.EventBuilder;
-import org.json.JSONException;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
+import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CassandraDataLoader {
+public class CassandraDataLoader extends BaseDAOCassandraImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraDataLoader.class);
 
@@ -61,7 +60,7 @@ public class CassandraDataLoader {
 	 */
 	public CassandraDataLoader() {
 		this(null);
-		initializeKafkaModules();
+		//initializeKafkaModules();
 	}
 
 	/**
@@ -70,7 +69,6 @@ public class CassandraDataLoader {
 	 */
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
-		initializeKafkaModules();
 	} 
 
 	public static long getTimeFromUUID(UUID uuid) {
@@ -86,11 +84,11 @@ public class CassandraDataLoader {
 		baseDao = BaseCassandraRepo.instance();
 		//ltiServiceHandler = new LTIServiceHandler(baseDao);
 		liveAggregator = MicroAggregatorDAO.instance();
+		kafkaLogWriter = getKafkaLogProducer();
 	}	
 
 	public void processMessage(EventBuilder event) {
 		if (event.getFields() != null) {
-			//kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}" ,event.getFields());
 		}
 				
@@ -104,24 +102,5 @@ public class CassandraDataLoader {
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
 		} 
-	}
-	
-	private void initializeKafkaModules(){
-		// Log Writter producer IP
-		if (getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER) != null && getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).size() > 0) {
-			final String KAFKA_LOG_WRITTER_PRODUCER_IP = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_IP);
-			final String KAFKA_LOG_WRITTER_PORT = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PORT);
-			final String KAFKA_LOG_WRITTER_TOPIC = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_TOPIC);
-			final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
-			kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
-		}
-	}
-	
-	public Map<String, String> getKafkaProperty(String propertyName) {
-		return new HashMap<String, String>();
-	}
-	 
-	public void updateStagingES(String startTime, String endTime, String customEventName, boolean isScheduledJob) throws ParseException {
-	 
-	}
+	}	 
 }

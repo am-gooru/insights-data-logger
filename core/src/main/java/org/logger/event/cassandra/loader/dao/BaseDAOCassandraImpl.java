@@ -32,6 +32,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
+import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.datasource.infra.CassandraClient;
 import org.logger.event.datasource.infra.ELSClient;
@@ -57,7 +58,11 @@ public abstract class BaseDAOCassandraImpl {
 	public String getLogKeyspaceName() {
 		return CassandraClient.getLogKeyspaceName();
 	}
-
+	
+	public KafkaLogProducer getKafkaLogProducer(){
+		return CassandraClient.getKafkaLogProducer();
+	}
+	
 	public Session getCassSession() {
 		return CassandraClient.getCassSession();
 	} 
