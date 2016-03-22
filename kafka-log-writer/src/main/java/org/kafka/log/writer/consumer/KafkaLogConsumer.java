@@ -50,7 +50,8 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_TOPIC;
 	private static String SERVER_NAME;
-
+	//private CassandraDataLoader cassandraDataLoader;
+	
 	private static Logger logger = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
 	public KafkaLogConsumer() {
