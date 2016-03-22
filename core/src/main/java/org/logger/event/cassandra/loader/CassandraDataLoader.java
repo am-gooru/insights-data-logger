@@ -88,14 +88,6 @@ public class CassandraDataLoader {
 		liveAggregator = MicroAggregatorDAO.instance();
 	}	
 
-	/**
-	 * This is the main the method that process all the events.
-	 * 
-	 * @param event
-	 * @throws JSONException
-	 * @throws IOException
-	 * @throws GeoIp2Exception
-	 */
 	public void processMessage(EventBuilder event) {
 		if (event.getFields() != null) {
 			//kafkaLogWriter.sendEventLog(event.getFields());
@@ -112,16 +104,6 @@ public class CassandraDataLoader {
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
 		} 
-		
-		/*else if(eventName.equalsIgnoreCase(Constants.LTI_OUTCOME)){
-			ltiServiceHandler.ltiEventProcess(eventName, eventMap);
-		}
-		
-		if (DataLoggerCaches.getCanRunIndexing()) {
-			indexer.indexEvents(event.getFields());
-		}*/
-
-
 	}
 	
 	private void initializeKafkaModules(){
@@ -133,10 +115,6 @@ public class CassandraDataLoader {
 			final String KAFKA_LOG_WRITTER_TYPE = getKafkaProperty(Constants.V2_KAFKA_LOG_WRITER_PRODUCER).get(Constants.KAFKA_PRODUCER_TYPE);
 			kafkaLogWriter = new KafkaLogProducer(KAFKA_LOG_WRITTER_PRODUCER_IP, KAFKA_LOG_WRITTER_PORT, KAFKA_LOG_WRITTER_TOPIC, KAFKA_LOG_WRITTER_TYPE);
 		}
-	}
-	
-	public boolean validateSchedular() {
-		return false;
 	}
 	
 	public Map<String, String> getKafkaProperty(String propertyName) {

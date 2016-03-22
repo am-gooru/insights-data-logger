@@ -34,8 +34,6 @@ public interface EventService {
 
 	public AppDO verifyApiKey(String apiKeyToken);
 
-	boolean validateSchedular();
-		
 	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response);
 	
 	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey);

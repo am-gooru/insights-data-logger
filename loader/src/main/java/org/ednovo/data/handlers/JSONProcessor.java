@@ -24,7 +24,6 @@
 package org.ednovo.data.handlers;
 
 import org.apache.commons.lang.StringUtils;
-import org.ednovo.data.model.EventData;
 import org.ednovo.data.model.EventBuilder;
 
 import com.google.gson.Gson;
@@ -58,17 +57,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
             }
         }
 
-        EventData eventData = null;
         EventBuilder event = null;
-        try {
-            eventData = gson.fromJson(jsonRowObject, EventData.class);
-            eventData.setFields(logMessage);
-            getNextRowHandler().processRow(eventData);
-            event = gson.fromJson(jsonRowObject, EventBuilder.class);
-        } catch (Exception e) {
-            LOG.error("Had a problem trying to parse JSON from the raw line {}", jsonRowObject, e);
-            return;
-        }
         try {
             event = gson.fromJson(jsonRowObject, EventBuilder.class);
             event.setFields(logMessage);        
