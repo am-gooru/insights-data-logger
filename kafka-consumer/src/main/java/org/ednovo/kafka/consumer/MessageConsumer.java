@@ -84,20 +84,15 @@ public class MessageConsumer extends Thread implements Runnable {
 	}
 
 	private void getKafkaConsumer() {
-		Map<String, String> kafkaProperty = new HashMap<String, String>();
-		kafkaProperty = cassandraDataLoader.getKafkaProperty("v2~kafka~consumer");
-		if (kafkaProperty != null && kafkaProperty.size() > 0) {
-			ZK_IP = kafkaProperty.get("zookeeper_ip");
-			ZK_PORT = kafkaProperty.get("zookeeper_portno");
-			KAFKA_TOPIC = kafkaProperty.get("kafka_topic");
-			KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+			ZK_IP = System.getenv("CONSUMER_ZOOKEEPER_IP");
+			ZK_PORT = "2181";
+			KAFKA_TOPIC = System.getenv("CONSUMER_TOPIC");
+			KAFKA_GROUPID = System.getenv("CONSUMER_GROUPID");
 			LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
 			MessageConsumer.topic = KAFKA_TOPIC.split(",");
 			consumer = kafka.consumer.Consumer
 					.createJavaConsumerConnector(createConsumerConfig());
-		}else{
-			LOG.error("Not able to start consumer, since consumer ip is null");
-		}
+		
 	}
 
 	private static String buildEndPoint(String ip, String portNo) {

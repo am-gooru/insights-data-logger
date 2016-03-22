@@ -49,31 +49,20 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private static String ZOOKEEPER_PORT;
 	private static String KAFKA_GROUPID;
 	private static String KAFKA_FILE_TOPIC;
-	private static String SERVER_NAME;
-	//private CassandraDataLoader cassandraDataLoader;
 	
-	private static Logger logger = LoggerFactory.getLogger(KafkaLogConsumer.class);
+	private static Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
 	public KafkaLogConsumer() {
-
 		getKafkaConsumer();
-		try {
-			SERVER_NAME = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			SERVER_NAME = "UnKnownHost";
-		}
 	}
 
 	private void getKafkaConsumer() {
-
-		Map<String, String> kafkaProperty = new HashMap<String, String>();
-/*		kafkaProperty = microAggregationLoader.getKafkaProperty("v2~kafka~logwritter~consumer");
-		ZOOKEEPER_IP = kafkaProperty.get("zookeeper_ip");
-		ZOOKEEPER_PORT = kafkaProperty.get("zookeeper_portno");
-		KAFKA_FILE_TOPIC = kafkaProperty.get("kafka_topic");
-		KAFKA_GROUPID = kafkaProperty.get("kafka_groupid");
+		ZOOKEEPER_IP = System.getenv("LOG_WRITER_ZOOKEEPER_IP");
+		ZOOKEEPER_PORT = "2181";
+		KAFKA_FILE_TOPIC = System.getenv("LOG_WRITER_TOPIC");
+		KAFKA_GROUPID = System.getenv("LOG_WRITER_GROUPID");
 		KafkaLogConsumer.topic = KAFKA_FILE_TOPIC;
-*/
+		LOG.info("ZOOKEEPER_IP : " + ZOOKEEPER_IP + " - KAFKA_FILE_TOPIC: " + KAFKA_FILE_TOPIC + " -KAFKA_GROUPID : "+ KAFKA_GROUPID);
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	}
 
@@ -105,7 +94,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 		props.put("zookeeper.session.timeout.ms", "20000");
 		props.put("zookeeper.sync.time.ms", "2000");
 		props.put("auto.commit.interval.ms", "1000");
-		logger.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
 		return new ConsumerConfig(props);
 
@@ -123,7 +112,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
-			logger.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
+			LOG.debug("Kafka Log Consumer unable to wait for 1000ms before it's shutdown");
 		}
 		consumer.shutdown();
 	}
@@ -139,8 +128,8 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 			 * get list of kafka stream from specific topic
 			 */
 			topicCountMap.put(topic, new Integer(1));
-			logger.info("Logwriter topic : "+topic);
-			logger.info("LogWriter topicCountMap : "+topicCountMap);
+			LOG.info("Logwriter topic : "+topic);
+			LOG.info("LogWriter topicCountMap : "+topicCountMap);
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 			ConsumerIterator<byte[], byte[]> it = stream.iterator();
@@ -172,7 +161,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("Log writter Message  Consumer:" + e);
+			LOG.error("Log writter Message  Consumer:" + e);
 		}
 	}
 }
