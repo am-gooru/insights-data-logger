@@ -89,6 +89,7 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 
 	public void processMessage(EventBuilder event) {
 		if (event.getFields() != null) {
+		//	kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}" ,event.getFields());
 		}
 				
