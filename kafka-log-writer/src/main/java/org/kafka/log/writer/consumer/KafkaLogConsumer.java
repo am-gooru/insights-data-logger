@@ -23,22 +23,20 @@
  ******************************************************************************/
 package org.kafka.log.writer.consumer;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
 
 public class KafkaLogConsumer extends Thread implements Runnable {
 
@@ -57,10 +55,10 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	}
 
 	private void getKafkaConsumer() {
-		ZOOKEEPER_IP = System.getenv("LOG_WRITER_ZOOKEEPER_IP");
-		ZOOKEEPER_PORT = "2181";
-		KAFKA_FILE_TOPIC = System.getenv("LOG_WRITER_TOPIC");
-		KAFKA_GROUPID = System.getenv("LOG_WRITER_GROUPID");
+		ZOOKEEPER_IP = DataLoader.getProperty("kafka.consumer.ip");
+		ZOOKEEPER_PORT = DataLoader.getProperty("kafka.consumer.port");
+		KAFKA_FILE_TOPIC = DataLoader.getProperty("kafka.logwritter.topic");
+		KAFKA_GROUPID = DataLoader.getProperty("kafka.logwritter.group");
 		KafkaLogConsumer.topic = KAFKA_FILE_TOPIC;
 		LOG.info("ZOOKEEPER_IP : " + ZOOKEEPER_IP + " - KAFKA_FILE_TOPIC: " + KAFKA_FILE_TOPIC + " -KAFKA_GROUPID : "+ KAFKA_GROUPID);
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
@@ -117,6 +115,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 		consumer.shutdown();
 	}
 
+	@SuppressWarnings("unchecked")
 	public void initConsumer() {
 
 		Integer noOfThread = 1;

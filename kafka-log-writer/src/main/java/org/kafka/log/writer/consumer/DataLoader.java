@@ -23,11 +23,17 @@
  ******************************************************************************/
 package org.kafka.log.writer.consumer;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +41,10 @@ public class DataLoader implements Runnable {
 
     static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
+	private static Properties configConstants;
+
     public DataLoader() {
+    	loadConfigFile();
 	}
     
     public static void main(String[] args) throws java.text.ParseException {
@@ -75,5 +84,23 @@ public class DataLoader implements Runnable {
 	public static void runThread() {
 		KafkaLogConsumer consumerThread = new KafkaLogConsumer();
         consumerThread.start();
+	}
+	
+	private void loadConfigFile() {
+		InputStream inputStream = null;
+		try {
+			configConstants = new Properties();
+			String propFileName = "logapi-config.properties";
+			String configPath = System.getenv("CATALINA_HOME").concat("/conf/");
+			inputStream = FileUtils.openInputStream(new File(configPath.concat(propFileName)));
+			configConstants.load(inputStream);
+			inputStream.close();
+		} catch (IOException ioException) {
+			LOG.error("Unable to Load Config File", ioException);
+		}
+	}
+	
+	public static String getProperty(String key) {
+		return configConstants.getProperty(key);
 	}
 }

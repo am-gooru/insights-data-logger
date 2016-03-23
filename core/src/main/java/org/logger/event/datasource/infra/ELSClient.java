@@ -20,8 +20,8 @@ public final class ELSClient implements Register {
 
 	@Override
 	public void init() {
-		final String elsIp = System.getenv("INSIGHTS_ES_IP");
-		String elsCluster = System.getenv("ES_CLUSTER");
+		final String elsIp = CassandraClient.getProperty("elasticsearch.ip");
+		String elsCluster = CassandraClient.getProperty("elasticsearch.cluster");;
 
 		LOG.info("ELS IP : " + elsIp);
 		if(elsCluster == null){

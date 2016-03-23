@@ -52,6 +52,7 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
 import org.logger.event.cassandra.loader.CassandraDataLoader;
+import org.logger.event.datasource.infra.CassandraClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,10 +85,10 @@ public class MessageConsumer extends Thread implements Runnable {
 	}
 
 	private void getKafkaConsumer() {
-			ZK_IP = System.getenv("CONSUMER_ZOOKEEPER_IP");
-			ZK_PORT = "2181";
-			KAFKA_TOPIC = System.getenv("CONSUMER_TOPIC");
-			KAFKA_GROUPID = System.getenv("CONSUMER_GROUPID");
+			ZK_IP = CassandraClient.getProperty("kafka.consumer.ip");
+			ZK_PORT = CassandraClient.getProperty("kafka.consumer.port");
+			KAFKA_TOPIC = CassandraClient.getProperty("kafka.consumer.topic");
+			KAFKA_GROUPID = CassandraClient.getProperty("kafka.consumer.group");
 			LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
 			MessageConsumer.topic = KAFKA_TOPIC.split(",");
 			consumer = kafka.consumer.Consumer
