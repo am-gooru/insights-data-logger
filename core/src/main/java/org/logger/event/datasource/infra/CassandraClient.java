@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.apache.commons.io.FileUtils;
+import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,71 +14,97 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 public final class CassandraClient implements Register {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraClient.class);
-	private static Cluster cluster;
-    private static Session session;
-    private static String logKeyspaceName;
+	private static Cluster analyticsCassandraCluster;
+	private static Session analyticsCassandraSession;
+	private static String analyticsKeyspaceName;
+	private static Cluster eventCassandraCluster;
+	private static Session eventCassandraSession;
+	private static String eventKeyspaceName;
 	private static KafkaLogProducer kafkaLogWriter;
 	private static Properties configConstants;
-	
+
 	@Override
 	public void init() {
 		loadConfigFile();
-		final String cassandraIp = getProperty("cassandra.seeds");
-		logKeyspaceName = getProperty("cassandra.keyspace");
-		String cassCluster = getProperty("cassandra.cluster");
-		final String dataCenter = getProperty("cassandra.datacenter");
+		final String analyticsCassandraHosts = getProperty("analytics.cassandra.seeds");
+		analyticsKeyspaceName = getProperty("analytics.cassandra.keyspace");
+		String analyticsCassCluster = getProperty("analytics.cassandra.cluster");
+		final String analyticsCassandraDatacenter = getProperty("analytics.cassandra.datacenter");
+
+		final String eventCassandraHosts = getProperty("event.cassandra.seeds");
+		eventKeyspaceName = getProperty("event.cassandra.keyspace");
+		String eventCassCluster = getProperty("event.cassandra.cluster");
+		final String eventCassandraDatacenter = getProperty("event.cassandra.datacenter");
+
 		final String kafkaProducerIp = getProperty("kafka.producer.ip");
 		final String kafkaLogwritterTopic = getProperty("kafka.logwritter.topic");
 		final String kafkaProducerPort = getProperty("kafka.producer.port");
 		final String kafkaProducerType = getProperty("kafka.producer.type");
-		
-		if (cassCluster == null) {
-			cassCluster = "gooru-cassandra";
-		}
-		LOG.info("Loading cassandra properties");
-		LOG.info("CASSANDRA_KEYSPACE" + logKeyspaceName);
-		LOG.info("CASSANDRA_IP" + cassandraIp);
-		LOG.info("DATACENTER" + dataCenter);
 
+		LOG.info("Loading cassandra properties");
+		LOG.info("CASSANDRA_KEYSPACE" + analyticsKeyspaceName);
+		LOG.info("CASSANDRA_IP" + analyticsCassandraHosts);
+		LOG.info("DATACENTER" + analyticsCassandraDatacenter);
 		LOG.info("KAFKA_LOG_WRITTER_PRODUCER_IP" + kafkaProducerIp);
 		LOG.info("KAFKA_LOG_WRITTER_PRODUCER_IP" + kafkaProducerIp);
-		
+
 		try {
-			cluster = Cluster.builder().withClusterName(cassCluster).addContactPoint(cassandraIp).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-			/*
-			 * .withReconnectionPolicy( new ExponentialReconnectionPolicy(1000, 30000))
-			 */
-			.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(dataCenter))).build();
-			session = cluster.connect(logKeyspaceName);
-			
+			analyticsCassandraCluster = Cluster.builder().withClusterName(analyticsCassCluster).addContactPoint(analyticsCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(analyticsCassandraDatacenter)))
+					.build();
+			analyticsCassandraSession = analyticsCassandraCluster.connect(analyticsKeyspaceName);
+
+			eventCassandraCluster = Cluster.builder().withClusterName(eventCassCluster).addContactPoint(eventCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(eventCassandraDatacenter)))
+					.build();
+			eventCassandraSession = eventCassandraCluster.connect(eventKeyspaceName);
+
 			kafkaLogWriter = new KafkaLogProducer(kafkaProducerIp, kafkaProducerPort, kafkaLogwritterTopic, kafkaProducerType);
 		} catch (Exception e) {
 			LOG.error("Error while initializing cassandra : {}", e);
 		}
 	}
-	public static String getLogKeyspaceName() {
-		return logKeyspaceName;
+
+	public static String getAnalyticsKeyspace() {
+		return analyticsKeyspaceName;
 	}
+
+	public static String getEventKeyspace() {
+		return eventKeyspaceName;
+	}
+
 	public static KafkaLogProducer getKafkaLogProducer() {
 		return kafkaLogWriter;
 	}
-	
-	public static Session getCassSession() {
-		if(session == null) {
+
+	public static Session getAnalyticsCassandraSession() {
+		if (analyticsCassandraSession == null) {
 			try {
-				throw new IOException("Session is not initialized.");
+				throw new IOException("Analytics Session is not initialized.");
 			} catch (IOException e) {
-				LOG.error("Session is not initialized.");
+				LOG.error("Analytics Session is not initialized.");
 			}
 		}
-		return session;
-	}  
-	
+		return analyticsCassandraSession;
+	}
+
+	public static Session getEventCassandraSession() {
+		if (eventCassandraSession == null) {
+			try {
+				throw new IOException("Event Session is not initialized.");
+			} catch (IOException e) {
+				LOG.error("Event Session is not initialized.");
+			}
+		}
+		return eventCassandraSession;
+	}
+
 	private void loadConfigFile() {
 		InputStream inputStream = null;
 		try {
@@ -92,7 +118,7 @@ public final class CassandraClient implements Register {
 			LOG.error("Unable to Load Config File", ioException);
 		}
 	}
-	
+
 	private static class CassandraClientHolder {
 		public static final CassandraClient INSTANCE = new CassandraClient();
 	}
@@ -100,8 +126,7 @@ public final class CassandraClient implements Register {
 	public static CassandraClient instance() {
 		return CassandraClientHolder.INSTANCE;
 	}
-    
-	
+
 	public static String getProperty(String key) {
 		return configConstants.getProperty(key);
 	}

@@ -23,10 +23,8 @@
  ******************************************************************************/
 package org.logger.event.cassandra.loader;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,7 +32,6 @@ import org.ednovo.data.model.EventBuilder;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.LTIServiceHandler;
 import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,19 +45,18 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
 	private KafkaLogProducer kafkaLogWriter;
-	 
+
 	private MicroAggregatorDAO liveAggregator;
-	
+
 	private BaseCassandraRepo baseDao;
-	
-	private LTIServiceHandler ltiServiceHandler;
+
+	// private LTIServiceHandler ltiServiceHandler;
 
 	/**
 	 * Get Kafka properties from Environment
 	 */
 	public CassandraDataLoader() {
 		this(null);
-		//initializeKafkaModules();
 	}
 
 	/**
@@ -69,7 +65,7 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	 */
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
 		init(configOptionsMap);
-	} 
+	}
 
 	public static long getTimeFromUUID(UUID uuid) {
 		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
@@ -82,26 +78,22 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	private void init(Map<String, String> configOptionsMap) {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		baseDao = BaseCassandraRepo.instance();
-		//ltiServiceHandler = new LTIServiceHandler(baseDao);
+		// ltiServiceHandler = new LTIServiceHandler(baseDao);
 		liveAggregator = MicroAggregatorDAO.instance();
 		kafkaLogWriter = getKafkaLogProducer();
-	}	
+	}
 
 	public void processMessage(EventBuilder event) {
 		if (event.getFields() != null) {
-		//	kafkaLogWriter.sendEventLog(event.getFields());
-			LOG.info("Field : {}" ,event.getFields());
+			kafkaLogWriter.sendEventLog(event.getFields());
+			LOG.info("Field : {}", event.getFields());
 		}
-				
 		baseDao.insertEvents(event.getEventId(), event.getFields());
-		
 		Date eventDateTime = new Date(event.getEndTime());
 		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
-
 		baseDao.insertEventsTimeline(eventRowKey, event.getEventId());
-
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
-		} 
-	}	 
+		}
+	}
 }
