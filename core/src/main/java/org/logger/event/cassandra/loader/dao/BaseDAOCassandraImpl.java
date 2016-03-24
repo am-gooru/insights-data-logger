@@ -55,17 +55,24 @@ public abstract class BaseDAOCassandraImpl {
 		return null;
 	}
 	
-	public String getLogKeyspaceName() {
-		return CassandraClient.getLogKeyspaceName();
+	public String getAnalyticsKeyspaceName() {
+		return CassandraClient.getAnalyticsKeyspace();
+	}
+	public String getEventKeyspaceName() {
+		return CassandraClient.getEventKeyspace();
 	}
 	
 	public KafkaLogProducer getKafkaLogProducer(){
 		return CassandraClient.getKafkaLogProducer();
 	}
 	
-	public Session getCassSession() {
-		return CassandraClient.getCassSession();
+	public Session getAnalyticsCassSession() {
+		return CassandraClient.getAnalyticsCassandraSession();
 	} 
+	
+	public Session getEventCassSession() {
+		return CassandraClient.getEventCassandraSession();
+	}
 	
 	public String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
 		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){

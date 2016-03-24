@@ -14,65 +14,61 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 		return PreparedQueriesHolder.INSTANCE;
 	}
 
-	private final PreparedStatement INSERT_USER_SESSION = getCassSession().prepare(Constants.INSERT_USER_SESSION);
+	private final PreparedStatement INSERT_USER_SESSION = getAnalyticsCassSession().prepare(Constants.INSERT_USER_SESSION);
 
-	private final PreparedStatement INSERT_USER_LAST_SESSION = getCassSession().prepare(Constants.INSERT_USER_LAST_SESSION);
+	private final PreparedStatement INSERT_USER_LAST_SESSION = getAnalyticsCassSession().prepare(Constants.INSERT_USER_LAST_SESSION);
 
-	private final PreparedStatement INSERT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.INSERT_USER_SESSION_ACTIVITY);
+	private final PreparedStatement INSERT_USER_SESSION_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_USER_SESSION_ACTIVITY);
 
-	private final PreparedStatement INSERT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.INSERT_STUDENTS_CLASS_ACTIVITY);
+	private final PreparedStatement INSERT_STUDENTS_CLASS_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_STUDENTS_CLASS_ACTIVITY);
 
-	private final PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY);
+	private final PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY);
 
-	private final  PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+	private final  PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 
-	private final PreparedStatement INSERT_USER_LOCATION = getCassSession().prepare(Constants.INSERT_USER_LOCATION);
+	private final PreparedStatement INSERT_USER_LOCATION = getAnalyticsCassSession().prepare(Constants.INSERT_USER_LOCATION);
 
-	private final PreparedStatement UPDATE_PEER_COUNT = getCassSession().prepare(Constants.UPDATE_PEER_COUNT);
+	private final PreparedStatement UPDATE_PEER_COUNT = getAnalyticsCassSession().prepare(Constants.UPDATE_PEER_COUNT);
 
-	// private final PreparedStatement UPDATE_PEER_DETAILS_ON_START = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_START);
+	private final PreparedStatement SELECT_USER_SESSION_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY);
 
-	// private final PreparedStatement UPDATE_PEER_DETAILS_ON_STOP = getCassSession().prepare(Constants.UPDATE_PEER_DETAILS_ON_STOP);
+	private final PreparedStatement SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = getAnalyticsCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
 
-	private final PreparedStatement SELECT_USER_SESSION_ACTIVITY = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY);
+	private final PreparedStatement SELECT_STUDENTS_CLASS_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_STUDENTS_CLASS_ACTIVITY);
 
-	private final PreparedStatement SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = getCassSession().prepare(Constants.SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID);
+	private final PreparedStatement UPDATE_REACTION = getAnalyticsCassSession().prepare(Constants.UPDATE_REACTION);
 
-	private final PreparedStatement SELECT_STUDENTS_CLASS_ACTIVITY = getCassSession().prepare(Constants.SELECT_STUDENTS_CLASS_ACTIVITY);
+	private final PreparedStatement UPDATE_SESSION_SCORE = getAnalyticsCassSession().prepare(Constants.UPDATE_SESSION_SCORE);
 
-	private final PreparedStatement UPDATE_REACTION = getCassSession().prepare(Constants.UPDATE_REACTION);
+	private final PreparedStatement SELECT_CLASS_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.SELECT_CLASS_ACTIVITY_DATACUBE);
 
-	private final PreparedStatement UPDATE_SESSION_SCORE = getCassSession().prepare(Constants.UPDATE_SESSION_SCORE);
+	private final PreparedStatement SELECT_ALL_CLASS_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
 
-	private final PreparedStatement SELECT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_CLASS_ACTIVITY_DATACUBE);
+	private final PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
 
-	private final PreparedStatement SELECT_ALL_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_ALL_CLASS_ACTIVITY_DATACUBE);
+	private final PreparedStatement SELECT_TAXONOMY_PARENT_NODE = getAnalyticsCassSession().prepare(Constants.SELECT_TAXONOMY_PARENT_NODE);
 
-	private final PreparedStatement INSERT_CLASS_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_CLASS_ACTIVITY_DATACUBE);
+	private final PreparedStatement SELECT_CONTENT_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY);
 
-	private final PreparedStatement SELECT_TAXONOMY_PARENT_NODE = getCassSession().prepare(Constants.SELECT_TAXONOMY_PARENT_NODE);
+	private final PreparedStatement SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 
-	private final PreparedStatement SELECT_CONTENT_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_TAXONOMY_ACTIVITY);
+	private final PreparedStatement SELECT_TAXONOMY_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
 
-	private final PreparedStatement SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getCassSession().prepare(Constants.SELECT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+	private final PreparedStatement INSERT_USER_QUESTION_GRADE = getAnalyticsCassSession().prepare(Constants.INSERT_USER_QUESTION_GRADE);
 
-	private final PreparedStatement SELECT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.SELECT_TAXONOMY_ACTIVITY_DATACUBE);
+	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_SESSION = getAnalyticsCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_SESSION);
 
-	private final PreparedStatement INSERT_USER_QUESTION_GRADE = getCassSession().prepare(Constants.INSERT_USER_QUESTION_GRADE);
+	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getAnalyticsCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
 
-	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_SESSION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_SESSION);
-
-	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
-
-	private final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
+	private final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
 	
-	private final PreparedStatement INSERT_EVENTS_TIMELINE = getCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
+	private final PreparedStatement INSERT_EVENTS_TIMELINE = getAnalyticsCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
 	
-	private final PreparedStatement INSERT_EVENTS = getCassSession().prepare(Constants.INSERT_EVENTS);
+	private final PreparedStatement INSERT_EVENTS = getAnalyticsCassSession().prepare(Constants.INSERT_EVENTS);
 	
-	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
+	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
 	
-	private final PreparedStatement SELECT_API_KEY = getCassSession().prepare(Constants.SELECT_API_KEY);
+	private final PreparedStatement SELECT_API_KEY = getAnalyticsCassSession().prepare(Constants.SELECT_API_KEY);
 	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
