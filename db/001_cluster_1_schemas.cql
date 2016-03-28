@@ -1,3 +1,6 @@
+// You can run this command in cql client
+// bin/cqlsh < {file path}/001_cluster_1_shemas.cql 
+
 CREATE KEYSPACE IF NOT EXISTS event_logger_insights WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'}  AND durable_writes = true;
 
 CREATE TABLE IF NOT EXISTS event_logger_insights.events_timeline (
