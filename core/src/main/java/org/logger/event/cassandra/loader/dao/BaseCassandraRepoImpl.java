@@ -19,6 +19,8 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 
+import scala.collection.immutable.Stream.Cons;
+
 public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseCassandraRepo {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
@@ -591,4 +593,84 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return appDO;
 	}
+	
+	@Override
+	public ResultSet getClassMembers(String classId) {
+		ResultSet result = null;
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.selectClassMembers());
+			boundStatement.bind(classId);
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			result = resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while read questions grade by session", e);
+		}
+		return result;
+	}
+	@Override
+	public boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+		try {
+			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+				BoundStatement boundStatement = new BoundStatement(queries.deleteCourseUsage());
+				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid());
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+			}
+		} catch (Exception e) {
+			LOG.error("Exception while delete course usage", e);
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+		try {
+			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+				BoundStatement boundStatement = new BoundStatement(queries.deleteUnitUsage());
+				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid());
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+			}
+		} catch (Exception e) {
+			LOG.error("Exception while delete unit usage", e);
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+		try {
+			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+				BoundStatement boundStatement = new BoundStatement(queries.deleteLessonUsage());
+				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+						studentsClassActivity.getLessonUid());
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+			}
+		} catch (Exception e) {
+			LOG.error("Exception while delete lesson usage", e);
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity) {
+		try {
+			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+				BoundStatement boundStatement = new BoundStatement(queries.deleteCourseUsage());
+				boundStatement.bind(classId, studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+						studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid());
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+			}
+		} catch (Exception e) {
+			LOG.error("Exception while delete assessment or collection usage ", e);
+			return false;
+		}
+		return true;
+	}
+	
 }

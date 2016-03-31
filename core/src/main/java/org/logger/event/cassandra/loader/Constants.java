@@ -716,7 +716,7 @@ public class Constants {
 	
 	public static final  String VIEW_CALC_EVENTS = "collection.play|collection.resource.play|resource.play";
 	
-	public static final  String RECOMPUTATION_EVENTS =  "class.item.delete|class.item.move";
+	public static final  String RECOMPUTATION_EVENTS =  "item.delete|item.move";
 	
 	public static final String CUL_IDS_MISSING = "CUL ids missing : ";
 	
@@ -826,4 +826,15 @@ public class Constants {
  	public static final String UPDATE_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
  	
  	public static final String SELECT_API_KEY = "SELECT * FROM app_api_key WHERE key = ?";
+ 	
+ 	public static final String SELECT_CLASS_MEMBERS = "SELECT * FROM class_members WHERE class_id = ?";
+ 	
+ 	public static final String DELETE_COURSE_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ?;";
+ 	
+ 	public static final String DELETE_UNIT_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ?;";
+ 	
+ 	public static final String DELETE_LESSON_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ?;";
+ 	
+ 	public static final String DELETE_ASSESSMENT_OR_COLLECTION_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
+ 	
 }

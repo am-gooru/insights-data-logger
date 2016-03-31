@@ -76,4 +76,14 @@ public interface BaseCassandraRepo {
 
 	AppDO getApiKeyDetails(String apiKey);
 
+	ResultSet getClassMembers(String classId);
+
+	boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+
+	boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity);
+
+	boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+
+	boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+
 }
