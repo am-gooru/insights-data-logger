@@ -191,3 +191,16 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.class_content_count (
     collection_count bigint,
     type_name text
 );
+
+CREATE TABLE IF NOT EXISTS event_logger_insights.class_class_members (
+    class_id text,
+    members set<text>,
+    PRIMARY KEY (class_id)
+);
+
+CREATE TABLE IF NOT EXISTS event_logger_insights.content_authorized_users (
+    gooru_oid text,
+    creator_uid text,
+    collaborators set<text>,
+    PRIMARY KEY (gooru_oid)
+);
