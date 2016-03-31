@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.class_content_count (
     type_name text
 );
 
-CREATE TABLE IF NOT EXISTS event_logger_insights.class_class_members (
+CREATE TABLE IF NOT EXISTS event_logger_insights.class_members (
     class_id text,
     members set<text>,
     PRIMARY KEY (class_id)
