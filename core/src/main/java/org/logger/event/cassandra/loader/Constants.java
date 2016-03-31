@@ -837,4 +837,8 @@ public class Constants {
  	
  	public static final String DELETE_ASSESSMENT_OR_COLLECTION_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
  	
+ 	public static final String DELETE_DATA_CUBE_BY_ROW_KEY = "DELETE FROM  class_activity_datacube WHERE row_key = ?;";
+ 	
+ 	public static final String DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN = "DELETE FROM  class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ? AND leaf_node = ?;";
+ 	
 }

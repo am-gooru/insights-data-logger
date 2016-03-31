@@ -608,11 +608,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return result;
 	}
 	@Override
-	public boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+	public boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {
 		try {
 			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 				BoundStatement boundStatement = new BoundStatement(queries.deleteCourseUsage());
-				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid());
+				boundStatement.bind(classId, (studentId == null ? studentsClassActivity.getUserUid():studentId), collectionType, studentsClassActivity.getCourseUid());
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
 				resultSetFuture.get();
 			}
@@ -624,11 +624,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 	
 	@Override
-	public boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+	public boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {
 		try {
 			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 				BoundStatement boundStatement = new BoundStatement(queries.deleteUnitUsage());
-				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid());
+				boundStatement.bind(classId, (studentId == null ? studentsClassActivity.getUserUid():studentId), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid());
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
 				resultSetFuture.get();
 			}
@@ -640,11 +640,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 	
 	@Override
-	public boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String collectionType) {
+	public boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {
 		try {
 			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 				BoundStatement boundStatement = new BoundStatement(queries.deleteLessonUsage());
-				boundStatement.bind(classId, studentsClassActivity.getUserUid(), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+				boundStatement.bind(classId, (studentId == null ? studentsClassActivity.getUserUid():studentId), collectionType, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 						studentsClassActivity.getLessonUid());
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
 				resultSetFuture.get();
@@ -657,11 +657,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 	
 	@Override
-	public boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity) {
+	public boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity, String studentId) {
 		try {
 			for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 				BoundStatement boundStatement = new BoundStatement(queries.deleteCourseUsage());
-				boundStatement.bind(classId, studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+				boundStatement.bind(classId, (studentId == null ? studentsClassActivity.getUserUid():studentId), studentsClassActivity.getCollectionType(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 						studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid());
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
 				resultSetFuture.get();
@@ -673,4 +673,32 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return true;
 	}
 	
+	@Override
+	public boolean deleteClassActivityDataCube(String rowKey, String collectionType, String studentId, String leafNode) {
+		try {
+			
+				BoundStatement boundStatement = new BoundStatement(queries.deleteDataCubeByRowkeyColumn());
+				boundStatement.bind(rowKey,collectionType,studentId,leafNode);
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while delete lesson usage", e);
+			return false;
+		}
+		return true;
+	}
+	@Override
+	public boolean deleteClassActivityDataCube(String rowKey) {
+		try {
+			
+				BoundStatement boundStatement = new BoundStatement(queries.deleteDataCubeByRowkey());
+				boundStatement.bind(rowKey);
+				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+				resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while delete lesson usage", e);
+			return false;
+		}
+		return true;
+	}
 }
