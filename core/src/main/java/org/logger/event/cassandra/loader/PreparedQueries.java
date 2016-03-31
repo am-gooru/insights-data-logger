@@ -80,6 +80,10 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement DELETE_ASSESSMENT_OR_COLLECTION_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_ASSESSMENT_OR_COLLECTION_USAGE);
 	
+	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY);
+	
+	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN);
+	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
 	}
@@ -210,5 +214,11 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	public PreparedStatement deleteAssessmentOrCollectionUsage() {
 		return DELETE_ASSESSMENT_OR_COLLECTION_USAGE;
+	}
+	public PreparedStatement deleteDataCubeByRowkey() {
+		return DELETE_DATA_CUBE_BY_ROW_KEY;
+	}
+	public PreparedStatement deleteDataCubeByRowkeyColumn() {
+		return DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN;
 	}
 }

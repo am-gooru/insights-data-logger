@@ -242,37 +242,69 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 	
 	public void reComputeData(final EventBuilder event){
 		ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
-		ClassActivityDatacube classActivityDatacube = objectBuilderHandler.getClassActivityDatacube();
 		StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
 		ResultSet classMembers = baseCassandraDao.getClassMembers(event.getClassGooruId());
-		generateDeleteTasks(classActivityDatacube, studentsClassActivity, classMembers.one().getSet("members",String.class));
+		generateDeleteTasks(studentsClassActivity, classMembers.one().getSet("members",String.class));
 		
 	}
-	private void generateDeleteTasks(final ClassActivityDatacube classActivityDatacube, final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+	private void generateDeleteTasks(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
 		try {
 			Set<Callable<String>> deleteTasks = new HashSet<Callable<String>>();
-			for (final String studentUId : studentsIds) {
-				deleteTasks.add(new Callable<String>() {
-					public String call() throws Exception {
-						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.COURSE)){
-							baseCassandraDao.deleteCourseUsage(studentsClassActivity, Constants.COLLECTION);
-							baseCassandraDao.deleteCourseUsage(studentsClassActivity, Constants.ASSESSMENT);
+			deleteTasks.add(new Callable<String>() {
+				public String call() throws Exception {
+					switch (studentsClassActivity.getCollectionType()) {
+					case Constants.COURSE:
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
 						}
-						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.UNIT)){
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, Constants.COLLECTION);
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, Constants.ASSESSMENT);
+						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid()));
 						}
-						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.LESSON)){
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, Constants.COLLECTION);
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, Constants.ASSESSMENT);
+						break;
+					case Constants.UNIT:
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
 						}
-						if(studentsClassActivity.getCollectionType().matches("collection|assessment")){
-							baseCassandraDao.deleteAssessmentOrCollectionUsage(studentsClassActivity);
+						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
 						}
-						return studentUId;
+						break;
+					case Constants.LESSON:
+
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+						}
+						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+							baseCassandraDao.deleteClassActivityDataCube(
+									appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()));
+						}
+						break;
+					case Constants.COLLECTION:
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+						}
+						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
+
+						}
+						break;
+					case Constants.ASSESSMENT:
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+						}
+						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
+									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
+						}
+						break;
 					}
-				});
-			}
+					return Constants.COMPLETED;
+				}
+			});
 
 			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
 			for (Future<String> taskStatus : taskStatues) {

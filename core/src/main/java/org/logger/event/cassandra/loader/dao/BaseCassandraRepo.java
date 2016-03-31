@@ -78,12 +78,16 @@ public interface BaseCassandraRepo {
 
 	ResultSet getClassMembers(String classId);
 
-	boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+	boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType);
 
-	boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity);
+	boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity,String studentId);
 
-	boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+	boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType);
 
-	boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String collectionType);
+	boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType);
+
+	boolean deleteClassActivityDataCube(String rowKey, String collectionType, String studentId, String leafNode);
+
+	boolean deleteClassActivityDataCube(String rowKey);
 
 }
