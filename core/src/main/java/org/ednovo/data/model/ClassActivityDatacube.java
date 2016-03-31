@@ -26,6 +26,10 @@ public class ClassActivityDatacube implements Serializable{
 	private long reaction;
 
 	private long completedCount;
+
+	public Object clone()throws CloneNotSupportedException{  
+		return super.clone();  	
+	}
 	
 	public String getRowKey() {
 		return rowKey;

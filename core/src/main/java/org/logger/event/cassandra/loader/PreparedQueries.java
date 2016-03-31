@@ -24,7 +24,7 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 
 	private final PreparedStatement INSERT_CONTENT_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_CONTENT_TAXONOMY_ACTIVITY);
 
-	private final  PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
+	private final PreparedStatement INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY);
 
 	private final PreparedStatement INSERT_USER_LOCATION = getAnalyticsCassSession().prepare(Constants.INSERT_USER_LOCATION);
 
@@ -69,6 +69,16 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
 	
 	private final PreparedStatement SELECT_API_KEY = getAnalyticsCassSession().prepare(Constants.SELECT_API_KEY);
+	
+	private final PreparedStatement SELECT_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.SELECT_CLASS_MEMBERS);
+	
+	private final PreparedStatement DELETE_COURSE_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_COURSE_USAGE);
+	
+	private final PreparedStatement DELETE_UNIT_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_UNIT_USAGE);
+	
+	private final PreparedStatement DELETE_LESSON_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_LESSON_USAGE);
+	
+	private final PreparedStatement DELETE_ASSESSMENT_OR_COLLECTION_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_ASSESSMENT_OR_COLLECTION_USAGE);
 	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
@@ -180,5 +190,25 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 
 	public PreparedStatement insertTaxonomyActivityDataCube() {
 		return INSERT_TAXONOMY_ACTIVITY_DATACUBE;
+	}
+	
+	public PreparedStatement selectClassMembers() {
+		return SELECT_CLASS_MEMBERS;
+	}
+	
+	public PreparedStatement deleteCourseUsage() {
+		return DELETE_COURSE_USAGE;
+	}
+	
+	public PreparedStatement deleteUnitUsage() {
+		return DELETE_UNIT_USAGE;
+	}
+	
+	public PreparedStatement deleteLessonUsage() {
+		return DELETE_LESSON_USAGE;
+	}
+	
+	public PreparedStatement deleteAssessmentOrCollectionUsage() {
+		return DELETE_ASSESSMENT_OR_COLLECTION_USAGE;
 	}
 }

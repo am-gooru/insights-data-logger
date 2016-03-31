@@ -1,5 +1,11 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 /*******************************************************************************
  * 
  * insights-event-logger
@@ -26,6 +32,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ClassActivityDatacube;
@@ -230,6 +237,49 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 		if(event.getTimespent() > 0){
 			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());			
+		}
+	}
+	
+	public void reComputeData(final EventBuilder event){
+		ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
+		ClassActivityDatacube classActivityDatacube = objectBuilderHandler.getClassActivityDatacube();
+		StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
+		ResultSet classMembers = baseCassandraDao.getClassMembers(event.getClassGooruId());
+		generateDeleteTasks(classActivityDatacube, studentsClassActivity, classMembers.one().getSet("members",String.class));
+		
+	}
+	private void generateDeleteTasks(final ClassActivityDatacube classActivityDatacube, final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+		try {
+			Set<Callable<String>> deleteTasks = new HashSet<Callable<String>>();
+			for (final String studentUId : studentsIds) {
+				deleteTasks.add(new Callable<String>() {
+					public String call() throws Exception {
+						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.COURSE)){
+							baseCassandraDao.deleteCourseUsage(studentsClassActivity, Constants.COLLECTION);
+							baseCassandraDao.deleteCourseUsage(studentsClassActivity, Constants.ASSESSMENT);
+						}
+						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.UNIT)){
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, Constants.COLLECTION);
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, Constants.ASSESSMENT);
+						}
+						if(studentsClassActivity.getCollectionType().equalsIgnoreCase(Constants.LESSON)){
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, Constants.COLLECTION);
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, Constants.ASSESSMENT);
+						}
+						if(studentsClassActivity.getCollectionType().matches("collection|assessment")){
+							baseCassandraDao.deleteAssessmentOrCollectionUsage(studentsClassActivity);
+						}
+						return studentUId;
+					}
+				});
+			}
+
+			List<Future<String>> taskStatues = service.invokeAll(deleteTasks);
+			for (Future<String> taskStatus : taskStatues) {
+				LOG.info(taskStatus.get());
+			}
+		} catch (Exception e) {
+			LOG.error("Exception:", e);
 		}
 	}
 }
