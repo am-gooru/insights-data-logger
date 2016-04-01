@@ -95,5 +95,6 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			liveAggregator.eventProcessor(event);
 		}
+		liveAggregator.statAndRawUpdate(event);
 	}
 }
