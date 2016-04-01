@@ -263,42 +263,76 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 						}
 						break;
 					case Constants.UNIT:
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-						}
+						
 						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
 						}
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+							ClassActivityDatacube aggregatedCourseActivityC = baseCassandraDao.getStudentsClassActivityDatacube(
+									appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.COLLECTION);
+							aggregatedCourseActivityC.setRowKey(studentsClassActivity.getClassUid());
+							aggregatedCourseActivityC.setLeafNode(studentsClassActivity.getCourseUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityC);
+							
+							ClassActivityDatacube aggregatedCourseActivityA = baseCassandraDao.getStudentsClassActivityDatacube(
+									appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.ASSESSMENT);
+							aggregatedCourseActivityA.setRowKey(studentsClassActivity.getClassUid());
+							aggregatedCourseActivityA.setLeafNode(studentsClassActivity.getCourseUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityA);
+							
+						}
+						
 						break;
 					case Constants.LESSON:
 
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-						}
 						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 							baseCassandraDao.deleteClassActivityDataCube(
 									appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()));
 						}
-						break;
-					case Constants.COLLECTION:
 						for (final String studentId : studentsIds) {
 							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+							
+							ClassActivityDatacube aggregatedUnitActivityC = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId, Constants.COLLECTION);			
+							aggregatedUnitActivityC.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
+							aggregatedUnitActivityC.setLeafNode(studentsClassActivity.getUnitUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityC);
+							
+							ClassActivityDatacube aggregatedUnitActivityA = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId, Constants.ASSESSMENT);			
+							aggregatedUnitActivityA.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
+							aggregatedUnitActivityA.setLeafNode(studentsClassActivity.getUnitUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityA);
+							
 						}
+						break;
+					case Constants.COLLECTION:
 						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
 
 						}
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+							ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentId, Constants.COLLECTION);			
+							aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
+							aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
+						}
+						
 						break;
 					case Constants.ASSESSMENT:
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-						}
 						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
 							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
+						}
+						for (final String studentId : studentsIds) {
+							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+							ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),studentsClassActivity.getLessonUid()), studentId, Constants.ASSESSMENT);			
+							aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
+							aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
+							baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
 						}
 						break;
 					}

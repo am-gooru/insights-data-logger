@@ -39,9 +39,12 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity = new UserSessionActivity();
 			userAllSessionActivity = new UserSessionActivity();
 			studentLocation = new StudentLocation();
-			if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS) || LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))){
+			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))){
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
+			}
+			if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
+				studentsClassActivity = new StudentsClassActivity();
 			}
 			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP)){
 				contentTaxonomyActivity = new ContentTaxonomyActivity();
