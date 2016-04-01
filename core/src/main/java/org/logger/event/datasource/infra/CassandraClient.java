@@ -3,18 +3,14 @@ package org.logger.event.datasource.infra;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
@@ -133,22 +129,5 @@ public final class CassandraClient implements Register {
 
 	public static String getProperty(String key) {
 		return configConstants.getProperty(key);
-	}
-	public static void main(String args[]){
-		Cluster cluster = Cluster.builder().withClusterName("gooru-cassandra-qa").addContactPoint("127.0.0.1").withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-				.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy("datacenter1")))
-				.build();
-		Session session = cluster.connect("event_logger_insights");
-
-		HashSet<String> members = new HashSet<String>();
-		members.add("daniel4");
-		/*BoundStatement boundStatement = new BoundStatement(session.prepare("INSERT INTO class_members(class_id,members)VALUES(?,?);"));
-		boundStatement.bind("classId",members);*/
-		BoundStatement boundStatement = new BoundStatement(session.prepare("UPDATE class_members SET members = members - ? WHERE class_id = ?;"));
-		boundStatement.bind(members,"classId");
-		ResultSetFuture resultSetFuture = session.executeAsync(boundStatement);
-		
-		System.out.println("Daniel.....");
-		
 	}
 }
