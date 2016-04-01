@@ -109,6 +109,10 @@ public class EventBuilder {
 	
 	private JSONArray taxonomyIds;
 	
+	private JSONArray collaborators;
+	
+	private String contentFormat;
+	
 	private long eventTime;
 	
 	private long score;
@@ -457,11 +461,10 @@ public class EventBuilder {
 			this.gradeType = payLoadObject.isNull(Constants.GRADE_TYPE) ? Constants.SYSTEM : payLoadObject.getString(Constants.GRADE_TYPE);
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
-			if (payLoadObject.isNull(Constants.TAXONOMYIDS)) {
-				this.taxonomyIds = new JSONArray();
-			} else {
-				this.taxonomyIds = (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
-			}
+			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
+			this.collaborators = payLoadObject.isNull(Constants.COLLABORATORS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.COLLABORATORS);
+			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
+			
 			this.eventTime = endTime;
 			this.collectionItemId = Constants.NA;
 			this.score = 0;
@@ -507,6 +510,22 @@ public class EventBuilder {
 
 	public void setParentEventId(String parentEventId) {
 		this.parentEventId = parentEventId;
+	}
+
+	public String getContentFormat() {
+		return contentFormat;
+	}
+
+	public void setContentFormat(String contentFormat) {
+		this.contentFormat = contentFormat;
+	}
+
+	public JSONArray getCollaborators() {
+		return collaborators;
+	}
+
+	public void setCollaborators(JSONArray collaborators) {
+		this.collaborators = collaborators;
 	}
 
 }

@@ -157,9 +157,7 @@ public class Constants {
 	public static final  String REACTION_TYPE = "reactionType";
 	
 	public static final  String REACTION = "reaction";
-	
-	public static final  String REACTION_CREATE = "reaction.create";
-	
+		
 	public static final  String TOTAL_REACTION = "total_reaction";
 	
 	public static final  String REACTED_COUNT = "reacted_count";
@@ -285,6 +283,10 @@ public class Constants {
 	public static final  String HINT_ID = "hintId";
 	
 	public static final  String COLLABORATOR_IDS = "collaboratorIds";
+	
+	public static final  String COLLABORATORS = "collaborators";
+	
+	public static final  String CONTENT_FORMAT = "contentFormat";
 	
 	public static final  String _GOORU_OID = "gooru_oid";
 	
@@ -763,7 +765,21 @@ public class Constants {
 	public static final String STANDARDS_ID = "standards_id";
 
 	public static final String LEARNING_TARGETS_ID = "learning_targets_id";
-	   
+	
+	public static final String COLLECTION_PLAY = "collection.play";
+	
+	public static final String COLLECTION_RESOURCE_PLAY = "collection.resource.play";
+	
+	public static final String RESOURCE_PLAY = "resource.play";
+	
+	public static final String REACTION_CREATE = "reaction.create";
+	
+	public static final String CLASS_JOIN = "class.join";
+	
+	public static final String COLLABORATORS_UPDATE = "collaborators.update";
+	
+	public static final String ITEM_CREATE = "item.create";
+	
 	/**
 	 * CQL QUERIES
 	 */
@@ -840,5 +856,13 @@ public class Constants {
  	public static final String DELETE_DATA_CUBE_BY_ROW_KEY = "DELETE FROM  class_activity_datacube WHERE row_key = ?;";
  	
  	public static final String DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN = "DELETE FROM  class_activity_datacube WHERE row_key = ? AND collection_type = ? AND user_uid = ? AND leaf_node = ?;";
+
+ 	public static final String UPDATE_CLASS_MEMBERS = "UPDATE class_members SET members = members + ? WHERE class_id = ?;";
  	
+ 	public static final String REMOVE_CLASS_MEMBERS = "UPDATE class_members SET members = members - ? WHERE class_id = ?;";
+ 	
+ 	public static final String UPDATE_COLLABORATORS = "INSERT INTO content_authorized_users(gooru_oid,collaborators)VALUES(?,?);";
+
+ 	public static final String UPDATE_CONTENT_CREATORS = "INSERT INTO content_authorized_users(gooru_oid,creator_uid)VALUES(?,?);";
+
 }
