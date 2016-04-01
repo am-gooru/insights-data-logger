@@ -72,6 +72,10 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement SELECT_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.SELECT_CLASS_MEMBERS);
 	
+	private final PreparedStatement SAVE_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.UPDATE_CLASS_MEMBERS);
+	
+	private final PreparedStatement REMOVE_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.REMOVE_CLASS_MEMBERS);
+	
 	private final PreparedStatement DELETE_COURSE_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_COURSE_USAGE);
 	
 	private final PreparedStatement DELETE_UNIT_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_UNIT_USAGE);
@@ -83,6 +87,10 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY);
 	
 	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN);
+	
+	private final PreparedStatement UPDATE_COLLABORATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_COLLABORATORS);
+	
+	private final PreparedStatement UPDATE_CONTENT_CREATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_CONTENT_CREATORS);
 	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
@@ -200,6 +208,14 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 		return SELECT_CLASS_MEMBERS;
 	}
 	
+	public PreparedStatement saveClassMembers() {
+		return SAVE_CLASS_MEMBERS;
+	}
+	
+	public PreparedStatement removeClassMembers() {
+		return REMOVE_CLASS_MEMBERS;
+	}
+	
 	public PreparedStatement deleteCourseUsage() {
 		return DELETE_COURSE_USAGE;
 	}
@@ -220,5 +236,11 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	}
 	public PreparedStatement deleteDataCubeByRowkeyColumn() {
 		return DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN;
+	}
+	public PreparedStatement updateCollaborators() {
+		return UPDATE_COLLABORATORS;
+	}
+	public PreparedStatement updateContentCreator() {
+		return UPDATE_CONTENT_CREATORS;
 	}
 }

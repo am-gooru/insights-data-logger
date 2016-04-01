@@ -1,5 +1,7 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.Set;
+
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
@@ -18,8 +20,6 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
-
-import scala.collection.immutable.Stream.Cons;
 
 public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseCassandraRepo {
 
@@ -606,6 +606,50 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			LOG.error("Exception while read questions grade by session", e);
 		}
 		return result;
+	}
+	@Override
+	public void saveClassMembers(String classId,Set<String> studentId) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.saveClassMembers());
+			boundStatement.bind(classId);
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while save class members", e);
+		}
+	}
+	@Override
+	public void removeClassMembers(String classId,Set<String> studentId) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.removeClassMembers());
+			boundStatement.bind(classId);
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while save class members", e);
+		}
+	}
+	@Override
+	public void updateCollaborators(String classId,Set<String> collaborators) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.updateCollaborators());
+			boundStatement.bind(classId,collaborators);
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while save collaborators", e);
+		}
+	}
+	@Override
+	public void updateContentCreators(String classId,String creator) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.updateContentCreator());
+			boundStatement.bind(classId,creator);
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			resultSetFuture.get();
+		} catch (Exception e) {
+			LOG.error("Exception while save content creators", e);
+		}
 	}
 	@Override
 	public boolean deleteCourseUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {

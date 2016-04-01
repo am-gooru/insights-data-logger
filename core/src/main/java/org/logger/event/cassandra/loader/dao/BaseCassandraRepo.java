@@ -1,5 +1,7 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.Set;
+
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
@@ -89,5 +91,13 @@ public interface BaseCassandraRepo {
 	boolean deleteClassActivityDataCube(String rowKey, String collectionType, String studentId, String leafNode);
 
 	boolean deleteClassActivityDataCube(String rowKey);
+
+	void saveClassMembers(String classId, Set<String> studentId);
+
+	void removeClassMembers(String classId, Set<String> studentId);
+
+	void updateCollaborators(String classId, Set<String> collaborators);
+
+	void updateContentCreators(String classId, String creator);
 
 }
