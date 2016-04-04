@@ -374,6 +374,10 @@ public class Constants {
 	
 	public static final  String PARENT_CONTENT_ID = "parentContentId";
 	
+	public static final  String REFERENCE_PARENT_GOORU_OIDS = "referenceParentGooruIds";
+	
+	public static final  String ORIGINAL_CONTENT_ID = "originalContentId";
+	
 	public static final  String _PARENT_CONTENT_ID = "parent_content_id";
 	
 	public static final  String _MINIMUM_SCORE = "minimum_score";
@@ -504,7 +508,15 @@ public class Constants {
 	
 	public static final  String COPY = "copy";
 	
+	public static final  String USED_IN_COLLECTION_COUNT = "usedInCollectionCount";
+	
 	public static final  String MOVE = "move";
+	
+	public static final  String SOURCE = "source";
+	
+	public static final  String TARGET = "target";
+	
+	
 	
 	public static final  String ITEMTYPES_SCSFFC =  "shelf.collection|shelf.folder|folder.collection";
 	
@@ -718,6 +730,14 @@ public class Constants {
 	
 	public static final  String VIEW_CALC_EVENTS = "collection.play|collection.resource.play|resource.play";
 	
+	public static final  String CONTENT_FORMATS = "course|unit|lesson|collection|assessment|resource|question";
+	
+	public static final  String COLLECTION_FORMATS = "course|unit|lesson|collection|assessment";
+	
+	public static final  String COLLECTION_TYPES = "collection|assessment|assessment/url";
+	
+	public static final  String RESOURCE_FORMATS = "resource|questions";
+	
 	public static final  String RECOMPUTATION_EVENTS =  "item.delete|item.move";
 	
 	public static final String CUL_IDS_MISSING = "CUL ids missing : ";
@@ -779,6 +799,14 @@ public class Constants {
 	public static final String COLLABORATORS_UPDATE = "collaborators.update";
 	
 	public static final String ITEM_CREATE = "item.create";
+	
+	public static final String ITEM_COPY = "item.copy";
+	
+	public static final String ITEM_DELETE = "item.delete";
+	
+	public static final String ITEM_MOVE = "item.move";
+	
+	public static final String ITEM_ADD = "item.add";
 	
 	/**
 	 * CQL QUERIES

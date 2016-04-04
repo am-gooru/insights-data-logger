@@ -231,15 +231,6 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
-	private void countStatisticalData(final EventBuilder event) {
-		if (event.getViews() > 0) {
-			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.VIEWS, event.getViews());
-		}
-		if (event.getTimespent() > 0) {
-			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());
-		}
-	}
-
 	public void reComputeData(final EventBuilder event) {
 		ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
 		StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
@@ -255,93 +246,22 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 				public String call() throws Exception {
 					switch (studentsClassActivity.getCollectionType()) {
 					case Constants.COURSE:
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-						}
-						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
-							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid()));
-						}
+						courseReCompute(studentsClassActivity, studentsIds);
 						break;
 					case Constants.UNIT:
-
-						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
-							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
-						}
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-							ClassActivityDatacube aggregatedCourseActivityC = baseCassandraDao
-									.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.COLLECTION);
-							aggregatedCourseActivityC.setRowKey(studentsClassActivity.getClassUid());
-							aggregatedCourseActivityC.setLeafNode(studentsClassActivity.getCourseUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityC);
-
-							ClassActivityDatacube aggregatedCourseActivityA = baseCassandraDao
-									.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.ASSESSMENT);
-							aggregatedCourseActivityA.setRowKey(studentsClassActivity.getClassUid());
-							aggregatedCourseActivityA.setLeafNode(studentsClassActivity.getCourseUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityA);
-
-						}
-
+						unitReCompute(studentsClassActivity, studentsIds);
 						break;
 					case Constants.LESSON:
-
-						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
-							baseCassandraDao.deleteClassActivityDataCube(
-									appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()));
-						}
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-
-							ClassActivityDatacube aggregatedUnitActivityC = baseCassandraDao.getStudentsClassActivityDatacube(
-									appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId,
-									Constants.COLLECTION);
-							aggregatedUnitActivityC.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
-							aggregatedUnitActivityC.setLeafNode(studentsClassActivity.getUnitUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityC);
-
-							ClassActivityDatacube aggregatedUnitActivityA = baseCassandraDao.getStudentsClassActivityDatacube(
-									appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId,
-									Constants.ASSESSMENT);
-							aggregatedUnitActivityA.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
-							aggregatedUnitActivityA.setLeafNode(studentsClassActivity.getUnitUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityA);
-
-						}
+						lessonReCompute(studentsClassActivity, studentsIds);
 						break;
 					case Constants.COLLECTION:
-						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
-							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
-									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
-
-						}
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
-							ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(),
-									studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()), studentId, Constants.COLLECTION);
-							aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
-							aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
-						}
-
+						collectionReCompute(studentsClassActivity, studentsIds);
 						break;
 					case Constants.ASSESSMENT:
-						for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
-							baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
-									studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid()));
-						}
-						for (final String studentId : studentsIds) {
-							baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
-							ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(),
-									studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()), studentId, Constants.ASSESSMENT);
-							aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
-							aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
-							baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
-						}
+						assessmentReCompute(studentsClassActivity, studentsIds);
 						break;
+					default:
+						LOG.info("Invalid content format..");
 					}
 					return Constants.COMPLETED;
 				}
@@ -356,6 +276,98 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 		}
 	}
 
+	private void courseReCompute(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+		for (final String studentId : studentsIds) {
+			baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+			baseCassandraDao.deleteCourseUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+		}
+		for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+			baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid()));
+		}
+	}
+
+	private void unitReCompute(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+
+		for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+			baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
+		}
+		for (final String studentId : studentsIds) {
+			baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+			baseCassandraDao.deleteUnitUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+			ClassActivityDatacube aggregatedCourseActivityC = baseCassandraDao
+					.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.COLLECTION);
+			aggregatedCourseActivityC.setRowKey(studentsClassActivity.getClassUid());
+			aggregatedCourseActivityC.setLeafNode(studentsClassActivity.getCourseUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityC);
+
+			ClassActivityDatacube aggregatedCourseActivityA = baseCassandraDao
+					.getStudentsClassActivityDatacube(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()), studentId, Constants.ASSESSMENT);
+			aggregatedCourseActivityA.setRowKey(studentsClassActivity.getClassUid());
+			aggregatedCourseActivityA.setLeafNode(studentsClassActivity.getCourseUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedCourseActivityA);
+
+		}
+
+	}
+
+	private void lessonReCompute(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+
+		for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+			baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()));
+		}
+		for (final String studentId : studentsIds) {
+			baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+			baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+
+			ClassActivityDatacube aggregatedUnitActivityC = baseCassandraDao.getStudentsClassActivityDatacube(
+					appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId, Constants.COLLECTION);
+			aggregatedUnitActivityC.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
+			aggregatedUnitActivityC.setLeafNode(studentsClassActivity.getUnitUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityC);
+
+			ClassActivityDatacube aggregatedUnitActivityA = baseCassandraDao.getStudentsClassActivityDatacube(
+					appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()), studentId, Constants.ASSESSMENT);
+			aggregatedUnitActivityA.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid()));
+			aggregatedUnitActivityA.setLeafNode(studentsClassActivity.getUnitUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedUnitActivityA);
+
+		}
+	}
+
+	private void collectionReCompute(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+		for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+			baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+					studentsClassActivity.getCollectionUid()));
+
+		}
+		for (final String studentId : studentsIds) {
+			baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.COLLECTION);
+			ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(
+					appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()),
+					studentId, Constants.COLLECTION);
+			aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
+			aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
+		}
+
+	}
+
+	private void assessmentReCompute(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
+		for (String classId : studentsClassActivity.getClassUid().split(Constants.COMMA)) {
+			baseCassandraDao.deleteClassActivityDataCube(appendTildaSeperator(classId, studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
+					studentsClassActivity.getCollectionUid()));
+		}
+		for (final String studentId : studentsIds) {
+			baseCassandraDao.deleteLessonUsage(studentsClassActivity, studentId, Constants.ASSESSMENT);
+			ClassActivityDatacube aggregatedLessonActivity = baseCassandraDao.getStudentsClassActivityDatacube(
+					appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid()),
+					studentId, Constants.ASSESSMENT);
+			aggregatedLessonActivity.setRowKey(appendTildaSeperator(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid()));
+			aggregatedLessonActivity.setLeafNode(studentsClassActivity.getLessonUid());
+			baseCassandraDao.saveClassActivityDataCube(aggregatedLessonActivity);
+		}
+	}
+
 	@Override
 	public void statAndRawUpdate(final EventBuilder event) {
 		try {
@@ -365,31 +377,34 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 					switch (event.getEventName()) {
 
 					case Constants.COLLECTION_PLAY:
-						countStatisticalData(event);
+						handlePlayerEvents(event);
 						break;
 					case Constants.COLLECTION_RESOURCE_PLAY:
-						countStatisticalData(event);
+						handlePlayerEvents(event);
 						break;
 					case Constants.RESOURCE_PLAY:
-						countStatisticalData(event);
+						handlePlayerEvents(event);
 						break;
 					case Constants.CLASS_JOIN:
-						HashSet<String> members = new HashSet<String>();
-						members.add(event.getGooruUUID());
-						baseCassandraDao.saveClassMembers(event.getClassGooruId(), members);
+						handleClassJoin(event);
 						break;
 					case Constants.ITEM_CREATE:
-						if (event.getContentFormat().equalsIgnoreCase(Constants.CLASS)) {
-							baseCassandraDao.updateContentCreators(event.getContentGooruId(), event.getGooruUUID());
-						}
+						handleItemCreate(event);
 						break;
 					case Constants.COLLABORATORS_UPDATE:
-						HashSet<String> collaborators = new HashSet<String>();
-						for (int index = 0; index < (event.getCollaborators()).length(); index++) {
-							collaborators.add(event.getCollaborators().getString(index));
-						}
-						baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
+						handleCollaboratorsUpdate(event);
 						break;
+					case Constants.ITEM_COPY:
+						handleItemCopy(event);
+						break;
+					case Constants.ITEM_DELETE:
+						handleItemDelete(event);
+						break;
+					case Constants.ITEM_ADD:
+						handleItemAdd(event);
+						break;
+					default:
+						LOG.info("Nothing to process....");
 					}
 					return Constants.COMPLETED;
 				}
@@ -403,4 +418,74 @@ public class MicroAggregatorDAOImpl extends BaseDAOCassandraImpl implements Micr
 			LOG.error("Exception:", e);
 		}
 	}
+	private void handlePlayerEvents(final EventBuilder event) {
+		if (event.getViews() > 0) {
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.VIEWS, event.getViews());
+		}
+		if (event.getTimespent() > 0) {
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());
+		}
+	}
+
+	private void handleClassJoin(final EventBuilder event) {
+		HashSet<String> members = new HashSet<String>();
+		members.add(event.getGooruUUID());
+		baseCassandraDao.saveClassMembers(event.getClassGooruId(), members);
+	}
+
+	private void handleCollaboratorsUpdate(final EventBuilder event) {
+		try {
+			HashSet<String> collaborators = new HashSet<String>();
+			for (int index = 0; index < (event.getCollaborators()).length(); index++) {
+				collaborators.add(event.getCollaborators().getString(index));
+			}
+			baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
+		} catch (Exception e) {
+			LOG.error("Exception:", e);
+		}
+	}
+
+	private void handleItemDelete(final EventBuilder event) {
+		try {
+			String parentContentIdD = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
+			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+				baseCassandraDao.updateStatisticalCounterData(parentContentIdD, Constants.USED_IN_COLLECTION_COUNT, -1);
+			}
+			baseCassandraDao.updateStatisticalCounterData(parentContentIdD, Constants.COPY, -1);
+		} catch (Exception e) {
+			LOG.error("Exception:", e);
+		}
+	}
+
+	private void handleItemCopy(final EventBuilder event) {
+		String parentContentId;
+		try {
+			parentContentId = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
+			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+				baseCassandraDao.updateStatisticalCounterData(parentContentId, Constants.USED_IN_COLLECTION_COUNT, 1);
+			}
+			baseCassandraDao.updateStatisticalCounterData(parentContentId, Constants.COPY, 1);
+		} catch (Exception e) {
+			LOG.error("Exception : ", e);
+		}
+	}
+
+	private void handleItemAdd(final EventBuilder event) {
+		try {
+			String parentContentIdA = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
+			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+				baseCassandraDao.updateStatisticalCounterData(parentContentIdA, Constants.USED_IN_COLLECTION_COUNT, 1);
+			}
+		} catch (Exception e) {
+			LOG.error("Exception : ", e);
+		}
+	}
+
+	private void handleItemCreate(final EventBuilder event) {
+		if (event.getContentFormat().equalsIgnoreCase(Constants.CLASS) || event.getContentFormat().matches(Constants.COLLECTION_TYPES)) {
+			baseCassandraDao.updateContentCreators(event.getContentGooruId(), event.getGooruUUID());
+		}
+	}
+
+
 }
