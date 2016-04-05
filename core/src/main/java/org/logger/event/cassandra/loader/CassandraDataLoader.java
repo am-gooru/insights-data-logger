@@ -32,7 +32,9 @@ import org.ednovo.data.model.EventBuilder;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
 import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
-import org.logger.event.cassandra.loader.dao.MicroAggregatorDAO;
+import org.logger.event.cassandra.loader.dao.EventsUpdateDAO;
+import org.logger.event.cassandra.loader.dao.ReComputationDAO;
+import org.logger.event.cassandra.loader.dao.ReportsGeneratorDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +48,12 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 
 	private KafkaLogProducer kafkaLogWriter;
 
-	private MicroAggregatorDAO liveAggregator;
+	private ReportsGeneratorDAO reportsGeneratorDAO;
 
+	private EventsUpdateDAO eventsUpdateDAO;
+	
+	private ReComputationDAO reComputationDAO;
+	
 	private BaseCassandraRepo baseDao;
 
 	// private LTIServiceHandler ltiServiceHandler;
@@ -78,8 +84,9 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	private void init(Map<String, String> configOptionsMap) {
 		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		baseDao = BaseCassandraRepo.instance();
-		// ltiServiceHandler = new LTIServiceHandler(baseDao);
-		liveAggregator = MicroAggregatorDAO.instance();
+		reportsGeneratorDAO = ReportsGeneratorDAO.instance();
+		eventsUpdateDAO = EventsUpdateDAO.instance();
+		reComputationDAO = ReComputationDAO.instance();
 		kafkaLogWriter = getKafkaLogProducer();
 	}
 
@@ -93,8 +100,11 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 		baseDao.insertEventsTimeline(eventRowKey, event.getEventId());
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
-			liveAggregator.eventProcessor(event);
+			reportsGeneratorDAO.eventProcessor(event);
 		}
-		liveAggregator.statAndRawUpdate(event);
+		if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
+			reComputationDAO.reComputeData(event);
+		}
+		eventsUpdateDAO.eventsHadler(event);
 	}
 }
