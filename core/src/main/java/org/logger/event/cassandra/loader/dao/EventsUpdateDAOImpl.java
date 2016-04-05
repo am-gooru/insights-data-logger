@@ -97,6 +97,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 				collaborators.add(event.getCollaborators().getString(index));
 			}
 			baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
+			baseCassandraDao.balanceCounterData(event.getContentGooruId(), Constants.COLLABORATORS, ((Number)collaborators.size()).longValue());
 		} catch (Exception e) {
 			LOG.error("Exception:", e);
 		}

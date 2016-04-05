@@ -100,4 +100,6 @@ public interface BaseCassandraRepo {
 
 	void updateContentCreators(String classId, String creator);
 
+	boolean balanceCounterData(String clusteringKey, String metricsName, Long metricsValue);
+
 }

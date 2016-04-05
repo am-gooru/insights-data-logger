@@ -572,6 +572,23 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	@Override
+	public boolean balanceCounterData(String clusteringKey, String metricsName, Long metricsValue) {
+		try {
+			BoundStatement selectBoundStatement = new BoundStatement(queries.selectStatustucalCounterData());
+			selectBoundStatement.bind(clusteringKey, metricsName);
+			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
+			ResultSet result = resultFuture.get();
+			
+			BoundStatement boundStatement = new BoundStatement(queries.updateStatustucalCounterData());
+			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey, metricsName);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while balancing statistical data", e);
+			return false;
+		}
+		return true;
+	}
+	@Override
 	public AppDO getApiKeyDetails(String apiKey) {
 		AppDO appDO = null;
 		try {
