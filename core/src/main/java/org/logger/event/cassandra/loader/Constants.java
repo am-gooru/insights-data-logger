@@ -869,6 +869,8 @@ public class Constants {
 
  	public static final String UPDATE_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
  	
+ 	public static final String SELECT_STATISTICAL_COUNTER_DATA = "SELECT metrics_value AS metrics FROM statistical_data WHERE clustering_key = ? AND metrics_name = ?";
+ 	
  	public static final String SELECT_API_KEY = "SELECT * FROM app_api_key WHERE key = ?";
  	
  	public static final String SELECT_CLASS_MEMBERS = "SELECT * FROM class_members WHERE class_id = ?";

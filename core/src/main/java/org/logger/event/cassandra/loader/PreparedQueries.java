@@ -68,6 +68,8 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
 	
+	private final PreparedStatement SELECT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.SELECT_STATISTICAL_COUNTER_DATA);
+	
 	private final PreparedStatement SELECT_API_KEY = getAnalyticsCassSession().prepare(Constants.SELECT_API_KEY);
 	
 	private final PreparedStatement SELECT_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.SELECT_CLASS_MEMBERS);
@@ -98,6 +100,10 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	public PreparedStatement updateStatustucalCounterData() {
 		return UPDATE_STATISTICAL_COUNTER_DATA;
+	}
+	
+	public PreparedStatement selectStatustucalCounterData() {
+		return SELECT_STATISTICAL_COUNTER_DATA;
 	}
 	
 	public PreparedStatement insertEventsTimeline() {
