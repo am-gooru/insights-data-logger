@@ -34,12 +34,15 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 
 					case Constants.COLLECTION_PLAY:
 						handlePlayerEvents(event);
+						saveStatIndexPublisherQueue(event);
 						break;
 					case Constants.COLLECTION_RESOURCE_PLAY:
 						handlePlayerEvents(event);
+						saveStatIndexPublisherQueue(event);
 						break;
 					case Constants.RESOURCE_PLAY:
 						handlePlayerEvents(event);
+						saveStatIndexPublisherQueue(event);
 						break;
 					case Constants.CLASS_JOIN:
 						handleClassJoin(event);
@@ -84,6 +87,10 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		}
 	}
 
+	private void saveStatIndexPublisherQueue(final EventBuilder event){
+		baseCassandraDao.addStatPublisherQueue(Constants.VIEWS, event.getClassGooruId(), event.getEventTime());
+	}
+	
 	private void handleClassJoin(final EventBuilder event) {
 		HashSet<String> members = new HashSet<String>();
 		members.add(event.getGooruUUID());

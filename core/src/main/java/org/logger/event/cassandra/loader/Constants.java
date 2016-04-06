@@ -895,4 +895,6 @@ public class Constants {
 
  	public static final String UPDATE_CONTENT_CREATORS = "INSERT INTO content_authorized_users(gooru_oid,creator_uid)VALUES(?,?);";
 
+ 	public static final String ADD_STAT_PUBLISHER_QUEUE = "INSERT INTO stat_publisher_queue(metrics_name,gooru_oid,event_time)VALUES(?,?,?);";
+ 	
 }
