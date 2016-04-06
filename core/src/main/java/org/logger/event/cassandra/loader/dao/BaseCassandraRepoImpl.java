@@ -762,4 +762,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
+	@Override
+	public boolean addStatPublisherQueue(String metricsName, String gooruOid, long eventTime) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.addStatPublisherQueue());
+			boundStatement.bind(metricsName, gooruOid, eventTime);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while add stat publisher queue..", e);
+			return false;
+		}
+		return true;
+	}
 }

@@ -249,4 +249,7 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	public PreparedStatement updateContentCreator() {
 		return UPDATE_CONTENT_CREATORS;
 	}
+	public PreparedStatement addStatPublisherQueue() {
+		return ADD_STAT_PUBLISHER_QUEUE;
+	}
 }
