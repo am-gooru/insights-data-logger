@@ -94,6 +94,8 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement UPDATE_CONTENT_CREATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_CONTENT_CREATORS);
 	
+	private final PreparedStatement ADD_STAT_PUBLISHER_QUEUE = getAnalyticsCassSession().prepare(Constants.ADD_STAT_PUBLISHER_QUEUE);
+	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
 	}
