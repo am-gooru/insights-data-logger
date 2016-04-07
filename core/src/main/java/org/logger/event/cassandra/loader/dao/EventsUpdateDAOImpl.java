@@ -88,7 +88,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	private void saveStatIndexPublisherQueue(final EventBuilder event){
-		baseCassandraDao.addStatPublisherQueue(Constants.VIEWS, event.getClassGooruId(), event.getEventTime());
+		baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getClassGooruId(), event.getEventTime());
 	}
 	
 	private void handleClassJoin(final EventBuilder event) {

@@ -808,6 +808,8 @@ public class Constants {
 	
 	public static final String ITEM_ADD = "item.add";
 	
+	public static final String PUBLISH_METRICS = "publishMetrics";
+	
 	/**
 	 * CQL QUERIES
 	 */
