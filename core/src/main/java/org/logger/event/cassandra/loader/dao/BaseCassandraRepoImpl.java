@@ -121,7 +121,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.insertStudentsClassActivity());
 			boundStatement.bind(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
-					studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType(), studentsClassActivity.getAttemptStatus(),
+					studentsClassActivity.getCollectionUid(), studentsClassActivity.getCollectionType(),studentsClassActivity.getUserUid(), studentsClassActivity.getAttemptStatus(),
 					studentsClassActivity.getScore(), studentsClassActivity.getTimeSpent(), studentsClassActivity.getViews(), studentsClassActivity.getReaction());
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
