@@ -245,8 +245,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public StudentsClassActivity compareAndMergeStudentsClassActivity(StudentsClassActivity studentsClassActivity) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.selectStudentClassActivity());
-			boundStatement.bind(studentsClassActivity.getClassUid(), studentsClassActivity.getUserUid(), studentsClassActivity.getCollectionType(), studentsClassActivity.getCourseUid(),
-					studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid());
+			boundStatement.bind(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(),
+					studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(),studentsClassActivity.getCollectionType(),studentsClassActivity.getUserUid());
 			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
 			ResultSet result = resultSetFuture.get();
 			if (result != null) {
