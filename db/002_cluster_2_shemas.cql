@@ -102,19 +102,19 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.student_location (
 
 CREATE TABLE IF NOT EXISTS event_logger_insights.students_class_activity (
     class_uid text,
-    user_uid text,
-    collection_type text,
     course_uid text,
     unit_uid text,
     lesson_uid text,
     collection_uid text,
+    collection_type text,
+    user_uid text,
     attempt_status text,
     reaction bigint,
     score bigint,
     time_spent bigint,
     views bigint,
-    PRIMARY KEY (class_uid, user_uid, collection_type, course_uid, unit_uid, lesson_uid, collection_uid)
-);
+    PRIMARY KEY (class_uid, course_uid, unit_uid, lesson_uid, collection_uid, collection_type, user_uid)
+)
 
 CREATE TABLE IF NOT EXISTS event_logger_insights.taxonomy_child_count (
     row_key text PRIMARY KEY,
