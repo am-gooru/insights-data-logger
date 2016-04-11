@@ -819,7 +819,7 @@ public class Constants {
  	
  	public static final String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,event_type,parent_event_id,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
  	
- 	public static final String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,collection_type,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
+ 	public static final String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,user_uid,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
  	
  	public static final String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";	
  	
@@ -837,7 +837,7 @@ public class Constants {
  	
  	public static final String SELECT_USER_SESSION_ACTIVITY_BY_SESSION_ID = "SELECT * FROM user_session_activity WHERE session_id = ?;";
  	
- 	public static final String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
+ 	public static final String SELECT_STUDENTS_CLASS_ACTIVITY = "SELECT * FROM students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ? AND collection_type = ? AND user_uid = ?;";
  	
  	public static final String UPDATE_REACTION = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,reaction)VALUES(?,?,?,?);";
  	
@@ -877,13 +877,13 @@ public class Constants {
  	
  	public static final String SELECT_CLASS_MEMBERS = "SELECT * FROM class_members WHERE class_id = ?";
  	
- 	public static final String DELETE_COURSE_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ?;";
+ 	public static final String DELETE_COURSE_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ?  AND course_uid = ?;";
  	
- 	public static final String DELETE_UNIT_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ?;";
+ 	public static final String DELETE_UNIT_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ?;";
  	
- 	public static final String DELETE_LESSON_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ?;";
+ 	public static final String DELETE_LESSON_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ?;";
  	
- 	public static final String DELETE_ASSESSMENT_OR_COLLECTION_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND user_uid = ? AND collection_type = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
+ 	public static final String DELETE_ASSESSMENT_OR_COLLECTION_USAGE = "DELETE FROM  students_class_activity WHERE class_uid = ? AND course_uid = ? AND unit_uid = ? AND lesson_uid = ? AND collection_uid = ?;";
  	
  	public static final String DELETE_DATA_CUBE_BY_ROW_KEY = "DELETE FROM  class_activity_datacube WHERE row_key = ?;";
  	
