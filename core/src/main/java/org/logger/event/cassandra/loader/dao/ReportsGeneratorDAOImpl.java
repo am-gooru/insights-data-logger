@@ -74,12 +74,12 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 				LOG.info("store students completed : {} ", userSessionActivity.getSessionId());
 			}
 
-			if (classActivityDatacube != null && studentsClassActivity != null) {
+			if (classActivityDatacube != null && studentsClassActivity != null && event.getReportsContext().contains(Constants.PERFORMANCE)) {
 				callClassActitivityDataCubeGenerator(studentsClassActivity, classActivityDatacube);
 				LOG.info("datacube generator completed : {} ", userSessionActivity.getSessionId());
 			}
 
-			if (contentTaxonomyActivity != null) {
+			if (contentTaxonomyActivity != null && event.getReportsContext().contains(Constants.PROFILE)) {
 				service.submit(new MastryGenerator(contentTaxonomyActivity, baseCassandraDao));
 				LOG.info("calling mastery generator : {} ", userSessionActivity.getSessionId());
 			}

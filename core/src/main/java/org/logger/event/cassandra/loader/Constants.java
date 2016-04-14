@@ -146,6 +146,8 @@ public class Constants {
 	
 	public static final  String ANSWER_OBECT = "answerObject";
 	
+	public static final  String REPORTS_CONTEXT = "reportsContext";
+	
 	public static final  String ATTEMPTS = "attempts";
 	
 	public static final  String ATTEMPTED = "attempted";
@@ -207,6 +209,10 @@ public class Constants {
 	public static final  String _FEED_BACK_PROVIDER = "feed_back_provider";
 	
 	public static final  String PROVIDER = "feedbackProviderUId";
+	
+	public static final  String PROFILE = "profile";
+	
+	public static final  String PERFORMANCE = "performance";
 	
 	public static final  String _FEED_BACK_TIMESTAMP = "feed_back_timestamp";
 	
@@ -872,6 +878,10 @@ public class Constants {
  	public static final String UPDATE_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
  	
  	public static final String SELECT_STATISTICAL_COUNTER_DATA = "SELECT metrics_value AS metrics FROM statistical_data WHERE clustering_key = ? AND metrics_name = ?";
+
+ 	public static final String UPDATE_USER_STATISTICAL_COUNTER_DATA = "UPDATE statistical_user_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
+ 	
+ 	public static final String SELECT_USER_STATISTICAL_COUNTER_DATA = "SELECT metrics_value AS metrics FROM statistical_data WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
  	
  	public static final String SELECT_API_KEY = "SELECT * FROM app_api_key WHERE key = ?";
  	

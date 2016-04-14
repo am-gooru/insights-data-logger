@@ -589,6 +589,36 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return true;
 	}
 	@Override
+	public boolean updateUserStatisticalCounterData(String clusteringKey, String userUid , String metricsName, Object metricsValue) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.updateUserStatustucalCounterData());
+			boundStatement.bind(metricsValue, clusteringKey, userUid, metricsName);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing statistical data", e);
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean balanceUserCounterData(String clusteringKey, String userUid, String metricsName, Long metricsValue) {
+		try {
+			BoundStatement selectBoundStatement = new BoundStatement(queries.selectUserStatustucalCounterData());
+			selectBoundStatement.bind(clusteringKey, userUid, metricsName);
+			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
+			ResultSet result = resultFuture.get();
+			
+			BoundStatement boundStatement = new BoundStatement(queries.updateStatustucalCounterData());
+			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey, metricsName);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while balancing statistical data", e);
+			return false;
+		}
+		return true;
+	}
+	@Override
 	public AppDO getApiKeyDetails(String apiKey) {
 		AppDO appDO = null;
 		try {

@@ -81,9 +81,11 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	private void handlePlayerEvents(final EventBuilder event) {
 		if (event.getViews() > 0) {
 			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.VIEWS, event.getViews());
+			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(), event.getGooruUUID(), Constants.VIEWS, event.getViews());
 		}
 		if (event.getTimespent() > 0) {
 			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());
+			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(),event.getGooruUUID(), Constants.TOTALTIMEINMS, event.getTimespent());
 		}
 	}
 
