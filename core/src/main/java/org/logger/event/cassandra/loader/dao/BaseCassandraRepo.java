@@ -104,4 +104,8 @@ public interface BaseCassandraRepo {
 
 	boolean addStatPublisherQueue(String metricsName, String gooruOid, long eventTime);
 
+	boolean updateUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue);
+
+	boolean balanceUserCounterData(String clusteringKey, String userUid, String metricsName, Long metricsValue);
+
 }
