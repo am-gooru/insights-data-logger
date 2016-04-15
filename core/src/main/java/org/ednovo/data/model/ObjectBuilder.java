@@ -21,6 +21,8 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 	
 	private ContentTaxonomyActivity contentTaxonomyActivity = null;
 	
+	private UserSessionTaxonomyActivity userSessionTaxonomyActivity = null;
+	
 	private EventBuilder event;
 	
 	public ObjectBuilder(EventBuilder event){
@@ -33,12 +35,17 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		classDataCubeObjectCreator();
 		allSessionActivityCreator();
 		contentTaxonomyActivityObjectCreator();
+		userSessionTaxonomyActivityObjectCreator();
 	}
 	private void objectCreator(){
 		if(event.getEventName().matches(Constants.PLAY_EVENTS)){
 			userSessionActivity = new UserSessionActivity();
 			userAllSessionActivity = new UserSessionActivity();
 			studentLocation = new StudentLocation();
+			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) ){				
+				userSessionTaxonomyActivity = new UserSessionTaxonomyActivity();
+			}
+			
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))){
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
@@ -89,7 +96,26 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			
 		}
 	}
-	
+
+	private void userSessionTaxonomyActivityObjectCreator(){
+		/**
+		 * Build userSessionTaxonomyActivity
+		 */
+		if(userSessionTaxonomyActivity != null){
+			if(event.getResourceType().equalsIgnoreCase(Constants.RESOURCE)){				
+				userSessionTaxonomyActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getGooruUUID()));
+			}
+			userSessionTaxonomyActivity.setGooruOid(event.getContentGooruId());			
+			userSessionTaxonomyActivity.setResourceType(event.getResourceType());
+			userSessionTaxonomyActivity.setQuestionType(event.getQuestionType());
+			userSessionTaxonomyActivity.setAnswerStatus(event.getAnswerStatus());
+			userSessionTaxonomyActivity.setReaction(event.getReaction());
+			userSessionTaxonomyActivity.setTimeSpent(event.getTimespent());
+			userSessionTaxonomyActivity.setViews(event.getViews());
+			userSessionTaxonomyActivity.setScore(event.getScore());
+			userSessionTaxonomyActivity.setTaxonomyIds(event.getTaxonomyIds());
+		}
+	}
 	private void studentLocationObjectCreator(){
 
 		/**
@@ -248,5 +274,11 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 
 	public void setContentTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		this.contentTaxonomyActivity = contentTaxonomyActivity;
+	}
+	public UserSessionTaxonomyActivity getUserSessionTaxonomyActivity() {
+		return userSessionTaxonomyActivity;
+	}
+	public void setUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
+		this.userSessionTaxonomyActivity = userSessionTaxonomyActivity;
 	}
 }

@@ -11,12 +11,15 @@ import org.ednovo.data.model.ObjectBuilder;
 import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.UserSessionActivity;
+import org.ednovo.data.model.UserSessionTaxonomyActivity;
+import org.json.JSONException;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 
 public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements ReportsGeneratorDAO {
 
@@ -47,6 +50,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 			ClassActivityDatacube classActivityDatacube = objectBuilderHandler.getClassActivityDatacube();
 			StudentLocation studentLocation = objectBuilderHandler.getStudentLocation();
 			ContentTaxonomyActivity contentTaxonomyActivity = objectBuilderHandler.getContentTaxonomyActivity();
+			UserSessionTaxonomyActivity userSessionTaxonomyActivity = objectBuilderHandler.getUserSessionTaxonomyActivity();
 
 			if (userSessionActivity != null && !LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
 				baseCassandraDao.compareAndMergeUserSessionActivity(userSessionActivity);
@@ -59,6 +63,9 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				LOG.info("store all session activity completed : {} ", userSessionActivity.getSessionId());
 			}
+			
+			saveUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+
 			if (LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
 				baseCassandraDao.updateReaction(userSessionActivity);
 			}
@@ -89,6 +96,30 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 			LOG.error("Exception:", e);
 		}
 
+	}
+
+	private void saveUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
+		if (userSessionTaxonomyActivity != null && (userSessionTaxonomyActivity.getTaxonomyIds().length() > 0)) {
+			for (int index = 0; index < (userSessionTaxonomyActivity.getTaxonomyIds()).length(); index++) {
+				ResultSet taxRows = null;
+				try {
+					taxRows = baseCassandraDao.getTaxonomy(userSessionTaxonomyActivity.getTaxonomyIds().getString(index));
+				} catch (JSONException e) {
+					LOG.error("Invalid taxonomy ids JSON format ");
+				}
+				if (taxRows != null) {
+					for (Row taxColumns : taxRows) {
+						userSessionTaxonomyActivity.setSubjectId(taxColumns.getString(Constants.SUBJECT_ID));
+						userSessionTaxonomyActivity.setCourseId(taxColumns.getString(Constants.COURSE_ID));
+						userSessionTaxonomyActivity.setDomainId(taxColumns.getString(Constants.DOMAIN_ID));
+						userSessionTaxonomyActivity.setStandardsId(taxColumns.getString(Constants.STANDARDS_ID));
+						userSessionTaxonomyActivity.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
+						baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+						baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+					}
+				}
+			}
+		}
 	}
 
 	/**

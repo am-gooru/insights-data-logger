@@ -9,6 +9,7 @@ import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserSessionActivity;
+import org.ednovo.data.model.UserSessionTaxonomyActivity;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
@@ -803,5 +804,41 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			return false;
 		}
 		return true;
+	}
+@Override
+public boolean insertUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
+	try {
+		//
+		//INSERT INTO user_session_taxonomy_activity(session_id,gooru_oid,subject_id, course_id, domain_id, standards_id, learning_targets_id,question_type,resource_type,answer_status,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+
+		BoundStatement boundStatement = new BoundStatement(queries.insertUserSessionTaxonomyActivity());
+		boundStatement.bind(userSessionTaxonomyActivity.getSessionId());
+		getAnalyticsCassSession().executeAsync(boundStatement);
+	} catch (Exception e) {
+		LOG.error("Error while add stat publisher queue..", e);
+		return false;
+	}
+	return true;
+}
+@Override
+	public ResultSet mergeUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
+		ResultSet result = null;
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.selectUserSessionTaxonomyActivity());
+			boundStatement.bind(userSessionTaxonomyActivity.getSessionId(), userSessionTaxonomyActivity.getGooruOid(), userSessionTaxonomyActivity.getSubjectId(),
+					userSessionTaxonomyActivity.getCourseId(), userSessionTaxonomyActivity.getDomainId(), userSessionTaxonomyActivity.getStandardsId(),
+					userSessionTaxonomyActivity.getLearningTargetsId());
+			ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
+			result = resultSetFuture.get();
+			if (result != null) {
+				for (Row columns : result) {
+					userSessionTaxonomyActivity.setTimeSpent((userSessionTaxonomyActivity.getTimeSpent() + columns.getLong(Constants._TIME_SPENT)));
+					userSessionTaxonomyActivity.setViews((userSessionTaxonomyActivity.getViews() + columns.getLong(Constants.VIEWS)));
+				}
+			}
+		} catch (Exception e) {
+			LOG.error("Exception while read questions grade by session", e);
+		}
+		return result;
 	}
 }

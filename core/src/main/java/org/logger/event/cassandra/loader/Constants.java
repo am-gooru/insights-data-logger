@@ -908,5 +908,9 @@ public class Constants {
  	public static final String UPDATE_CONTENT_CREATORS = "INSERT INTO content_authorized_users(gooru_oid,creator_uid)VALUES(?,?);";
 
  	public static final String ADD_STAT_PUBLISHER_QUEUE = "INSERT INTO stat_publisher_queue(metrics_name,gooru_oid,event_time)VALUES(?,?,?);";
- 	
+
+ 	public static final String INSERT_USER_SESSION_TAXONOMY_ACTIVITY = "INSERT INTO user_session_taxonomy_activity(session_id,gooru_oid,subject_id, course_id, domain_id, standards_id, learning_targets_id,question_type,resource_type,answer_status,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+
+ 	public static final String SELECT_USER_SESSION_TAXONOMY_ACTIVITY = "SELECT * FROM user_session_taxonomy_activity WHERE session_id = ? AND gooru_oid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ?;";
+
 }
