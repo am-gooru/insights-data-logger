@@ -62,9 +62,9 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 
 	private final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
 	
-	private final PreparedStatement INSERT_EVENTS_TIMELINE = getAnalyticsCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
+	private final PreparedStatement INSERT_EVENTS_TIMELINE = getEventCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
 	
-	private final PreparedStatement INSERT_EVENTS = getAnalyticsCassSession().prepare(Constants.INSERT_EVENTS);
+	private final PreparedStatement INSERT_EVENTS = getEventCassSession().prepare(Constants.INSERT_EVENTS);
 	
 	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
 	
@@ -98,7 +98,7 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement UPDATE_CONTENT_CREATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_CONTENT_CREATORS);
 	
-	private final PreparedStatement ADD_STAT_PUBLISHER_QUEUE = getAnalyticsCassSession().prepare(Constants.ADD_STAT_PUBLISHER_QUEUE);
+	private final PreparedStatement ADD_STAT_PUBLISHER_QUEUE = getEventCassSession().prepare(Constants.ADD_STAT_PUBLISHER_QUEUE);
 	
 	private final PreparedStatement INSERT_USER_SESSION_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_USER_SESSION_TAXONOMY_ACTIVITY);
 	

@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.user_session_taxonomy_activity 
     learning_targets_id text,
     answer_status text,
     question_type text,
+    reaction bigint,
     resource_type text,
     score bigint,
     time_spent counter,
