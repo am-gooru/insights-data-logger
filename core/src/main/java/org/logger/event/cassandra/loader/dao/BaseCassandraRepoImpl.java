@@ -806,20 +806,21 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return true;
 	}
 @Override
-public boolean insertUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
-	try {
-		//
-		//INSERT INTO user_session_taxonomy_activity(session_id,gooru_oid,subject_id, course_id, domain_id, standards_id, learning_targets_id,question_type,resource_type,answer_status,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);
-
-		BoundStatement boundStatement = new BoundStatement(queries.insertUserSessionTaxonomyActivity());
-		boundStatement.bind(userSessionTaxonomyActivity.getSessionId());
-		getAnalyticsCassSession().executeAsync(boundStatement);
-	} catch (Exception e) {
-		LOG.error("Error while add stat publisher queue..", e);
-		return false;
+	public boolean insertUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.insertUserSessionTaxonomyActivity());
+			boundStatement.bind(userSessionTaxonomyActivity.getSessionId(), userSessionTaxonomyActivity.getGooruOid(), userSessionTaxonomyActivity.getSubjectId(),
+					userSessionTaxonomyActivity.getCourseId(), userSessionTaxonomyActivity.getDomainId(), userSessionTaxonomyActivity.getStandardsId(),
+					userSessionTaxonomyActivity.getLearningTargetsId(), userSessionTaxonomyActivity.getQuestionType(), userSessionTaxonomyActivity.getResourceType(),
+					userSessionTaxonomyActivity.getAnswerStatus(), userSessionTaxonomyActivity.getReaction(), userSessionTaxonomyActivity.getScore(), userSessionTaxonomyActivity.getTimeSpent(),
+					userSessionTaxonomyActivity.getViews());
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while add stat publisher queue..", e);
+			return false;
+		}
+		return true;
 	}
-	return true;
-}
 @Override
 	public ResultSet mergeUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
 		ResultSet result = null;
