@@ -104,6 +104,8 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		if(userSessionTaxonomyActivity != null){
 			if(event.getResourceType().equalsIgnoreCase(Constants.RESOURCE)){				
 				userSessionTaxonomyActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getGooruUUID()));
+			}else{
+				userSessionTaxonomyActivity.setSessionId(event.getSessionId());				
 			}
 			userSessionTaxonomyActivity.setGooruOid(event.getContentGooruId());			
 			userSessionTaxonomyActivity.setResourceType(event.getResourceType());
