@@ -56,12 +56,12 @@ public final class CassandraClient implements Register {
 
 		try {
 			analyticsCassandraCluster = Cluster.builder().withClusterName(analyticsCassCluster).addContactPoint(analyticsCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(analyticsCassandraDatacenter)))
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000))
 					.build();
 			analyticsCassandraSession = analyticsCassandraCluster.connect(analyticsKeyspaceName);
 
 			eventCassandraCluster = Cluster.builder().withClusterName(eventCassCluster).addContactPoint(eventCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(eventCassandraDatacenter)))
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000))
 					.build();
 			eventCassandraSession = eventCassandraCluster.connect(eventKeyspaceName);
 
