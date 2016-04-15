@@ -9,6 +9,7 @@ import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserSessionActivity;
+import org.ednovo.data.model.UserSessionTaxonomyActivity;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -107,5 +108,9 @@ public interface BaseCassandraRepo {
 	boolean updateUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue);
 
 	boolean balanceUserCounterData(String clusteringKey, String userUid, String metricsName, Long metricsValue);
+
+	boolean insertUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity);
+
+	ResultSet mergeUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity);
 
 }

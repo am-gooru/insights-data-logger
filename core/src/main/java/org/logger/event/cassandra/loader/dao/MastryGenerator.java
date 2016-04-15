@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 
 
 public class MastryGenerator implements Runnable {
@@ -37,7 +38,7 @@ public class MastryGenerator implements Runnable {
 				for (int index = 0 ;  index < (contentTaxonomyActivity.getTaxonomyIds()).length(); index++) {
 				ResultSet taxRows = baseCassandraDao.getTaxonomy(contentTaxonomyActivity.getTaxonomyIds().getString(index));
 				if (taxRows != null) {
-					for (com.datastax.driver.core.Row taxColumns : taxRows) {
+					for (Row taxColumns : taxRows) {
 						contentTaxonomyActivityInstance.setSubjectId(taxColumns.getString(Constants.SUBJECT_ID));
 						contentTaxonomyActivityInstance.setCourseId(taxColumns.getString(Constants.COURSE_ID));
 						contentTaxonomyActivityInstance.setDomainId(taxColumns.getString(Constants.DOMAIN_ID));
@@ -45,7 +46,7 @@ public class MastryGenerator implements Runnable {
 						contentTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
 						ResultSet taxActivityRows = baseCassandraDao.getContentTaxonomyActivity(contentTaxonomyActivityInstance);
 						if (taxActivityRows != null) {
-							for (com.datastax.driver.core.Row taxActivityColumns : taxActivityRows) {
+							for (Row taxActivityColumns : taxActivityRows) {
 								contentTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + taxActivityColumns.getLong(Constants.VIEWS));
 								contentTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxActivityColumns.getLong(Constants._TIME_SPENT));
 							}
@@ -63,7 +64,7 @@ public class MastryGenerator implements Runnable {
 						contentClassTaxonomyActivityInstance.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
 						ResultSet classTaxActivityRows = baseCassandraDao.getContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
 						if (classTaxActivityRows != null) {
-							for (com.datastax.driver.core.Row classTaxActivityColumns : classTaxActivityRows) {
+							for (Row classTaxActivityColumns : classTaxActivityRows) {
 								contentClassTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + classTaxActivityColumns.getLong(Constants.VIEWS));
 								contentClassTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + classTaxActivityColumns.getLong(Constants._TIME_SPENT));
 								contentClassTaxonomyActivityInstance.setScore(contentTaxonomyActivity.getScore());
@@ -108,7 +109,7 @@ public class MastryGenerator implements Runnable {
 	private TaxonomyActivityDataCube generateDataCubeObj(TaxonomyActivityDataCube taxonomyActivityDataCube) {
 		ResultSet taxActivityDataCubeRows = baseCassandraDao.getContentTaxonomyActivityDataCube(taxonomyActivityDataCube.getRowKey(), taxonomyActivityDataCube.getLeafNode());
 		if (taxActivityDataCubeRows != null) {
-			for (com.datastax.driver.core.Row taxActivityDataCubeColumn : taxActivityDataCubeRows) {
+			for (Row taxActivityDataCubeColumn : taxActivityDataCubeRows) {
 				taxonomyActivityDataCube.setRowKey(taxonomyActivityDataCube.getRowKey());
 				taxonomyActivityDataCube.setLeafNode(taxonomyActivityDataCube.getLeafNode());
 				if (contentTaxonomyActivity.getResourceType().equalsIgnoreCase(Constants.RESOURCE)) {

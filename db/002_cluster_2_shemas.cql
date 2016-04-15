@@ -204,3 +204,20 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.content_authorized_users (
     collaborators set<text>,
     PRIMARY KEY (gooru_oid)
 );
+
+CREATE TABLE IF NOT EXISTS event_logger_insights.user_session_taxonomy_activity (
+    session_id text,
+    gooru_oid text,
+    subject_id text,
+    course_id text,
+    domain_id text,
+    standards_id text,
+    learning_targets_id text,
+    answer_status text,
+    question_type text,
+    resource_type text,
+    score bigint,
+    time_spent counter,
+    views counter,
+    PRIMARY KEY (session_id, gooru_oid, subject_id, course_id, domain_id, standards_id, learning_targets_id)
+) 

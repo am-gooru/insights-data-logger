@@ -100,6 +100,10 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement ADD_STAT_PUBLISHER_QUEUE = getAnalyticsCassSession().prepare(Constants.ADD_STAT_PUBLISHER_QUEUE);
 	
+	private final PreparedStatement INSERT_USER_SESSION_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_USER_SESSION_TAXONOMY_ACTIVITY);
+	
+	private final PreparedStatement SELECT_USER_SESSION_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_USER_SESSION_TAXONOMY_ACTIVITY);
+	
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
 	}
@@ -265,5 +269,11 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	}
 	public PreparedStatement addStatPublisherQueue() {
 		return ADD_STAT_PUBLISHER_QUEUE;
+	}
+	public PreparedStatement insertUserSessionTaxonomyActivity() {
+		return INSERT_USER_SESSION_TAXONOMY_ACTIVITY;
+	}
+	public PreparedStatement selectUserSessionTaxonomyActivity() {
+		return SELECT_USER_SESSION_TAXONOMY_ACTIVITY;
 	}
 }
