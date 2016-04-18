@@ -108,7 +108,7 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 		return SELECT_API_KEY;
 	}
 	
-	public PreparedStatement updateStatustucalCounterData() {
+	public PreparedStatement updateStatisticalCounterData() {
 		return UPDATE_STATISTICAL_COUNTER_DATA;
 	}
 	
@@ -116,11 +116,11 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 		return SELECT_STATISTICAL_COUNTER_DATA;
 	}
 	
-	public PreparedStatement updateUserStatustucalCounterData() {
+	public PreparedStatement updateUserStatisticalCounterData() {
 		return UPDATE_USER_STATISTICAL_COUNTER_DATA;
 	}
 	
-	public PreparedStatement selectUserStatustucalCounterData() {
+	public PreparedStatement selectUserStatisticalCounterData() {
 		return SELECT_USER_STATISTICAL_COUNTER_DATA;
 	}
 	
