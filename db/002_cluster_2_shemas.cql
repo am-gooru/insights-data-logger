@@ -218,7 +218,15 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.user_session_taxonomy_activity 
     reaction bigint,
     resource_type text,
     score bigint,
-    time_spent counter,
-    views counter,
+    time_spent bigint,
+    views bigint,
     PRIMARY KEY (session_id, gooru_oid, subject_id, course_id, domain_id, standards_id, learning_targets_id)
 ) 
+
+CREATE TABLE IF NOT EXISTS event_logger_insights.statistical_user_data (
+    clustering_key text,
+    user_uid text,
+    metrics_name text,
+    metrics_value counter,
+    PRIMARY KEY (clustering_key, user_uid, metrics_name)
+)
