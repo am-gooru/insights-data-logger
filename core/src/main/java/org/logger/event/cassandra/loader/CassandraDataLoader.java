@@ -105,6 +105,6 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 		if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
 			reComputationDAO.reComputeData(event);
 		}
-		eventsUpdateDAO.eventsHadler(event);
+		eventsUpdateDAO.eventsHandler(event);
 	}
 }

@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 
 import org.ednovo.data.model.EventBuilder;
 import org.logger.event.cassandra.loader.Constants;
+import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	@Override
-	public void eventsHadler(final EventBuilder event) {
+	public void eventsHandler(final EventBuilder event) {
 		try {
 			Set<Callable<String>> tasks = new HashSet<Callable<String>>();
 			tasks.add(new Callable<String>() {
@@ -79,13 +80,19 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	private void handlePlayerEvents(final EventBuilder event) {
+		String resourceType = null;
+		if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
+			resourceType = event.getCollectionType();
+		}else{
+			resourceType = event.getResourceType();
+		}
 		if (event.getViews() > 0) {
-			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.VIEWS, event.getViews());
-			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(), event.getGooruUUID(), Constants.VIEWS, event.getViews());
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(),resourceType, Constants.VIEWS, event.getViews());
+			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(), event.getGooruUUID(),resourceType, Constants.VIEWS, event.getViews());
 		}
 		if (event.getTimespent() > 0) {
-			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), Constants.TOTALTIMEINMS, event.getTimespent());
-			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(),event.getGooruUUID(), Constants.TOTALTIMEINMS, event.getTimespent());
+			baseCassandraDao.updateStatisticalCounterData(event.getContentGooruId(), resourceType,Constants.TOTALTIMEINMS, event.getTimespent());
+			baseCassandraDao.updateUserStatisticalCounterData(event.getContentGooruId(),event.getGooruUUID(), resourceType, Constants.TOTALTIMEINMS, event.getTimespent());
 		}
 	}
 
@@ -104,7 +111,8 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 				collaborators.add(event.getCollaborators().getString(index));
 			}
 			baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
-			baseCassandraDao.balanceCounterData(event.getContentGooruId(), Constants.COLLABORATORS, ((Number)collaborators.size()).longValue());
+			baseCassandraDao.balanceCounterData(event.getContentGooruId(),Constants.COLLABORATORS, Constants.COLLABORATORS, ((Number)collaborators.size()).longValue());
+			baseCassandraDao.balanceUserCounterData(event.getContentGooruId(),Constants.USER, Constants.COLLABORATORS, Constants.COLLABORATORS, ((Number)collaborators.size()).longValue());
 		} catch (Exception e) {
 			LOG.error("Exception:", e);
 		}
@@ -114,9 +122,11 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		try {
 			String parentContentIdD = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
 			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
-				baseCassandraDao.updateStatisticalCounterData(parentContentIdD, Constants.USED_IN_COLLECTION_COUNT, -1);
+				baseCassandraDao.updateStatisticalCounterData(parentContentIdD,event.getContentFormat(), Constants.USED_IN_COLLECTION_COUNT, -1);
+				baseCassandraDao.updateUserStatisticalCounterData(parentContentIdD,event.getGooruUUID(), event.getContentFormat(), Constants.USED_IN_COLLECTION_COUNT, -1);
 			}
-			baseCassandraDao.updateStatisticalCounterData(parentContentIdD, Constants.COPY, -1);
+			baseCassandraDao.updateStatisticalCounterData(parentContentIdD,event.getContentFormat(), Constants.COPY, -1);
+			baseCassandraDao.updateUserStatisticalCounterData(parentContentIdD,event.getGooruUUID(), event.getContentFormat(), Constants.COPY, -1);
 		} catch (Exception e) {
 			LOG.error("Exception:", e);
 		}
@@ -127,9 +137,12 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		try {
 			parentContentId = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
 			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
-				baseCassandraDao.updateStatisticalCounterData(parentContentId, Constants.USED_IN_COLLECTION_COUNT, 1);
+				baseCassandraDao.updateStatisticalCounterData(parentContentId,event.getContentFormat(), Constants.USED_IN_COLLECTION_COUNT, 1);
+				baseCassandraDao.updateUserStatisticalCounterData(parentContentId,event.getGooruUUID(),event.getContentFormat(), Constants.USED_IN_COLLECTION_COUNT, 1);
 			}
-			baseCassandraDao.updateStatisticalCounterData(parentContentId, Constants.COPY, 1);
+			baseCassandraDao.updateStatisticalCounterData(parentContentId,event.getContentFormat(), Constants.COPY, 1);
+			baseCassandraDao.updateUserStatisticalCounterData(parentContentId, event.getGooruUUID(), event.getContentFormat(), Constants.COPY, 1);
+			
 		} catch (Exception e) {
 			LOG.error("Exception : ", e);
 		}
@@ -139,7 +152,8 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		try {
 			String parentContentIdA = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
 			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
-				baseCassandraDao.updateStatisticalCounterData(parentContentIdA, Constants.USED_IN_COLLECTION_COUNT, 1);
+				baseCassandraDao.updateStatisticalCounterData(parentContentIdA, event.getContentFormat(),Constants.USED_IN_COLLECTION_COUNT, 1);
+				baseCassandraDao.updateUserStatisticalCounterData(parentContentIdA, event.getGooruUUID(), event.getContentFormat(),Constants.USED_IN_COLLECTION_COUNT, 1);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception : ", e);

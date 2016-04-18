@@ -82,9 +82,10 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.content_taxonomy_activity (
 
 CREATE TABLE IF NOT EXISTS event_logger_insights.statistical_data (
     clustering_key text,
+    type text,
     metrics_name text,
     metrics_value counter,
-    PRIMARY KEY (clustering_key, metrics_name)
+    PRIMARY KEY (clustering_key, type, metrics_name)
 );
 
 CREATE TABLE IF NOT EXISTS event_logger_insights.student_location (
@@ -226,7 +227,8 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.user_session_taxonomy_activity 
 CREATE TABLE IF NOT EXISTS event_logger_insights.statistical_user_data (
     clustering_key text,
     user_uid text,
+    type text,
     metrics_name text,
     metrics_value counter,
-    PRIMARY KEY (clustering_key, user_uid, metrics_name)
+    PRIMARY KEY (clustering_key, user_uid, type, metrics_name)
 )
