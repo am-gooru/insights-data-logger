@@ -1,16 +1,13 @@
 package org.ednovo.kafka.consumer;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.KafkaStream;
 
 public final class ConsumeMessages implements Runnable {
 
@@ -20,9 +17,10 @@ public final class ConsumeMessages implements Runnable {
 
 	private DataProcessor rowDataProcessor;
 
-	private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
+	private static Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
 
-	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap, DataProcessor rowDataProcessor) {
+	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap,
+			DataProcessor rowDataProcessor) {
 		this.consumerTopic = consumerTopic;
 		this.consumerMap = consumerMap;
 		this.rowDataProcessor = rowDataProcessor;
@@ -30,7 +28,7 @@ public final class ConsumeMessages implements Runnable {
 
 	public void run() {
 		try {
-			logger.info("consumer process started for the topic : {}", consumerTopic);
+			LOG.info("consumer process started for the topic : {}", consumerTopic);
 			KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
 			ConsumerIterator<byte[], byte[]> it = stream.iterator();
 			/**
@@ -39,27 +37,12 @@ public final class ConsumeMessages implements Runnable {
 			while (it.hasNext()) {
 				String message = null;
 				message = new String(it.next().message());
-				Gson gson = new Gson();
-				Map<String, String> messageMap = new HashMap<String, String>();
-				try {
-					messageMap = gson.fromJson(message, messageMap.getClass());
-				} catch (Exception e) {
-					ConsumerLogFactory.errorActivity.error(message);
-					continue;
-				}
-
-				/**
-				 * TODO We're only getting raw data now. We'll have to use the server IP as well for extra information.
-				 **/
-				if (messageMap != null && !messageMap.isEmpty()) {
-					this.rowDataProcessor.processRow(messageMap.get("raw"));
-				} else {
-					ConsumerLogFactory.errorActivity.error(message);
-				}
+				LOG.info("consume receiving event {}", message);
+				this.rowDataProcessor.processRow(message);
 			}
 
 		} catch (Exception e) {
-			logger.error("Error while consume messages", e);
+			LOG.error("Error while consume messages", e);
 		}
 	}
 }
