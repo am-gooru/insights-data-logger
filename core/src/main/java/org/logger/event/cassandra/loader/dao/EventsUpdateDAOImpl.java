@@ -98,7 +98,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		}else{
 			resourceType = event.getResourceType();
 		}
-		baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getClassGooruId(), resourceType, event.getEventTime());
+		baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getContentGooruId(), resourceType, event.getEventTime());
 	}
 	
 	private void handleClassJoin(final EventBuilder event) {
