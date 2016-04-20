@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.events (
 CREATE TABLE IF NOT EXISTS event_logger_insights.stat_publisher_queue (
     metrics_name text,
     gooru_oid text,
+    type text,
     event_time bigint,
     PRIMARY KEY (metrics_name, gooru_oid)
 )
