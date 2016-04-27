@@ -39,7 +39,7 @@ public class ReComputationDAOImpl extends BaseDAOCassandraImpl implements ReComp
 	public void reComputeData(final EventBuilder event) {
 		ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
 		StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
-		if (StringUtils.isNotBlank(event.getClassGooruId())) {
+		if (StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA)) {
 			for (String classId : event.getClassGooruId().split(Constants.COMMA)) {
 				ResultSet classMembers = baseCassandraDao.getClassMembers(classId);
 				generateDeleteTasks(studentsClassActivity, classMembers.one().getSet("members", String.class));
