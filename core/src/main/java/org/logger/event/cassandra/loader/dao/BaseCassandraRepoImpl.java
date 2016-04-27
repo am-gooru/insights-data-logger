@@ -563,7 +563,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean incrementStatisticalCounterData(String clusteringKey, String metricsName ,Object metricsValue) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
-			boundStatement.bind(metricsValue, clusteringKey, metricsName);
+			boundStatement.bind(((Number)metricsValue).longValue(), clusteringKey, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while storing statistical data", e);
@@ -575,7 +575,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean decrementStatisticalCounterData(String clusteringKey, String metricsName ,Object metricsValue) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.decrementStatisticalCounterData());
-			boundStatement.bind(metricsValue, clusteringKey, metricsName);
+			boundStatement.bind(((Number)metricsValue).longValue(), clusteringKey, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while storing statistical data", e);
@@ -592,7 +592,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			ResultSet result = resultFuture.get();
 			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
-			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey,  metricsName);
+			boundStatement.bind((result.one().getLong(Constants.METRICS) - ((Number)metricsValue).longValue()), clusteringKey,  metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while balancing statistical data", e);
@@ -604,7 +604,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean incrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
-			boundStatement.bind(metricsValue, clusteringKey, userUid, metricsName);
+			boundStatement.bind(((Number)metricsValue).longValue(), clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while storing statistical data", e);
@@ -616,7 +616,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	public boolean decrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.decrementUserStatisticalCounterData());
-			boundStatement.bind(metricsValue, clusteringKey, userUid, metricsName);
+			boundStatement.bind(((Number)metricsValue).longValue(), clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while storing statistical data", e);
@@ -633,7 +633,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			ResultSet result = resultFuture.get();
 			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
-			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey, userUid, metricsName);
+			boundStatement.bind((result.one().getLong(Constants.METRICS) - ((Number)metricsValue).longValue()), clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while balancing statistical data", e);
