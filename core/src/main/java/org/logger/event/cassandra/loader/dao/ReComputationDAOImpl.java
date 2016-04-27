@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.EventBuilder;
 import org.ednovo.data.model.ObjectBuilder;
@@ -38,8 +39,14 @@ public class ReComputationDAOImpl extends BaseDAOCassandraImpl implements ReComp
 	public void reComputeData(final EventBuilder event) {
 		ObjectBuilder objectBuilderHandler = new ObjectBuilder(event);
 		StudentsClassActivity studentsClassActivity = objectBuilderHandler.getStudentsClassActivity();
-		ResultSet classMembers = baseCassandraDao.getClassMembers(event.getClassGooruId());
-		generateDeleteTasks(studentsClassActivity, classMembers.one().getSet("members", String.class));
+		if (StringUtils.isNotBlank(event.getClassGooruId())) {
+			for (String classId : event.getClassGooruId().split(Constants.COMMA)) {
+				ResultSet classMembers = baseCassandraDao.getClassMembers(classId);
+				generateDeleteTasks(studentsClassActivity, classMembers.one().getSet("members", String.class));
+			}
+		} else {
+			LOG.info(event.getContentFormat() + " is not mapped with any of the classes");
+		}
 
 	}
 
