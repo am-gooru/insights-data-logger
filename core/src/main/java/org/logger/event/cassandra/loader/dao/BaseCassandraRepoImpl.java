@@ -656,7 +656,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return result;
 	}
 	@Override
-	public void saveClassMembers(String classId,String studentId) {
+	public void saveClassMembers(String classId,Set<String> studentId) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.saveClassMembers());
 			boundStatement.bind(studentId,classId);
@@ -667,7 +667,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 	}
 	@Override
-	public void removeClassMembers(String classId,String studentId) {
+	public void removeClassMembers(String classId,Set<String> studentId) {
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.removeClassMembers());
 			boundStatement.bind(studentId,classId);

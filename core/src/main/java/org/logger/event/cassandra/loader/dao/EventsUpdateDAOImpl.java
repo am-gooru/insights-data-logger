@@ -102,7 +102,9 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 	
 	private void handleClassJoin(final EventBuilder event) {
-		baseCassandraDao.saveClassMembers(event.getClassGooruId(), event.getGooruUUID());
+		HashSet<String> students = new HashSet<String>();
+		students.add(event.getGooruUUID());
+ 		baseCassandraDao.saveClassMembers(event.getClassGooruId(), event.getGooruUUID());
 	}
 
 	private void handleCollaboratorsUpdate(final EventBuilder event) {

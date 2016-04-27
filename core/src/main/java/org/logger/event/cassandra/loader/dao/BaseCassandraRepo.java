@@ -93,9 +93,9 @@ public interface BaseCassandraRepo {
 
 	boolean deleteClassActivityDataCube(String rowKey);
 
-	void saveClassMembers(String classId, String studentId);
+	void saveClassMembers(String classId, Set<String> studentId);
 
-	void removeClassMembers(String classId, String studentId);
+	void removeClassMembers(String classId, Set<String> studentId);
 
 	void updateCollaborators(String classId, Set<String> collaborators);
 
