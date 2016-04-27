@@ -66,11 +66,15 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	
 	private final PreparedStatement INSERT_EVENTS = getEventCassSession().prepare(Constants.INSERT_EVENTS);
 	
-	private final PreparedStatement UPDATE_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_STATISTICAL_COUNTER_DATA);
+	private final PreparedStatement INCREMENT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.INCREMENT_STATISTICAL_COUNTER_DATA);
+	
+	private final PreparedStatement DECREMENT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.DECREMENT_STATISTICAL_COUNTER_DATA);
 	
 	private final PreparedStatement SELECT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.SELECT_STATISTICAL_COUNTER_DATA);
 	
-	private final PreparedStatement UPDATE_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.UPDATE_USER_STATISTICAL_COUNTER_DATA);
+	private final PreparedStatement INCREMENT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.INCREMENT_USER_STATISTICAL_COUNTER_DATA);
+	
+	private final PreparedStatement DECREMENT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.DECREMENT_USER_STATISTICAL_COUNTER_DATA);
 	
 	private final PreparedStatement SELECT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.SELECT_USER_STATISTICAL_COUNTER_DATA);
 	
@@ -108,16 +112,23 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 		return SELECT_API_KEY;
 	}
 	
-	public PreparedStatement updateStatisticalCounterData() {
-		return UPDATE_STATISTICAL_COUNTER_DATA;
+	public PreparedStatement incrementStatisticalCounterData() {
+		return INCREMENT_STATISTICAL_COUNTER_DATA;
 	}
 	
 	public PreparedStatement selectStatustucalCounterData() {
 		return SELECT_STATISTICAL_COUNTER_DATA;
 	}
 	
-	public PreparedStatement updateUserStatisticalCounterData() {
-		return UPDATE_USER_STATISTICAL_COUNTER_DATA;
+	public PreparedStatement incrementUserStatisticalCounterData() {
+		return INCREMENT_USER_STATISTICAL_COUNTER_DATA;
+	}
+	
+	public PreparedStatement decrementUserStatisticalCounterData() {
+		return DECREMENT_USER_STATISTICAL_COUNTER_DATA;
+	}
+	public PreparedStatement decrementStatisticalCounterData() {
+		return DECREMENT_STATISTICAL_COUNTER_DATA;
 	}
 	
 	public PreparedStatement selectUserStatisticalCounterData() {

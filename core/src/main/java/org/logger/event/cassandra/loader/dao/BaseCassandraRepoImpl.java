@@ -560,9 +560,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	}
 
 	@Override
-	public boolean updateStatisticalCounterData(String clusteringKey, String metricsName ,Object metricsValue) {
+	public boolean incrementStatisticalCounterData(String clusteringKey, String metricsName ,Object metricsValue) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(queries.updateStatisticalCounterData());
+			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
 			boundStatement.bind(metricsValue, clusteringKey, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
@@ -571,7 +571,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-
+	@Override
+	public boolean decrementStatisticalCounterData(String clusteringKey, String metricsName ,Object metricsValue) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.decrementStatisticalCounterData());
+			boundStatement.bind(metricsValue, clusteringKey, metricsName);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing statistical data", e);
+			return false;
+		}
+		return true;
+	}
 	@Override
 	public boolean balanceCounterData(String clusteringKey, String metricsName, Long metricsValue) {
 		try {
@@ -580,7 +591,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
 			ResultSet result = resultFuture.get();
 			
-			BoundStatement boundStatement = new BoundStatement(queries.updateStatisticalCounterData());
+			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
 			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey,  metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
@@ -590,9 +601,9 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		return true;
 	}
 	@Override
-	public boolean updateUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue) {
+	public boolean incrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue) {
 		try {
-			BoundStatement boundStatement = new BoundStatement(queries.updateUserStatisticalCounterData());
+			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
 			boundStatement.bind(metricsValue, clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
@@ -601,7 +612,18 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-
+	@Override
+	public boolean decrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue) {
+		try {
+			BoundStatement boundStatement = new BoundStatement(queries.decrementUserStatisticalCounterData());
+			boundStatement.bind(metricsValue, clusteringKey, userUid, metricsName);
+			getAnalyticsCassSession().executeAsync(boundStatement);
+		} catch (Exception e) {
+			LOG.error("Error while storing statistical data", e);
+			return false;
+		}
+		return true;
+	}
 	@Override
 	public boolean balanceUserCounterData(String clusteringKey, String userUid, String metricsName, Long metricsValue) {
 		try {
@@ -610,7 +632,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
 			ResultSet result = resultFuture.get();
 			
-			BoundStatement boundStatement = new BoundStatement(queries.updateUserStatisticalCounterData());
+			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
 			boundStatement.bind((result.one().getLong(Constants.METRICS) - metricsValue), clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {

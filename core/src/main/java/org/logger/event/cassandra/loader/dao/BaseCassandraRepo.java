@@ -75,7 +75,7 @@ public interface BaseCassandraRepo {
 
 	boolean insertEventsTimeline(String eventTime, String eventId);
 
-	boolean updateStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue);
+	boolean incrementStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue);
 
 	AppDO getApiKeyDetails(String apiKey);
 
@@ -105,12 +105,16 @@ public interface BaseCassandraRepo {
 
 	boolean addStatPublisherQueue(String metricsName, String gooruOid, String resourceType, long eventTime);
 
-	boolean updateUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue);
+	boolean incrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue);
 
 	boolean balanceUserCounterData(String clusteringKey, String userUid, String metricsName, Long metricsValue);
 
 	boolean insertUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity);
 
 	ResultSet mergeUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity);
+
+	boolean decrementUserStatisticalCounterData(String clusteringKey, String userUid, String metricsName, Object metricsValue);
+
+	boolean decrementStatisticalCounterData(String clusteringKey, String metricsName, Object metricsValue);
 
 }

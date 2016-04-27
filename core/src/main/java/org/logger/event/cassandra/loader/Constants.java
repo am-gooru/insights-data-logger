@@ -875,11 +875,15 @@ public class Constants {
  	
  	public static final String INSERT_EVENTS = "INSERT INTO events(event_id,fields)VALUES(?,?)";
 
- 	public static final String UPDATE_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
+ 	public static final String INCREMENT_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND metrics_name = ?";
+ 	
+ 	public static final String DECREMENT_STATISTICAL_COUNTER_DATA = "UPDATE statistical_data SET metrics_value = metrics_value-? WHERE clustering_key = ? AND metrics_name = ?";
  	
  	public static final String SELECT_STATISTICAL_COUNTER_DATA = "SELECT metrics_value AS metrics FROM statistical_data WHERE clustering_key = ? AND metrics_name = ?";
 
- 	public static final String UPDATE_USER_STATISTICAL_COUNTER_DATA = "UPDATE statistical_user_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
+ 	public static final String INCREMENT_USER_STATISTICAL_COUNTER_DATA = "UPDATE statistical_user_data SET metrics_value = metrics_value+? WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
+ 	
+ 	public static final String DECREMENT_USER_STATISTICAL_COUNTER_DATA = "UPDATE statistical_user_data SET metrics_value = metrics_value-? WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
  	
  	public static final String SELECT_USER_STATISTICAL_COUNTER_DATA = "SELECT metrics_value AS metrics FROM statistical_user_data WHERE clustering_key = ? AND user_uid = ? AND metrics_name = ?";
  	
