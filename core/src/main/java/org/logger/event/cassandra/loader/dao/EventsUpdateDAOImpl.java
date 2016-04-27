@@ -123,7 +123,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 
 	private void handleItemDelete(final EventBuilder event) {
 		try {
-			String parentContentIdD = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
+			String parentContentIdD = event.getContext().getString(Constants.PARENT_CONTENT_ID);
 			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
 				baseCassandraDao.updateStatisticalCounterData(parentContentIdD,Constants.USED_IN_COLLECTION_COUNT, -1);
 				baseCassandraDao.updateUserStatisticalCounterData(parentContentIdD,event.getGooruUUID(), Constants.USED_IN_COLLECTION_COUNT, -1);
