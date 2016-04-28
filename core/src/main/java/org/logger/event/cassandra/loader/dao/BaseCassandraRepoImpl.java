@@ -590,9 +590,12 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			selectBoundStatement.bind(clusteringKey, metricsName);
 			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
 			ResultSet result = resultFuture.get();
+			 
+			long balancedMatrics = 0;
+			balancedMatrics =  result.one() != null ? result.one().getLong(Constants.METRICS) : 0 - ((Number)metricsValue).longValue();
 			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
-			boundStatement.bind(( result.one() != null ? result.one().getLong(Constants.METRICS) : 0 - ((Number)metricsValue).longValue()), clusteringKey,  metricsName);
+			boundStatement.bind(balancedMatrics, clusteringKey,  metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while balancing statistical data", e);
@@ -631,9 +634,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			selectBoundStatement.bind(clusteringKey, userUid, metricsName);
 			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
 			ResultSet result = resultFuture.get();
+			long balancedMatrics = 0;
+			balancedMatrics =  result.one() != null ? result.one().getLong(Constants.METRICS) : 0 - ((Number)metricsValue).longValue();
 			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
-			boundStatement.bind((result.one() != null ? result.one().getLong(Constants.METRICS) : 0 - ((Number)metricsValue).longValue()), clusteringKey, userUid, metricsName);
+			boundStatement.bind(balancedMatrics, clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while balancing statistical data", e);
