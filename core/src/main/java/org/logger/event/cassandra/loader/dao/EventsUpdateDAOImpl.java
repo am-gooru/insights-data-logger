@@ -9,6 +9,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.ednovo.data.model.EventBuilder;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;
@@ -110,12 +112,18 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	private void handleCollaboratorsUpdate(final EventBuilder event) {
 		try {
 			HashSet<String> collaborators = new HashSet<String>();
-			for (int index = 0; index < (event.getCollaborators()).length(); index++) {
-				collaborators.add(event.getCollaborators().getString(index));
+			JSONObject data = event.getPayLoadObject().getJSONObject(Constants.DATA);
+			if (data != null) {
+				JSONArray collaboratorsArray = data.getJSONArray(Constants.COLLABORATORS);
+				if (collaboratorsArray != null) {
+					for (int index = 0; index < (collaboratorsArray).length(); index++) {
+						collaborators.add(collaboratorsArray.getString(index));
+					}
+					baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
+					baseCassandraDao.balanceCounterData(event.getContentGooruId(), Constants.COLLABORATORS, ((Number) collaborators.size()).longValue());
+					baseCassandraDao.balanceUserCounterData(event.getContentGooruId(), Constants.USER, Constants.COLLABORATORS, ((Number) collaborators.size()).longValue());
+				}
 			}
-			baseCassandraDao.updateCollaborators(event.getContentGooruId(), collaborators);
-			baseCassandraDao.balanceCounterData(event.getContentGooruId(),Constants.COLLABORATORS,((Number)collaborators.size()).longValue());
-			baseCassandraDao.balanceUserCounterData(event.getContentGooruId(),Constants.USER, Constants.COLLABORATORS, ((Number)collaborators.size()).longValue());
 		} catch (Exception e) {
 			LOG.error("Exception:", e);
 		}

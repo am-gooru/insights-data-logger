@@ -108,9 +108,7 @@ public class EventBuilder {
 	private String teacherId;
 	
 	private JSONArray taxonomyIds;
-	
-	private JSONArray collaborators;
-	
+		
 	private String contentFormat;
 	
 	private long eventTime;
@@ -465,7 +463,6 @@ public class EventBuilder {
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
 			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
-			this.collaborators = payLoadObject.isNull(Constants.COLLABORATORS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.COLLABORATORS);
 			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
 			
 			this.eventTime = endTime;
@@ -521,14 +518,6 @@ public class EventBuilder {
 
 	public void setContentFormat(String contentFormat) {
 		this.contentFormat = contentFormat;
-	}
-
-	public JSONArray getCollaborators() {
-		return collaborators;
-	}
-
-	public void setCollaborators(JSONArray collaborators) {
-		this.collaborators = collaborators;
 	}
 
 	public String getReportsContext() {
