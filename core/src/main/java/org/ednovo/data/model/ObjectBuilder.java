@@ -1,5 +1,6 @@
 package org.ednovo.data.model;
 
+import org.apache.commons.lang.StringUtils;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
@@ -41,7 +42,9 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		if(event.getEventName().matches(Constants.PLAY_EVENTS)){
 			userSessionActivity = new UserSessionActivity();
 			userAllSessionActivity = new UserSessionActivity();
-			studentLocation = new StudentLocation();
+			if(StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA)){				
+				studentLocation = new StudentLocation();
+			}
 			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) ){				
 				userSessionTaxonomyActivity = new UserSessionTaxonomyActivity();
 			}
@@ -212,9 +215,9 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 				e.printStackTrace();
 			}
 			if(event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){				
-				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS, userSessionActivity.getGooruOid(), event.getGooruUUID()));
+				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getClassGooruId(), userSessionActivity.getGooruOid(), event.getGooruUUID()));
 			}else{
-				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS, userSessionActivity.getParentGooruOid(), event.getGooruUUID()));
+				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getClassGooruId(), userSessionActivity.getParentGooruOid(), event.getGooruUUID()));
 			}
 		}		
 	}
