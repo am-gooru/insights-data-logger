@@ -588,8 +588,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement selectBoundStatement = new BoundStatement(queries.selectStatustucalCounterData());
 			selectBoundStatement.bind(clusteringKey, metricsName);
-			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
-			ResultSet result = resultFuture.get();
+			ResultSet result =  getAnalyticsCassSession().execute(selectBoundStatement);
 			long balancedMatrics =  ((Number)metricsValue).longValue() - (result != null ? result.one().getLong(Constants.METRICS) : 0);
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
 			boundStatement.bind(balancedMatrics, clusteringKey,  metricsName);
@@ -629,8 +628,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement selectBoundStatement = new BoundStatement(queries.selectUserStatisticalCounterData());
 			selectBoundStatement.bind(clusteringKey, userUid, metricsName);
-			ResultSetFuture resultFuture =  getAnalyticsCassSession().executeAsync(selectBoundStatement);
-			ResultSet result = resultFuture.get();
+			ResultSet result =  getAnalyticsCassSession().execute(selectBoundStatement);
+			
 			long balancedMatrics =  ((Number)metricsValue).longValue() - (result != null ? result.one().getLong(Constants.METRICS) : 0);			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
 			boundStatement.bind(balancedMatrics, clusteringKey, userUid, metricsName);
