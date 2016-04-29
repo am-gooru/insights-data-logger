@@ -588,10 +588,16 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement selectBoundStatement = new BoundStatement(queries.selectStatustucalCounterData());
 			selectBoundStatement.bind(clusteringKey, metricsName);
-			ResultSet result =  getAnalyticsCassSession().execute(selectBoundStatement);
-			long balancedMatrics =  ((Number)metricsValue).longValue() - (result != null ? result.one().getLong(Constants.METRICS) : 0);
+			ResultSet result = getAnalyticsCassSession().execute(selectBoundStatement);
+			long existingValue = 0;
+			if (result != null) {
+				for (Row resultRow : result) {
+					existingValue = resultRow.getLong(Constants.METRICS);
+				}
+			}
+			long balancedMatrics = ((Number) metricsValue).longValue() - existingValue;
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
-			boundStatement.bind(balancedMatrics, clusteringKey,  metricsName);
+			boundStatement.bind(balancedMatrics, clusteringKey, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while balancing statistical data", e);
@@ -629,8 +635,13 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			BoundStatement selectBoundStatement = new BoundStatement(queries.selectUserStatisticalCounterData());
 			selectBoundStatement.bind(clusteringKey, userUid, metricsName);
 			ResultSet result =  getAnalyticsCassSession().execute(selectBoundStatement);
-			
-			long balancedMatrics =  ((Number)metricsValue).longValue() - (result != null ? result.one().getLong(Constants.METRICS) : 0);			
+			long existingValue = 0;
+			if(result != null){
+			for(Row resultRow : result){
+				existingValue = resultRow.getLong(Constants.METRICS);
+			}
+			}
+			long balancedMatrics =  ((Number)metricsValue).longValue() - existingValue;			
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
 			boundStatement.bind(balancedMatrics, clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
