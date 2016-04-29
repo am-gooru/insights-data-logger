@@ -68,6 +68,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 			if (LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
 				baseCassandraDao.updateReaction(userSessionActivity);
+				baseCassandraDao.updateReaction(userAllSessionActivity);
 			}
 
 			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
