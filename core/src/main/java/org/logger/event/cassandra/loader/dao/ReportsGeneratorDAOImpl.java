@@ -102,8 +102,21 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	private void saveUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
 		if (userSessionTaxonomyActivity != null && (userSessionTaxonomyActivity.getTaxonomyIds().length() > 0)) {
 			for (int index = 0; index < (userSessionTaxonomyActivity.getTaxonomyIds()).length(); index++) {
-				ResultSet taxRows = null;
+				userSessionTaxonomyActivity.setSubjectId(Constants.NA);
+				userSessionTaxonomyActivity.setCourseId(Constants.NA);
+				userSessionTaxonomyActivity.setDomainId(Constants.NA);
+				userSessionTaxonomyActivity.setStandardsId(Constants.NA);
 				try {
+					userSessionTaxonomyActivity.setLearningTargetsId(userSessionTaxonomyActivity.getTaxonomyIds().getString(index));
+				} catch (JSONException e) {
+					LOG.error("Invalid taxonomy ids JSON format ");
+				}
+				baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+				baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+
+				/*
+				ResultSet taxRows = null;
+				  try {
 					taxRows = baseCassandraDao.getTaxonomy(userSessionTaxonomyActivity.getTaxonomyIds().getString(index));
 				} catch (JSONException e) {
 					LOG.error("Invalid taxonomy ids JSON format ");
@@ -118,7 +131,8 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 						baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 						baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 					}
-				}
+				}*/
+				
 			}
 		}
 	}
