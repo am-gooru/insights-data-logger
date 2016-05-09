@@ -465,7 +465,7 @@ public class EventBuilder {
 			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
 			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
 			
-			this.eventTime = endTime;
+			this.eventTime = this.event.getLong(Constants.END_TIME);
 			this.collectionItemId = Constants.NA;
 			this.score = 0;
 			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : context.getLong(Constants.REACTION_TYPE);

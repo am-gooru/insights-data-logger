@@ -71,7 +71,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 				baseCassandraDao.updateReaction(userAllSessionActivity);
 			}
 
-			saveUserSessions(eventName, userSessionActivity, studentsClassActivity, studentLocation);
+			saveUserSessions(event, userSessionActivity, studentsClassActivity);
 
 			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
 
@@ -191,13 +191,14 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	 * @param studentsClassActivity
 	 * @param studentLocation
 	 */
-	private void saveUserSessions(String eventName, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, StudentLocation studentLocation) {
-		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
-			LOG.info("saving sessions...");
+	private void saveUserSessions(EventBuilder event, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity) {
+		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) {
+			LOG.info("saving sessions.....");
 			baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
 					studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getCollectionType(),
-					userSessionActivity.getEventType(), studentLocation.getSessionTime());
+					userSessionActivity.getEventType(), event.getEventTime());
 		}
+			
 	}
 
 	/**

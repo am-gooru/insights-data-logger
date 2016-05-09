@@ -167,7 +167,7 @@ public class ServerValidationUtils {
 					logger.error(Constants.ANONYMOUS + " is not valid user event"
 							+ " : " + field);
 				}
-				if ((context.has(Constants.CLASS_GOORU_OID) && (context
+				if ((context.has(Constants.CLASS_GOORU_OID) && (!context
 						.isNull(Constants.CLASS_GOORU_OID) || (context
 						.get(Constants.CLASS_GOORU_OID) != null && !context.getString(
 						Constants.CLASS_GOORU_OID).equalsIgnoreCase("null"))))) {

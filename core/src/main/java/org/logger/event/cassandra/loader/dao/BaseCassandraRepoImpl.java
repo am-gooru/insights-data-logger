@@ -223,7 +223,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 					userSessionActivity.setSessionId(columns.getString(Constants._SESSION_ID));
 					userSessionActivity.setGooruOid(columns.getString(Constants._GOORU_OID));
 					userSessionActivity.setCollectionItemId(columns.getString(Constants._COLLECTION_ITEM_ID));
-					userSessionActivity.setAnswerObject(new JSONObject(columns.getString(Constants._ANSWER_OBECT)));
+					userSessionActivity.setAnswerObject(columns.getString(Constants._ANSWER_OBECT));
 					userSessionActivity.setAnswerStatus(columns.getString(Constants._ANSWER_STATUS));
 					userSessionActivity.setResourceType(columns.getString(Constants._RESOURCE_TYPE));
 					userSessionActivity.setCollectionType(columns.getString(Constants._COLLECTION_TYPE));
