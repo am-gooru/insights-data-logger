@@ -457,7 +457,7 @@ public class EventBuilder {
 			this.sessionId = session.isNull(Constants.SESSION_ID) ? Constants.NA : session.getString(Constants.SESSION_ID);
 			this.questionType = payLoadObject.isNull(Constants.QUESTION_TYPE) ? Constants.NA : payLoadObject.getString(Constants.QUESTION_TYPE);
 			this.answerObject = payLoadObject.isNull(Constants.ANSWER_OBECT) ? Constants.NA : payLoadObject.get(Constants.ANSWER_OBECT);
-			this.reportsContext = payLoadObject.isNull(Constants.REPORTS_CONTEXT) ? Constants.NA : payLoadObject.getString(Constants.REPORTS_CONTEXT);
+			this.reportsContext = payLoadObject.isNull(Constants.REPORTS_CONTEXT) ? Constants.PERFORMANCE : payLoadObject.getString(Constants.REPORTS_CONTEXT);
 			this.answerStatus = Constants.NA;
 			this.gradeType = payLoadObject.isNull(Constants.GRADE_TYPE) ? Constants.SYSTEM : payLoadObject.getString(Constants.GRADE_TYPE);
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
