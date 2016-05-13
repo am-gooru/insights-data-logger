@@ -93,14 +93,16 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		}
 	}
 
-	private void saveStatIndexPublisherQueue(final EventBuilder event){
+	private void saveStatIndexPublisherQueue(final EventBuilder event) {
 		String resourceType = null;
-		if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
-			resourceType = event.getCollectionType();
-		}else{
-			resourceType = event.getResourceType();
+		if (event.getViews() > 0) {
+			if (LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) {
+				resourceType = event.getCollectionType();
+			} else {
+				resourceType = event.getResourceType();
+			}
+			baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getContentGooruId(), resourceType, event.getEventTime());
 		}
-		baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getContentGooruId(), resourceType, event.getEventTime());
 	}
 	
 	private void handleClassJoin(final EventBuilder event) {
