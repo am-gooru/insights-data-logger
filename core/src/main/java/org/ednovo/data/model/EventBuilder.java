@@ -107,6 +107,8 @@ public class EventBuilder {
 
 	private String teacherId;
 	
+	private boolean isStudent;
+	
 	private JSONArray taxonomyIds;
 		
 	private String contentFormat;
@@ -464,6 +466,7 @@ public class EventBuilder {
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
 			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
 			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
+			this.setStudent(payLoadObject.isNull(Constants.IS_STUDENT) ? true : payLoadObject.getBoolean(Constants.IS_STUDENT));
 			
 			this.eventTime = this.event.getLong(Constants.END_TIME);
 			this.collectionItemId = Constants.NA;
@@ -526,6 +529,14 @@ public class EventBuilder {
 
 	public void setReportsContext(String reportsContext) {
 		this.reportsContext = reportsContext;
+	}
+
+	public boolean isStudent() {
+		return isStudent;
+	}
+
+	public void setStudent(boolean isStudent) {
+		this.isStudent = isStudent;
 	}
 
 }

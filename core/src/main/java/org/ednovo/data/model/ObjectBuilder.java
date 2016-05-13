@@ -42,21 +42,21 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		if(event.getEventName().matches(Constants.PLAY_EVENTS)){
 			userSessionActivity = new UserSessionActivity();
 			userAllSessionActivity = new UserSessionActivity();
-			if(StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA)){				
+			if(StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA) && event.isStudent()){				
 				studentLocation = new StudentLocation();
 			}
-			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) ){				
+			if((LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName())) && event.isStudent() ){				
 				userSessionTaxonomyActivity = new UserSessionTaxonomyActivity();
 			}
 			
-			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))){
+			if((LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName())) && event.isStudent())){
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
 			}
 			if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
 				studentsClassActivity = new StudentsClassActivity();
 			}
-			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP)){
+			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP) && event.isStudent()){
 				contentTaxonomyActivity = new ContentTaxonomyActivity();
 			}
 		}
