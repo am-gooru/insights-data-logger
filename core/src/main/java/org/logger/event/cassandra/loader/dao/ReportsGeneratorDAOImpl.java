@@ -113,8 +113,6 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					Map<String, String> taxObject = new HashMap<String, String>();
 					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
 					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
-					System.out.println("internalTaxonomyCode : " + internalTaxonomyCode);
-					System.out.println("subject : " + subject + "- course"+ course);
 					userSessionTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
 					userSessionTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
 					userSessionTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
