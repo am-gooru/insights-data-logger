@@ -1,6 +1,8 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -105,12 +107,14 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 			Iterator<String> internalTaxonomyCodes = userSessionTaxonomyActivity.getTaxonomyIds().keys();
 			while (internalTaxonomyCodes.hasNext()) {
 				try {
-				String internalTaxonomyCode = internalTaxonomyCodes.next();
-					String displayCode;
-					displayCode = userSessionTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
+					String internalTaxonomyCode = internalTaxonomyCodes.next();
+					String displayCode = userSessionTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
 					userSessionTaxonomyActivity.setDisplayCode(displayCode);
-					String subject = null, course = null, domain = null, standards = null, learningTarget = null;
-					splitByTaxonomyCode(internalTaxonomyCode, subject, course, domain, standards, learningTarget);
+					Map<String, String> taxObject = new HashMap<String, String>();
+					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
+					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
+					System.out.println("internalTaxonomyCode : " + internalTaxonomyCode);
+					System.out.println("subject : " + subject + "- course"+ course);
 					userSessionTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
 					userSessionTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
 					userSessionTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
@@ -137,8 +141,9 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					String displayCode;
 					displayCode = contentTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
 					contentTaxonomyActivity.setDisplayCode(displayCode);
-					String subject = null, course = null, domain = null, standards = null, learningTarget = null;
-					splitByTaxonomyCode(internalTaxonomyCode, subject, course, domain, standards, learningTarget);
+					Map<String, String> taxObject = new HashMap<String, String>();
+					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
+					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
 					contentTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
 					contentTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
 					contentTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
@@ -296,24 +301,24 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 		}
 	}
 
-	private void splitByTaxonomyCode(String taxonomyCode, String subject, String course, String domain, String standards, String learningTargets){
+	private void splitByTaxonomyCode(String taxonomyCode, Map<String, String> taxObject){
 		int index = 0;
 		for(String value : taxonomyCode.split(Constants.HASH)){
 			   switch(index){
 			   case 0:
-				   subject = value;
+				   taxObject.put(Constants.SUBJECT, value);
 				   break;
 			   case 1:
-				   course = value;
+				   taxObject.put(Constants.COURSE, value);
 				   break;
 			   case 2:
-				   domain = value;
+				   taxObject.put(Constants.DOMAIN, value);
 				   break;
 			   case 3:
-				   standards = value;
+				   taxObject.put(Constants.STANDARDS, value);
 				   break;
 			   case 4:
-				   learningTargets = value;
+				   taxObject.put(Constants.LEARNING_TARGETS, value);
 				   break;
 			   }
 			   index++;
