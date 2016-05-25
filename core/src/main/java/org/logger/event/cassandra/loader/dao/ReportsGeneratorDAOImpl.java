@@ -1,5 +1,6 @@
 package org.logger.event.cassandra.loader.dao;
 
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,7 +89,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 			}
 
 			if (contentTaxonomyActivity != null && event.getReportsContext().contains(Constants.PROFILE)) {
-				service.submit(new MastryGenerator(contentTaxonomyActivity, baseCassandraDao));
+				this.saveContentClassTaxonomyActivity(contentTaxonomyActivity);
 				LOG.info("calling mastery generator : {} ", userSessionActivity.getSessionId());
 			}
 			saveQuestionGrade(event);
@@ -100,43 +101,83 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	}
 
 	private void saveUserSessionTaxonomyActivity(UserSessionTaxonomyActivity userSessionTaxonomyActivity) {
-		if (userSessionTaxonomyActivity != null && (userSessionTaxonomyActivity.getTaxonomyIds().length() > 0)) {
-			for (int index = 0; index < (userSessionTaxonomyActivity.getTaxonomyIds()).length(); index++) {
-				userSessionTaxonomyActivity.setSubjectId(Constants.NA);
-				userSessionTaxonomyActivity.setCourseId(Constants.NA);
-				userSessionTaxonomyActivity.setDomainId(Constants.NA);
-				userSessionTaxonomyActivity.setStandardsId(Constants.NA);
+		if (userSessionTaxonomyActivity != null) {
+			Iterator<String> internalTaxonomyCodes = userSessionTaxonomyActivity.getTaxonomyIds().keys();
+			while (internalTaxonomyCodes.hasNext()) {
 				try {
-					userSessionTaxonomyActivity.setLearningTargetsId(userSessionTaxonomyActivity.getTaxonomyIds().getString(index));
-				} catch (JSONException e) {
-					LOG.error("Invalid taxonomy ids JSON format ");
+				String internalTaxonomyCode = internalTaxonomyCodes.next();
+					String displayCode;
+					displayCode = userSessionTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
+					userSessionTaxonomyActivity.setDisplayCode(displayCode);
+					String subject = null, course = null, domain = null, standards = null, learningTarget = null;
+					splitByTaxonomyCode(internalTaxonomyCode, subject, course, domain, standards, learningTarget);
+					userSessionTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
+					userSessionTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
+					userSessionTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
+					userSessionTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
+					userSessionTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+					baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+					baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
+				} catch (Exception e) {
+					LOG.error("Exception while split and save taxonmy usage: ", e);
 				}
-				baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
-				baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 
-				/*
-				ResultSet taxRows = null;
-				  try {
-					taxRows = baseCassandraDao.getTaxonomy(userSessionTaxonomyActivity.getTaxonomyIds().getString(index));
-				} catch (JSONException e) {
-					LOG.error("Invalid taxonomy ids JSON format ");
-				}
-				if (taxRows != null) {
-					for (Row taxColumns : taxRows) {
-						userSessionTaxonomyActivity.setSubjectId(taxColumns.getString(Constants.SUBJECT_ID));
-						userSessionTaxonomyActivity.setCourseId(taxColumns.getString(Constants.COURSE_ID));
-						userSessionTaxonomyActivity.setDomainId(taxColumns.getString(Constants.DOMAIN_ID));
-						userSessionTaxonomyActivity.setStandardsId(taxColumns.getString(Constants.STANDARDS_ID));
-						userSessionTaxonomyActivity.setLearningTargetsId(taxColumns.getString(Constants.LEARNING_TARGETS_ID));
-						baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
-						baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
-					}
-				}*/
-				
 			}
 		}
+
 	}
 
+	private void saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) throws CloneNotSupportedException {
+		if (contentTaxonomyActivity != null) {
+			try {
+				ContentTaxonomyActivity contentClassTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();
+				Iterator<String> internalTaxonomyCodes = contentTaxonomyActivity.getTaxonomyIds().keys();
+				while (internalTaxonomyCodes.hasNext()) {
+					String internalTaxonomyCode = internalTaxonomyCodes.next();
+					String displayCode;
+					displayCode = contentTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
+					contentTaxonomyActivity.setDisplayCode(displayCode);
+					String subject = null, course = null, domain = null, standards = null, learningTarget = null;
+					splitByTaxonomyCode(internalTaxonomyCode, subject, course, domain, standards, learningTarget);
+					contentTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
+					contentTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
+					contentTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
+					contentTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
+					contentTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+
+					contentClassTaxonomyActivityInstance.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
+					contentClassTaxonomyActivityInstance.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+
+					ResultSet taxActivityRows = baseCassandraDao.getContentTaxonomyActivity(contentTaxonomyActivity);
+					if (taxActivityRows != null) {
+						for (Row taxActivityColumns : taxActivityRows) {
+							contentTaxonomyActivity.setViews(contentTaxonomyActivity.getViews() + taxActivityColumns.getLong(Constants.VIEWS));
+							contentTaxonomyActivity.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxActivityColumns.getLong(Constants._TIME_SPENT));
+						}
+					}
+					contentTaxonomyActivity.setScore(contentTaxonomyActivity.getScore());
+					baseCassandraDao.saveContentTaxonomyActivity(contentTaxonomyActivity);
+
+					ResultSet taxClassActivityRows = baseCassandraDao.getContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
+					if (taxClassActivityRows != null) {
+						for (Row taxClassActivityColumns : taxClassActivityRows) {
+							contentClassTaxonomyActivityInstance.setViews(contentTaxonomyActivity.getViews() + taxClassActivityColumns.getLong(Constants.VIEWS));
+							contentClassTaxonomyActivityInstance.setTimeSpent(contentTaxonomyActivity.getTimeSpent() + taxClassActivityColumns.getLong(Constants._TIME_SPENT));
+						}
+					}
+					contentClassTaxonomyActivityInstance.setScore(contentClassTaxonomyActivityInstance.getScore());
+					baseCassandraDao.saveContentClassTaxonomyActivity(contentClassTaxonomyActivityInstance);
+				}
+			} catch (Exception e) {
+				LOG.error("Exception while split and save content& class taxonmy usage: ", e);
+			}
+
+		}
+
+	}
 	/**
 	 * Generate datacube for performance reports
 	 * 
@@ -255,4 +296,39 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 		}
 	}
 
+	private void splitByTaxonomyCode(String taxonomyCode, String subject, String course, String domain, String standards, String learningTargets){
+		int index = 0;
+		for(String value : taxonomyCode.split(Constants.HASH)){
+			   switch(index){
+			   case 0:
+				   subject = value;
+				   break;
+			   case 1:
+				   course = value;
+				   break;
+			   case 2:
+				   domain = value;
+				   break;
+			   case 3:
+				   standards = value;
+				   break;
+			   case 4:
+				   learningTargets = value;
+				   break;
+			   }
+			   index++;
+		   }
+	}
+	public static String appendHash(String... texts) {
+		StringBuffer sb = new StringBuffer();
+		for (String text : texts) {
+			if (StringUtils.isNotBlank(text)) {
+				if (sb.length() > 0) {
+					sb.append(Constants.HASH);
+				}
+				sb.append(text);
+			}
+		}
+		return sb.toString();
+	}
 }

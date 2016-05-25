@@ -14,6 +14,8 @@ public class Constants {
     
     public static final  String SEPERATOR = "~";
     
+    public static final  String HASH = "#";
+    
     public static final  String COMMA = ",";
     
     public static final  String EMPTY = "";
@@ -827,9 +829,9 @@ public class Constants {
  	
  	public static final String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,user_uid,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
  	
- 	public static final String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";	
+ 	public static final String INSERT_CONTENT_TAXONOMY_ACTIVITY = "INSERT INTO content_taxonomy_activity (user_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,display_code,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";	
  	
- 	public static final String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";
+ 	public static final String INSERT_CONTENT_CLASS_TAXONOMY_ACTIVITY = "INSERT INTO content_class_taxonomy_activity (user_uid,class_uid,subject_id,course_id,domain_id,standards_id,learning_targets_id,gooru_oid,display_code,resource_type,question_type,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
  	
  	public static final String INSERT_USER_LOCATION = "INSERT INTO student_location(user_uid,class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,resource_uid,session_time)VALUES(?,?,?,?,?,?,?,?,?);";
  	
@@ -913,7 +915,7 @@ public class Constants {
 
  	public static final String ADD_STAT_PUBLISHER_QUEUE = "INSERT INTO stat_publisher_queue(metrics_name,gooru_oid,type,event_time)VALUES(?,?,?,?);";
 
- 	public static final String INSERT_USER_SESSION_TAXONOMY_ACTIVITY = "INSERT INTO user_session_taxonomy_activity(session_id,gooru_oid,subject_id, course_id, domain_id, standards_id, learning_targets_id,question_type,resource_type,answer_status,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+ 	public static final String INSERT_USER_SESSION_TAXONOMY_ACTIVITY = "INSERT INTO user_session_taxonomy_activity(session_id,gooru_oid,subject_id, course_id, domain_id, standards_id, learning_targets_id,question_type,resource_type,answer_status,display_code,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
  	public static final String SELECT_USER_SESSION_TAXONOMY_ACTIVITY = "SELECT * FROM user_session_taxonomy_activity WHERE session_id = ? AND gooru_oid = ? AND subject_id = ? AND course_id = ? AND domain_id = ? AND standards_id = ? AND learning_targets_id = ?;";
 

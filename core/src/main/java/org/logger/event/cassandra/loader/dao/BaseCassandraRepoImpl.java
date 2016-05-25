@@ -137,7 +137,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.insertContentTaxonomyActivity());
 			boundStatement.bind(contentTaxonomyActivity.getUserUid(), contentTaxonomyActivity.getSubjectId(), contentTaxonomyActivity.getCourseId(), contentTaxonomyActivity.getDomainId(),
-					contentTaxonomyActivity.getStandardsId(), contentTaxonomyActivity.getLearningTargetsId(), contentTaxonomyActivity.getGooruOid(), contentTaxonomyActivity.getResourceType(),
+					contentTaxonomyActivity.getStandardsId(), contentTaxonomyActivity.getLearningTargetsId(), contentTaxonomyActivity.getGooruOid(), contentTaxonomyActivity.getDisplayCode(), contentTaxonomyActivity.getResourceType(),
 					contentTaxonomyActivity.getQuestionType(), contentTaxonomyActivity.getScore(), contentTaxonomyActivity.getTimeSpent(), contentTaxonomyActivity.getViews());
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
@@ -152,7 +152,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		try {
 			BoundStatement boundStatement = new BoundStatement(queries.insertContentClassTaxonomyActivty());
 			boundStatement.bind(contentTaxonomyActivity.getUserUid(), contentTaxonomyActivity.getClassUid(), contentTaxonomyActivity.getSubjectId(), contentTaxonomyActivity.getCourseId(),
-					contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(), contentTaxonomyActivity.getLearningTargetsId(), contentTaxonomyActivity.getGooruOid(),
+					contentTaxonomyActivity.getDomainId(), contentTaxonomyActivity.getStandardsId(), contentTaxonomyActivity.getLearningTargetsId(), contentTaxonomyActivity.getGooruOid(),contentTaxonomyActivity.getDisplayCode(),
 					contentTaxonomyActivity.getResourceType(), contentTaxonomyActivity.getQuestionType(), contentTaxonomyActivity.getScore(), contentTaxonomyActivity.getTimeSpent(),
 					contentTaxonomyActivity.getViews());
 			getAnalyticsCassSession().executeAsync(boundStatement);
@@ -844,7 +844,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			boundStatement.bind(userSessionTaxonomyActivity.getSessionId(), userSessionTaxonomyActivity.getGooruOid(), userSessionTaxonomyActivity.getSubjectId(),
 					userSessionTaxonomyActivity.getCourseId(), userSessionTaxonomyActivity.getDomainId(), userSessionTaxonomyActivity.getStandardsId(),
 					userSessionTaxonomyActivity.getLearningTargetsId(), userSessionTaxonomyActivity.getQuestionType(), userSessionTaxonomyActivity.getResourceType(),
-					userSessionTaxonomyActivity.getAnswerStatus(), userSessionTaxonomyActivity.getReaction(), userSessionTaxonomyActivity.getScore(), userSessionTaxonomyActivity.getTimeSpent(),
+					userSessionTaxonomyActivity.getAnswerStatus(), userSessionTaxonomyActivity.getDisplayCode(), userSessionTaxonomyActivity.getReaction(), userSessionTaxonomyActivity.getScore(), userSessionTaxonomyActivity.getTimeSpent(),
 					userSessionTaxonomyActivity.getViews());
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
