@@ -3,6 +3,7 @@ package org.ednovo.data.model;
 import java.io.Serializable;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
@@ -25,11 +26,15 @@ public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
 	private String learningTargetsId;
 
+	private String displayCode;
+	
 	private String resourceType;
  	
 	private String questionType;
  		
 	private String answerStatus;
+	
+	private JSONObject taxonomyIds;
 	
 	private long views;
 
@@ -39,8 +44,6 @@ public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
 	private long reaction;
 
-	private JSONArray taxonomyIds;
-	
 	public String getSessionId() {
 		return sessionId;
 	}
@@ -153,11 +156,19 @@ public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 		this.reaction = reaction;
 	}
 
-	public JSONArray getTaxonomyIds() {
+	public String getDisplayCode() {
+		return displayCode;
+	}
+
+	public void setDisplayCode(String displayCode) {
+		this.displayCode = displayCode;
+	}
+
+	public JSONObject getTaxonomyIds() {
 		return taxonomyIds;
 	}
 
-	public void setTaxonomyIds(JSONArray taxonomyIds) {
+	public void setTaxonomyIds(JSONObject taxonomyIds) {
 		this.taxonomyIds = taxonomyIds;
 	}
 }

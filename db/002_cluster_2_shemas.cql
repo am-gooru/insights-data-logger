@@ -230,3 +230,10 @@ CREATE TABLE IF NOT EXISTS event_logger_insights.statistical_user_data (
     metrics_value counter,
     PRIMARY KEY (clustering_key, user_uid, metrics_name)
 )
+//Add new column in taxonomy activity usage table.
+
+ALTER TABLE user_session_taxonomy_activity ADD display_code varchar;
+
+ALTER TABLE content_class_taxonomy_activity ADD display_code varchar;
+
+ALTER TABLE content_taxonomy_activity ADD display_code varchar;

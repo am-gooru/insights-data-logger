@@ -3,6 +3,7 @@ package org.ednovo.data.model;
 import java.io.Serializable;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ContentTaxonomyActivity implements Serializable, Cloneable{
 
@@ -23,6 +24,8 @@ public class ContentTaxonomyActivity implements Serializable, Cloneable{
 
 	private String learningTargetsId;
 	
+	private String displayCode;
+	
 	private String gooruOid;
 	
 	private String classUid;
@@ -31,7 +34,7 @@ public class ContentTaxonomyActivity implements Serializable, Cloneable{
 
 	private String questionType;
 	
-	private JSONArray taxonomyIds;
+	private JSONObject taxonomyIds;
 	
 	private long views;
 
@@ -123,11 +126,11 @@ public class ContentTaxonomyActivity implements Serializable, Cloneable{
 		this.questionType = questionType;
 	}
 
-	public JSONArray getTaxonomyIds() {
+	public JSONObject getTaxonomyIds() {
 		return taxonomyIds;
 	}
 
-	public void setTaxonomyIds(JSONArray taxonomyIds) {
+	public void setTaxonomyIds(JSONObject taxonomyIds) {
 		this.taxonomyIds = taxonomyIds;
 	}
 
@@ -153,6 +156,14 @@ public class ContentTaxonomyActivity implements Serializable, Cloneable{
 
 	public void setScore(long score) {
 		this.score = score;
+	}
+
+	public String getDisplayCode() {
+		return displayCode;
+	}
+
+	public void setDisplayCode(String displayCode) {
+		this.displayCode = displayCode;
 	}
 	
 }

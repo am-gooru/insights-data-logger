@@ -109,7 +109,7 @@ public class EventBuilder {
 	
 	private boolean isStudent;
 	
-	private JSONArray taxonomyIds;
+	private JSONObject taxonomyIds;
 		
 	private String contentFormat;
 	
@@ -359,11 +359,11 @@ public class EventBuilder {
 		this.gradeType = gradeType;
 	}
 
-	public JSONArray getTaxonomyIds() {
+	public JSONObject getTaxonomyIds() {
 		return taxonomyIds;
 	}
 
-	public void setTaxonomyIds(JSONArray taxonomyIds) {
+	public void setTaxonomyIds(JSONObject taxonomyIds) {
 		this.taxonomyIds = taxonomyIds;
 	}
 
@@ -465,7 +465,7 @@ public class EventBuilder {
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
 			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
-			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONArray() : (JSONArray) payLoadObject.get(Constants.TAXONOMYIDS);
+			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONObject() : payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
 			this.setStudent(payLoadObject.isNull(Constants.IS_STUDENT) ? true : payLoadObject.getBoolean(Constants.IS_STUDENT));
 			
 			this.eventTime = this.event.getLong(Constants.END_TIME);
