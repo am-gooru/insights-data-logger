@@ -114,10 +114,10 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
 					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
 					userSessionTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
-					userSessionTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
-					userSessionTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
-					userSessionTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
-					userSessionTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+					userSessionTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHyphen(subject, course) : Constants.NA);
+					userSessionTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHyphen(subject, course, domain) : Constants.NA);
+					userSessionTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHyphen(subject, course, domain, standards) : Constants.NA);
+					userSessionTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHyphen(subject, course, domain, standards, learningTarget) : Constants.NA);
 					baseCassandraDao.mergeUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 					baseCassandraDao.insertUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 				} catch (Exception e) {
@@ -143,16 +143,16 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
 					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
 					contentTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
-					contentTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
-					contentTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
-					contentTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
-					contentTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+					contentTaxonomyActivity.setCourseId(StringUtils.isNotBlank(course) ? appendHyphen(subject, course) : Constants.NA);
+					contentTaxonomyActivity.setDomainId(StringUtils.isNotBlank(domain) ? appendHyphen(subject, course, domain) : Constants.NA);
+					contentTaxonomyActivity.setStandardsId(StringUtils.isNotBlank(standards) ? appendHyphen(subject, course, domain, standards) : Constants.NA);
+					contentTaxonomyActivity.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHyphen(subject, course, domain, standards, learningTarget) : Constants.NA);
 
 					contentClassTaxonomyActivityInstance.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
-					contentClassTaxonomyActivityInstance.setCourseId(StringUtils.isNotBlank(course) ? appendHash(subject, course) : Constants.NA);
-					contentClassTaxonomyActivityInstance.setDomainId(StringUtils.isNotBlank(domain) ? appendHash(subject, course, domain) : Constants.NA);
-					contentClassTaxonomyActivityInstance.setStandardsId(StringUtils.isNotBlank(standards) ? appendHash(subject, course, domain, standards) : Constants.NA);
-					contentClassTaxonomyActivityInstance.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHash(subject, course, domain, standards, learningTarget) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setCourseId(StringUtils.isNotBlank(course) ? appendHyphen(subject, course) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setDomainId(StringUtils.isNotBlank(domain) ? appendHyphen(subject, course, domain) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setStandardsId(StringUtils.isNotBlank(standards) ? appendHyphen(subject, course, domain, standards) : Constants.NA);
+					contentClassTaxonomyActivityInstance.setLearningTargetsId(StringUtils.isNotBlank(learningTarget) ? appendHyphen(subject, course, domain, standards, learningTarget) : Constants.NA);
 
 					ResultSet taxActivityRows = baseCassandraDao.getContentTaxonomyActivity(contentTaxonomyActivity);
 					if (taxActivityRows != null) {
@@ -328,6 +328,18 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 			if (StringUtils.isNotBlank(text)) {
 				if (sb.length() > 0) {
 					sb.append(Constants.HASH);
+				}
+				sb.append(text);
+			}
+		}
+		return sb.toString();
+	}
+	public static String appendHyphen(String... texts) {
+		StringBuffer sb = new StringBuffer();
+		for (String text : texts) {
+			if (StringUtils.isNotBlank(text)) {
+				if (sb.length() > 0) {
+					sb.append(Constants.HYPHEN);
 				}
 				sb.append(text);
 			}
