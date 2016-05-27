@@ -147,8 +147,10 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Async
 	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey) {
+		logger.info("start:eventLogging");
 		boolean isValid = ensureValidRequest(request, response);
 		if (!isValid) {
+			logger.info("isValid..");
 			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, Constants.INVALID_API_KEY);
 			return;
 		}
@@ -158,6 +160,7 @@ public class EventServiceImpl implements EventService {
 
 			try {
 				// validate JSON
+				logger.info("validate JSON");
 				jsonElement = new JsonParser().parse(fields);
 				eventJsonArr = jsonElement.getAsJsonArray();
 			} catch (JsonParseException e) {
@@ -193,18 +196,22 @@ public class EventServiceImpl implements EventService {
 					}
 					event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
 					event.setApiKey(apiKey);
+					logger.info("starts processMessage....");
 					processMessage(event);
+					logger.info("ends processMessage....");
 			}
 		} catch (Exception e) {
 			logger.error("Exception : ", e);
 		}
-
+		logger.info("ends eventLogging..");
 	}
 	@Async
 	private void processMessage(EventBuilder event){
+		logger.info("entering processMessage....");
 		Boolean isValidEvent = validateInsertEvent(event);
 		if (isValidEvent) {
 			dataLoaderService.processMessage(event);
 		}
+		logger.info("exiting processMessage....");
 	}
 }

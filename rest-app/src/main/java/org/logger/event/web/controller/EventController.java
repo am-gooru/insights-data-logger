@@ -77,7 +77,9 @@ public class EventController implements AsyncConfigurer {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
+		logger.info("starts trackEvent");
 		eventService.eventLogging(request, response, fields, apiKey);
+		logger.info("ends trackEvent");
 		return;
 	}
 
