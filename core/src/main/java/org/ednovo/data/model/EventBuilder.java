@@ -465,8 +465,8 @@ public class EventBuilder {
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
 			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);			 
-			if(payLoadObject.get(Constants.TAXONOMYIDS) instanceof JSONObject){				
-				this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONObject() : payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
+			if(!payLoadObject.isNull(Constants.TAXONOMYIDS) && payLoadObject.get(Constants.TAXONOMYIDS) instanceof JSONObject){				
+				this.taxonomyIds = payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
 			}else{
 				this.taxonomyIds = new JSONObject();
 			}
