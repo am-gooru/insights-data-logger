@@ -464,10 +464,13 @@ public class EventBuilder {
 			this.gradeType = payLoadObject.isNull(Constants.GRADE_TYPE) ? Constants.SYSTEM : payLoadObject.getString(Constants.GRADE_TYPE);
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
-			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
-			this.taxonomyIds = payLoadObject.isNull(Constants.TAXONOMYIDS) ? new JSONObject() : payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
+			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);			 
+			if(!payLoadObject.isNull(Constants.TAXONOMYIDS) && payLoadObject.get(Constants.TAXONOMYIDS) instanceof JSONObject){				
+				this.taxonomyIds = payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
+			}else{
+				this.taxonomyIds = new JSONObject();
+			}
 			this.setStudent(payLoadObject.isNull(Constants.IS_STUDENT) ? true : payLoadObject.getBoolean(Constants.IS_STUDENT));
-			
 			this.eventTime = this.event.getLong(Constants.END_TIME);
 			this.collectionItemId = Constants.NA;
 			this.score = 0;
