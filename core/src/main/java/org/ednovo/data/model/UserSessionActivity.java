@@ -29,6 +29,8 @@ public class UserSessionActivity implements Serializable, Cloneable {
 	
 	private String answerStatus;
 	
+	private long questionCount;
+	
 	private long views;
 
 	private long timeSpent;
@@ -171,6 +173,14 @@ public class UserSessionActivity implements Serializable, Cloneable {
 
 	public void setParentEventId(String parentEventId) {
 		this.parentEventId = parentEventId;
+	}
+
+	public long getQuestionCount() {
+		return questionCount;
+	}
+
+	public void setQuestionCount(long questionCount) {
+		this.questionCount = questionCount;
 	}
 
 }

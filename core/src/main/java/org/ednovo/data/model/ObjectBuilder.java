@@ -1,6 +1,7 @@
 package org.ednovo.data.model;
 
 import org.apache.commons.lang.StringUtils;
+import org.json.JSONException;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.logger.event.cassandra.loader.dao.BaseCassandraRepo;
@@ -67,6 +68,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		 * Build UserSessionActivity
 		 */
 		if(userSessionActivity != null){
+			try {
 			userSessionActivity.setSessionId(event.getSessionId());
 			userSessionActivity.setParentEventId(event.getParentEventId());
 			userSessionActivity.setGooruOid(event.getContentGooruId());
@@ -76,9 +78,12 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 				userSessionActivity.setAnswerObject(event.getAnswerObject());
 			}
 			userSessionActivity.setAttempts(0);
+			userSessionActivity.setQuestionCount(0);
 			userSessionActivity.setCollectionType(event.getCollectionType());
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
 				userSessionActivity.setResourceType(event.getCollectionType());
+					userSessionActivity.setQuestionCount(event.getContext().getLong(Constants.QUESTION_COUNT));
+	
 			}else{
 				userSessionActivity.setResourceType(event.getResourceType());
 			}
@@ -96,7 +101,10 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 					userSessionActivity.setScore(userSessionActivity.getScore());
 				}
 			}
-			
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
 		}
 	}
 
