@@ -24,19 +24,12 @@
 package org.logger.event.web.service;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.ednovo.data.model.AppDO;
 import org.springframework.stereotype.Service;
 
 @Service
 public interface EventService {
-
-	public AppDO verifyApiKey(String apiKeyToken);
-
-	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response);
 	
-	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey);
+	public void eventLogging(HttpServletRequest request, String fields, String apiKey);
 	
-	public void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message);
 }

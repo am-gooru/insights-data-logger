@@ -68,15 +68,6 @@ public class EventServiceImpl implements EventService {
 
 	/**
 	 * 
-	 */
-
-	@Override
-	public AppDO verifyApiKey(String apiKey) {		
-		return baseDao.getApiKeyDetails(apiKey);
-	}
-
-	/**
-	 * 
 	 * @param event
 	 * @return
 	 */
@@ -108,7 +99,7 @@ public class EventServiceImpl implements EventService {
 	 * @param response
 	 * @return
 	 */
-	public boolean ensureValidRequest(HttpServletRequest request, HttpServletResponse response) {
+	public boolean ensureValidRequest(HttpServletRequest request) {
 
 		String apiKeyToken = request.getParameter("apiKey");
 
@@ -121,35 +112,12 @@ public class EventServiceImpl implements EventService {
 		return false;
 	}
 
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 * @param responseStatus
-	 * @param message
-	 */
-	public void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, int responseStatus, String message) {
-		response.setStatus(responseStatus);
-		response.setContentType("application/json");
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-
-		resultMap.put("statusCode", responseStatus);
-		resultMap.put("message", message);
-		JSONObject resultJson = new JSONObject(resultMap);
-
-		try {
-			response.getWriter().write(resultJson.toString());
-		} catch (IOException e) {
-			logger.error("OOPS! Something went wrong", e);
-		}
-	}
-
 	@Override
 	@Async
-	public void eventLogging(HttpServletRequest request, HttpServletResponse response, String fields, String apiKey) {
-		boolean isValid = ensureValidRequest(request, response);
+	public void eventLogging(HttpServletRequest request,  String fields, String apiKey) {
+		boolean isValid = ensureValidRequest(request);
 		if (!isValid) {
-			sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, Constants.INVALID_API_KEY);
+			logger.error("isValid request..");
 			return;
 		}
 		JsonElement jsonElement = null;
@@ -158,17 +126,17 @@ public class EventServiceImpl implements EventService {
 
 			try {
 				// validate JSON
+				logger.info("validate JSON");
 				jsonElement = new JsonParser().parse(fields);
 				eventJsonArr = jsonElement.getAsJsonArray();
 			} catch (JsonParseException e) {
 				// Invalid.
-				sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, Constants.INVALID_JSON);
 				logger.error(Constants.INVALID_JSON, e);
 				return;
 			}
 
 		} else {
-			sendErrorResponse(request, response, HttpServletResponse.SC_BAD_REQUEST, Constants.BAD_REQUEST);
+			logger.error("Field should not be empty");
 			return;
 		}
 
@@ -195,10 +163,10 @@ public class EventServiceImpl implements EventService {
 					event.setApiKey(apiKey);
 					processMessage(event);
 			}
+			Thread.sleep(2000);
 		} catch (Exception e) {
 			logger.error("Exception : ", e);
 		}
-
 	}
 	@Async
 	private void processMessage(EventBuilder event){
@@ -207,4 +175,8 @@ public class EventServiceImpl implements EventService {
 			dataLoaderService.processMessage(event);
 		}
 	}
+	private AppDO verifyApiKey(String apiKey) {		
+		return baseDao.getApiKeyDetails(apiKey);
+	}
+
 }

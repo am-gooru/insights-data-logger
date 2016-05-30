@@ -23,24 +23,18 @@
  ******************************************************************************/
 package org.logger.event.web.controller;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.ednovo.data.model.AppDO;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.web.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,8 +43,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping(value = "/event")
-@EnableAsync
-public class EventController implements AsyncConfigurer {
+@Async("threadPoolTaskExecutorForController")
+public class EventController {
 
 	protected final Logger logger = LoggerFactory.getLogger(EventController.class);
 
@@ -77,56 +71,7 @@ public class EventController implements AsyncConfigurer {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-		eventService.eventLogging(request, response, fields, apiKey);
+		eventService.eventLogging(request,fields, apiKey);
 		return;
-	}
-
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 */
-	@RequestMapping(value = "/authenticate", method = RequestMethod.POST)
-	public void authenticateRequest(HttpServletRequest request, HttpServletResponse response) {
-
-		// add cross domain support
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
-		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
-
-		String apiKeyToken = request.getParameter("apiKey");
-
-		if (apiKeyToken != null && apiKeyToken.length() == 36) {
-			AppDO appDO = eventService.verifyApiKey(apiKeyToken);
-			if (appDO != null) {
-				response.setContentType("application/json");
-				Map<String, Object> resultMap = new HashMap<String, Object>();
-
-				resultMap.put("endPoint", appDO.getEndPoint());
-				resultMap.put("pushIntervalMs", appDO.getDataPushingIntervalInMillsecs());
-				JSONObject resultJson = new JSONObject(resultMap);
-
-				try {
-					response.getWriter().write(resultJson.toString());
-				} catch (IOException e) {
-					logger.error("OOPS! Something went wrong", e);
-				}
-
-				return;
-			}
-		}
-		eventService.sendErrorResponse(request, response, HttpServletResponse.SC_FORBIDDEN, "Invalid API Key");
-		return;
-	}
-	
-     @Override
-	public Executor getAsyncExecutor() {
-		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(15);
-		executor.setMaxPoolSize(80);
-		executor.setQueueCapacity(200);
-		executor.setThreadNamePrefix("eventExecutor");
-		executor.initialize();
-		return executor;
 	}
 }
