@@ -15,7 +15,6 @@ import org.ednovo.data.model.StudentLocation;
 import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.UserSessionActivity;
 import org.ednovo.data.model.UserSessionTaxonomyActivity;
-import org.json.JSONException;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.slf4j.Logger;

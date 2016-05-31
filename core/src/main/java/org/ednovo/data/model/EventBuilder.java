@@ -24,7 +24,6 @@
 package org.ednovo.data.model;
 
 import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;

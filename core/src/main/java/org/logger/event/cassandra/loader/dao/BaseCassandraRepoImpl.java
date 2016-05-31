@@ -10,7 +10,6 @@ import org.ednovo.data.model.StudentsClassActivity;
 import org.ednovo.data.model.TaxonomyActivityDataCube;
 import org.ednovo.data.model.UserSessionActivity;
 import org.ednovo.data.model.UserSessionTaxonomyActivity;
-import org.json.JSONObject;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.cassandra.loader.LoaderConstants;
 import org.logger.event.cassandra.loader.PreparedQueries;
@@ -298,7 +297,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		long score = 0L;
 		try {
 			String gooruOid = "";
-			long questionCount = 0;
+			long attemptedQuestionCount = 0;
 			long reactionCount = 0;
 			long totalReaction = 0;
 			if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName)) {
@@ -314,7 +313,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			if (result != null) {
 				for (Row columns : result) {
 					if (!gooruOid.equalsIgnoreCase(columns.getString(Constants._GOORU_OID)) && Constants.QUESTION.equalsIgnoreCase(columns.getString("resource_type"))) {
-						questionCount++;
+						attemptedQuestionCount++;
 						score += columns.getLong(Constants.SCORE);
 					}
 					if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && columns.getLong(Constants.REACTION) > 0) {
@@ -322,9 +321,10 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 						totalReaction += columns.getLong(Constants.REACTION);
 					}
 				}
-				userSessionActivity.setScore(questionCount > 0 ? (score / questionCount) : 0);
 				userSessionActivity.setReaction(reactionCount > 0 ? (totalReaction / reactionCount) : userSessionActivity.getReaction());
 			}
+			LOG.info("{} questions attempted in {} questions ", attemptedQuestionCount, userSessionActivity.getQuestionCount());
+			userSessionActivity.setScore(userSessionActivity.getQuestionCount() > 0 ? (score / userSessionActivity.getQuestionCount()) : 0);
 		} catch (Exception e) {
 			LOG.error("Error while retreving user sessions activity", e);
 		}
