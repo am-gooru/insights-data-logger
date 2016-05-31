@@ -41,7 +41,7 @@ public class Registry implements Iterable<Register> {
 	public Registry() {
 		registers = new ArrayList<Register>();
 		registers.add(CassandraClient.instance());
-		registers.add(ELSClient.instance());
+		//registers.add(ELSClient.instance());
 		
 		internalIterator = registers.iterator();
 	}

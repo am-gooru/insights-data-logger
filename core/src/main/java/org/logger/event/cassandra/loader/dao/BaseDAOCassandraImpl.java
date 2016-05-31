@@ -27,33 +27,16 @@
  */
 package org.logger.event.cassandra.loader.dao;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.client.Client;
 import org.kafka.log.writer.producer.KafkaLogProducer;
 import org.logger.event.cassandra.loader.Constants;
 import org.logger.event.datasource.infra.CassandraClient;
-import org.logger.event.datasource.infra.ELSClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Session;
 
 public abstract class BaseDAOCassandraImpl {
-	
-	private final Logger LOG = LoggerFactory.getLogger(BaseDAOCassandraImpl.class);
-	
-	
-	public Client getESClient() {
-		try {
-			return ELSClient.getESClient();
-		} catch (IOException e) {
-			LOG.error("Exception : ",e);
-		}
-		return null;
-	}
 	
 	public String getAnalyticsKeyspaceName() {
 		return CassandraClient.getAnalyticsKeyspace();

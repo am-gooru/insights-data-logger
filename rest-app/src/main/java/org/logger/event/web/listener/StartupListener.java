@@ -23,10 +23,6 @@
  ******************************************************************************/
 package org.logger.event.web.listener;
 
-import java.util.Properties;
-import java.util.ResourceBundle;
-
-import javax.annotation.Resource;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
