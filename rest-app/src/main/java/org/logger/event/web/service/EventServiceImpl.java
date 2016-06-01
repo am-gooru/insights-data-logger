@@ -99,12 +99,13 @@ public class EventServiceImpl implements EventService {
 	 * @param response
 	 * @return
 	 */
-	public boolean ensureValidRequest(HttpServletRequest request) {
-
-		String apiKeyToken = request.getParameter("apiKey");
-
+	public boolean ensureValidRequest(String apiKeyToken) {
+		logger.info("apiKeyToken" + apiKeyToken);
+		logger.info("apiKeyToken length" + apiKeyToken.length());
 		if (apiKeyToken != null && apiKeyToken.length() == 36) {
+			logger.info("apiKeyToken is not null....");
 			AppDO validKey = verifyApiKey(apiKeyToken);
+			logger.info("validKey is not null...." + validKey);
 			if (validKey != null) {
 				return true;
 			}
@@ -115,9 +116,9 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Async
 	public void eventLogging(HttpServletRequest request,  String fields, String apiKey) {
-		boolean isValid = ensureValidRequest(request);
+		boolean isValid = ensureValidRequest(apiKey);
 		if (!isValid) {
-			logger.error("isValid request..");
+			logger.error("inValid request..");
 			return;
 		}
 		JsonElement jsonElement = null;
