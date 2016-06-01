@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Async("threadPoolTaskExecutorForController")
 public class EventController {
 
-	protected final Logger logger = LoggerFactory.getLogger(EventController.class);
+	protected final Logger LOG = LoggerFactory.getLogger(EventController.class);
 
 	@Autowired
 	protected EventService eventService;
@@ -68,7 +68,9 @@ public class EventController {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
+		LOG.debug("starts trackEvent");
 		eventService.eventLogging(request,fields, apiKey);
+		LOG.debug("ends trackEvent");
 		return;
 	}
 }

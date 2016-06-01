@@ -53,7 +53,7 @@ import com.google.gson.JsonParser;
 @Service
 public class EventServiceImpl implements EventService {
 
-	protected final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
+	protected final Logger LOG = LoggerFactory.getLogger(EventServiceImpl.class);
 
 	protected CassandraDataLoader dataLoaderService;
 	private BaseCassandraRepo baseDao;
@@ -100,12 +100,10 @@ public class EventServiceImpl implements EventService {
 	 * @return
 	 */
 	public boolean ensureValidRequest(String apiKeyToken) {
-		logger.info("apiKeyToken" + apiKeyToken);
-		logger.info("apiKeyToken length" + apiKeyToken.length());
+		LOG.debug("apiKeyToken : " + apiKeyToken);
 		if (apiKeyToken != null && apiKeyToken.length() == 36) {
-			logger.info("apiKeyToken is not null....");
 			AppDO validKey = verifyApiKey(apiKeyToken);
-			logger.info("validKey is not null...." + validKey);
+			LOG.debug("valid api Key : " + validKey);
 			if (validKey != null) {
 				return true;
 			}
@@ -117,8 +115,9 @@ public class EventServiceImpl implements EventService {
 	@Async
 	public void eventLogging(HttpServletRequest request,  String fields, String apiKey) {
 		boolean isValid = ensureValidRequest(apiKey);
+		LOG.debug("isValid : " + isValid);
 		if (!isValid) {
-			logger.error("inValid request..");
+			LOG.error("inValid request..");
 			return;
 		}
 		JsonElement jsonElement = null;
@@ -127,17 +126,17 @@ public class EventServiceImpl implements EventService {
 
 			try {
 				// validate JSON
-				logger.info("validate JSON");
+				LOG.debug("validate JSON");
 				jsonElement = new JsonParser().parse(fields);
 				eventJsonArr = jsonElement.getAsJsonArray();
 			} catch (JsonParseException e) {
 				// Invalid.
-				logger.error(Constants.INVALID_JSON, e);
+				LOG.error(Constants.INVALID_JSON, e);
 				return;
 			}
 
 		} else {
-			logger.error("Field should not be empty");
+			LOG.error("Field should not be empty");
 			return;
 		}
 
@@ -153,6 +152,7 @@ public class EventServiceImpl implements EventService {
 				JsonObject eventObj = eventJson.getAsJsonObject();
 				String eventString = eventObj.toString();				
 				EventBuilder event = new EventBuilder(eventString);
+				LOG.debug("event builder completed");
 					if (event.getUser() != null && event.getUser().length() > 0) {
 						JSONObject user = event.getUser();
 						user.put(Constants.USER_IP, userIp);
@@ -162,16 +162,19 @@ public class EventServiceImpl implements EventService {
 					}
 					event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
 					event.setApiKey(apiKey);
+					LOG.debug("starts processMessage...");
 					processMessage(event);
+					LOG.debug("ends processMessage...");
 			}
 			Thread.sleep(2000);
 		} catch (Exception e) {
-			logger.error("Exception : ", e);
+			LOG.error("Exception : ", e);
 		}
 	}
 	@Async
 	private void processMessage(EventBuilder event){
 		Boolean isValidEvent = validateInsertEvent(event);
+		LOG.debug("deep valid event check - " + isValidEvent);
 		if (isValidEvent) {
 			dataLoaderService.processMessage(event);
 		}

@@ -95,16 +95,23 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 			kafkaLogWriter.sendEventLog(event.getFields());
 			LOG.info("Field : {}", event.getFields());
 		}
+		LOG.debug("pushed events for kafkaLogWriter");
 		baseDao.insertEvents(event.getEventId(), event.getFields());
+		LOG.debug("written in events column family");
 		Date eventDateTime = new Date(event.getEndTime());
 		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
 		baseDao.insertEventsTimeline(eventRowKey, event.getEventId());
+		LOG.debug("written in events_timeline column family");
 		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
 			reportsGeneratorDAO.eventProcessor(event);
+			LOG.debug("eventProcessor completed");
 		}
 		if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
 			reComputationDAO.reComputeData(event);
+			LOG.debug("reComputeData completed");
 		}
+		
 		eventsUpdateDAO.eventsHandler(event);
+		LOG.debug("eventsHandler completed");
 	}
 }
