@@ -2,6 +2,7 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
@@ -87,9 +88,8 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean saveUserSessionActivity(UserSessionActivity userSessionActivity) {
 		try {
-
 			BoundStatement boundStatement = new BoundStatement(queries.insertUserSessionActivity());
-			boundStatement.bind(userSessionActivity.getSessionId(), userSessionActivity.getGooruOid(), userSessionActivity.getCollectionItemId(), userSessionActivity.getAnswerObject().toString(),
+			boundStatement.bind(userSessionActivity.getSessionId(), userSessionActivity.getGooruOid(), userSessionActivity.getCollectionItemId(), (userSessionActivity.getAnswerObject() != null ? userSessionActivity.getAnswerObject().toString() : Constants.NA),
 					userSessionActivity.getAttempts(), userSessionActivity.getCollectionType(), userSessionActivity.getResourceType(), userSessionActivity.getQuestionType(),
 					userSessionActivity.getAnswerStatus(), userSessionActivity.getEventType(), userSessionActivity.getParentEventId(), userSessionActivity.getReaction(),
 					userSessionActivity.getScore(), userSessionActivity.getTimeSpent(), userSessionActivity.getViews());
