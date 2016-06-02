@@ -69,7 +69,7 @@ public class EventController {
 		response.setHeader("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
 		response.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST");
 		LOG.debug("starts trackEvent");
-		eventService.eventLogging(request,fields, apiKey);
+		eventService.eventLogging(fields, apiKey);
 		LOG.debug("ends trackEvent");
 		return;
 	}

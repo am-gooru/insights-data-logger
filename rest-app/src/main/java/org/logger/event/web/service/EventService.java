@@ -23,13 +23,11 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.stereotype.Service;
 
 @Service
 public interface EventService {
 	
-	public void eventLogging(HttpServletRequest request, String fields, String apiKey);
+	public void eventLogging(String fields, String apiKey);
 	
 }

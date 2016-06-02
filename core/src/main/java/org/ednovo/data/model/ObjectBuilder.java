@@ -74,15 +74,13 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity.setGooruOid(event.getContentGooruId());
 			userSessionActivity.setParentGooruOid(event.getParentGooruId());
 			userSessionActivity.setCollectionItemId(event.getCollectionItemId());
-			if(event.getAnswerObject() != null && !event.getAnswerObject().equals(Constants.NA)){				
-				userSessionActivity.setAnswerObject(event.getAnswerObject());
-			}
 			userSessionActivity.setAttempts(0);
+			userSessionActivity.setQuestionCount(0);
 			userSessionActivity.setQuestionCount(0);
 			userSessionActivity.setCollectionType(event.getCollectionType());
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
 				userSessionActivity.setResourceType(event.getCollectionType());
-					userSessionActivity.setQuestionCount(event.getContext().getLong(Constants.QUESTION_COUNT));
+				userSessionActivity.setQuestionCount(event.getContext().getLong(Constants.QUESTION_COUNT));
 	
 			}else{
 				userSessionActivity.setResourceType(event.getResourceType());

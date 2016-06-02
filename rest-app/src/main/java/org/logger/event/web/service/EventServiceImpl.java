@@ -113,7 +113,7 @@ public class EventServiceImpl implements EventService {
 
 	@Override
 	@Async
-	public void eventLogging(HttpServletRequest request,  String fields, String apiKey) {
+	public void eventLogging(String fields, String apiKey) {
 		boolean isValid = ensureValidRequest(apiKey);
 		LOG.debug("isValid : " + isValid);
 		if (!isValid) {
@@ -123,7 +123,6 @@ public class EventServiceImpl implements EventService {
 		JsonElement jsonElement = null;
 		JsonArray eventJsonArr = null;
 		if (!fields.isEmpty()) {
-
 			try {
 				// validate JSON
 				LOG.debug("validate JSON");
@@ -141,32 +140,17 @@ public class EventServiceImpl implements EventService {
 		}
 
 		try {
-			request.setCharacterEncoding("UTF-8");
-			String userAgent = request.getHeader("User-Agent");
-
-			String userIp = request.getHeader("X-FORWARDED-FOR");
-			if (userIp == null) {
-				userIp = request.getRemoteAddr();
-			}
 			for (JsonElement eventJson : eventJsonArr) {
 				JsonObject eventObj = eventJson.getAsJsonObject();
-				String eventString = eventObj.toString();				
+				String eventString = eventObj.toString();
 				EventBuilder event = new EventBuilder(eventString);
 				LOG.debug("event builder completed");
-					if (event.getUser() != null && event.getUser().length() > 0) {
-						JSONObject user = event.getUser();
-						user.put(Constants.USER_IP, userIp);
-						user.put(Constants.USER_AGENT, userAgent);
-						event.setUser(user);
-						
-					}
-					event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
-					event.setApiKey(apiKey);
-					LOG.debug("starts processMessage...");
-					processMessage(event);
-					LOG.debug("ends processMessage...");
+				event.setFields((new JSONObject(eventString).put(Constants.USER, event.getUser())).toString());
+				event.setApiKey(apiKey);
+				LOG.debug("starts processMessage...");
+				processMessage(event);
+				LOG.debug("ends processMessage...");
 			}
-			Thread.sleep(2000);
 		} catch (Exception e) {
 			LOG.error("Exception : ", e);
 		}
