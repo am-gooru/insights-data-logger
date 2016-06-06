@@ -16,8 +16,8 @@ public class AppConfig {
 	public Executor threadPoolTaskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setCorePoolSize(10);
-		executor.setMaxPoolSize(20);
-		executor.setQueueCapacity(200);
+		executor.setMaxPoolSize(45);
+		executor.setQueueCapacity(150);
 		executor.setThreadNamePrefix("eventExecutor");
 		executor.initialize();
 		return executor;
