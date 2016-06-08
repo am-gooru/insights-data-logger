@@ -300,7 +300,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	private void splitByTaxonomyCode(String taxonomyCode, Map<String, String> taxObject){
 		int index = 0;
-		for(String value : taxonomyCode.split(Constants.HASH)){
+		for(String value : taxonomyCode.split(Constants.HYPHEN)){
 			   switch(index){
 			   case 0:
 				   taxObject.put(Constants.SUBJECT, value);
