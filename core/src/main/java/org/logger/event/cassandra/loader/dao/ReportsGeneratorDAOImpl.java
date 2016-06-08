@@ -75,7 +75,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 			saveUserSessions(event, userSessionActivity);
 
-			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
+			saveLastSessions(eventName, userSessionActivity, event, userAllSessionActivity);
 
 			saveCollectionDataFromResourcePlay(eventName, userSessionActivity, userAllSessionActivity, studentsClassActivity);
 
@@ -252,15 +252,15 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	 * @param studentsClassActivity
 	 * @param userAllSessionActivity
 	 */
-	private void saveLastSessions(String eventName, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity, UserSessionActivity userAllSessionActivity) {
-		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && StringUtils.isNotBlank(studentsClassActivity.getClassUid()) && !studentsClassActivity.getClassUid().equals(Constants.NA)) {
+	private void saveLastSessions(String eventName, UserSessionActivity userSessionActivity, EventBuilder event, UserSessionActivity userAllSessionActivity) {
+		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(eventName) && StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equals(Constants.NA)) {
 			LOG.info("saving latest sessions...");
 			if (Constants.START.equals(userSessionActivity.getEventType()) && Constants.COLLECTION.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
-				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
-						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userAllSessionActivity.getSessionId());
+				baseCassandraDao.saveLastSession(event.getClassGooruId(), event.getCourseGooruId(), event.getUnitGooruId(), event.getLessonGooruId(),
+						event.getContentGooruId(), event.getGooruUUID(), userAllSessionActivity.getSessionId());
 			} else if (Constants.STOP.equals(userSessionActivity.getEventType()) && Constants.ASSESSMENT.equalsIgnoreCase(userSessionActivity.getCollectionType())) {
-				baseCassandraDao.saveLastSession(studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(), studentsClassActivity.getLessonUid(),
-						studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getSessionId());
+				baseCassandraDao.saveLastSession(event.getClassGooruId(), event.getCourseGooruId(), event.getUnitGooruId(), event.getLessonGooruId(),
+						event.getContentGooruId(), event.getGooruUUID(), userSessionActivity.getSessionId());
 			}
 		}
 	}
