@@ -54,7 +54,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.ASSESSMENT))
 					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION)
 							&& event.getEventType().equalsIgnoreCase(Constants.START))
-					|| LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getEventName().matches(Constants.RECOMPUTATION_EVENTS))) {
+					|| LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) || event.getEventName().matches(Constants.RECOMPUTATION_EVENTS))) {
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
 			}
