@@ -827,7 +827,7 @@ public class Constants {
  	
  	public static final String INSERT_USER_LAST_SESSION = "INSERT INTO user_class_collection_last_sessions(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,user_uid,session_id)VALUES(?,?,?,?,?,?,?);";
  	
- 	public static final String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,event_type,parent_event_id,reaction,score,time_spent,views)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
+ 	public static final String INSERT_USER_SESSION_ACTIVITY = "INSERT INTO user_session_activity(session_id,gooru_oid,collection_item_id,answer_object,attempts,collection_type,resource_type,question_type,answer_status,event_type,parent_event_id,reaction,score,time_spent,views,event_time)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";	
  	
  	public static final String INSERT_STUDENTS_CLASS_ACTIVITY = "INSERT INTO students_class_activity(class_uid,course_uid,unit_uid,lesson_uid,collection_uid,collection_type,user_uid,attempt_status,score,time_spent,views,reaction)VALUES(?,?,?,?,?,?,?,?,?,?,?,?);";
  	

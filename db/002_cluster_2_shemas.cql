@@ -237,3 +237,5 @@ ALTER TABLE user_session_taxonomy_activity ADD display_code varchar;
 ALTER TABLE content_class_taxonomy_activity ADD display_code varchar;
 
 ALTER TABLE content_taxonomy_activity ADD display_code varchar;
+
+ALTER TABLE user_session_activity ADD event_time bigint;

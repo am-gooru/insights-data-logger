@@ -80,6 +80,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			userSessionActivity.setQuestionCount(0);
 			userSessionActivity.setQuestionCount(0);
 			userSessionActivity.setCollectionType(event.getCollectionType());
+			userSessionActivity.setEventTime(event.getEndTime());
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
 				userSessionActivity.setResourceType(event.getCollectionType());
 				userSessionActivity.setQuestionCount(event.getContext().getLong(Constants.QUESTION_COUNT));

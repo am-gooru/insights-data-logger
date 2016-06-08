@@ -41,6 +41,8 @@ public class UserSessionActivity implements Serializable, Cloneable {
 	
 	private long reaction;
 	
+	private long eventTime;
+	
 	private Object answerObject;
 
 	public Object clone()throws CloneNotSupportedException{  
@@ -181,6 +183,14 @@ public class UserSessionActivity implements Serializable, Cloneable {
 
 	public void setQuestionCount(long questionCount) {
 		this.questionCount = questionCount;
+	}
+
+	public long getEventTime() {
+		return eventTime;
+	}
+
+	public void setEventTime(long eventTime) {
+		this.eventTime = eventTime;
 	}
 
 }

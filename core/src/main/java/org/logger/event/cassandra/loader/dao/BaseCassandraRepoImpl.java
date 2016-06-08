@@ -92,7 +92,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 			boundStatement.bind(userSessionActivity.getSessionId(), userSessionActivity.getGooruOid(), userSessionActivity.getCollectionItemId(), (userSessionActivity.getAnswerObject() != null ? userSessionActivity.getAnswerObject().toString() : Constants.NA),
 					userSessionActivity.getAttempts(), userSessionActivity.getCollectionType(), userSessionActivity.getResourceType(), userSessionActivity.getQuestionType(),
 					userSessionActivity.getAnswerStatus(), userSessionActivity.getEventType(), userSessionActivity.getParentEventId(), userSessionActivity.getReaction(),
-					userSessionActivity.getScore(), userSessionActivity.getTimeSpent(), userSessionActivity.getViews());
+					userSessionActivity.getScore(), userSessionActivity.getTimeSpent(), userSessionActivity.getViews(),userSessionActivity.getEventTime());
 			getAnalyticsCassSession().executeAsync(boundStatement);
 		} catch (Exception e) {
 			LOG.error("Error while storing user sessions activity", e);
