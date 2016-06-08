@@ -50,13 +50,15 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 				userSessionTaxonomyActivity = new UserSessionTaxonomyActivity();
 			}
 			
-			if((LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName()) || (LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName())) && event.isStudent())){
+			if (event.isStudent() && ((event.getEventName().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))
+					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.ASSESSMENT))
+					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION)
+							&& event.getEventType().equalsIgnoreCase(Constants.START))
+					|| LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) || event.getEventName().matches(Constants.RECOMPUTATION_EVENTS))) {
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
 			}
-			if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
-				studentsClassActivity = new StudentsClassActivity();
-			}
+			
 			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP) && event.isStudent()){
 				contentTaxonomyActivity = new ContentTaxonomyActivity();
 			}
@@ -164,6 +166,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			if (event.getEventName().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) || event.getEventName().equalsIgnoreCase(LoaderConstants.CRAV1.getName())) {
 				studentsClassActivity.setCollectionUid(event.getParentGooruId());
 				studentsClassActivity.setViews(0);
+				studentsClassActivity.setReaction(event.getReaction());
 			} else if(event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				studentsClassActivity.setCollectionUid(event.getContentGooruId());
 				studentsClassActivity.setViews(event.getViews());
