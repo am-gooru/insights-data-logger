@@ -73,7 +73,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 				baseCassandraDao.updateReaction(userAllSessionActivity);
 			}
 
-			saveUserSessions(event, userSessionActivity, studentsClassActivity);
+			saveUserSessions(event, userSessionActivity);
 
 			saveLastSessions(eventName, userSessionActivity, studentsClassActivity, userAllSessionActivity);
 
@@ -234,11 +234,11 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	 * @param studentsClassActivity
 	 * @param studentLocation
 	 */
-	private void saveUserSessions(EventBuilder event, UserSessionActivity userSessionActivity, StudentsClassActivity studentsClassActivity) {
+	private void saveUserSessions(EventBuilder event, UserSessionActivity userSessionActivity) {
 		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) {
 			LOG.info("saving sessions.....");
-			baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), studentsClassActivity.getClassUid(), studentsClassActivity.getCourseUid(), studentsClassActivity.getUnitUid(),
-					studentsClassActivity.getLessonUid(), studentsClassActivity.getCollectionUid(), studentsClassActivity.getUserUid(), userSessionActivity.getCollectionType(),
+			baseCassandraDao.saveUserSession(userSessionActivity.getSessionId(), event.getClassGooruId(), event.getCourseGooruId(), event.getUnitGooruId(),
+					event.getLessonGooruId(), event.getContentGooruId(), event.getGooruUUID(), userSessionActivity.getCollectionType(),
 					userSessionActivity.getEventType(), event.getEventTime());
 		}
 			
