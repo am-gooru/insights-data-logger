@@ -43,6 +43,10 @@ public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
 	private long reaction;
 
+	public Object clone()throws CloneNotSupportedException{  
+		return super.clone();  	
+	}
+	
 	public String getSessionId() {
 		return sessionId;
 	}
