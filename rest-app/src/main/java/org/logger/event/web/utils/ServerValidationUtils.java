@@ -36,9 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.Errors;
 
-public class ServerValidationUtils {
-	
-	protected final static Logger logger = LoggerFactory.getLogger(ServerValidationUtils.class);
+public final class ServerValidationUtils {
+
+	private final static Logger logger = LoggerFactory.getLogger(ServerValidationUtils.class);
+
+	private ServerValidationUtils() {
+		throw new AssertionError();
+	}
 
 	public static void rejectIfNullOrEmpty(Errors errors, String data, String field, String errorMsg) {
 		if (data == null || StringUtils.isBlank(data)) {
@@ -59,13 +63,13 @@ public class ServerValidationUtils {
 			errors.rejectValue(field, errorCode, errorMsg);
 		}
 	}
-	
+
 	public static void rejectIfAlReadyExist(Errors errors, Object data,  String errorCode, String errorMsg) {
 		if (data != null) {
 			errors.reject(errorCode, errorMsg);
 		}
 	}
-	
+
 	public static void rejectIfNullOrEmpty(Errors errors, Set<?> data, String field, String errorMsg) {
 		if (data == null || data.size() == 0) {
 			errors.rejectValue(field, errorMsg);
@@ -83,7 +87,7 @@ public class ServerValidationUtils {
 			errors.rejectValue(field, errorCode, errorMsg);
 		}
 	}
-	
+
 	public static void rejectIfInvalidDate(Errors errors, Date data, String field, String errorCode, String errorMsg) {
 		Date date =new Date();
 		if (data.compareTo(date) <= 0) {
@@ -96,36 +100,32 @@ public class ServerValidationUtils {
 			errors.rejectValue(field, errorCode, errorMsg);
 		}
 	}
-	
+
 	public static void logErrorIfZeroLongValue(Boolean isValidEvent, Long data, String field, String errorCode, String eventJson, String errorMsg) {
 		if (isValidEvent) {
 			if (data == null || data == 0L) {
-				isValidEvent = false;
 				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
 			}
 		}
 	}
-	
+
 	public static void logErrorIfNullOrEmpty(Boolean isValidEvent, String data, String field, String errorCode, String eventJson, String errorMsg) {
 		if (isValidEvent) {
 			if (data == null || StringUtils.isBlank(data) || data.equalsIgnoreCase("null")) {
-				isValidEvent = false;
 				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
 			}
 		}
 	}
-	
+
 	public static void logErrorIfNullOrEmpty(Boolean isValidEvent, JSONObject data, String field, String errorCode, String eventJson, String errorMsg) {
 		if (isValidEvent && data == null) {
-				isValidEvent = false;
-				logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
+			logger.error(errorMsg + " ErrorCode :" + errorCode + " FieldName :" + field + " : " + eventJson);
 		}
 	}
-	
+
 	public static void logErrorIfNull(Boolean isValidEvent, Object data, String field, String errorMsg) {
 		if (isValidEvent) {
 			if (data == null) {
-				isValidEvent = false;
 				logger.error(errorMsg + " : FieldName :" + field + " : ");
 			}
 		}
@@ -134,20 +134,18 @@ public class ServerValidationUtils {
 	public static void deepEventCheck(Boolean isValidEvent, EventBuilder event,
 			String field) {
 		if (isValidEvent
-				&& event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
+				&& Constants.SESSION_ACTIVITY_EVENTS_PATTERN.matcher(event.getEventName()).matches()) {
 			try {
 				JSONObject session = event.getSession();
 				if (!session.has(Constants.SESSION_ID)
 						|| (session.has(Constants.SESSION_ID) && (session
 								.isNull(Constants.SESSION_ID) || (session.get(Constants.SESSION_ID) != null && session
 								.getString(Constants.SESSION_ID).equalsIgnoreCase("null"))))) {
-					isValidEvent = false;
 					logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.SESSION_ID + " : "
 							+ field);
 				}
 
 			} catch (JSONException e) {
-				isValidEvent = false;
 				logger.error(Constants.RAW_EVENT_JSON_EXCEPTION + Constants.SESSION + " : " + field);
 			}
 			try {
@@ -158,12 +156,10 @@ public class ServerValidationUtils {
 								.get(Constants.CONTENT_GOORU_OID) != null && context
 								.getString(Constants.CONTENT_GOORU_OID).equalsIgnoreCase(
 										"null"))))) {
-					isValidEvent = false;
 					logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.CONTENT_GOORU_OID
 							+ " : " + field);
 				}
 				if(event.getGooruUUID().equalsIgnoreCase(Constants.ANONYMOUS)){
-					isValidEvent = false;
 					logger.error(Constants.ANONYMOUS + " is not valid user event"
 							+ " : " + field);
 				}
@@ -191,13 +187,11 @@ public class ServerValidationUtils {
 									.get(Constants.LESSON_GOORU_OID) != null && context
 									.getString(Constants.LESSON_GOORU_OID)
 									.equalsIgnoreCase("null")))))) {
-						isValidEvent = false;
 						logger.error(Constants.RAW_EVENT_NULL_EXCEPTION + Constants.CUL_IDS_MISSING
 								+ " : " + field);
 					}
 				}
 			} catch (JSONException e) {
-				isValidEvent = false;
 				logger.error(Constants.RAW_EVENT_JSON_EXCEPTION + Constants.CONTEXT + " : " + field);
 			}
 		}

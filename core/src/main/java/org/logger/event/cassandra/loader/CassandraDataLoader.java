@@ -44,16 +44,16 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 
 	private SimpleDateFormat minuteDateFormatter;
 
-	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+	private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
 	private KafkaLogProducer kafkaLogWriter;
 
 	private ReportsGeneratorDAO reportsGeneratorDAO;
 
 	private EventsUpdateDAO eventsUpdateDAO;
-	
+
 	private ReComputationDAO reComputationDAO;
-	
+
 	private BaseCassandraRepo baseDao;
 
 	// private LTIServiceHandler ltiServiceHandler;
@@ -66,7 +66,7 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param configOptionsMap
 	 */
 	public CassandraDataLoader(Map<String, String> configOptionsMap) {
@@ -78,7 +78,7 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param configOptionsMap
 	 */
 	private void init(Map<String, String> configOptionsMap) {
@@ -99,18 +99,18 @@ public class CassandraDataLoader extends BaseDAOCassandraImpl {
 		baseDao.insertEvents(event.getEventId(), event.getFields());
 		LOG.debug("written in events column family");
 		Date eventDateTime = new Date(event.getEndTime());
-		String eventRowKey = minuteDateFormatter.format(eventDateTime).toString();
+		String eventRowKey = minuteDateFormatter.format(eventDateTime);
 		baseDao.insertEventsTimeline(eventRowKey, event.getEventId());
 		LOG.debug("written in events_timeline column family");
-		if (event.getEventName().matches(Constants.SESSION_ACTIVITY_EVENTS)) {
+		if (Constants.SESSION_ACTIVITY_EVENTS_PATTERN.matcher(event.getEventName()).matches()) {
 			reportsGeneratorDAO.eventProcessor(event);
 			LOG.debug("eventProcessor completed");
 		}
-		if(event.getEventName().matches(Constants.RECOMPUTATION_EVENTS)){
+		if(Constants.RECOMPUTATION_EVENTS_PATTERN.matcher(event.getEventName()).matches()){
 			reComputationDAO.reComputeData(event);
 			LOG.debug("reComputeData completed");
 		}
-		
+
 		eventsUpdateDAO.eventsHandler(event);
 		LOG.debug("eventsHandler completed");
 	}

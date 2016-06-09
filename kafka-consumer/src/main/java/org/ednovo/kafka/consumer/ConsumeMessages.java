@@ -6,18 +6,18 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
+import kafka.message.MessageAndMetadata;
 
 public final class ConsumeMessages implements Runnable {
 
-	private Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap;
+	private final Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap;
 
-	private String consumerTopic;
+	private final String consumerTopic;
 
-	private DataProcessor rowDataProcessor;
+	private final DataProcessor rowDataProcessor;
 
-	private static Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
 
 	public ConsumeMessages(String consumerTopic, Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap,
 			DataProcessor rowDataProcessor) {
@@ -30,13 +30,12 @@ public final class ConsumeMessages implements Runnable {
 		try {
 			LOG.info("consumer process started for the topic : {}", consumerTopic);
 			KafkaStream<byte[], byte[]> stream = consumerMap.get(consumerTopic).get(0);
-			ConsumerIterator<byte[], byte[]> it = stream.iterator();
 			/**
 			 * process consumed data
 			 */
-			while (it.hasNext()) {
+			for (MessageAndMetadata<byte[], byte[]> aStream : stream) {
 				String message = null;
-				message = new String(it.next().message());
+				message = new String(aStream.message());
 				LOG.info("consume receiving event {}", message);
 				this.rowDataProcessor.processRow(message);
 			}

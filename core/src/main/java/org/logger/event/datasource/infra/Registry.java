@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 
 public class Registry implements Iterable<Register> {
 
-	private List<Register> registers = null;
 	private final Iterator<Register> internalIterator;
 
 	@Override
@@ -39,10 +38,10 @@ public class Registry implements Iterable<Register> {
 	}
 
 	public Registry() {
-		registers = new ArrayList<Register>();
+		List<Register> registers = new ArrayList<>();
 		registers.add(CassandraClient.instance());
 		//registers.add(ELSClient.instance());
-		
+
 		internalIterator = registers.iterator();
 	}
 

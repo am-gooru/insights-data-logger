@@ -33,25 +33,25 @@ import org.slf4j.LoggerFactory;
 
 public class DataLoader implements Runnable {
 
-    static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
     public DataLoader() {
-		
+
 	}
-    
+
     public static void main(String[] args) throws java.text.ParseException {
     	// create the command line parser
     	CommandLineParser parser = new PosixParser();
 
     	// create the Options
     	Options options = new Options();
-    
+
     	options.addOption( "k", "kafka-stream", false, "process messages from kafka stream" );
 
     	try {
     	    // parse the command line arguments
-    	    CommandLine line = parser.parse( options, args );    	    
-    	    
+    	    CommandLine line = parser.parse( options, args );
+
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
     		    runThread();
@@ -61,28 +61,28 @@ public class DataLoader implements Runnable {
     	catch( ParseException exp ) {
     		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
-    			
+
     	LOG.info("processing input stream");
     	DataProcessor[] handlers = {new PipedInputStreamProcessor(), new JSONProcessor(), new CassandraProcessor()};
 		DataProcessor initialRowHandler = buildHandlerChain(handlers);
 		initialRowHandler.processRow(null);
 	}
-    public static DataProcessor buildHandlerChain(DataProcessor[] handlers) {
+    private static DataProcessor buildHandlerChain(DataProcessor[] handlers) {
     	DataProcessor firstHandler = null;
-    	DataProcessor currentHandler = null;
+    	DataProcessor currentHandler;
     	for (int handlerIndex = 0; handlerIndex < handlers.length; handlerIndex++) {
 			if(handlerIndex == 0) {
 				firstHandler = handlers[handlerIndex];
 			}
 			currentHandler = handlers[handlerIndex];
-			
+
 			if(handlers.length > (handlerIndex + 1)) {
 				currentHandler.setNextRowHandler(handlers[handlerIndex + 1]);
 			}
 		}
     	return firstHandler;
     }
-    
+
     @Override
     public void run(){
     	runThread();
@@ -91,8 +91,8 @@ public class DataLoader implements Runnable {
 	public void shutdownMessageConsumer(){
 		MessageConsumer.shutdownMessageConsumer();
 	}
-	
-	public static void runThread() {
+
+	private static void runThread() {
 		 // print the value of block-size
     	DataProcessor[] handlers = {new KafkaInputProcessor(), new JSONProcessor(), new CassandraProcessor()};
 		DataProcessor initialRowHandler = buildHandlerChain(handlers);

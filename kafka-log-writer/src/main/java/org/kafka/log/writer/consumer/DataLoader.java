@@ -39,44 +39,43 @@ import org.slf4j.LoggerFactory;
 
 public class DataLoader implements Runnable {
 
-    static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
 	private static Properties configConstants;
 
     public DataLoader() {
     	loadConfigFile();
 	}
-    
+
     public static void main(String[] args) throws java.text.ParseException {
     	// create the command line parser
     	CommandLineParser parser = new PosixParser();
 
     	// create the Options
     	Options options = new Options();
-    
+
     	options.addOption( "k", "kafka-stream", false, "process messages from kafka stream" );
 
     	try {
     	    // parse the command line arguments
-    	    CommandLine line = parser.parse( options, args );    	    
-    	    
+    	    CommandLine line = parser.parse( options, args );
+
     	    if( line.hasOption( "kafka-stream" ) ) {
     	    	LOG.info("processing kafka stream as consumer");
     	    	runThread();
-    		    return;
-    	    }
+			}
     	}
     	catch( ParseException exp ) {
     		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
-    			
+
 	}
-    
+
     @Override
     public void run(){
     	runThread();
     }
-    
+
     public void shutdownLogConsumer(){
     	KafkaLogConsumer.shutdownLogConsumer();
     }
@@ -85,9 +84,9 @@ public class DataLoader implements Runnable {
 		KafkaLogConsumer consumerThread = new KafkaLogConsumer();
         consumerThread.start();
 	}
-	
+
 	private void loadConfigFile() {
-		InputStream inputStream = null;
+		InputStream inputStream;
 		try {
 			configConstants = new Properties();
 			String propFileName = "logapi-config.properties";
@@ -99,7 +98,7 @@ public class DataLoader implements Runnable {
 			LOG.error("Unable to Load Config File", ioException);
 		}
 	}
-	
+
 	public static String getProperty(String key) {
 		return configConstants.getProperty(key);
 	}

@@ -26,8 +26,11 @@ package org.logger.event.web.service;
 import java.util.Map;
 
 
-public class SessionContextSupport {
+public final class SessionContextSupport {
 
+	private SessionContextSupport() {
+		throw new AssertionError();
+	}
 
 	public static Map<String, Object> getLog() {
 		try {

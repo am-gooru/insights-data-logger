@@ -23,17 +23,16 @@ public class ReComputationDAOImpl extends BaseDAOCassandraImpl implements ReComp
 
 	private static final Logger LOG = LoggerFactory.getLogger(ReComputationDAOImpl.class);
 
-	private BaseCassandraRepo baseCassandraDao;
+	private final BaseCassandraRepo baseCassandraDao;
 
 	private final ExecutorService service = Executors.newFixedThreadPool(10);
 
 	public ReComputationDAOImpl() {
 		baseCassandraDao = BaseCassandraRepo.instance();
 	}
-	
+
 	/**
 	 * ReComputations if user/teacher deletes/moves an item
-	 * @param even
 	 */
 	@Override
 	public void reComputeData(final EventBuilder event) {
@@ -52,7 +51,7 @@ public class ReComputationDAOImpl extends BaseDAOCassandraImpl implements ReComp
 
 	private void generateDeleteTasks(final StudentsClassActivity studentsClassActivity, final Set<String> studentsIds) {
 		try {
-			Set<Callable<String>> deleteTasks = new HashSet<Callable<String>>();
+			Set<Callable<String>> deleteTasks = new HashSet<>();
 			deleteTasks.add(new Callable<String>() {
 				public String call() throws Exception {
 					switch (studentsClassActivity.getCollectionType()) {

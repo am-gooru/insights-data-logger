@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
-public class DataUtils {
+public final class DataUtils {
 
 	private static final Pattern collectionLoadPattern = Pattern
 			.compile("^(/collection/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(.json)$");
@@ -38,10 +38,10 @@ public class DataUtils {
 			.compile("^(/collection/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(/play.json)$");
 	private static final Pattern quizAttemptStartPattern = Pattern
 			.compile("^(/assessment/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(/attempt/attempt.json)$");
-	private static Map<String, String> formatedEventNameMap;
+	private static final Map<String, String> formatedEventNameMap;
 
 	static {
-    	formatedEventNameMap = new HashMap<String, String>();
+    	formatedEventNameMap = new HashMap<>();
 		formatedEventNameMap.put("checkContentAccess", "check-content-access");
 		formatedEventNameMap.put("checkSession", "check-session");
 		formatedEventNameMap.put("collection play", "collection-play");
@@ -58,13 +58,17 @@ public class DataUtils {
 		formatedEventNameMap.put("showRating", "show-rating");
 		formatedEventNameMap.put("resourceCollectionList", "resource-collection-list");
 	}
-	
+
+	private DataUtils() {
+		throw new AssertionError();
+	}
+
 	public static String makeEventNameConsistent(String eventName) {
 		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName), eventName);
 	}
 
 	public static Map<String, String> guessEventName(String context) {
-		Map<String, String> guessedAttributes = new HashMap<String, String>();
+		Map<String, String> guessedAttributes = new HashMap<>();
 		Matcher matcher = collectionLoadPattern.matcher(context);
 		if (matcher.matches()) {
 			String gooruOid = matcher.group(2);

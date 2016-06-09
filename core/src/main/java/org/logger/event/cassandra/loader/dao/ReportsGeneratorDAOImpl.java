@@ -27,7 +27,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	private static final Logger LOG = LoggerFactory.getLogger(ReportsGeneratorDAOImpl.class);
 
-	private BaseCassandraRepo baseCassandraDao;
+	private final BaseCassandraRepo baseCassandraDao;
 
 	private final ExecutorService service = Executors.newFixedThreadPool(10);
 
@@ -37,7 +37,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	/**
 	 * This is method to handle and processing all the player events and to generate reports.
-	 * 
+	 *
 	 * @param event
 	 */
 	@Override
@@ -65,7 +65,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 				baseCassandraDao.saveUserSessionActivity(userAllSessionActivity);
 				LOG.info("store all session activity completed : {} ", userSessionActivity.getSessionId());
 			}
-			
+
 			saveUserSessionTaxonomyActivity(userSessionTaxonomyActivity);
 
 			if (LoaderConstants.CRAV1.getName().equalsIgnoreCase(eventName)) {
@@ -109,7 +109,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					String internalTaxonomyCode = internalTaxonomyCodes.next();
 					String displayCode = userSessionTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
 					userSessionTaxonomyActivity.setDisplayCode(displayCode);
-					Map<String, String> taxObject = new HashMap<String, String>();
+					Map<String, String> taxObject = new HashMap<>();
 					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
 					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
 					userSessionTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
@@ -128,7 +128,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	}
 
-	private void saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) throws CloneNotSupportedException {
+	private void saveContentClassTaxonomyActivity(ContentTaxonomyActivity contentTaxonomyActivity) {
 		if (contentTaxonomyActivity != null) {
 			try {
 				ContentTaxonomyActivity contentClassTaxonomyActivityInstance = (ContentTaxonomyActivity) contentTaxonomyActivity.clone();
@@ -138,7 +138,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					String displayCode;
 					displayCode = contentTaxonomyActivity.getTaxonomyIds().getString(internalTaxonomyCode);
 					contentTaxonomyActivity.setDisplayCode(displayCode);
-					Map<String, String> taxObject = new HashMap<String, String>();
+					Map<String, String> taxObject = new HashMap<>();
 					splitByTaxonomyCode(internalTaxonomyCode, taxObject);
 					String subject = taxObject.get(Constants.SUBJECT), course = taxObject.get(Constants.COURSE), domain = taxObject.get(Constants.DOMAIN), standards = taxObject.get(Constants.STANDARDS), learningTarget = taxObject.get(Constants.LEARNING_TARGETS);
 					contentTaxonomyActivity.setSubjectId(StringUtils.isNotBlank(subject) ? subject : Constants.NA);
@@ -182,7 +182,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 	}
 	/**
 	 * Generate datacube for performance reports
-	 * 
+	 *
 	 * @param studentsClassActivity
 	 * @param classActivityDatacube
 	 */
@@ -204,7 +204,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	/**
 	 * Save data while teacher grading user responses.
-	 * 
+	 *
 	 * @param event
 	 */
 	private void saveQuestionGrade(EventBuilder event) {
@@ -218,9 +218,9 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 						baseCassandraDao.saveQuestionGradeInSession(event.getSessionId(), event.getContentGooruId(), Constants.NA, Constants.COMPLETED, score.getLong(Constants.SCORE));
 					}
 				}
-				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity((String) event.getSessionId(), event.getParentGooruId(), Constants.NA);
+				UserSessionActivity userCollectionData = baseCassandraDao.getUserSessionActivity(event.getSessionId(), event.getParentGooruId(), Constants.NA);
 				baseCassandraDao.getSessionScore(userCollectionData, LoaderConstants.CPV1.getName());
-				baseCassandraDao.saveQuestionGradeInSession((String) event.getSessionId(), event.getParentGooruId(), Constants.NA, Constants.COMPLETED, userCollectionData.getScore());
+				baseCassandraDao.saveQuestionGradeInSession(event.getSessionId(), event.getParentGooruId(), Constants.NA, Constants.COMPLETED, userCollectionData.getScore());
 			}
 			LOG.info("store question grade completed : {} ", event.getSessionId());
 		}
@@ -228,11 +228,8 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	/**
 	 * Save session id details in each sessions
-	 * 
-	 * @param eventName
+	 *
 	 * @param userSessionActivity
-	 * @param studentsClassActivity
-	 * @param studentLocation
 	 */
 	private void saveUserSessions(EventBuilder event, UserSessionActivity userSessionActivity) {
 		if (LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) {
@@ -241,15 +238,14 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 					event.getLessonGooruId(), event.getContentGooruId(), event.getGooruUUID(), userSessionActivity.getCollectionType(),
 					userSessionActivity.getEventType(), event.getEventTime());
 		}
-			
+
 	}
 
 	/**
 	 * Save most recent session id for each collection/assessment play happen
-	 * 
+	 *
 	 * @param eventName
 	 * @param userSessionActivity
-	 * @param studentsClassActivity
 	 * @param userAllSessionActivity
 	 */
 	private void saveLastSessions(String eventName, UserSessionActivity userSessionActivity, EventBuilder event, UserSessionActivity userAllSessionActivity) {
@@ -267,7 +263,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 
 	/**
 	 * Rolling up to reosurces usage data to collection level from collection.resource.play event
-	 * 
+	 *
 	 * @param eventName
 	 * @param userSessionActivity
 	 * @param userAllSessionActivity
@@ -298,7 +294,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 		}
 	}
 
-	private void splitByTaxonomyCode(String taxonomyCode, Map<String, String> taxObject){
+	private static void splitByTaxonomyCode(String taxonomyCode, Map<String, String> taxObject){
 		int index = 0;
 		for(String value : taxonomyCode.split(Constants.HYPHEN)){
 			   switch(index){
@@ -322,7 +318,7 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 		   }
 	}
 	public static String appendHash(String... texts) {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (String text : texts) {
 			if (StringUtils.isNotBlank(text)) {
 				if (sb.length() > 0) {
@@ -333,8 +329,8 @@ public class ReportsGeneratorDAOImpl extends BaseDAOCassandraImpl implements Rep
 		}
 		return sb.toString();
 	}
-	public static String appendHyphen(String... texts) {
-		StringBuffer sb = new StringBuffer();
+	private static String appendHyphen(String... texts) {
+		StringBuilder sb = new StringBuilder();
 		for (String text : texts) {
 			if (StringUtils.isNotBlank(text)) {
 				if (sb.length() > 0) {

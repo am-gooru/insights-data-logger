@@ -42,7 +42,7 @@ public class FileInputProcessor extends BaseDataProcessor implements DataProcess
 	public FileInputProcessor(Map<String, String> configOptionsMap) {
 		this.fileInputData = configOptionsMap;
 	}
-	
+
 	@Override
 	public void handleRow(Object row) throws Exception {
 		File folder = new File(fileInputData.get("file-path"));
@@ -57,10 +57,10 @@ public class FileInputProcessor extends BaseDataProcessor implements DataProcess
 				 try {
 				   while (it.hasNext()) {
 				     final String line = it.nextLine();
-				     
+
 				     // Send the row to the next process handler.
 				     getNextRowHandler().processRow(line);
-				     
+
 					 lines++;
 					if(lines % 1000 == 0) {
 						LOG.info("file-lines: {} ", lines);
@@ -72,8 +72,8 @@ public class FileInputProcessor extends BaseDataProcessor implements DataProcess
 			} catch (IOException e) {
 				LOG.error("Error processing file {} " , file.getAbsolutePath(), e);
 			}
-	    	sw.stop("file:"+file.getAbsolutePath() + ": lines= "+lines + " ");
-			LOG.info(sw.toString(Integer.parseInt(lines+"")));
+	    	sw.stop("file:"+file.getAbsolutePath() + ": lines= "+lines + ' ');
+			LOG.info(sw.toString(Integer.parseInt(String.valueOf(lines))));
 		}
 	}
 

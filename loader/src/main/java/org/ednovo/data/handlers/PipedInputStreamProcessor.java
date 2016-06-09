@@ -33,11 +33,11 @@ public class PipedInputStreamProcessor extends BaseDataProcessor implements Data
 
 	@Override
 	public void handleRow(Object row) throws Exception {
-    	String line = "";
+    	String line;
     	StopWatch sw = new StopWatch();
-    	
+    	// FIXME: Where are we closing BufferedReader???
     	BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
-    	
+
     	long lines = 0;
     	try {
 			while ((line = bi.readLine()) != null) {
@@ -53,7 +53,7 @@ public class PipedInputStreamProcessor extends BaseDataProcessor implements Data
 			LOG.error("Something went wrong while processing input", e);
 		}
     	sw.stop("loglines");
-		LOG.info(sw.toString());		
+		LOG.info(sw.toString());
 	}
 
 }

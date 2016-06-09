@@ -6,7 +6,7 @@ import com.datastax.driver.core.PreparedStatement;
 
 public final class PreparedQueries extends BaseDAOCassandraImpl {
 
-	private static class PreparedQueriesHolder {
+	private static final class PreparedQueriesHolder {
 		public static final PreparedQueries INSTANCE = new PreparedQueries();
 	}
 
@@ -61,88 +61,88 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	private final PreparedStatement SELECT_USER_QUESTION_GRADE_BY_QUESTION = getAnalyticsCassSession().prepare(Constants.SELECT_USER_QUESTION_GRADE_BY_QUESTION);
 
 	private final PreparedStatement INSERT_TAXONOMY_ACTIVITY_DATACUBE = getAnalyticsCassSession().prepare(Constants.INSERT_TAXONOMY_ACTIVITY_DATACUBE);
-	
+
 	private final PreparedStatement INSERT_EVENTS_TIMELINE = getEventCassSession().prepare(Constants.INSERT_EVENTS_TIMELINE);
-	
+
 	private final PreparedStatement INSERT_EVENTS = getEventCassSession().prepare(Constants.INSERT_EVENTS);
-	
+
 	private final PreparedStatement INCREMENT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.INCREMENT_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement DECREMENT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.DECREMENT_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement SELECT_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.SELECT_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement INCREMENT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.INCREMENT_USER_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement DECREMENT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.DECREMENT_USER_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement SELECT_USER_STATISTICAL_COUNTER_DATA = getAnalyticsCassSession().prepare(Constants.SELECT_USER_STATISTICAL_COUNTER_DATA);
-	
+
 	private final PreparedStatement SELECT_API_KEY = getAnalyticsCassSession().prepare(Constants.SELECT_API_KEY);
-	
+
 	private final PreparedStatement SELECT_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.SELECT_CLASS_MEMBERS);
-	
+
 	private final PreparedStatement SAVE_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.UPDATE_CLASS_MEMBERS);
-	
+
 	private final PreparedStatement REMOVE_CLASS_MEMBERS = getAnalyticsCassSession().prepare(Constants.REMOVE_CLASS_MEMBERS);
-	
+
 	private final PreparedStatement DELETE_COURSE_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_COURSE_USAGE);
-	
+
 	private final PreparedStatement DELETE_UNIT_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_UNIT_USAGE);
-	
+
 	private final PreparedStatement DELETE_LESSON_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_LESSON_USAGE);
-	
+
 	private final PreparedStatement DELETE_ASSESSMENT_OR_COLLECTION_USAGE = getAnalyticsCassSession().prepare(Constants.DELETE_ASSESSMENT_OR_COLLECTION_USAGE);
-	
+
 	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY);
-	
+
 	private final PreparedStatement DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN = getAnalyticsCassSession().prepare(Constants.DELETE_DATA_CUBE_BY_ROW_KEY_COLUMN);
-	
+
 	private final PreparedStatement UPDATE_COLLABORATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_COLLABORATORS);
-	
+
 	private final PreparedStatement UPDATE_CONTENT_CREATORS = getAnalyticsCassSession().prepare(Constants.UPDATE_CONTENT_CREATORS);
-	
+
 	private final PreparedStatement ADD_STAT_PUBLISHER_QUEUE = getEventCassSession().prepare(Constants.ADD_STAT_PUBLISHER_QUEUE);
-	
+
 	private final PreparedStatement INSERT_USER_SESSION_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.INSERT_USER_SESSION_TAXONOMY_ACTIVITY);
-	
+
 	private final PreparedStatement SELECT_USER_SESSION_TAXONOMY_ACTIVITY = getAnalyticsCassSession().prepare(Constants.SELECT_USER_SESSION_TAXONOMY_ACTIVITY);
-	
+
 	public PreparedStatement selectApiKey() {
 		return SELECT_API_KEY;
 	}
-	
+
 	public PreparedStatement incrementStatisticalCounterData() {
 		return INCREMENT_STATISTICAL_COUNTER_DATA;
 	}
-	
+
 	public PreparedStatement selectStatustucalCounterData() {
 		return SELECT_STATISTICAL_COUNTER_DATA;
 	}
-	
+
 	public PreparedStatement incrementUserStatisticalCounterData() {
 		return INCREMENT_USER_STATISTICAL_COUNTER_DATA;
 	}
-	
+
 	public PreparedStatement decrementUserStatisticalCounterData() {
 		return DECREMENT_USER_STATISTICAL_COUNTER_DATA;
 	}
 	public PreparedStatement decrementStatisticalCounterData() {
 		return DECREMENT_STATISTICAL_COUNTER_DATA;
 	}
-	
+
 	public PreparedStatement selectUserStatisticalCounterData() {
 		return SELECT_USER_STATISTICAL_COUNTER_DATA;
 	}
-	
+
 	public PreparedStatement insertEventsTimeline() {
 		return INSERT_EVENTS_TIMELINE;
 	}
-	
+
 	public PreparedStatement insertEvents() {
 		return INSERT_EVENTS;
 	}
-	
+
 	public PreparedStatement updateSessionScore() {
 		return UPDATE_SESSION_SCORE;
 	}
@@ -238,31 +238,31 @@ public final class PreparedQueries extends BaseDAOCassandraImpl {
 	public PreparedStatement insertTaxonomyActivityDataCube() {
 		return INSERT_TAXONOMY_ACTIVITY_DATACUBE;
 	}
-	
+
 	public PreparedStatement selectClassMembers() {
 		return SELECT_CLASS_MEMBERS;
 	}
-	
+
 	public PreparedStatement saveClassMembers() {
 		return SAVE_CLASS_MEMBERS;
 	}
-	
+
 	public PreparedStatement removeClassMembers() {
 		return REMOVE_CLASS_MEMBERS;
 	}
-	
+
 	public PreparedStatement deleteCourseUsage() {
 		return DELETE_COURSE_USAGE;
 	}
-	
+
 	public PreparedStatement deleteUnitUsage() {
 		return DELETE_UNIT_USAGE;
 	}
-	
+
 	public PreparedStatement deleteLessonUsage() {
 		return DELETE_LESSON_USAGE;
 	}
-	
+
 	public PreparedStatement deleteAssessmentOrCollectionUsage() {
 		return DELETE_ASSESSMENT_OR_COLLECTION_USAGE;
 	}

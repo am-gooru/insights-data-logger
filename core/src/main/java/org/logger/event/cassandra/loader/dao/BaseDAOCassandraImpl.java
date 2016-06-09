@@ -37,26 +37,26 @@ import org.logger.event.datasource.infra.CassandraClient;
 import com.datastax.driver.core.Session;
 
 public abstract class BaseDAOCassandraImpl {
-	
+
 	public String getAnalyticsKeyspaceName() {
 		return CassandraClient.getAnalyticsKeyspace();
 	}
 	public String getEventKeyspaceName() {
 		return CassandraClient.getEventKeyspace();
 	}
-	
-	public KafkaLogProducer getKafkaLogProducer(){
+
+	protected KafkaLogProducer getKafkaLogProducer(){
 		return CassandraClient.getKafkaLogProducer();
 	}
-	
-	public Session getAnalyticsCassSession() {
+
+	protected Session getAnalyticsCassSession() {
 		return CassandraClient.getAnalyticsCassandraSession();
-	} 
-	
-	public Session getEventCassSession() {
+	}
+
+	protected Session getEventCassSession() {
 		return CassandraClient.getEventCassandraSession();
 	}
-	
+
 	public String setNAIfNull(Map<String, Object> eventMap,String fieldName) {
 		if(eventMap.containsKey(fieldName) && eventMap.get(fieldName) != null && StringUtils.isNotBlank((String)eventMap.get(fieldName))){
 			return (String) eventMap.get(fieldName);
@@ -81,7 +81,7 @@ public abstract class BaseDAOCassandraImpl {
 		}
 		return 0;
 	}
-	public String appendTildaSeperator(String... columns) {
+	protected String appendTildaSeperator(String... columns) {
 		StringBuilder columnKey = new StringBuilder();
 		for (String column : columns) {
 			if (StringUtils.isNotBlank(column)) {

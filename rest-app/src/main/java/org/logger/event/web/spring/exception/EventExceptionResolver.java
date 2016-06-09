@@ -42,7 +42,7 @@ public class EventExceptionResolver extends SimpleMappingExceptionResolver {
 
 	@Override
 	public ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-		ErrorObject errorObject = null;
+		ErrorObject errorObject;
 		ex.printStackTrace();
 		logger.error("Error in Resolver : {}", ex);
 		if (ex instanceof AccessDeniedException) {

@@ -23,14 +23,8 @@
  ******************************************************************************/
 package org.logger.event.web.service;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.TimeZone;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.EventBuilder;
@@ -53,21 +47,20 @@ import com.google.gson.JsonParser;
 @Service
 public class EventServiceImpl implements EventService {
 
-	protected final Logger LOG = LoggerFactory.getLogger(EventServiceImpl.class);
+	private final Logger LOG = LoggerFactory.getLogger(EventServiceImpl.class);
 
-	protected CassandraDataLoader dataLoaderService;
-	private BaseCassandraRepo baseDao;
-	private SimpleDateFormat minuteDateFormatter;
-	
+	private final CassandraDataLoader dataLoaderService;
+	private final BaseCassandraRepo baseDao;
+
 	public EventServiceImpl() {
 		baseDao = BaseCassandraRepo.instance();
 		dataLoaderService = new CassandraDataLoader();
-		this.minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
+		SimpleDateFormat minuteDateFormatter = new SimpleDateFormat("yyyyMMddkkmm");
 		minuteDateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 
 	/**
-	 * 
+	 *
 	 * @param event
 	 * @return
 	 */
@@ -76,6 +69,7 @@ public class EventServiceImpl implements EventService {
 		Boolean isValidEvent = true;
 		if (event == null) {
 			ServerValidationUtils.logErrorIfNull(isValidEvent, event, "event.all", Constants.RAW_EVENT_NULL_EXCEPTION);
+			return false;
 		}
 		String eventJson = event.getFields();
 		ServerValidationUtils.logErrorIfNullOrEmpty(isValidEvent, event.getEventName(), Constants.EVENT_NAME, "LA001", eventJson, Constants.RAW_EVENT_NULL_EXCEPTION);
@@ -94,9 +88,7 @@ public class EventServiceImpl implements EventService {
 
 	/**
 	 * Validating apiKey
-	 * 
-	 * @param request
-	 * @param response
+	 *
 	 * @return
 	 */
 	public boolean ensureValidRequest(String apiKeyToken) {
@@ -120,8 +112,8 @@ public class EventServiceImpl implements EventService {
 			LOG.error("inValid request..");
 			return;
 		}
-		JsonElement jsonElement = null;
-		JsonArray eventJsonArr = null;
+		JsonElement jsonElement;
+		JsonArray eventJsonArr;
 		if (!fields.isEmpty()) {
 			try {
 				// validate JSON
@@ -163,7 +155,7 @@ public class EventServiceImpl implements EventService {
 			dataLoaderService.processMessage(event);
 		}
 	}
-	private AppDO verifyApiKey(String apiKey) {		
+	private AppDO verifyApiKey(String apiKey) {
 		return baseDao.getApiKeyDetails(apiKey);
 	}
 

@@ -32,12 +32,12 @@ import com.ecyrd.speed4j.StopWatch;
 public class PipedInputStreamProcessor extends BaseDataProcessor implements DataProcessor {
 
 	@Override
-	public void handleRow(Object row) throws Exception {
-    	String line = "";
+	public void handleRow(Object row) {
+    	String line;
     	StopWatch sw = new StopWatch();
-    	
+    	// FIXME: When this BufferedReader closed???
     	BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
-    	
+
     	long lines = 0;
     	try {
 			while ((line = bi.readLine()) != null) {
@@ -53,7 +53,7 @@ public class PipedInputStreamProcessor extends BaseDataProcessor implements Data
 			LOG.error("Something went wrong while processing input", e);
 		}
     	sw.stop("loglines");
-		LOG.info(sw.toString());		
+		LOG.info(sw.toString());
 	}
 
 }

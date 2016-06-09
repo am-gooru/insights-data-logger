@@ -28,36 +28,36 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-public class DataUtils {
+public final class DataUtils {
 
-	private static Map<String, String> formatedEventNameMap;
+	private static final Map<String, String> formatedEventNameMap;
 
-	private static Map<String, String> formatedAnswerSeq;
+	private static final Map<String, String> formatedAnswerSeq;
 
-	private static Map<String, Long> formatedReaction;
+	private static final Map<String, Long> formatedReaction;
 
-	public static Map<String, String> collectionItemKeys;
+	private static final Map<String, String> collectionItemKeys;
 
-	public static Map<String, String> collectionKeys;
+	private static final Map<String, String> collectionKeys;
 
-	public static Map<String, String> collectionItemTableKeys;
+	private static final Map<String, String> collectionItemTableKeys;
 
-	public static Map<String, String> classpageTableKeyMap;
+	private static final Map<String, String> classpageTableKeyMap;
 
-	public static Map<String, String> collectionItemCFKeys;
+	private static final Map<String, String> collectionItemCFKeys;
 
-	public static Map<String, String> collectionCFKeys;
+	private static final Map<String, String> collectionCFKeys;
 
-	public static Map<String, String> classpageCFDataTypeMap;
+	private static final Map<String, String> classpageCFDataTypeMap;
 
-	public static Map<String, String> collectionCFDataTypeMap;
+	private static final Map<String, String> collectionCFDataTypeMap;
 
-	public static Map<String, String> collectionItemCFDataTypeMap;
-	
-	private static Map<String, Long> resourceFormatIdMap;
+	private static final Map<String, String> collectionItemCFDataTypeMap;
+
+	private static final Map<String, Long> resourceFormatIdMap;
 
 	static {
-		formatedEventNameMap = new HashMap<String, String>();
+		formatedEventNameMap = new HashMap<>();
 		formatedEventNameMap.put("collection-search", "search_performed");
 		formatedEventNameMap.put("resource-search", "search_performed");
 		formatedEventNameMap.put("quiz-search", "search_performed");
@@ -76,7 +76,7 @@ public class DataUtils {
 	}
 
 	static {
-		formatedAnswerSeq = new HashMap<String, String>();
+		formatedAnswerSeq = new HashMap<>();
 		formatedAnswerSeq.put("0", "skipped");
 		formatedAnswerSeq.put("1", "A");
 		formatedAnswerSeq.put("2", "B");
@@ -87,7 +87,7 @@ public class DataUtils {
 	}
 
 	static {
-		formatedReaction = new HashMap<String, Long>();
+		formatedReaction = new HashMap<>();
 		formatedReaction.put("i-need-help", 1L);
 		formatedReaction.put("i-donot-understand", 2L);
 		formatedReaction.put("meh", 3L);
@@ -96,7 +96,7 @@ public class DataUtils {
 	}
 
 	static {
-		collectionItemTableKeys = new HashMap<String, String>();
+		collectionItemTableKeys = new HashMap<>();
 		collectionItemTableKeys.put("collectionContentId", "collectionContentId");
 		collectionItemTableKeys.put("collectionGooruOid", "collectionGooruOid");
 		collectionItemTableKeys.put("resourceGooruOid", "resourceGooruOid");
@@ -117,7 +117,7 @@ public class DataUtils {
 	}
 
 	static {
-		collectionItemCFKeys = new HashMap<String, String>();
+		collectionItemCFKeys = new HashMap<>();
 		collectionItemCFKeys.put("deleted", "deleted");
 		collectionItemCFKeys.put("item_type", "itemType");
 		collectionItemCFKeys.put("resource_content_id", "resourceContentId");
@@ -141,7 +141,7 @@ public class DataUtils {
 	}
 
 	static {
-		collectionCFKeys = new HashMap<String, String>();
+		collectionCFKeys = new HashMap<>();
 		collectionCFKeys.put("gooru_oid", "gooruOid");
 		collectionCFKeys.put("content_id", "contentId");
 		collectionCFKeys.put("collection_type", "collectionType");
@@ -162,7 +162,7 @@ public class DataUtils {
 
 	}
 	static {
-		classpageTableKeyMap = new HashMap<String, String>();
+		classpageTableKeyMap = new HashMap<>();
 		classpageTableKeyMap.put("deleted", "deleted");
 		classpageTableKeyMap.put("classpage_content_id", "contentId");
 		classpageTableKeyMap.put("classpage_gooru_oid", "classId");
@@ -179,7 +179,7 @@ public class DataUtils {
 	}
 
 	static {
-		collectionKeys = new HashMap<String, String>();
+		collectionKeys = new HashMap<>();
 		collectionKeys.put("collectionContentId", "collectionContentId");
 		collectionKeys.put("gooruOid", "collectionGooruOid");
 		collectionKeys.put("collectionType", "collectionType");
@@ -198,7 +198,7 @@ public class DataUtils {
 		collectionKeys.put("estimatedTime", "estimatedTime");
 	}
 	static {
-		collectionItemKeys = new HashMap<String, String>();
+		collectionItemKeys = new HashMap<>();
 		collectionItemKeys.put("contentGooruId", "resourceGooruOid");
 		collectionItemKeys.put("parentGooruId", "collectionGooruOid");
 		collectionItemKeys.put("parentContentId", "collectionContentId");
@@ -212,7 +212,7 @@ public class DataUtils {
 
 	}
 	static {
-		classpageCFDataTypeMap = new HashMap<String, String>();
+		classpageCFDataTypeMap = new HashMap<>();
 		classpageCFDataTypeMap.put("deleted", "Integer");
 		classpageCFDataTypeMap.put("classpage_content_id", "Long");
 		classpageCFDataTypeMap.put("classpage_gooru_oid", "String");
@@ -228,7 +228,7 @@ public class DataUtils {
 		classpageCFDataTypeMap.put("rKey", "String");
 	}
 	static {
-		collectionCFDataTypeMap = new HashMap<String, String>();
+		collectionCFDataTypeMap = new HashMap<>();
 		collectionCFDataTypeMap.put("gooru_oid", "String");
 		collectionCFDataTypeMap.put("content_id", "Long");
 		collectionCFDataTypeMap.put("collection_type", "String");
@@ -248,7 +248,7 @@ public class DataUtils {
 		collectionCFDataTypeMap.put("rKey", "String");
 	}
 	static {
-		collectionItemCFDataTypeMap = new HashMap<String, String>();
+		collectionItemCFDataTypeMap = new HashMap<>();
 		collectionItemCFDataTypeMap.put("deleted", "Integer");
 		collectionItemCFDataTypeMap.put("item_type", "String");
 		collectionItemCFDataTypeMap.put("resource_content_id", "Long");
@@ -272,7 +272,7 @@ public class DataUtils {
 	}
 
 	static {
-		resourceFormatIdMap = new HashMap<String, Long>();
+		resourceFormatIdMap = new HashMap<>();
 		resourceFormatIdMap.put("animation/swf",103L);
 		resourceFormatIdMap.put("animation/kmz",103L);
 		resourceFormatIdMap.put("application",123L);
@@ -301,7 +301,11 @@ public class DataUtils {
 		resourceFormatIdMap.put("vimeo/video",100L);
 		resourceFormatIdMap.put("quiz",122L);
 	}
-	
+
+	private DataUtils() {
+		throw new AssertionError();
+	}
+
 	public static String makeCombinedEventName(String eventName) {
 		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName), eventName);
 	}
@@ -313,7 +317,7 @@ public class DataUtils {
 	public static String makeCombinedAnswerSeq(int sequence) {
 		return StringUtils.defaultIfEmpty(formatedAnswerSeq.get(String.valueOf(sequence)), String.valueOf(sequence));
 	}
-	
+
 	public static Long getResourceFormatId(String key) {
 		return resourceFormatIdMap.containsKey(key) ? resourceFormatIdMap.get(key) : null ;
 	}

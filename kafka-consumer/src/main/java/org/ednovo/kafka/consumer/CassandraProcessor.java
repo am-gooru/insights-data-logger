@@ -33,19 +33,19 @@ import org.slf4j.LoggerFactory;
 public class CassandraProcessor extends BaseDataProcessor implements
 		DataProcessor {
 	protected Properties properties;
-	protected CassandraDataLoader dataLoader;
+	private CassandraDataLoader dataLoader;
 	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
 
 	public CassandraProcessor() {
 		init();
 	}
 
-	protected void init() {
+	private void init() {
 		dataLoader = new CassandraDataLoader();
 	}
 
 	@Override
-	public void handleRow(Object row) throws Exception {
+	public void handleRow(Object row) {
 		if (row != null && (row instanceof EventBuilder)) {
 			dataLoader.processMessage((EventBuilder) row);
 		}

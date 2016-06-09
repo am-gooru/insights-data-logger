@@ -25,11 +25,11 @@ package org.ednovo.kafka.consumer;
 
 /*
  * Copyright 2010 LinkedIn
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -40,10 +40,7 @@ package org.ednovo.kafka.consumer;
  */
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -58,25 +55,23 @@ import org.slf4j.LoggerFactory;
 
 public class MessageConsumer extends Thread implements Runnable {
 
-	private CassandraDataLoader cassandraDataLoader;
 	private static ConsumerConnector consumer;
-	private DataProcessor rowDataProcessor;
+	private final DataProcessor rowDataProcessor;
 
 	private static String[] topic;
 	private static String ZK_IP;
 	private static String ZK_PORT;
-	private static String KAFKA_TOPIC;
 	private static String KAFKA_GROUPID;
-	private static String SERVER_NAME;
-	ExecutorService service = Executors.newFixedThreadPool(10);
+	private final ExecutorService service = Executors.newFixedThreadPool(10);
 
-	private static Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MessageConsumer.class);
 
 	public MessageConsumer(DataProcessor insertRowForLogDB) {
 
-		cassandraDataLoader = new CassandraDataLoader();
+		CassandraDataLoader cassandraDataLoader = new CassandraDataLoader();
 		this.rowDataProcessor = insertRowForLogDB;
 		getKafkaConsumer();
+		String SERVER_NAME;
 		try {
 			SERVER_NAME = InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
@@ -87,30 +82,30 @@ public class MessageConsumer extends Thread implements Runnable {
 	private void getKafkaConsumer() {
 			ZK_IP = CassandraClient.getProperty("kafka.consumer.ip");
 			ZK_PORT = CassandraClient.getProperty("kafka.consumer.port");
-			KAFKA_TOPIC = CassandraClient.getProperty("kafka.consumer.topic");
+		String KAFKA_TOPIC = CassandraClient.getProperty("kafka.consumer.topic");
 			KAFKA_GROUPID = CassandraClient.getProperty("kafka.consumer.group");
-			LOG.info("Mesage Consumer: " + ZK_IP + ":" + ZK_PORT);
+			LOG.info("Mesage Consumer: " + ZK_IP + ':' + ZK_PORT);
 			MessageConsumer.topic = KAFKA_TOPIC.split(",");
 			consumer = kafka.consumer.Consumer
 					.createJavaConsumerConnector(createConsumerConfig());
-		
+
 	}
 
 	private static String buildEndPoint(String ip, String portNo) {
 
-		StringBuffer stringBuffer = new StringBuffer();
+		StringBuilder stringBuffer = new StringBuilder();
 		String[] ips = ip.split(",");
 		String[] ports = portNo.split(",");
 		for (int count = 0; count < ips.length; count++) {
 
 			if (stringBuffer.length() > 0) {
-				stringBuffer.append(",");
+				stringBuffer.append(',');
 			}
 
 			if (count < ports.length) {
-				stringBuffer.append(ips[count] + ":" + ports[count]);
+				stringBuffer.append(ips[count]).append(':').append(ports[count]);
 			} else {
-				stringBuffer.append(ips[count] + ":" + ports[0]);
+				stringBuffer.append(ips[count]).append(':').append(ports[0]);
 			}
 		}
 		return stringBuffer.toString();
@@ -119,12 +114,12 @@ public class MessageConsumer extends Thread implements Runnable {
 	private static ConsumerConfig createConsumerConfig() {
 
 		Properties props = new Properties();
-		props.put("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
-		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "6000");
-		props.put("zookeeper.sync.time.ms", "200");
-		props.put("auto.commit.interval.ms", "1000");
-		LOG.info("Kafka consumer config: " + ZK_IP + ":" + ZK_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		props.setProperty("zookeeper.connect", MessageConsumer.buildEndPoint(ZK_IP, ZK_PORT));
+		props.setProperty("group.id", KAFKA_GROUPID);
+		props.setProperty("zookeeper.session.timeout.ms", "6000");
+		props.setProperty("zookeeper.sync.time.ms", "200");
+		props.setProperty("auto.commit.interval.ms", "1000");
+		LOG.info("Kafka consumer config: " + ZK_IP + ':' + ZK_PORT + "::" + Arrays.toString(topic) + "::" + KAFKA_GROUPID);
 		return new ConsumerConfig(props);
 
 	}
@@ -134,9 +129,9 @@ public class MessageConsumer extends Thread implements Runnable {
 		 * get list of kafka stream from specific topic
 		 */
 		try {
-			Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+			Map<String, Integer> topicCountMap = new HashMap<>();
 			for (final String consumerTopic : topic) {
-				topicCountMap.put(consumerTopic, new Integer(1));
+				topicCountMap.put(consumerTopic, 1);
 			}
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			for (final String consumerTopic : topic) {

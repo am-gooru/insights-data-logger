@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsUpdateDAO {
 	private static final Logger LOG = LoggerFactory.getLogger(EventsUpdateDAOImpl.class);
 
-	private BaseCassandraRepo baseCassandraDao;
+	private final BaseCassandraRepo baseCassandraDao;
 
 	private final ExecutorService service = Executors.newFixedThreadPool(10);
 
@@ -30,7 +30,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	@Override
 	public void eventsHandler(final EventBuilder event) {
 		try {
-			Set<Callable<String>> tasks = new HashSet<Callable<String>>();
+			Set<Callable<String>> tasks = new HashSet<>();
 			tasks.add(new Callable<String>() {
 				public String call() throws Exception {
 					switch (event.getEventName()) {
@@ -82,7 +82,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	private void handlePlayerEvents(final EventBuilder event) {
-		
+
 		if (event.getViews() > 0) {
 			baseCassandraDao.incrementStatisticalCounterData(event.getContentGooruId(),Constants.VIEWS, event.getViews());
 			baseCassandraDao.incrementUserStatisticalCounterData(event.getContentGooruId(), event.getGooruUUID(), Constants.VIEWS, event.getViews());
@@ -94,7 +94,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	private void saveStatIndexPublisherQueue(final EventBuilder event) {
-		String resourceType = null;
+		String resourceType;
 		if (event.getViews() > 0) {
 			if (LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())) {
 				resourceType = event.getCollectionType();
@@ -104,16 +104,16 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 			baseCassandraDao.addStatPublisherQueue(Constants.PUBLISH_METRICS, event.getContentGooruId(), resourceType, event.getEventTime());
 		}
 	}
-	
+
 	private void handleClassJoin(final EventBuilder event) {
-		HashSet<String> students = new HashSet<String>();
+		HashSet<String> students = new HashSet<>();
 		students.add(event.getGooruUUID());
  		baseCassandraDao.saveClassMembers(event.getContentGooruId(), students);
 	}
 
 	private void handleCollaboratorsUpdate(final EventBuilder event) {
 		try {
-			HashSet<String> collaborators = new HashSet<String>();
+			HashSet<String> collaborators = new HashSet<>();
 			JSONObject data = event.getPayLoadObject().getJSONObject(Constants.DATA);
 			if (data != null) {
 				JSONArray collaboratorsArray = data.getJSONArray(Constants.COLLABORATORS);
@@ -134,7 +134,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	private void handleItemDelete(final EventBuilder event) {
 		try {
 			String parentContentIdD = event.getContext().getString(Constants.PARENT_CONTENT_ID);
-			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+			if (Constants.RESOURCE_FORMATS_PATTERN.matcher(event.getContentFormat()).matches()) {
 				baseCassandraDao.decrementStatisticalCounterData(parentContentIdD,Constants.USED_IN_COLLECTION_COUNT, 1);
 				baseCassandraDao.decrementUserStatisticalCounterData(parentContentIdD,event.getGooruUUID(), Constants.USED_IN_COLLECTION_COUNT, 1);
 			}
@@ -149,13 +149,13 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 		String parentContentId;
 		try {
 			parentContentId = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
-			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+			if (Constants.RESOURCE_FORMATS_PATTERN.matcher(event.getContentFormat()).matches()) {
 				baseCassandraDao.incrementStatisticalCounterData(parentContentId, Constants.USED_IN_COLLECTION_COUNT, 1);
 				baseCassandraDao.incrementUserStatisticalCounterData(parentContentId,event.getGooruUUID(), Constants.USED_IN_COLLECTION_COUNT, 1);
 			}
 			baseCassandraDao.incrementStatisticalCounterData(parentContentId, Constants.COPY, 1);
 			baseCassandraDao.incrementUserStatisticalCounterData(parentContentId, event.getGooruUUID(), Constants.COPY, 1);
-			
+
 		} catch (Exception e) {
 			LOG.error("Exception : ", e);
 		}
@@ -164,7 +164,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	private void handleItemAdd(final EventBuilder event) {
 		try {
 			String parentContentIdA = event.getPayLoadObject().getJSONObject(Constants.TARGET).getString(Constants.PARENT_CONTENT_ID);
-			if (event.getContentFormat().matches(Constants.RESOURCE_FORMATS)) {
+			if (Constants.RESOURCE_FORMATS_PATTERN.matcher(event.getContentFormat()).matches()) {
 				baseCassandraDao.incrementStatisticalCounterData(parentContentIdA, Constants.USED_IN_COLLECTION_COUNT, 1);
 				baseCassandraDao.incrementUserStatisticalCounterData(parentContentIdA, event.getGooruUUID(), Constants.USED_IN_COLLECTION_COUNT, 1);
 			}
@@ -174,7 +174,7 @@ public class EventsUpdateDAOImpl extends BaseDAOCassandraImpl implements EventsU
 	}
 
 	private void handleItemCreate(final EventBuilder event) {
-		if (event.getContentFormat().equalsIgnoreCase(Constants.CLASS) || event.getContentFormat().matches(Constants.COLLECTION_TYPES)) {
+		if (event.getContentFormat().equalsIgnoreCase(Constants.CLASS) || Constants.COLLECTION_TYPES.matcher(event.getContentFormat()).matches()) {
 			baseCassandraDao.updateContentCreators(event.getContentGooruId(), event.getGooruUUID());
 		}
 	}

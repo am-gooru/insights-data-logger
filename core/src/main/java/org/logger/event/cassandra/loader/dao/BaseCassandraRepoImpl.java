@@ -2,7 +2,6 @@ package org.logger.event.cassandra.loader.dao;
 
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.ednovo.data.model.AppDO;
 import org.ednovo.data.model.ClassActivityDatacube;
 import org.ednovo.data.model.ContentTaxonomyActivity;
@@ -26,11 +25,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseCassandraRepoImpl.class);
 
-	private static PreparedQueries queries = PreparedQueries.getInstance();
+	private static final PreparedQueries queries = PreparedQueries.getInstance();
 
 	/**
 	 * Store all the session IDs if user playing collection from inside and outside of the class
-	 * 
+	 *
 	 * @param sessionId
 	 * @param classUid
 	 * @param courseUid
@@ -71,18 +70,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	/**
 	 * Usage metrics will be store here by session wise
-	 * 
-	 * @param sessionId
-	 * @param gooruOid
-	 * @param collectionItemId
-	 * @param answerObject
-	 * @param attempts
-	 * @param reaction
-	 * @param resourceFormat
-	 * @param resourceType
-	 * @param score
-	 * @param timeSpent
-	 * @param views
+	 *
 	 * @return true/false -- meaning - operation success/fail
 	 */
 	@Override
@@ -103,17 +91,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	/**
 	 * CULA/C aggregated metrics will be stored.
-	 * 
-	 * @param classUid
-	 * @param courseUid
-	 * @param unitUid
-	 * @param lessonUid
-	 * @param collectionUid
-	 * @param userUid
-	 * @param collectionType
-	 * @param score
-	 * @param timeSpent
-	 * @param views
+	 *
 	 * @return true/false -- meaning operation success/fail
 	 */
 	@Override
@@ -164,15 +142,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	/**
 	 * Students current/left off CULA/CR will be stored
-	 * 
-	 * @param userUid
-	 * @param classUid
-	 * @param courseUid
-	 * @param unitUid
-	 * @param lessonUid
-	 * @param collectionUid
-	 * @param resourceUid
-	 * @param sessionTime
+	 *
 	 * @return true/false -- meaning operation success/fail
 	 */
 	@Override
@@ -444,7 +414,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 
 	@Override
 	public long getContentTaxonomyActivityScore(String rowKey) {
-		ResultSet result = null;
+		ResultSet result;
 		long questionCount = 0L;
 		long score = 0L;
 		try {
@@ -595,7 +565,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 					existingValue = resultRow.getLong(Constants.METRICS);
 				}
 			}
-			long balancedMatrics = ((Number) metricsValue).longValue() - existingValue;
+			long balancedMatrics = metricsValue - existingValue;
 			BoundStatement boundStatement = new BoundStatement(queries.incrementStatisticalCounterData());
 			boundStatement.bind(balancedMatrics, clusteringKey, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
@@ -641,7 +611,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 				existingValue = resultRow.getLong(Constants.METRICS);
 			}
 			}
-			long balancedMatrics =  ((Number)metricsValue).longValue() - existingValue;			
+			long balancedMatrics = metricsValue - existingValue;
 			BoundStatement boundStatement = new BoundStatement(queries.incrementUserStatisticalCounterData());
 			boundStatement.bind(balancedMatrics, clusteringKey, userUid, metricsName);
 			getAnalyticsCassSession().executeAsync(boundStatement);
@@ -673,7 +643,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return appDO;
 	}
-	
+
 	@Override
 	public ResultSet getClassMembers(String classId) {
 		ResultSet result = null;
@@ -746,7 +716,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean deleteUnitUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {
 		try {
@@ -762,7 +732,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean deleteLessonUsage(StudentsClassActivity studentsClassActivity, String studentId, String collectionType) {
 		try {
@@ -779,7 +749,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean deleteAssessmentOrCollectionUsage(StudentsClassActivity studentsClassActivity, String studentId) {
 		try {
@@ -796,11 +766,11 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean deleteClassActivityDataCube(String rowKey, String collectionType, String studentId, String leafNode) {
 		try {
-			
+
 				BoundStatement boundStatement = new BoundStatement(queries.deleteDataCubeByRowkeyColumn());
 				boundStatement.bind(rowKey,collectionType,studentId,leafNode);
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);
@@ -814,7 +784,7 @@ public class BaseCassandraRepoImpl extends BaseDAOCassandraImpl implements BaseC
 	@Override
 	public boolean deleteClassActivityDataCube(String rowKey) {
 		try {
-			
+
 				BoundStatement boundStatement = new BoundStatement(queries.deleteDataCubeByRowkey());
 				boundStatement.bind(rowKey);
 				ResultSetFuture resultSetFuture = getAnalyticsCassSession().executeAsync(boundStatement);

@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
-public class DataUtils {
+public final class DataUtils {
 
 	private static final Pattern collectionLoadPattern = Pattern
 			.compile("^(/collection/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(.json)$");
@@ -58,7 +58,7 @@ public class DataUtils {
 		formatedEventNameMap.put("showRating", "show-rating");
 		formatedEventNameMap.put("resourceCollectionList", "resource-collection-list");
 	}
-	
+
 	public static String makeEventNameConsistent(String eventName) {
 		return StringUtils.defaultIfEmpty(formatedEventNameMap.get(eventName), eventName);
 	}

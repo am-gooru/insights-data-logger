@@ -35,12 +35,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class CORSFilter implements Filter {
-	
-	public static final String VALID_METHODS = "DELETE, HEAD, GET, OPTIONS, POST, PUT";
 
-	public CORSFilter() { 
+	private static final String VALID_METHODS = "DELETE, HEAD, GET, OPTIONS, POST, PUT";
+
+	public CORSFilter() {
 	}
-	
+
 	@Override
 	public void destroy() {
 	}
@@ -53,7 +53,7 @@ public class CORSFilter implements Filter {
 		chain.doFilter(request, response);
 
 	}*/
-	
+
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws ServletException, IOException {
         HttpServletRequest httpReq = (HttpServletRequest) req;
         HttpServletResponse httpResp = (HttpServletResponse) resp;

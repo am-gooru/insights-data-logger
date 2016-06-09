@@ -31,7 +31,7 @@ import org.springframework.web.context.ContextLoader;
 public class RequestSupport {
 
 	public RequestSupport() {
-		log = new HashMap<String, Object>();
+		log = new HashMap<>();
 	}
 
 	public static RequestSupport getSessionContext() {

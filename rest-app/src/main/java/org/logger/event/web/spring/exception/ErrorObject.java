@@ -29,10 +29,10 @@ public class ErrorObject implements Serializable {
 
 	private static final long serialVersionUID = 2324523124118900807L;
 
-	int code;
+	private int code;
 
-	String status;
-	
+	private String status;
+
 	public ErrorObject(int code, String status) {
 		this.code = code;
 		this.status = status;

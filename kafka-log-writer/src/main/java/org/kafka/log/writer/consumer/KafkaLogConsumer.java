@@ -37,6 +37,7 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
 public class KafkaLogConsumer extends Thread implements Runnable {
 
@@ -46,9 +47,8 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private static String ZOOKEEPER_IP;
 	private static String ZOOKEEPER_PORT;
 	private static String KAFKA_GROUPID;
-	private static String KAFKA_FILE_TOPIC;
-	
-	private static Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
+
+	private static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
 
 	public KafkaLogConsumer() {
 		getKafkaConsumer();
@@ -57,28 +57,28 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private void getKafkaConsumer() {
 		ZOOKEEPER_IP = DataLoader.getProperty("kafka.consumer.ip");
 		ZOOKEEPER_PORT = DataLoader.getProperty("kafka.consumer.port");
-		KAFKA_FILE_TOPIC = DataLoader.getProperty("kafka.logwritter.topic");
+		String KAFKA_FILE_TOPIC = DataLoader.getProperty("kafka.logwritter.topic");
 		KAFKA_GROUPID = DataLoader.getProperty("kafka.logwritter.group");
 		KafkaLogConsumer.topic = KAFKA_FILE_TOPIC;
 		LOG.info("ZOOKEEPER_IP : " + ZOOKEEPER_IP + " - KAFKA_FILE_TOPIC: " + KAFKA_FILE_TOPIC + " -KAFKA_GROUPID : "+ KAFKA_GROUPID);
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
 	}
 
-	public static String buildEndPoint(String ip, String portNo) {
+	private static String buildEndPoint(String ip, String portNo) {
 
-		StringBuffer stringBuffer = new StringBuffer();
+		StringBuilder stringBuffer = new StringBuilder();
 		String[] ips = ip.split(",");
 		String[] ports = portNo.split(",");
 		for (int count = 0; count < ips.length; count++) {
 
 			if (stringBuffer.length() > 0) {
-				stringBuffer.append(",");
+				stringBuffer.append(',');
 			}
 
 			if (count < ports.length) {
-				stringBuffer.append(ips[count] + ":" + ports[count]);
+				stringBuffer.append(ips[count]).append(':').append(ports[count]);
 			} else {
-				stringBuffer.append(ips[count] + ":" + ports[0]);
+				stringBuffer.append(ips[count]).append(':').append(ports[0]);
 			}
 		}
 		return stringBuffer.toString();
@@ -87,12 +87,12 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	private static ConsumerConfig createConsumerConfig() {
 
 		Properties props = new Properties();
-		props.put("zookeeper.connect", KafkaLogConsumer.buildEndPoint(ZOOKEEPER_IP, ZOOKEEPER_PORT));
-		props.put("group.id", KAFKA_GROUPID);
-		props.put("zookeeper.session.timeout.ms", "20000");
-		props.put("zookeeper.sync.time.ms", "2000");
-		props.put("auto.commit.interval.ms", "1000");
-		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ":" + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
+		props.setProperty("zookeeper.connect", KafkaLogConsumer.buildEndPoint(ZOOKEEPER_IP, ZOOKEEPER_PORT));
+		props.setProperty("group.id", KAFKA_GROUPID);
+		props.setProperty("zookeeper.session.timeout.ms", "20000");
+		props.setProperty("zookeeper.sync.time.ms", "2000");
+		props.setProperty("auto.commit.interval.ms", "1000");
+		LOG.info("Kafka File writer consumer config: " + ZOOKEEPER_IP + ':' + ZOOKEEPER_PORT + "::" + topic + "::" + KAFKA_GROUPID);
 
 		return new ConsumerConfig(props);
 
@@ -102,7 +102,7 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 
 		initConsumer();
 	}
-	
+
 	/**
 	 * Clean Shutdown
 	 */
@@ -116,29 +116,28 @@ public class KafkaLogConsumer extends Thread implements Runnable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void initConsumer() {
+	private void initConsumer() {
 
 		Integer noOfThread = 1;
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+		Map<String, Integer> topicCountMap = new HashMap<>();
 		topicCountMap.put(topic, noOfThread);
 		try {
 
 			/**
 			 * get list of kafka stream from specific topic
 			 */
-			topicCountMap.put(topic, new Integer(1));
+			topicCountMap.put(topic, 1);
 			LOG.info("Logwriter topic : "+topic);
 			LOG.info("LogWriter topicCountMap : "+topicCountMap);
 			Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 			KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-			ConsumerIterator<byte[], byte[]> it = stream.iterator();
 			/**
 			 * process consumed data
 			 */
-			while (it.hasNext()) {
-				String message = new String(it.next().message());
+			for (MessageAndMetadata<byte[], byte[]> aStream : stream) {
+				String message = new String(aStream.message());
 				Gson gson = new Gson();
-				Map<String, String> messageMap = new HashMap<String, String>();
+				Map<String, String> messageMap = new HashMap<>();
 				try {
 					messageMap = gson.fromJson(message, messageMap.getClass());
 				} catch (Exception e) {

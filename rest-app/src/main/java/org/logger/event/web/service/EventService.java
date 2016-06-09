@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface EventService {
-	
-	public void eventLogging(String fields, String apiKey);
-	
+
+	void eventLogging(String fields, String apiKey);
+
 }

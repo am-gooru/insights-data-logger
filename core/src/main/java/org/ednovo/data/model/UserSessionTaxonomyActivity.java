@@ -2,44 +2,43 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
 	private String sessionId;
-	
+
 	private String gooruOid;
-	
+
 	private String subjectId;
-	
+
 	private String courseId;
-	
+
 	private String domainId;
-	
+
 	private String standardsId;
 
 	private String learningTargetsId;
 
 	private String displayCode;
-	
+
 	private String resourceType;
- 	
+
 	private String questionType;
- 		
+
 	private String answerStatus;
-	
+
 	private JSONObject taxonomyIds;
-	
+
 	private long views;
 
 	private long timeSpent;
-	
+
 	private long score;
 
 	private long reaction;

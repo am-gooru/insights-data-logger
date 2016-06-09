@@ -9,24 +9,24 @@ import org.logger.event.cassandra.loader.dao.BaseDAOCassandraImpl;
 
 public class ObjectBuilder extends BaseDAOCassandraImpl {
 
-	private  BaseCassandraRepo baseCassandraDao;
-	
+	private final BaseCassandraRepo baseCassandraDao;
+
 	private UserSessionActivity userSessionActivity = null;
 
 	private UserSessionActivity userAllSessionActivity = null;
-	
+
 	private StudentsClassActivity studentsClassActivity = null;
-	
+
 	private ClassActivityDatacube classActivityDatacube = null;
-	
+
 	private StudentLocation studentLocation = null;
-	
+
 	private ContentTaxonomyActivity contentTaxonomyActivity = null;
-	
+
 	private UserSessionTaxonomyActivity userSessionTaxonomyActivity = null;
-	
-	private EventBuilder event;
-	
+
+	private final EventBuilder event;
+
 	public ObjectBuilder(EventBuilder event){
 		baseCassandraDao = BaseCassandraRepo.instance();
 		this.event = event;
@@ -40,25 +40,25 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		userSessionTaxonomyActivityObjectCreator();
 	}
 	private void objectCreator(){
-		if(event.getEventName().matches(Constants.PLAY_EVENTS)){
+		if(Constants.PLAY_EVENTS_PATTERN.matcher(event.getEventName()).matches()){
 			userSessionActivity = new UserSessionActivity();
 			userAllSessionActivity = new UserSessionActivity();
-			if(StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA) && event.isStudent()){				
+			if(StringUtils.isNotBlank(event.getClassGooruId()) && !event.getClassGooruId().equalsIgnoreCase(Constants.NA) && event.isStudent()){
 				studentLocation = new StudentLocation();
 			}
-			if((LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName())) && event.isStudent() ){				
+			if((LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) ||LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName())) && event.isStudent() ){
 				userSessionTaxonomyActivity = new UserSessionTaxonomyActivity();
 			}
-			
+
 			if (event.isStudent() && ((event.getEventName().equalsIgnoreCase(LoaderConstants.CRPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION))
 					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.ASSESSMENT))
 					|| (event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName()) && event.getCollectionType().equalsIgnoreCase(Constants.COLLECTION)
 							&& event.getEventType().equalsIgnoreCase(Constants.START))
-					|| LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) || event.getEventName().matches(Constants.RECOMPUTATION_EVENTS))) {
+					|| LoaderConstants.CRAV1.getName().equalsIgnoreCase(event.getEventName()) || Constants.RECOMPUTATION_EVENTS_PATTERN.matcher(event.getEventName()).matches())) {
 				studentsClassActivity = new StudentsClassActivity();
 				classActivityDatacube = new ClassActivityDatacube();
 			}
-			
+
 			if(LoaderConstants.CRPV1.getName().equalsIgnoreCase(event.getEventName()) && event.getEventType().equalsIgnoreCase(Constants.STOP) && event.isStudent()){
 				contentTaxonomyActivity = new ContentTaxonomyActivity();
 			}
@@ -84,7 +84,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			if(LoaderConstants.CPV1.getName().equalsIgnoreCase(event.getEventName())){
 				userSessionActivity.setResourceType(event.getCollectionType());
 				userSessionActivity.setQuestionCount(event.getContext().getLong(Constants.QUESTION_COUNT));
-	
+
 			}else{
 				userSessionActivity.setResourceType(event.getResourceType());
 			}
@@ -105,7 +105,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}		
+			}
 		}
 	}
 
@@ -114,12 +114,12 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 		 * Build userSessionTaxonomyActivity
 		 */
 		if(userSessionTaxonomyActivity != null){
-			if(event.getResourceType().equalsIgnoreCase(Constants.RESOURCE)){				
+			if(event.getResourceType().equalsIgnoreCase(Constants.RESOURCE)){
 				userSessionTaxonomyActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getGooruUUID()));
 			}else{
-				userSessionTaxonomyActivity.setSessionId(event.getSessionId());				
+				userSessionTaxonomyActivity.setSessionId(event.getSessionId());
 			}
-			userSessionTaxonomyActivity.setGooruOid(event.getContentGooruId());			
+			userSessionTaxonomyActivity.setGooruOid(event.getContentGooruId());
 			userSessionTaxonomyActivity.setResourceType(event.getResourceType());
 			userSessionTaxonomyActivity.setQuestionType(event.getQuestionType());
 			userSessionTaxonomyActivity.setAnswerStatus(event.getAnswerStatus());
@@ -151,13 +151,13 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			studentLocation.setSessionTime(event.getEventTime());
 		}
 	}
-	
+
 	private void classActivityObjectCreator(){
 
 		/**
 		 * Build studentClassActivity
 		 */
-		
+
 		if(studentsClassActivity != null){
 			studentsClassActivity.setClassUid(event.getClassGooruId());
 			studentsClassActivity.setCourseUid(event.getCourseGooruId());
@@ -186,7 +186,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			studentsClassActivity.setTimeSpent(event.getTimespent());
 		}
 	}
-	
+
 	private void classDataCubeObjectCreator(){
 		/**
 		 * Build classActivityDatacube
@@ -202,7 +202,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			classActivityDatacube.setScore(studentsClassActivity.getScore());
 		}
 	}
-	
+
 	private void contentTaxonomyActivityObjectCreator() {
 		if (contentTaxonomyActivity != null) {
 			contentTaxonomyActivity.setClassUid(event.getClassGooruId());
@@ -216,7 +216,7 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			contentTaxonomyActivity.setQuestionType(event.getQuestionType());
 		}
 	}
-	
+
 	private void allSessionActivityCreator(){
 		if(userAllSessionActivity != null){
 			try {
@@ -224,14 +224,14 @@ public class ObjectBuilder extends BaseDAOCassandraImpl {
 			} catch (CloneNotSupportedException e) {
 				e.printStackTrace();
 			}
-			if(event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){				
+			if(event.getEventName().equalsIgnoreCase(LoaderConstants.CPV1.getName())){
 				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getClassGooruId(), userSessionActivity.getGooruOid(), event.getGooruUUID()));
 			}else{
 				userAllSessionActivity.setSessionId(appendTildaSeperator(Constants.AS,event.getClassGooruId(), userSessionActivity.getParentGooruOid(), event.getGooruUUID()));
 			}
-		}		
+		}
 	}
-	
+
 	public UserSessionActivity getUserSessionActivity() {
 		return userSessionActivity;
 	}

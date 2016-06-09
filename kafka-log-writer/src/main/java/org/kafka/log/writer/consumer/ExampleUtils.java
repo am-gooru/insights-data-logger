@@ -26,8 +26,12 @@ package org.kafka.log.writer.consumer;
 import java.nio.ByteBuffer;
 import kafka.message.Message;
 
-public class ExampleUtils
+public final class ExampleUtils
 {
+  private ExampleUtils() {
+    throw new AssertionError();
+  }
+
   public static String getMessage(Message message)
   {
     ByteBuffer buffer = message.payload();

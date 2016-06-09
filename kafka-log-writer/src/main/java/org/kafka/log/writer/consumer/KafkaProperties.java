@@ -23,14 +23,13 @@
  ******************************************************************************/
 package org.kafka.log.writer.consumer;
 
-public interface KafkaProperties
-{
-  final static String zkConnect = "54.241.212.22:2181";
-  final static  String groupId = "writerGroup1";
-  final static String topic = "event-log-writer";
-  final static String kafkaServerURL = "54.241.212.22";
-  final static int kafkaServerPort = 9092;
-  final static int kafkaProducerBufferSize = 64*1024;
-  final static int connectionTimeOut = 100000;
-  final static int reconnectInterval = 10000;
+public interface KafkaProperties {
+    String zkConnect = "54.241.212.22:2181";
+    String groupId = "writerGroup1";
+    String topic = "event-log-writer";
+    String kafkaServerURL = "54.241.212.22";
+    int kafkaServerPort = 9092;
+    int kafkaProducerBufferSize = 64 * 1024;
+    int connectionTimeOut = 100000;
+    int reconnectInterval = 10000;
 }

@@ -31,24 +31,24 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 
     public JSONProcessor() {
 	}
-    
+
 	@Override
-	public void handleRow(Object row) throws Exception {
+	public void handleRow(Object row) {
 		String jsonRowObject = (String)row;
-		
+
 		if(StringUtils.isEmpty(jsonRowObject)) {
 			return;
 		}
-		
+
 		long startTime = System.currentTimeMillis(), firstStartTime = System.currentTimeMillis();
-		
+
 		if(row == null) {
 			LOG.error("The row was null. This is invalid");
 			return;
 		}
-		
-		// Override and set fields to be the original log message / JSON. 
-	        EventBuilder event = null;
+
+		// Override and set fields to be the original log message / JSON.
+	        EventBuilder event;
 	        try {
 	        	JSONObject eventJson = new JSONObject(jsonRowObject);
 	    		/*eventJson.put("context", new JSONObject(eventJson.getString("context")));
@@ -62,17 +62,17 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 	    		eventJson.put("metrics", new JSONObject(eventJson.getString("metrics")));
 	    		eventJson.put("session", new JSONObject(eventJson.getString("session")));
 	    		eventJson.put("version", new JSONObject(eventJson.getString("version")));*/
-	    		
+
 	            event = new EventBuilder(eventJson.toString());
-	            event.setFields(eventJson.toString());        
+	            event.setFields(eventJson.toString());
 	            getNextRowHandler().processRow(event);
 	        } catch (Exception e) {
 	            LOG.error("Had a problem trying to parse EventObject JSON from the raw line {}", jsonRowObject, e);
 	            return;
 	        }
 
-	        
+
 		long partEndTime = System.currentTimeMillis();
 		LOG.trace("Cassandra update: {} ms : Total : {} ms " , (partEndTime - startTime),  (partEndTime  - firstStartTime));
-	}	
+	}
 }

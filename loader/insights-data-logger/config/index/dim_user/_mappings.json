@@ -10,10 +10,6 @@
 },"organization":{
 "type":"string",
 "index":"not_analyzed"
-},
-"organization":{
-"type":"string",
-"index":"not_analyzed"
 },"state":{
 "type":"Long",
 "index":"not_analyzed"

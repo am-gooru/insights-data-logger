@@ -40,21 +40,21 @@ import org.ednovo.data.handlers.PSVProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataLoader  {
+public final class DataLoader  {
     protected static Properties properties;
-    static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
-    public DataLoader() {
-		
+    private DataLoader() {
+		throw new AssertionError();
 	}
-    
+
     public static void main(String[] args) throws java.text.ParseException {
     	// create the command line parser
     	CommandLineParser parser = new PosixParser();
 
     	// create the Options
     	Options options = new Options();
-    
+
     	options.addOption("psv","psv-path", true, "process csv files");
     	options.addOption( "f", "file-path", true, "process files from path" );
     	options.addOption( "p", "path-pattern", true, "File path pattern" );
@@ -67,7 +67,7 @@ public class DataLoader  {
     	options.addOption( "en", "eventName", true, "Load particular event in staging" );
     	options.addOption( "postUpdate", "postUpdate", true, "Load events for post aggregation" );
     	options.addOption( "method", "method", true, "Call method for job" );
-    	
+
     	options.addOption( "dryRun", "dryRun", true, "DryRun. pass true to make a dryrun. default true" );
         options.addOption( "tsStart", "tsStart", true, "time stamp Start. start of timestamp" );
         options.addOption( "tsStop", "tsStop", true, "time stamp Stop. End of timestamp" );
@@ -82,7 +82,7 @@ public class DataLoader  {
     	options.addOption( "updateBy", "updateBy", true, "updateBy" );
     	options.addOption( "callAPIViewCount", "callAPIViewCount", true, "callAPIViewCount" );
     	try {
-    		
+
     	    // parse the command line arguments
     	    CommandLine line = parser.parse( options, args );
     	    Map<String, String> configOptionsMap = new HashMap<String, String>();
@@ -93,7 +93,6 @@ public class DataLoader  {
     	    if(line.hasOption("command")) {
     	    	String cmd  = line.getOptionValue( "command");
     	    	if(cmd.equalsIgnoreCase("delete-events") || cmd.equalsIgnoreCase("delete-staging")) {
-	    	    	CassandraProcessor cassandraProcessor = new CassandraProcessor(configOptionsMap);	
 	    	    	String timeStampStartMinute = null;
                         String timeStampStopMinute = null;
                         boolean dryRun = true;
@@ -109,11 +108,11 @@ public class DataLoader  {
                         if(line.hasOption("dryRun")) {
                             String dryRunValue = line.getOptionValue("dryRun");
                             if(dryRunValue != null && (dryRunValue.equalsIgnoreCase("0")||dryRunValue.equalsIgnoreCase("false"))) {
-                               dryRun = false; 
+                               dryRun = false;
                             }
                         }
-                        
-                        
+
+
 	    	    	return;
     	    	}
     	    }
@@ -122,11 +121,11 @@ public class DataLoader  {
     	    	LOG.info("processing files");
         	    populateOptionValue(line, configOptionsMap, "path-pattern", "path-pattern", "activity*.log");
         	    populateOptionValue(line, configOptionsMap, "file-path", "file-path");
-    	    	
+
     	    	DataProcessor[] handlers = {new FileInputProcessor(configOptionsMap), new JSONProcessor(), new CassandraProcessor(configOptionsMap)};
 				DataProcessor initialRowHandler = buildHandlerChain(handlers);
 				initialRowHandler.processRow(null);
-				
+
     	        // print the value of block-size
     		    return;
     	    }
@@ -139,48 +138,47 @@ public class DataLoader  {
     	    	DataProcessor[] handlers = {new FileInputProcessor(configOptionsMap), new PSVProcessor(), new CassandraProcessor(configOptionsMap)};
 				DataProcessor initialRowHandler = buildHandlerChain(handlers);
 				initialRowHandler.processRow(null);
-    		    return;
-    	    }
+			}
     	}
     	catch( ParseException exp ) {
     		LOG.error( "Unexpected exception:" + exp.getMessage() );
     	}
 	}
-    
+
     private static void populateOptionValue(CommandLine line, Map<String, String> configOptionsMap, String optionName, String mapKeyName) {
     	populateOptionValue(line, configOptionsMap, optionName, mapKeyName, null);
     }
-    
+
     private static void populateOptionValue(CommandLine line, Map<String, String> configOptionsMap, String optionName, String mapKeyName, String defaultValue) {
     	String optionValue = null;
-    	
+
     	if( line.hasOption( optionName ) ) {
     		optionValue = line.getOptionValue( optionName );
 	    }
-    	
+
     	if(optionValue == null && defaultValue != null) {
     		optionValue = defaultValue;
     	}
-    		
+
     	if(optionValue != null) {
     		configOptionsMap.put(mapKeyName, optionValue);
     	}
     }
-    
-    public static DataProcessor buildHandlerChain(DataProcessor[] handlers) {
+
+    private static DataProcessor buildHandlerChain(DataProcessor[] handlers) {
     	DataProcessor firstHandler = null;
-    	DataProcessor currentHandler = null;
+    	DataProcessor currentHandler;
     	for (int handlerIndex = 0; handlerIndex < handlers.length; handlerIndex++) {
 			if(handlerIndex == 0) {
 				firstHandler = handlers[handlerIndex];
 			}
 			currentHandler = handlers[handlerIndex];
-			
+
 			if(handlers.length > (handlerIndex + 1)) {
 				currentHandler.setNextRowHandler(handlers[handlerIndex + 1]);
 			}
 		}
     	return firstHandler;
     }
-    
+
 }

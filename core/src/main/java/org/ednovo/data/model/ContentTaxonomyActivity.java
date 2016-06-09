@@ -2,50 +2,49 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ContentTaxonomyActivity implements Serializable, Cloneable{
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 3962232378273647276L;
 
 	private String userUid;
-	
+
 	private String subjectId;
-	
+
 	private String courseId;
-	
+
 	private String domainId;
-	
+
 	private String standardsId;
 
 	private String learningTargetsId;
-	
+
 	private String displayCode;
-	
+
 	private String gooruOid;
-	
+
 	private String classUid;
-	
+
 	private String resourceType;
 
 	private String questionType;
-	
+
 	private JSONObject taxonomyIds;
-	
+
 	private long views;
 
 	private long timeSpent;
 
 	private long score;
 
-	public Object clone()throws CloneNotSupportedException{  
-		return super.clone();  	
-	}  
-	
+	public Object clone()throws CloneNotSupportedException{
+		return super.clone();
+	}
+
 	public String getUserUid() {
 		return userUid;
 	}
@@ -165,5 +164,5 @@ public class ContentTaxonomyActivity implements Serializable, Cloneable{
 	public void setDisplayCode(String displayCode) {
 		this.displayCode = displayCode;
 	}
-	
+
 }

@@ -43,18 +43,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Async("threadPoolTaskExecutorForController")
 public class EventController {
 
-	protected final Logger LOG = LoggerFactory.getLogger(EventController.class);
+	private final Logger LOG = LoggerFactory.getLogger(EventController.class);
 
 	@Autowired
 	protected EventService eventService;
 
 	/**
 	 * Tracks events.
-	 * 
+	 *
 	 * @param fields
 	 *            Request Body with a JSON string that will have the fields to update
-	 * @param eventName
-	 *            Name of the event
 	 * @param apiKey
 	 *            API Key for the logging service
 	 * @param request
@@ -62,7 +60,7 @@ public class EventController {
 	 * @throws Exception
 	 */
 	@RequestMapping(method = RequestMethod.POST, headers = "Content-Type=application/json")
-	public void trackEvent(@RequestBody String fields, @RequestParam(value = Constants.API_KEY, required = true) String apiKey, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void trackEvent(@RequestBody String fields, @RequestParam(value = Constants.API_KEY, required = true) String apiKey, HttpServletRequest request, HttpServletResponse response) {
 
 		// add cross domain support
 		response.setHeader("Access-Control-Allow-Origin", "*");
@@ -71,6 +69,5 @@ public class EventController {
 		LOG.debug("starts trackEvent");
 		eventService.eventLogging(fields, apiKey);
 		LOG.debug("ends trackEvent");
-		return;
 	}
 }

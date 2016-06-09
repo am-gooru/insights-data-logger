@@ -37,9 +37,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
-public class TypeConverter {
+public final class TypeConverter {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TypeConverter.class);
+
+	private TypeConverter() {
+		throw new AssertionError();
+	}
 
 	public static <T> T stringToIntArray(String arrayAsString) {
 		if (arrayAsString != null) {
@@ -120,7 +124,7 @@ public class TypeConverter {
 					}
 				}
 			} else if (type.equalsIgnoreCase("Boolean")) {
-				result = ((Boolean)(value));
+				result = value;
 			} else if (type.equalsIgnoreCase("String")) {
 				result = String.valueOf(value);
 			} else if (type.equals("IntegerArray")) {
@@ -137,7 +141,6 @@ public class TypeConverter {
 					} catch (NumberFormatException nfe) {
 						LOG.error("Exeption : " + nfe);
 					}
-					;
 				}
 				result = results;
 			} else if (type.equalsIgnoreCase("StringArray")) {
@@ -152,7 +155,6 @@ public class TypeConverter {
 					} catch (Exception nfe) {
 						LOG.error("Exeption : " + nfe);
 					}
-					;
 				}
 				result = results;
 			} else if (type.equalsIgnoreCase("JSONArray")) {
@@ -181,7 +183,6 @@ public class TypeConverter {
 
 	public static String convertMapToJsonString(Map<String, String> map) {
 		Gson gson = new Gson();
-		String json = gson.toJson(map);
-		return json;
+		return gson.toJson(map);
 	}
 }

@@ -30,7 +30,7 @@ public abstract class BaseDataProcessor implements DataProcessor {
 	static final Logger LOG = LoggerFactory.getLogger(BaseDataProcessor.class);
 
     private DataProcessor nextRowHandler ;
-    
+
 	public DataProcessor getNextRowHandler() {
 		return nextRowHandler;
 	}
@@ -39,20 +39,20 @@ public abstract class BaseDataProcessor implements DataProcessor {
 	public void setNextRowHandler(DataProcessor handler) {
 		this.nextRowHandler = handler;
 	}
-	
+
 	@Override
 	public void processRow(Object row) {
-		
+
 		try {
 			this.handleRow(row);
 		} catch (Exception exception) {
 			LOG.info("There was an exception while processing row : {}", exception);
 		}
 	}
-	
-	abstract public void handleRow(Object row) throws Exception;
-        
-        protected void handleRowByNextHandler(Object row) throws Exception {
+
+	protected abstract void handleRow(Object row) throws Exception;
+
+        protected void handleRowByNextHandler(Object row) {
             if(nextRowHandler != null) {
                 nextRowHandler.processRow(row);
             }

@@ -18,10 +18,8 @@ import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 public final class CassandraClient implements Register {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CassandraClient.class);
-	private static Cluster analyticsCassandraCluster;
 	private static Session analyticsCassandraSession;
 	private static String analyticsKeyspaceName;
-	private static Cluster eventCassandraCluster;
 	private static Session eventCassandraSession;
 	private static String eventKeyspaceName;
 	private static KafkaLogProducer kafkaLogWriter;
@@ -53,14 +51,16 @@ public final class CassandraClient implements Register {
 		LOG.info("KAFKA_LOG_WRITTER_PRODUCER_IP" + kafkaProducerIp);
 
 		try {
-			analyticsCassandraCluster = Cluster.builder().withClusterName(analyticsCassCluster).addContactPoint(analyticsCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000))
-					.build();
+			Cluster analyticsCassandraCluster =
+				Cluster.builder().withClusterName(analyticsCassCluster).addContactPoint(analyticsCassandraHosts)
+					.withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).build();
 			analyticsCassandraSession = analyticsCassandraCluster.connect(analyticsKeyspaceName);
 
-			eventCassandraCluster = Cluster.builder().withClusterName(eventCassCluster).addContactPoint(eventCassandraHosts).withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000))
-					.build();
+			Cluster eventCassandraCluster =
+				Cluster.builder().withClusterName(eventCassCluster).addContactPoint(eventCassandraHosts)
+					.withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+					.withReconnectionPolicy(new ExponentialReconnectionPolicy(1000, 30000)).build();
 			eventCassandraSession = eventCassandraCluster.connect(eventKeyspaceName);
 
 			kafkaLogWriter = new KafkaLogProducer(kafkaProducerIp, kafkaProducerPort, kafkaLogwritterTopic, kafkaProducerType);
@@ -104,7 +104,7 @@ public final class CassandraClient implements Register {
 	}
 
 	private void loadConfigFile() {
-		InputStream inputStream = null;
+		InputStream inputStream;
 		try {
 			configConstants = new Properties();
 			String propFileName = "logapi-config.properties";
@@ -117,7 +117,7 @@ public final class CassandraClient implements Register {
 		}
 	}
 
-	private static class CassandraClientHolder {
+	private static final class CassandraClientHolder {
 		public static final CassandraClient INSTANCE = new CassandraClient();
 	}
 

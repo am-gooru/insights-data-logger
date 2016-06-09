@@ -30,13 +30,11 @@ import org.logger.event.cassandra.loader.CassandraDataLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-
 public class CassandraProcessor extends BaseDataProcessor implements DataProcessor {
-	static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
-	
-	protected CassandraDataLoader dataLoader;
-	
+	private static final Logger logger = LoggerFactory.getLogger(CassandraProcessor.class);
+
+	protected final CassandraDataLoader dataLoader;
+
 	public CassandraProcessor(Map<String,String> configOptionsMap){
 		dataLoader = new CassandraDataLoader(configOptionsMap);
 	}
@@ -45,13 +43,13 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
         public void handleRow(Object row) throws Exception {
 
          if (row != null && (row instanceof EventBuilder)) {
-        	
+
         	 EventBuilder event = (EventBuilder) row;
-         	
+
         	 if(event.getVersion() == null){
              	return;
              }
-        	 
+
         	if (event.getEventName() == null || event.getEventName().isEmpty() || event.getContext() == null) {
         		logger.warn("EventName or Context is empty. This is an error in EventObject");
         		return;
@@ -59,5 +57,5 @@ public class CassandraProcessor extends BaseDataProcessor implements DataProcess
 
          	dataLoader.processMessage(event);
          }
-	}	
+	}
 }

@@ -29,11 +29,11 @@ public class KafkaInputProcessor extends BaseDataProcessor implements DataProces
 	public KafkaInputProcessor() {
 
 	}
-	
+
 	@Override
-	public void handleRow(Object row) throws Exception {
+	public void handleRow(Object row) {
 		if(consumerThread == null){
-			// If this is the first row, then initialize and start thread. 
+			// If this is the first row, then initialize and start thread.
 			consumerThread = new MessageConsumer(getNextRowHandler());
 		    consumerThread.start();
 		}

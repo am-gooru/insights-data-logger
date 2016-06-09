@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class EventBuilder {
 	private static final Logger LOG = LoggerFactory.getLogger(EventBuilder.class);
-	
+
 	private JSONObject event;
 
 	public EventBuilder(String json) throws JSONException {
@@ -71,61 +71,61 @@ public class EventBuilder {
 	private String fields;
 
 	private String parentEventId;
-	
+
 	private String gooruUUID;
-		
+
 	private String lessonGooruId;
-	
+
 	private String unitGooruId;
-	
+
 	private String courseGooruId;
-	
+
 	private String classGooruId;
-	
+
 	private String parentGooruId;
-	
+
 	private String collectionItemId;
-	
+
 	private String sessionId;
-	
+
 	private String eventType;
-	
+
 	private String collectionType;
-	
+
 	private String questionType;
-	
+
 	private String resourceType;
-	
+
 	private Object answerObject;
-	
+
 	private String answerStatus;
-	
+
 	private String gradeType;
-	
+
 	private String gradeStatus;
 
 	private String teacherId;
-	
+
 	private boolean isStudent;
-	
+
 	private JSONObject taxonomyIds;
-		
+
 	private String contentFormat;
-	
+
 	private long eventTime;
-	
+
 	private long score;
-	
+
 	private long timespent;
-	
+
 	private long views;
-	
+
 	private int attempts;
-	
+
 	private long reaction;
-	
+
 	private String reportsContext;
-	
+
 	public String getEventId() {
 		return eventId;
 	}
@@ -429,7 +429,7 @@ public class EventBuilder {
 		this.teacherId = teacherId;
 	}
 
-	public EventBuilder build() {
+	private EventBuilder build() {
 		try {
 			this.context = this.event.getJSONObject(Constants.CONTEXT);
 			this.user = this.event.getJSONObject(Constants.USER);
@@ -463,19 +463,20 @@ public class EventBuilder {
 			this.gradeType = payLoadObject.isNull(Constants.GRADE_TYPE) ? Constants.SYSTEM : payLoadObject.getString(Constants.GRADE_TYPE);
 			this.gradeStatus = payLoadObject.isNull(Constants.GRADE_STATUS) ? Constants.NA : payLoadObject.getString(Constants.GRADE_STATUS);
 			this.teacherId = payLoadObject.isNull(Constants.TEACHER_ID) ? Constants.NA : payLoadObject.getString(Constants.TEACHER_ID);
-			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);			 
-			if(!payLoadObject.isNull(Constants.TAXONOMYIDS) && payLoadObject.get(Constants.TAXONOMYIDS) instanceof JSONObject){				
+			this.contentFormat = payLoadObject.isNull(Constants.CONTENT_FORMAT) ? Constants.NA : payLoadObject.getString(Constants.CONTENT_FORMAT);
+			if(!payLoadObject.isNull(Constants.TAXONOMYIDS) && payLoadObject.get(Constants.TAXONOMYIDS) instanceof JSONObject){
 				this.taxonomyIds = payLoadObject.getJSONObject(Constants.TAXONOMYIDS);
 			}else{
 				this.taxonomyIds = new JSONObject();
 			}
-			this.setStudent(payLoadObject.isNull(Constants.IS_STUDENT) ? true : payLoadObject.getBoolean(Constants.IS_STUDENT));
+			this.setStudent(
+				payLoadObject.isNull(Constants.IS_STUDENT) || payLoadObject.getBoolean(Constants.IS_STUDENT));
 			this.eventTime = this.event.getLong(Constants.END_TIME);
 			this.collectionItemId = Constants.NA;
 			this.score = 0;
 			this.reaction = context.isNull(Constants.REACTION_TYPE) ? 0 : context.getLong(Constants.REACTION_TYPE);
 
-			if (eventName.matches(Constants.PLAY_EVENTS)) {
+			if (Constants.PLAY_EVENTS_PATTERN.matcher(eventName).matches()) {
 				this.views = 1L;
 				this.timespent = (endTime - startTime);
 				String collectionType = context.getString(Constants.COLLECTION_TYPE);
@@ -491,7 +492,7 @@ public class EventBuilder {
 
 			if (Constants.QUESTION.equals(resourceType) && (Constants.STOP.equals(eventType))) {
 				answerStatus = payLoadObject.isNull(Constants.ATTEMPT_STATUS) ? Constants.ATTEMPTED : payLoadObject.getString(Constants.ATTEMPT_STATUS);
-				
+
 				if(StringUtils.isBlank(answerStatus)){
 					answerStatus = Constants.ATTEMPTED;
 					score = 0;
@@ -537,7 +538,7 @@ public class EventBuilder {
 		return isStudent;
 	}
 
-	public void setStudent(boolean isStudent) {
+	private void setStudent(boolean isStudent) {
 		this.isStudent = isStudent;
 	}
 

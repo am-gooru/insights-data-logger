@@ -30,7 +30,7 @@ import com.google.gson.Gson;
 
 public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
 
-    private Gson gson;
+    private final Gson gson;
 
     public JSONProcessor() {
         this.gson = new Gson();
@@ -44,7 +44,7 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
         }
 
         String logMessage = (String) row;
-        
+
         // Log lines at times have spaces. Trim them away.
         logMessage = logMessage.trim();
         String jsonRowObject = logMessage;
@@ -57,16 +57,15 @@ public class JSONProcessor extends BaseDataProcessor implements DataProcessor {
             }
         }
 
-        EventBuilder event = null;
+        EventBuilder event;
         try {
             event = gson.fromJson(jsonRowObject, EventBuilder.class);
-            event.setFields(logMessage);        
+            event.setFields(logMessage);
             getNextRowHandler().processRow(event);
         } catch (Exception e) {
             LOG.error("Had a problem trying to parse EventObject JSON from the raw line {}", jsonRowObject, e);
-            return;
         }
 
-       
+
     }
 }

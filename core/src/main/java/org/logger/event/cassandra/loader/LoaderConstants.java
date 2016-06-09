@@ -24,157 +24,157 @@
 package org.logger.event.cassandra.loader;
 
 public enum LoaderConstants {
-	
+
     CORRECT("correct"),
-    
+
     INCORRECT("in-correct"),
-    
+
     ATTEMPTED("attempted"),
-    
+
     VIEWS("resource-view"),
 
 	SKIPPED("skipped"),
- 
-	COMPLETED("completed"),
-    
-    INPROGRESS("in-progress"),
-    
-    REST_API_END_POINT("http://www.gooruleaning.org/gooruapi"),
-    
-    SESSIONTOKEN("session_token"),
-    
-    SEARCHINDEXAPI("search_indexing_api"),
-    
-    VIEW_COUNT_REST_API_END_POINT("view.count.update.rest.api"),
-    
-    CROPD("collection-resource-oe-play-dots"),
-    
-    QOPD("question-oe-play-dots"),
-  
-    CRPD("collection-resource-play-dots"),
-    
-    CQPD("collection-question-play-dots"), 
-  
-    CQRPD("collection-question-resource-play-dots"),
-    
-    RPD("resource-play-dots"),
-    
-    CP("collection-play"),
-    
-    CPD("collection-play-dots"),
-    
-    CRP("collection-resource-play"),
-    
-    QUIZPRV("quiz-preview"),
-    
-    RPRV("resource-preview"),
-    
-    QUIZP("quiz-play"),
-    
-    QPD("question-play-dots"),
-    
-    CR("create-reaction"),
-    
-    CSRCH("collection-search"),
-    
-    RSRCH("resource-search"),
-    
-    QSRCH("quiz-search"),
-    
-    SCSRCH("scollection-search"),
-    
-    RADD("resource-add"),
-    
-    SCIADD("scollection-item-add"),
-    
-    SCCOPY("scollection-copy"),
-    
-    CCOPY("collection-copy"),
-    
-    ESKL("kafka-logged"),
-    
-    ESAPIL("api-logged"),
-    
-    ESFL("file-logged"),
-    
-    KEY("key"),
-    
-    STATUS("status"),
-    
-    STARTTIME("start_time"),
-    
-    ENDTIME("end_time"),
-    
-    LASTPROCESSED("last_processed"),
-    
-    SCORE("score"),
-    
-    TS("time_spent"),
-    
-    COUNT("count"),
-    
-    AVGTS("avg_time_spent"),
-    
-    TOTALVIEWS("views"),
-    
-    AVGRA("avg_reaction"),
-    
-    CRPV1("collection.resource.play"),
-    
-    CPV1("collection.play"),
-    
-    RP1("resource.play"),
-    
-    CRAV1("reaction.create"),
-    
-	CLPV1("classpage.view"),
-    
-	CLPCV1("classpage.create"),
-	
-	CLUAV1("classpage.user.add"),
-	
-	CCV1("collection.create"),
-	
-	RUFB("resource.user.feedback"),
-	
-	CLASSPAGE("classpage"),
-	
-	ITEM_DOT_CREATE("item.create"),
-	
-	ITEM_DOT_EDIT("item.edit"),
-	
-	ITEM_DOT_RATE("item.rate"),
-	
-	ITEM_DOT_DELETE("item.delete"),
-	
-	REGISTER_DOT_USER("user.register"),
-	
-	PROFILE_DOT_ACTION("profile.action"),
-	
-	CLP_USER_REMOVE("classpage.user.remove"),
-	
-	CLASSPAGE_DOT_COLLECTION("classpage.collection"),
-	
-	SHELF_DOT_COLLECTION("shelf.collection"),
-	
-	COLLECTION_DOT_RESOURCE("collection.resource"),
-	
-	QUESTION_GRADE("question.grade"),
-	
-	SCOLLECTION("scollection"),
-	
-	PATHWAY("pathway"),
-	
-	CLASS_ITEM_DELETE("class.item.delete"),
-    
-	ENV_END_POINT("env.end.point"),
-	
-    ;
-	
-	String name;
 
-	
-	private LoaderConstants(String name) {
+	COMPLETED("completed"),
+
+    INPROGRESS("in-progress"),
+
+    REST_API_END_POINT("http://www.gooruleaning.org/gooruapi"),
+
+    SESSIONTOKEN("session_token"),
+
+    SEARCHINDEXAPI("search_indexing_api"),
+
+    VIEW_COUNT_REST_API_END_POINT("view.count.update.rest.api"),
+
+    CROPD("collection-resource-oe-play-dots"),
+
+    QOPD("question-oe-play-dots"),
+
+    CRPD("collection-resource-play-dots"),
+
+    CQPD("collection-question-play-dots"),
+
+    CQRPD("collection-question-resource-play-dots"),
+
+    RPD("resource-play-dots"),
+
+    CP("collection-play"),
+
+    CPD("collection-play-dots"),
+
+    CRP("collection-resource-play"),
+
+    QUIZPRV("quiz-preview"),
+
+    RPRV("resource-preview"),
+
+    QUIZP("quiz-play"),
+
+    QPD("question-play-dots"),
+
+    CR("create-reaction"),
+
+    CSRCH("collection-search"),
+
+    RSRCH("resource-search"),
+
+    QSRCH("quiz-search"),
+
+    SCSRCH("scollection-search"),
+
+    RADD("resource-add"),
+
+    SCIADD("scollection-item-add"),
+
+    SCCOPY("scollection-copy"),
+
+    CCOPY("collection-copy"),
+
+    ESKL("kafka-logged"),
+
+    ESAPIL("api-logged"),
+
+    ESFL("file-logged"),
+
+    KEY("key"),
+
+    STATUS("status"),
+
+    STARTTIME("start_time"),
+
+    ENDTIME("end_time"),
+
+    LASTPROCESSED("last_processed"),
+
+    SCORE("score"),
+
+    TS("time_spent"),
+
+    COUNT("count"),
+
+    AVGTS("avg_time_spent"),
+
+    TOTALVIEWS("views"),
+
+    AVGRA("avg_reaction"),
+
+    CRPV1("collection.resource.play"),
+
+    CPV1("collection.play"),
+
+    RP1("resource.play"),
+
+    CRAV1("reaction.create"),
+
+	CLPV1("classpage.view"),
+
+	CLPCV1("classpage.create"),
+
+	CLUAV1("classpage.user.add"),
+
+	CCV1("collection.create"),
+
+	RUFB("resource.user.feedback"),
+
+	CLASSPAGE("classpage"),
+
+	ITEM_DOT_CREATE("item.create"),
+
+	ITEM_DOT_EDIT("item.edit"),
+
+	ITEM_DOT_RATE("item.rate"),
+
+	ITEM_DOT_DELETE("item.delete"),
+
+	REGISTER_DOT_USER("user.register"),
+
+	PROFILE_DOT_ACTION("profile.action"),
+
+	CLP_USER_REMOVE("classpage.user.remove"),
+
+	CLASSPAGE_DOT_COLLECTION("classpage.collection"),
+
+	SHELF_DOT_COLLECTION("shelf.collection"),
+
+	COLLECTION_DOT_RESOURCE("collection.resource"),
+
+	QUESTION_GRADE("question.grade"),
+
+	SCOLLECTION("scollection"),
+
+	PATHWAY("pathway"),
+
+	CLASS_ITEM_DELETE("class.item.delete"),
+
+	ENV_END_POINT("env.end.point"),
+
+    ;
+
+	final String name;
+
+
+	LoaderConstants(String name) {
 		this.name = name;
 	}
 

@@ -43,90 +43,89 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class KafkaLogProducer 
+public class KafkaLogProducer
 {
 	private static final long serialVersionUID = 8483062836459978581L;
 	private static final Logger LOG = LoggerFactory.getLogger(KafkaLogConsumer.class);
-	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
+	private final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss:S");
 	private Producer<String, String> producer;
 	private String topic = "event-log-writer-dev";
 	private String errorLogTopic = "error-event-log-writer";
-	protected Properties props = new Properties();
-	
-	public KafkaLogProducer(){
+	private final Properties props = new Properties();
+
+	private KafkaLogProducer(){
 	}
-	
+
 	public KafkaLogProducer(String kafkaIp, String port, String topic, String producerType) {
 		init(kafkaIp, port, topic, producerType);
 	}
-	
-	public void init(String kafkaIp, String port, String topic, String producerType) {
+
+	private void init(String kafkaIp, String port, String topic, String producerType) {
 		this.topic = topic;
 		this.errorLogTopic = "error"+topic;
-		
-		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+":"+port+"::"+topic+"::"+producerType);
-		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+":"+port+"::"+errorLogTopic+"::"+producerType);
-		props.put("metadata.broker.list",KafkaLogProducer.buildEndPoint(kafkaIp, port));
-		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("request.required.acks", "1");
-		props.put("producer.type",producerType);
-		
-		
+
+		LOG.info("Kafka Data log writer producer config: "+ kafkaIp+ ':' +port+"::"+topic+"::"+producerType);
+		LOG.info("Kafka Error File writer producer config: "+ kafkaIp+ ':' +port+"::"+errorLogTopic+"::"+producerType);
+		props.setProperty("metadata.broker.list", KafkaLogProducer.buildEndPoint(kafkaIp, port));
+		props.setProperty("serializer.class", "kafka.serializer.StringEncoder");
+		props.setProperty("request.required.acks", "1");
+		props.setProperty("producer.type", producerType);
+
+
 		try{
-		producer = new Producer<String, String>(
-				new ProducerConfig(props));
+		producer = new Producer<>(new ProducerConfig(props));
 		}
 		catch (Exception e) {
 			LOG.info("Error while initializing kafka : " + e);
 		}
 	}
-	
-	 public static String buildEndPoint(String ip, String portNo){
-			
-			StringBuffer stringBuffer  = new StringBuffer();
+
+	 private static String buildEndPoint(String ip, String portNo){
+
+			StringBuilder stringBuffer  = new StringBuilder();
 			String[] ips = ip.split(",");
 			String[] ports = portNo.split(",");
 			for( int count = 0; count<ips.length; count++){
-				
+
 				if(stringBuffer.length() > 0){
-					stringBuffer.append(",");
+					stringBuffer.append(',');
 				}
-				
+
 				if(count < ports.length){
-					stringBuffer.append(ips[count]+":"+ports[count]);
+					stringBuffer.append(ips[count]).append(':').append(ports[count]);
 				}else{
-					stringBuffer.append(ips[count]+":"+ports[0]);
+					stringBuffer.append(ips[count]).append(':').append(ports[0]);
 				}
 			}
 			return stringBuffer.toString();
 		}
-	 
+
 	public void sendEventLog(String eventLog) {
-	Map<String, String> message = new HashMap<String, String>();
+	Map<String, String> message = new HashMap<>();
 	message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-	message.put("raw", new String(eventLog));
-	
+	message.put("raw", eventLog);
+
 	String messageAsJson = new JSONObject(message).toString();
 	send(messageAsJson);
 }
 
 public void sendErrorEventLog(String eventLog) {
-    Map<String, String> message = new HashMap<String, String>();
+    Map<String, String> message = new HashMap<>();
     message.put("timestamp", dateFormatter.format(System.currentTimeMillis()));
-    message.put("raw", new String(eventLog));
+    message.put("raw", eventLog);
 
     String messageAsJson = new JSONObject(message).toString();
     sendErrorEvent(messageAsJson);
 }
 
  private void sendErrorEvent(String message) {
-	 KeyedMessage<String, String> data = new KeyedMessage<String, String>(errorLogTopic,message);
+	 KeyedMessage<String, String> data = new KeyedMessage<>(errorLogTopic, message);
      producer.send(data);
  }
 
- 
+
 private void send(String message) {
-	KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic,message);
+	KeyedMessage<String, String> data = new KeyedMessage<>(topic, message);
 	producer.send(data);
 }
 
@@ -145,8 +144,7 @@ private void send(String message) {
 	     if(line.hasOption("mess")) {
 	    	 message = line.getOptionValue( "mess");
          }
-	     
-	     KafkaLogProducer kafkaLogProducer = new KafkaLogProducer();
+
 	     String kafkaIp = System.getenv("INSIGHTS_KAFKA_AGGREGATOR_PRODUCER_IP");
 	     String kafkaPort = System.getenv("INSIGHTS_KAFKA_ZK_PORT");
 	     String kafkaProducerType = System.getenv("INSIGHTS_KAFKA_PRODUCER_TYPE");

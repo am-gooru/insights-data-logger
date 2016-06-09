@@ -23,14 +23,13 @@
  ******************************************************************************/
 package org.ednovo.data;
 
-public interface KafkaProperties
-{
-  final static String zkConnect = "204.236.164.22:2181";
-  final static  String groupId = "group1";
-  final static String topic = "activity-log";
-  final static String kafkaServerURL = "204.236.164.22";
-  final static int kafkaServerPort = 9092;
-  final static int kafkaProducerBufferSize = 64*1024;
-  final static int connectionTimeOut = 100000;
-  final static int reconnectInterval = 10000;
+public interface KafkaProperties {
+    String zkConnect = "204.236.164.22:2181";
+    String groupId = "group1";
+    String topic = "activity-log";
+    String kafkaServerURL = "204.236.164.22";
+    int kafkaServerPort = 9092;
+    int kafkaProducerBufferSize = 64 * 1024;
+    int connectionTimeOut = 100000;
+    int reconnectInterval = 10000;
 }
