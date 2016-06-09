@@ -2,7 +2,6 @@ package org.ednovo.data.model;
 
 import java.io.Serializable;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
@@ -44,6 +43,10 @@ public class UserSessionTaxonomyActivity implements Serializable, Cloneable{
 
 	private long reaction;
 
+	public Object clone()throws CloneNotSupportedException{  
+		return super.clone();  	
+	}
+	
 	public String getSessionId() {
 		return sessionId;
 	}
